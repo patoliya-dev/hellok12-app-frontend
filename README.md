@@ -1,1 +1,11 @@
 # hellok12-app-frontend
+
+.DS_Store
+node_modules
+.idea
+package-lock.json
+/build
+/dist
+.vscode/
+.idea/
+vite.config.*s.*
