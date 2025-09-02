@@ -6,7 +6,7 @@ const TeacherIcon = ({ selected = false }) => {
   return (
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect width="32" height="32" rx="5" fill="#F3F4F6" />
-      <mask id={maskId} style="mask-type:alpha" maskUnits="userSpaceOnUse" x="6" y="6" width="20" height="20">
+      <mask id={maskId} style={{ maskType: "alpha" }} maskUnits="userSpaceOnUse" x="6" y="6" width="20" height="20">
         <rect x="6" y="6" width="20" height="20" fill="#D9D9D9" />
       </mask>
       <g mask={`url(#${maskId})`}>

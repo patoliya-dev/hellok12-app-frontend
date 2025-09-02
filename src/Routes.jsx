@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes as RouterRoutes, Route } from "react-router-dom";
+import { BrowserRouter, Routes as RouterRoutes, Route, Navigate } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import ErrorBoundary from "./components/ErrorBoundary";
 // Add your imports here
@@ -18,7 +18,7 @@ const Routes = () => {
       <ScrollToTop />
       <RouterRoutes>
         {/* Define your routes here */}
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/user-registration" element={<UserRegistration />} />
         <Route path="/password-reset" element={<PasswordReset />} />

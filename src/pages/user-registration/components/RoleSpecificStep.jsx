@@ -1,261 +1,258 @@
-import React from 'react';
-import Input from '../../../components/ui/Input';
-import Select from '../../../components/ui/Select';
+import React, { useEffect, useState } from "react";
+import Input from "../../../components/ui/Input";
+import Select from "../../../components/ui/Select";
+import Icon from "../../../components/AppIcon";
+import { Checkbox } from "../../../components/ui/Checkbox";
+import Button from "../../../components/ui/Button";
 
 const RoleSpecificStep = ({ formData, errors, onChange }) => {
-  const handleInputChange = (field) => (e) => {
-    onChange(field, e.target.value);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Ensure at least one child exists for parent userType
+  useEffect(() => {
+    if (formData.userType === "parent" && (!formData.children || formData.children.length === 0)) {
+      onChange("children", [{ name: "", age: "", gender: "" }]);
+    }
+  }, [formData.userType, formData.children, onChange]);
+
+  const handleInputChange = (field, index = null) => (e) => {
+    const value = e?.target?.value ?? e;
+
+    if (field === "children" && index !== null) {
+      const updatedChildren = [...(formData.children || [])];
+      updatedChildren[index] = { ...updatedChildren[index], ...value };
+      onChange("children", updatedChildren);
+    } else {
+      onChange(field, value);
+    }
   };
 
-  const handleSelectChange = (field) => (value) => {
-    onChange(field, value);
+  const handleSelectChange = (field) => (value) => onChange(field, value);
+
+  const addChild = () => {
+    const updatedChildren = [...(formData.children || []), { name: "", age: "", gender: "" }];
+    onChange("children", updatedChildren);
   };
 
-  const gradeOptions = [
-    { value: '9', label: 'Grade 9' },
-    { value: '10', label: 'Grade 10' },
-    { value: '11', label: 'Grade 11' },
-    { value: '12', label: 'Grade 12' },
-    { value: 'undergraduate', label: 'Undergraduate' },
-    { value: 'graduate', label: 'Graduate' }
+  const deleteChild = (index) => {
+    const updatedChildren = [...(formData.children || [])];
+    if (updatedChildren.length > 1) {
+      updatedChildren.splice(index, 1);
+      onChange("children", updatedChildren);
+    }
+  };
+
+  const userTypeOptions = [
+    { value: "student", label: "Student" },
+    { value: "parent", label: "Parent" },
   ];
 
-  const subjectOptions = [
-    { value: 'mathematics', label: 'Mathematics' },
-    { value: 'science', label: 'Science' },
-    { value: 'english', label: 'English' },
-    { value: 'history', label: 'History' },
-    { value: 'geography', label: 'Geography' },
-    { value: 'physics', label: 'Physics' },
-    { value: 'chemistry', label: 'Chemistry' },
-    { value: 'biology', label: 'Biology' }
+  const genderOptions = [
+    { value: "male", label: "Male" },
+    { value: "female", label: "Female" },
+    { value: "other", label: "Other" },
   ];
 
-  const relationshipOptions = [
-    { value: 'mother', label: 'Mother' },
-    { value: 'father', label: 'Father' },
-    { value: 'guardian', label: 'Guardian' },
-    { value: 'other', label: 'Other' }
-  ];
-
-  const renderStudentFields = () => (
-    <div className="space-y-4">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground">Student Information</h2>
-        <p className="text-muted-foreground mt-2">
-          Tell us about your academic level
-        </p>
-      </div>
-
-      <Select
-        label="Grade Level"
-        options={gradeOptions}
-        value={formData.gradeLevel}
-        onChange={handleSelectChange('gradeLevel')}
-        error={errors.gradeLevel}
-        placeholder="Select your grade level"
-        required
-      />
-
+  const renderPasswordField = (label, value, show, setShow, onChangeHandler, error) => (
+    <div className="relative">
       <Input
-        label="Student ID (Optional)"
-        type="text"
-        placeholder="Enter your student ID if you have one"
-        value={formData.studentId}
-        onChange={handleInputChange('studentId')}
-        error={errors.studentId}
-        description="Leave blank if you don't have a student ID yet"
-      />
-
-      <Input
-        label="School/Institution Name"
-        type="text"
-        placeholder="Enter your school or institution name"
-        value={formData.institutionName}
-        onChange={handleInputChange('institutionName')}
-        error={errors.institutionName}
+        type={show ? "text" : "password"}
+        label={label}
+        placeholder={label}
+        value={value || ""}
+        onChange={onChangeHandler}
+        error={error}
         required
+        className="pr-12"
       />
+      <button
+        type="button"
+        onClick={() => setShow(!show)}
+        className="absolute right-3 top-9 text-muted-foreground hover:text-foreground transition"
+      >
+        <Icon name={show ? "EyeOff" : "Eye"} size={16} />
+      </button>
     </div>
   );
 
-  const renderParentFields = () => (
+  const renderCommonFields = () => (
     <div className="space-y-4">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground">Parent Information</h2>
-        <p className="text-muted-foreground mt-2">
-          Provide details about your relationship with the student
-        </p>
+      {/* Student/Parent Selection for combined role */}
+      {formData.role === "student/parent" && (
+        <Select
+          label="Sign up as"
+          options={userTypeOptions}
+          value={formData.userType || "student"}
+          onChange={handleSelectChange("userType")}
+          error={errors.userType}
+          required
+        />
+      )}
+
+      <div className="text-left">
+        <h5 className="text-sm font-bold text-foreground">
+          {formData.userType === "parent"
+            ? "Parent / Guardian Information"
+            : formData.role === "teacher"
+              ? "Teacher Information"
+              : formData.role === "school"
+                ? "School Information"
+                : "Student Information"}
+        </h5>
       </div>
 
-      <Select
-        label="Relationship to Student"
-        options={relationshipOptions}
-        value={formData.relationship}
-        onChange={handleSelectChange('relationship')}
-        error={errors.relationship}
-        placeholder="Select your relationship"
-        required
-      />
-
+      {/* Basic Inputs */}
       <Input
-        label="Child's Full Name"
+        label="Name"
         type="text"
-        placeholder="Enter your child's full name"
-        value={formData.childName}
-        onChange={handleInputChange('childName')}
-        error={errors.childName}
+        placeholder="Enter your name"
+        value={formData.name || ""}
+        onChange={handleInputChange("name")}
+        error={errors.name}
         required
       />
-
       <Input
-        label="Child's Student ID"
-        type="text"
-        placeholder="Enter your child's student ID"
-        value={formData.childStudentId}
-        onChange={handleInputChange('childStudentId')}
-        error={errors.childStudentId}
-        description="This helps us link your account to your child's records"
+        label="Phone Number"
+        type="tel"
+        placeholder="Enter your phone number"
+        value={formData.phone || ""}
+        onChange={handleInputChange("phone")}
+        error={errors.phone}
         required
       />
-
       <Input
-        label="School/Institution Name"
-        type="text"
-        placeholder="Enter the school name"
-        value={formData.institutionName}
-        onChange={handleInputChange('institutionName')}
-        error={errors.institutionName}
+        label="Email Address"
+        type="email"
+        placeholder="Enter your email"
+        value={formData.email || ""}
+        onChange={handleInputChange("email")}
+        error={errors.email}
         required
       />
-    </div>
-  );
 
-  const renderTeacherFields = () => (
-    <div className="space-y-4">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground">Teacher Information</h2>
-        <p className="text-muted-foreground mt-2">
-          Tell us about your teaching specialization
-        </p>
+      {/* Password Fields */}
+      {renderPasswordField(
+        "Password",
+        formData.password,
+        showPassword,
+        setShowPassword,
+        handleInputChange("password"),
+        errors.password
+      )}
+      {renderPasswordField(
+        "Confirm Password",
+        formData.confirmPassword,
+        showConfirmPassword,
+        setShowConfirmPassword,
+        handleInputChange("confirmPassword"),
+        errors.confirmPassword
+      )}
+
+      {/* Children for Parent */}
+      {formData.userType === "parent" && (
+        <div>
+          {formData.children?.map((child, i) => (
+            <div
+              key={i}
+              className="space-y-2 mt-2 p-4 border rounded border-gray-200 relative"
+            >
+              <div className="grid grid-cols-1 gap-4">
+                {!i && (
+                  <div className="text-left">
+                    <h5 className="text-sm font-bold text-foreground">Student Information</h5>
+                  </div>
+                )}
+
+                {formData.children.length > 1 && (
+                  <div className="flex items-center justify-end gap-2">
+                    <Icon name="GraduationCap" size={20} className="text-primary" />
+                    <span className="text-sm text-primary">Child {i + 1}</span>
+                    <span className="border-r border-black/13 h-5 mx-2"></span>
+                    <button
+                      type="button"
+                      onClick={() => deleteChild(i)}
+                      className="text-red-600 hover:text-red-800 transition"
+                    >
+                      <Icon name="Trash2" size={20} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <Input
+                label="Name"
+                placeholder="Enter student name"
+                value={child.name || ""}
+                required
+                error={errors[`name_${i}`]}
+                onChange={(e) => handleInputChange("children", i)({ name: e.target.value })}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Age"
+                  type="number"
+                  placeholder="Enter student age"
+                  value={child.age || ""}
+                  required
+                  error={errors[`age_${i}`]}
+                  onChange={(e) => handleInputChange("children", i)({ age: e.target.value })}
+                />
+                <Select
+                  label="Gender"
+                  options={genderOptions}
+                  value={child.gender || ""}
+                  required
+                  error={errors[`gender_${i}`]}
+                  onChange={(value) => handleInputChange("children", i)({ gender: value })}
+                />
+              </div>
+            </div>
+          ))}
+
+          <div className="text-center">
+            <Button
+              variant="default"
+              onClick={addChild}
+              iconName="Plus"
+              iconPosition="left"
+              className="w-auto mt-6 mr-2 bg-card text-primary hover:bg-card/80 border border-primary"
+            >
+              Add Student
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Checkboxes */}
+      <div className="flex flex-col gap-2 mt-4">
+        <Checkbox
+          label="I agree to the Terms of Service and Privacy Policy"
+          checked={formData.termsAccepted || false}
+          onChange={(checked) => onChange("termsAccepted", checked)}
+        />
+        <Checkbox
+          label="I would like to receive marketing communications"
+          checked={formData.marketingConsent || false}
+          onChange={(checked) => onChange("marketingConsent", checked)}
+        />
       </div>
-
-      <Select
-        label="Primary Subject"
-        options={subjectOptions}
-        value={formData.primarySubject}
-        onChange={handleSelectChange('primarySubject')}
-        error={errors.primarySubject}
-        placeholder="Select your primary subject"
-        required
-      />
-
-      <Input
-        label="Employee ID"
-        type="text"
-        placeholder="Enter your employee ID"
-        value={formData.employeeId}
-        onChange={handleInputChange('employeeId')}
-        error={errors.employeeId}
-        required
-      />
-
-      <Input
-        label="Years of Experience"
-        type="number"
-        placeholder="Enter years of teaching experience"
-        value={formData.experience}
-        onChange={handleInputChange('experience')}
-        error={errors.experience}
-        min="0"
-        max="50"
-        required
-      />
-
-      <Input
-        label="School/Institution Name"
-        type="text"
-        placeholder="Enter your school or institution name"
-        value={formData.institutionName}
-        onChange={handleInputChange('institutionName')}
-        error={errors.institutionName}
-        required
-      />
-    </div>
-  );
-
-  const renderAdminFields = () => (
-    <div className="space-y-4">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground">Administrator Information</h2>
-        <p className="text-muted-foreground mt-2">
-          Provide your administrative credentials
-        </p>
-      </div>
-
-      <Input
-        label="Institution Name"
-        type="text"
-        placeholder="Enter the institution name"
-        value={formData.institutionName}
-        onChange={handleInputChange('institutionName')}
-        error={errors.institutionName}
-        required
-      />
-
-      <Input
-        label="Admin ID"
-        type="text"
-        placeholder="Enter your administrator ID"
-        value={formData.adminId}
-        onChange={handleInputChange('adminId')}
-        error={errors.adminId}
-        required
-      />
-
-      <Input
-        label="Department"
-        type="text"
-        placeholder="Enter your department"
-        value={formData.department}
-        onChange={handleInputChange('department')}
-        error={errors.department}
-        required
-      />
-
-      <Input
-        label="Institution Code"
-        type="text"
-        placeholder="Enter the institution code"
-        value={formData.institutionCode}
-        onChange={handleInputChange('institutionCode')}
-        error={errors.institutionCode}
-        description="This code is provided by your institution"
-        required
-      />
     </div>
   );
 
   const renderRoleSpecificFields = () => {
     switch (formData.role) {
-      case 'student':
-        return renderStudentFields();
-      case 'parent':
-        return renderParentFields();
-      case 'teacher':
-        return renderTeacherFields();
-      case 'admin':
-        return renderAdminFields();
+      case "student/parent":
+      case "teacher":
+      case "school":
+        return renderCommonFields();
       default:
         return null;
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {renderRoleSpecificFields()}
-    </div>
-  );
+  return <div className="space-y-6 mb-6">{renderRoleSpecificFields()}</div>;
 };
 
 export default RoleSpecificStep;
