@@ -22,7 +22,7 @@ const NewPasswordStep = ({ verificationInfo, onNext, onBack }) => {
   const getPasswordStrength = () => {
     const metRequirements = passwordRequirements.filter(req => req.regex.test(password));
     const strength = metRequirements.length;
-    
+
     if (strength < 2) return { level: 'weak', color: 'text-error', bg: 'bg-error' };
     if (strength < 4) return { level: 'medium', color: 'text-warning', bg: 'bg-warning' };
     return { level: 'strong', color: 'text-success', bg: 'bg-success' };
@@ -52,17 +52,17 @@ const NewPasswordStep = ({ verificationInfo, onNext, onBack }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setLoading(true);
-    
+
     // Simulate API call to reset password
     setTimeout(() => {
       setLoading(false);
-      onNext({ 
-        ...verificationInfo, 
-        newPassword: password 
+      onNext({
+        ...verificationInfo,
+        newPassword: password
       });
     }, 2000);
   };
@@ -71,13 +71,19 @@ const NewPasswordStep = ({ verificationInfo, onNext, onBack }) => {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Icon name="Key" size={24} color="var(--color-success)" />
-        </div>
-        <h1 className="text-2xl font-bold text-foreground mb-2">Create New Password</h1>
+      <div className="text-left mb-8">
+        <Button
+          variant="default"
+          onClick={onBack}
+          iconName="ChevronLeft"
+          iconPosition="left"
+          className="p-0 bg-transparent text-foreground hover:bg-muted/80"
+        >
+          Back
+        </Button>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Set a Password</h1>
         <p className="text-muted-foreground">
-          Choose a strong password to secure your EduPortal account.
+          Your previous password has been reset. Please set a new password for your account.
         </p>
       </div>
 
@@ -109,10 +115,10 @@ const NewPasswordStep = ({ verificationInfo, onNext, onBack }) => {
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className={`h-full transition-all duration-300 ${strengthInfo.bg}`}
-                    style={{ 
-                      width: `${(passwordRequirements.filter(req => req.regex.test(password)).length / passwordRequirements.length) * 100}%` 
+                    style={{
+                      width: `${(passwordRequirements.filter(req => req.regex.test(password)).length / passwordRequirements.length) * 100}%`
                     }}
                   />
                 </div>
@@ -145,35 +151,13 @@ const NewPasswordStep = ({ verificationInfo, onNext, onBack }) => {
           </button>
         </div>
 
-        {/* Password Requirements */}
-        <div className="bg-muted/50 rounded-lg p-4">
-          <div className="text-sm font-medium text-foreground mb-3">Password Requirements:</div>
-          <div className="space-y-2">
-            {passwordRequirements.map((requirement) => {
-              const isMet = requirement.regex.test(password);
-              return (
-                <div key={requirement.id} className="flex items-center space-x-2">
-                  <Icon 
-                    name={isMet ? 'CheckCircle' : 'Circle'} 
-                    size={14} 
-                    color={isMet ? 'var(--color-success)' : 'var(--color-muted-foreground)'} 
-                  />
-                  <span className={`text-xs ${isMet ? 'text-success' : 'text-muted-foreground'}`}>
-                    {requirement.text}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Password Match Indicator */}
         {confirmPassword && (
           <div className="flex items-center space-x-2">
-            <Icon 
-              name={password === confirmPassword ? 'CheckCircle' : 'XCircle'} 
-              size={14} 
-              color={password === confirmPassword ? 'var(--color-success)' : 'var(--color-error)'} 
+            <Icon
+              name={password === confirmPassword ? 'CheckCircle' : 'XCircle'}
+              size={14}
+              color={password === confirmPassword ? 'var(--color-success)' : 'var(--color-error)'}
             />
             <span className={`text-xs ${password === confirmPassword ? 'text-success' : 'text-error'}`}>
               {password === confirmPassword ? 'Passwords match' : 'Passwords do not match'}
@@ -191,37 +175,10 @@ const NewPasswordStep = ({ verificationInfo, onNext, onBack }) => {
             iconName="Check"
             iconPosition="right"
           >
-            {loading ? 'Updating Password...' : 'Update Password'}
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onBack}
-            fullWidth
-            iconName="ArrowLeft"
-            iconPosition="left"
-          >
-            Back
+            {loading ? 'Updating Password...' : 'Set Password'}
           </Button>
         </div>
       </form>
-
-      {/* Security Tips */}
-      <div className="mt-8 bg-muted/50 rounded-lg p-4">
-        <div className="flex items-start space-x-3">
-          <Icon name="Shield" size={16} color="var(--color-primary)" className="mt-0.5 flex-shrink-0" />
-          <div className="text-sm">
-            <div className="font-medium text-foreground mb-1">Security Tips</div>
-            <ul className="text-muted-foreground space-y-1">
-              <li>• Use a unique password for your EduPortal account</li>
-              <li>• Consider using a password manager</li>
-              <li>• Don't share your password with anyone</li>
-              <li>• Update your password regularly</li>
-            </ul>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

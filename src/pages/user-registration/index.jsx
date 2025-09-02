@@ -15,7 +15,6 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
     phone: '',
     role: '',
     userType: 'student', // Added userType selection for student/parent
-    // Role-specific fields
     schoolName: '',
     children: [],
     termsAccepted: false,
@@ -28,11 +27,33 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
 
   const [errors, setErrors] = useState({});
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field, value, childId = null) => {
+    if (field === "children" && childId) {
+      // Update child field
+      setFormData(prev => ({
+        ...prev,
+        children: prev.children.map(child =>
+          child.id === childId ? { ...child, ...value } : child
+        )
+      }));
 
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      // Clear child errors dynamically
+      Object.keys(value).forEach(key => {
+        const errorKey = `${key}_${childId}`;
+        if (errors[errorKey]) {
+          setErrors(prev => ({ ...prev, [errorKey]: "" }));
+        }
+      });
+    } else if (field === "clearError") {
+      setErrors(prev => ({ ...prev, [value]: "" }));
+    } else {
+      // Handle top-level fields including checkboxes
+      setFormData(prev => ({ ...prev, [field]: value }));
+
+      // Clear error dynamically
+      if (errors[field]) {
+        setErrors(prev => ({ ...prev, [field]: "" }));
+      }
     }
   };
 
@@ -50,7 +71,13 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
       else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email is invalid";
       if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
       if (!formData.role) newErrors.role = "Please select a role";
+      if (!formData.password) newErrors.password = "Password is required";
+      else if (formData.password.length < 6) newErrors.password = "Password must be at least 6 characters";
+      if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords do not match";
+      if (!formData.termsAccepted) newErrors.termsAccepted = "You must accept the terms and conditions";
+      if (!formData.marketingConsent) newErrors.marketingConsent = "You must consent to marketing communications";
 
+      // Role-specific validation
       if (formData.role === "student/parent") {
         if (!formData.userType) newErrors.userType = "Please select student or parent";
 
@@ -58,22 +85,13 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
           if (!formData.children || !formData.children.length) {
             newErrors.children = "Please add at least one student";
           } else {
-            formData.children.forEach((child, i) => {
-              console.log('Validating child:', child);
-
-              if (!child.name?.trim()) newErrors[`name_${i}`] = "Name is required";
-              if (!child.age) newErrors[`age_${i}`] = "Age is required";
-              if (!child.gender) newErrors[`gender_${i}`] = "Gender is required";
+            formData.children.forEach((child) => {
+              if (!child.name?.trim()) newErrors[`name_${child.id}`] = "Name is required";
+              if (!child.age) newErrors[`age_${child.id}`] = "Age is required";
+              if (!child.gender) newErrors[`gender_${child.id}`] = "Gender is required";
             });
           }
         }
-      }
-
-      if (formData.role === "teacher") {
-        if (!formData.primarySubject) newErrors.primarySubject = "Primary subject is required";
-        if (!formData.employeeId?.trim()) newErrors.employeeId = "Employee ID is required";
-        if (!formData.experience?.trim()) newErrors.experience = "Experience is required";
-        if (!formData.institutionName?.trim()) newErrors.institutionName = "Institution name is required";
       }
 
       if (formData.role === "school") {
@@ -101,11 +119,6 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
 
   const handlePrevious = () => setCurrentStep(prev => prev - 1);
 
-  const handleSocialLogin = (provider) => {
-    console.log(`Logging in with ${provider}`);
-    navigate('/student-dashboard'); // Demo purposes
-  };
-
   const handleResendOTP = (type) => console.log(`Resending ${type} OTP`);
 
   const handleSubmit = async () => {
@@ -113,7 +126,7 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
 
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
       console.log('Registration successful:', formData);
 
       const dashboardRoutes = {
@@ -165,7 +178,6 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
                 errors={errors}
                 onChange={handleInputChange}
               />
-
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Button
@@ -210,7 +222,6 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
           <p className="text-sm text-error">{errors.submit}</p>
         </div>
       )}
-
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid"; // Standard for unique IDs
 import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
 import Icon from "../../../components/AppIcon";
@@ -9,38 +10,49 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Ensure at least one child exists for parent userType
+  // Ensure at least one child exists for parent
   useEffect(() => {
     if (formData.userType === "parent" && (!formData.children || formData.children.length === 0)) {
-      onChange("children", [{ name: "", age: "", gender: "" }]);
+      onChange("children", [{ id: uuidv4(), name: "", age: "", gender: "" }]);
     }
   }, [formData.userType, formData.children, onChange]);
 
-  const handleInputChange = (field, index = null) => (e) => {
-    const value = e?.target?.value ?? e;
 
-    if (field === "children" && index !== null) {
-      const updatedChildren = [...(formData.children || [])];
-      updatedChildren[index] = { ...updatedChildren[index], ...value };
+  const handleInputChange = (field, value, childId = null) => {
+    if (field === "children" && childId) {
+      const updatedChildren = (formData.children || []).map(child =>
+        child.id === childId ? { ...child, ...value } : child
+      );
       onChange("children", updatedChildren);
+
+      // Clear child errors dynamically
+      Object.keys(value).forEach(key => {
+        const errorKey = `${key}_${childId}`;
+        if (errors[errorKey]) {
+          // Use a callback to clear specific child error
+          onChange("clearError", errorKey);
+        }
+      });
     } else {
       onChange(field, value);
+
+      // Clear top-level error
+      if (errors[field]) onChange("clearError", field);
     }
   };
 
-  const handleSelectChange = (field) => (value) => onChange(field, value);
-
   const addChild = () => {
-    const updatedChildren = [...(formData.children || []), { name: "", age: "", gender: "" }];
+    const updatedChildren = [
+      ...(formData.children || []),
+      { id: uuidv4(), name: "", age: "", gender: "" },
+    ];
     onChange("children", updatedChildren);
   };
 
-  const deleteChild = (index) => {
-    const updatedChildren = [...(formData.children || [])];
-    if (updatedChildren.length > 1) {
-      updatedChildren.splice(index, 1);
-      onChange("children", updatedChildren);
-    }
+  const deleteChild = (childId) => {
+    if ((formData.children || []).length <= 1) return;
+    const updatedChildren = formData.children.filter(child => child.id !== childId);
+    onChange("children", updatedChildren);
   };
 
   const userTypeOptions = [
@@ -78,13 +90,13 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
 
   const renderCommonFields = () => (
     <div className="space-y-4">
-      {/* Student/Parent Selection for combined role */}
+      {/* Student/Parent Selection */}
       {formData.role === "student/parent" && (
         <Select
           label="Sign up as"
           options={userTypeOptions}
           value={formData.userType || "student"}
-          onChange={handleSelectChange("userType")}
+          onChange={value => handleInputChange("userType", value)}
           error={errors.userType}
           required
         />
@@ -92,7 +104,7 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
 
       <div className="text-left">
         <h5 className="text-sm font-bold text-foreground">
-          {formData.userType === "parent"
+          {(formData.role === 'student/parent' && formData.userType === "parent")
             ? "Parent / Guardian Information"
             : formData.role === "teacher"
               ? "Teacher Information"
@@ -108,7 +120,7 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
         type="text"
         placeholder="Enter your name"
         value={formData.name || ""}
-        onChange={handleInputChange("name")}
+        onChange={e => handleInputChange("name", e.target.value)}
         error={errors.name}
         required
       />
@@ -117,7 +129,7 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
         type="tel"
         placeholder="Enter your phone number"
         value={formData.phone || ""}
-        onChange={handleInputChange("phone")}
+        onChange={e => handleInputChange("phone", e.target.value)}
         error={errors.phone}
         required
       />
@@ -126,7 +138,7 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
         type="email"
         placeholder="Enter your email"
         value={formData.email || ""}
-        onChange={handleInputChange("email")}
+        onChange={e => handleInputChange("email", e.target.value)}
         error={errors.email}
         required
       />
@@ -137,7 +149,7 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
         formData.password,
         showPassword,
         setShowPassword,
-        handleInputChange("password"),
+        e => handleInputChange("password", e.target.value),
         errors.password
       )}
       {renderPasswordField(
@@ -145,25 +157,21 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
         formData.confirmPassword,
         showConfirmPassword,
         setShowConfirmPassword,
-        handleInputChange("confirmPassword"),
+        e => handleInputChange("confirmPassword", e.target.value),
         errors.confirmPassword
       )}
 
       {/* Children for Parent */}
-      {formData.userType === "parent" && (
+      {(formData.userType === "parent" && formData.role === "student/parent") && (
         <div>
           {formData.children?.map((child, i) => (
-            <div
-              key={i}
-              className="space-y-2 mt-2 p-4 border rounded border-gray-200 relative"
-            >
-              <div className="grid grid-cols-1 gap-4">
-                {!i && (
+            <div key={child.id} className="space-y-2 mt-2 pt-5 border-t border-gray-200">
+              <div className={`grid ${i === 0 ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
+                {i === 0 && (
                   <div className="text-left">
                     <h5 className="text-sm font-bold text-foreground">Student Information</h5>
                   </div>
                 )}
-
                 {formData.children.length > 1 && (
                   <div className="flex items-center justify-end gap-2">
                     <Icon name="GraduationCap" size={20} className="text-primary" />
@@ -171,7 +179,7 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
                     <span className="border-r border-black/13 h-5 mx-2"></span>
                     <button
                       type="button"
-                      onClick={() => deleteChild(i)}
+                      onClick={() => deleteChild(child.id)}
                       className="text-red-600 hover:text-red-800 transition"
                     >
                       <Icon name="Trash2" size={20} />
@@ -185,8 +193,8 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
                 placeholder="Enter student name"
                 value={child.name || ""}
                 required
-                error={errors[`name_${i}`]}
-                onChange={(e) => handleInputChange("children", i)({ name: e.target.value })}
+                error={errors[`name_${child.id}`]}
+                onChange={e => handleInputChange("children", { name: e.target.value }, child.id)}
               />
 
               <div className="grid grid-cols-2 gap-4">
@@ -196,16 +204,16 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
                   placeholder="Enter student age"
                   value={child.age || ""}
                   required
-                  error={errors[`age_${i}`]}
-                  onChange={(e) => handleInputChange("children", i)({ age: e.target.value })}
+                  error={errors[`age_${child.id}`]}
+                  onChange={e => handleInputChange("children", { age: e.target.value }, child.id)}
                 />
                 <Select
                   label="Gender"
                   options={genderOptions}
                   value={child.gender || ""}
                   required
-                  error={errors[`gender_${i}`]}
-                  onChange={(value) => handleInputChange("children", i)({ gender: value })}
+                  error={errors[`gender_${child.id}`]}
+                  onChange={value => handleInputChange("children", { gender: value }, child.id)}
                 />
               </div>
             </div>
@@ -229,13 +237,17 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
       <div className="flex flex-col gap-2 mt-4">
         <Checkbox
           label="I agree to the Terms of Service and Privacy Policy"
-          checked={formData.termsAccepted || false}
-          onChange={(checked) => onChange("termsAccepted", checked)}
+          checked={!!formData.termsAccepted}
+          required
+          error={errors.termsAccepted}
+          onChange={checked => handleInputChange("termsAccepted", checked)}
         />
         <Checkbox
           label="I would like to receive marketing communications"
-          checked={formData.marketingConsent || false}
-          onChange={(checked) => onChange("marketingConsent", checked)}
+          checked={!!formData.marketingConsent}
+          required
+          error={errors.marketingConsent}
+          onChange={checked => handleInputChange("marketingConsent", checked)}
         />
       </div>
     </div>
