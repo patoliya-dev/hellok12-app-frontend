@@ -3,35 +3,36 @@ import Icon from '../../../components/AppIcon';
 
 const TrustSignals = () => {
   return (
-    <div className="mt-8 pt-6 border-t border-border">
-      <div className="flex items-center justify-center space-x-6 text-xs text-muted-foreground">
+    <div className="mt-4 space-y-4">
+      <div className="flex items-center justify-center space-x-2 text-xs text-muted-foreground">
         <div className="flex items-center space-x-1">
-          <Icon name="Shield" size={14} />
-          <span>SSL Secured</span>
+          <span>Privacy Policy</span>
         </div>
-        
+
+        <Icon name="Dot" size={20} />
+
         <div className="flex items-center space-x-1">
-          <Icon name="Lock" size={14} />
-          <span>256-bit Encryption</span>
+          <span>Terms of Service</span>
         </div>
-        
+
+        <Icon name="Dot" size={20} />
+
         <div className="flex items-center space-x-1">
-          <Icon name="CheckCircle" size={14} />
-          <span>FERPA Compliant</span>
+          <span>Support</span>
         </div>
       </div>
-      
-      <div className="mt-4 text-center">
-        <p className="text-xs text-muted-foreground">
-          By signing in, you agree to our{' '}
-          <a href="#" className="text-primary hover:text-primary/80 transition-smooth">
-            Terms of Service
-          </a>{' '}
-          and{' '}
-          <a href="#" className="text-primary hover:text-primary/80 transition-smooth">
-            Privacy Policy
-          </a>
-        </p>
+
+      <div className="flex items-center justify-center space-x-2 text-xs text-muted-foreground">
+        <div className="flex items-center space-x-1">
+          <Icon name="Shield" size={14} />
+          <span>Secure & Encrypted</span>
+        </div>
+
+        <Icon name="Dot" size={20} />
+
+        <div className="flex items-center space-x-1">
+          <span>© 2025 HelloK12</span>
+        </div>
       </div>
     </div>
   );

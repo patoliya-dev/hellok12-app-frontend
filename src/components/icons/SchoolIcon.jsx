@@ -6,7 +6,7 @@ const SchoolIcon = ({ selected = false }) => {
   return (
     <svg width="32" height="33" viewBox="0 0 32 33" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect y="0.148132" width="32" height="32" rx="5" fill="#F3F4F6" />
-      <mask id={maskId} style="mask-type:alpha" maskUnits="userSpaceOnUse" x="5" y="5" width="22" height="23">
+      <mask id={maskId} style={{ maskType: "alpha" }} maskUnits="userSpaceOnUse" x="5" y="5" width="22" height="23">
         <rect x="5" y="5.14813" width="22" height="22" fill="#D9D9D9" />
       </mask>
       <g mask={`url(#${maskId})`}>

@@ -156,7 +156,7 @@ const VerificationStep = ({ formData, errors, onChange, onResendOTP }) => {
           <div>
             <h4 className="font-medium text-foreground">Security Notice</h4>
             <p className="text-sm text-muted-foreground mt-1">
-              For your security, verification codes expire in 10 minutes. 
+              For your security, verification codes expire in 10 minutes.
               Don't share these codes with anyone.
             </p>
           </div>

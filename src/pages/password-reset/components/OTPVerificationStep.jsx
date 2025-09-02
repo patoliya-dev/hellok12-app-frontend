@@ -6,7 +6,7 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes in seconds
   const [canResend, setCanResend] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const inputRefs = useRef([]);
@@ -43,7 +43,7 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
         newOtp[i] = pastedData[i];
       }
       setOtp(newOtp);
-      
+
       // Focus on the next empty field or last field
       const nextIndex = Math.min(pastedData.length, 5);
       inputRefs.current[nextIndex]?.focus();
@@ -70,7 +70,7 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const otpString = otp.join('');
-    
+
     if (otpString.length !== 6) {
       setError('Please enter the complete 6-digit code');
       return;
@@ -95,12 +95,12 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
 
   const handleResend = async () => {
     setResendLoading(true);
-    
+
     // Simulate resend API call
     setTimeout(() => {
       setResendLoading(false);
       setCanResend(false);
-      setTimeLeft(600); // Reset timer
+      setTimeLeft(120); // Reset timer
       setOtp(['', '', '', '', '', '']);
       setError('');
       inputRefs.current[0]?.focus();
@@ -118,10 +118,19 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-warning/10 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="text-left mb-8">
+        <Button
+          variant="default"
+          onClick={onBack}
+          iconName="ChevronLeft"
+          iconPosition="left"
+          className="p-0 bg-transparent text-foreground hover:bg-muted/80"
+        >
+          Back
+        </Button>
+        {/* <div className="w-16 h-16 bg-warning/10 rounded-full flex items-center justify-center mx-auto mb-4">
           <Icon name="MessageSquare" size={24} color="var(--color-warning)" />
-        </div>
+        </div> */}
         <h1 className="text-2xl font-bold text-foreground mb-2">Enter Verification Code</h1>
         <p className="text-muted-foreground">
           We've sent a 6-digit code to <span className="font-medium text-foreground">{getContactDisplay()}</span>
@@ -147,8 +156,8 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
                 className={`
                   w-12 h-12 text-center text-lg font-semibold rounded-lg border-2 transition-smooth
                   focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-                  ${error 
-                    ? 'border-error bg-error/5 text-error' :'border-border bg-input text-foreground hover:border-primary/50'
+                  ${error
+                    ? 'border-error bg-error/5 text-error' : 'border-border bg-input text-foreground hover:border-primary/50'
                   }
                 `}
                 autoComplete="one-time-code"
@@ -207,43 +216,10 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
             iconName="Check"
             iconPosition="right"
           >
-            {loading ? 'Verifying...' : 'Verify Code'}
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onBack}
-            fullWidth
-            iconName="ArrowLeft"
-            iconPosition="left"
-          >
-            Back
+            {loading ? 'Verifying...' : 'Verify'}
           </Button>
         </div>
       </form>
-
-      {/* Help Section */}
-      <div className="mt-8 bg-muted/50 rounded-lg p-4">
-        <div className="flex items-start space-x-3">
-          <Icon name="HelpCircle" size={16} color="var(--color-primary)" className="mt-0.5 flex-shrink-0" />
-          <div className="text-sm">
-            <div className="font-medium text-foreground mb-1">Didn't receive the code?</div>
-            <ul className="text-muted-foreground space-y-1">
-              <li>• Check your spam/junk folder</li>
-              <li>• Ensure you have network connectivity</li>
-              <li>• Wait a few minutes and try resending</li>
-              <li>• Contact support if issues persist</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Demo Credentials */}
-      <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-        <div className="text-xs text-primary font-medium mb-1">Demo Credentials:</div>
-        <div className="text-xs text-primary">Verification Code: {correctOTP}</div>
-      </div>
     </div>
   );
 };

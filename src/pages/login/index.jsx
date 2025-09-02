@@ -8,9 +8,8 @@ import TrustSignals from './components/TrustSignals';
 import Icon from '../../components/AppIcon';
 import logo from '../../assets/logo.svg';
 import wavingHand from '../../assets/waving-hand.svg';
-import signupIcon from '../../assets/signup-icon.svg';
-import signinIcon from '../../assets/signin-icon.svg';
 import UserRegistration from '../../pages/user-registration';
+import { SignInIcon, SignUpIcon } from '../../components/icons';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -20,17 +19,18 @@ const Login = () => {
   const [mfaError, setMfaError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState('signin');
+  const [currentStep, setCurrentStep] = useState(0);
 
   const tabs = [{
     id: 'signin',
     label: 'Sign In',
-    icon: signinIcon,
+    icon: SignInIcon,
     component: LoginForm
   },
   {
     id: 'signup',
     label: 'Sign Up',
-    icon: signupIcon,
+    icon: SignUpIcon,
     component: UserRegistration
   }];
 
@@ -170,7 +170,7 @@ const Login = () => {
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || LoginForm;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" style={{ backgroundImage: "url('/src/assets/auth/bg.png')" }}>
       <main className="pt-16 min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-8">
           {/* Header */}
@@ -192,43 +192,51 @@ const Login = () => {
           <div className="bg-card border border-border rounded-xl shadow-elevated">
             {!showMFA ? (
               <>
-                <div className="mb-6">
-                  <div className="border-b border-border">
-                    <nav className="flex space-x-8">
-                      {tabs.map((tab) => (
+
+                <div className="border-b border-border">
+                  <nav className="flex space-x-8">
+                    {tabs.map((tab) => {
+                      const IconComponent = tab.icon;
+                      return (
+
                         <button
                           key={tab.id}
-                          onClick={() => setActiveTab(tab.id)}
+                          onClick={() => {
+                            setActiveTab(tab.id)
+                            setCurrentStep(0);
+                          }}
                           className={`
-                            flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-smooth
+                            flex flex-1 justify-center text-center items-center space-x-2 py-[18px] px-1 border-b-2 font-medium text-sm transition-smooth
                             ${activeTab === tab.id
                               ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted'
                             }
                           `}
                         >
-                          <img src={tab.icon} alt="Company Logo" className='ml-1' size={16} />
-                          <span>{tab.label}</span>
+                          <IconComponent selected={activeTab === tab.id} />
+                          <span className='text-sm'>{tab.label}</span>
                         </button>
-                      ))}
-                    </nav>
-                  </div>
+                      );
+                    }
+                    )}
+                  </nav>
                 </div>
+
 
                 {/* Login Form */}
-                <div className="mt-6 p-6">
-                  <ActiveComponent
-                    onSubmit={handleLogin}
-                    isLoading={isLoading}
-                    error={error}
-                  />
-                </div>
+                <ActiveComponent
+                  onSubmit={handleLogin}
+                  isLoading={isLoading}
+                  error={error}
+                  currentStep={currentStep}
+                  setCurrentStep={setCurrentStep}
+                />
 
                 {/* Social Login Section */}
-                <SocialLoginSection
+                {!currentStep ? <SocialLoginSection
                   onGoogleLogin={() => handleSocialLogin('Google')}
                   onFacebookLogin={() => handleSocialLogin('Facebook')}
                   isLoading={isLoading}
-                />
+                /> : null}
               </>
             ) : (
               /* MFA Prompt */
@@ -245,19 +253,6 @@ const Login = () => {
 
           {/* Trust Signals */}
           <TrustSignals />
-
-          {/* Registration Link */}
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              Don't have an account?{' '}
-              <a
-                href="/user-registration"
-                className="text-primary hover:text-primary/80 font-medium transition-smooth"
-              >
-                Create Account
-              </a>
-            </p>
-          </div>
 
           {/* Demo Credentials Info */}
           {/* <div className="bg-muted/50 border border-border rounded-lg p-4">

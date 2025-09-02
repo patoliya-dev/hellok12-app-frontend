@@ -2,13 +2,11 @@ import { useId } from "react";
 
 const StudentParentIcon = ({ selected = false }) => {
   const maskId = useId();
-  console.log('maskId', maskId);
-  
 
   return (
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="32" height="32" rx="5" fill={selected ? '#2563EB' : '#F3F4F6'} />
-      <mask id={maskId} style="mask-type:alpha" maskUnits="userSpaceOnUse" x="4" y="4" width="24" height="24">
+      <rect width="32" height="32" rx="5" fill='#F3F4F6' />
+      <mask id={maskId} style={{ maskType: "alpha" }} maskUnits="userSpaceOnUse" x="4" y="4" width="24" height="24">
         <rect x="4" y="4" width="24" height="24" fill="#D9D9D9" />
       </mask>
       <g mask={`url(#${maskId})`}>

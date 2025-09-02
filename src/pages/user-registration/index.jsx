@@ -1,175 +1,140 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
-import RegistrationHeader from './components/RegistrationHeader';
-import SocialLoginSection from './components/SocialLoginSection';
-import ProgressIndicator from './components/ProgressIndicator';
 import BasicInfoStep from './components/BasicInfoStep';
 import RoleSpecificStep from './components/RoleSpecificStep';
 import VerificationStep from './components/VerificationStep';
-import TrustSignals from './components/TrustSignals';
+import LoginSignupProgress from '../../pages/login-signup-progress';
 
-const UserRegistration = () => {
+const UserRegistration = ({ currentStep, setCurrentStep }) => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    // Basic Info
-    firstName: '',
-    lastName: '',
+    name: '',
     email: '',
     phone: '',
     role: '',
-    
-    // Role-specific fields
-    gradeLevel: '',
-    studentId: '',
-    institutionName: '',
-    relationship: '',
-    childName: '',
-    childStudentId: '',
-    primarySubject: '',
-    employeeId: '',
-    experience: '',
-    adminId: '',
-    department: '',
-    institutionCode: '',
-    
-    // Verification
+    userType: 'student', // Added userType selection for student/parent
+    schoolName: '',
+    children: [],
+    termsAccepted: false,
+    marketingConsent: false,
+    password: '',
+    confirmPassword: '',
     emailOTP: '',
     smsOTP: ''
   });
 
   const [errors, setErrors] = useState({});
 
+  const handleInputChange = (field, value, childId = null) => {
+    if (field === "children" && childId) {
+      // Update child field
+      setFormData(prev => ({
+        ...prev,
+        children: prev.children.map(child =>
+          child.id === childId ? { ...child, ...value } : child
+        )
+      }));
+
+      // Clear child errors dynamically
+      Object.keys(value).forEach(key => {
+        const errorKey = `${key}_${childId}`;
+        if (errors[errorKey]) {
+          setErrors(prev => ({ ...prev, [errorKey]: "" }));
+        }
+      });
+    } else if (field === "clearError") {
+      setErrors(prev => ({ ...prev, [value]: "" }));
+    } else {
+      // Handle top-level fields including checkboxes
+      setFormData(prev => ({ ...prev, [field]: value }));
+
+      // Clear error dynamically
+      if (errors[field]) {
+        setErrors(prev => ({ ...prev, [field]: "" }));
+      }
+    }
+  };
+
+  const handleRoleSelect = (role) => {
+    setFormData(prev => ({ ...prev, role }));
+    setCurrentStep(1);
+  };
+
   const validateStep = (step) => {
     const newErrors = {};
 
-    if (step === 1) {
-      if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-      if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-      if (!formData.email.trim()) newErrors.email = 'Email is required';
-      else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
-      if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-      if (!formData.role) newErrors.role = 'Please select a role';
-    }
-
     if (step === 2) {
-      if (formData.role === 'student') {
-        if (!formData.gradeLevel) newErrors.gradeLevel = 'Grade level is required';
-        if (!formData.institutionName.trim()) newErrors.institutionName = 'Institution name is required';
-      } else if (formData.role === 'parent') {
-        if (!formData.relationship) newErrors.relationship = 'Relationship is required';
-        if (!formData.childName.trim()) newErrors.childName = 'Child\'s name is required';
-        if (!formData.childStudentId.trim()) newErrors.childStudentId = 'Child\'s student ID is required';
-        if (!formData.institutionName.trim()) newErrors.institutionName = 'Institution name is required';
-      } else if (formData.role === 'teacher') {
-        if (!formData.primarySubject) newErrors.primarySubject = 'Primary subject is required';
-        if (!formData.employeeId.trim()) newErrors.employeeId = 'Employee ID is required';
-        if (!formData.experience.trim()) newErrors.experience = 'Experience is required';
-        if (!formData.institutionName.trim()) newErrors.institutionName = 'Institution name is required';
-      } else if (formData.role === 'admin') {
-        if (!formData.institutionName.trim()) newErrors.institutionName = 'Institution name is required';
-        if (!formData.adminId.trim()) newErrors.adminId = 'Admin ID is required';
-        if (!formData.department.trim()) newErrors.department = 'Department is required';
-        if (!formData.institutionCode.trim()) newErrors.institutionCode = 'Institution code is required';
+      if (!formData.name.trim()) newErrors.name = "Name is required";
+      if (!formData.email.trim()) newErrors.email = "Email is required";
+      else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email is invalid";
+      if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+      if (!formData.role) newErrors.role = "Please select a role";
+      if (!formData.password) newErrors.password = "Password is required";
+      else if (formData.password.length < 6) newErrors.password = "Password must be at least 6 characters";
+      if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords do not match";
+      if (!formData.termsAccepted) newErrors.termsAccepted = "You must accept the terms and conditions";
+      if (!formData.marketingConsent) newErrors.marketingConsent = "You must consent to marketing communications";
+
+      // Role-specific validation
+      if (formData.role === "student/parent") {
+        if (!formData.userType) newErrors.userType = "Please select student or parent";
+
+        if (formData.userType === "parent") {
+          if (!formData.children || !formData.children.length) {
+            newErrors.children = "Please add at least one student";
+          } else {
+            formData.children.forEach((child) => {
+              if (!child.name?.trim()) newErrors[`name_${child.id}`] = "Name is required";
+              if (!child.age) newErrors[`age_${child.id}`] = "Age is required";
+              if (!child.gender) newErrors[`gender_${child.id}`] = "Gender is required";
+            });
+          }
+        }
+      }
+
+      if (formData.role === "school") {
+        if (!formData.schoolName?.trim()) newErrors.schoolName = "School name is required";
       }
     }
 
     if (step === 3) {
-      if (!formData.emailOTP.trim() || formData.emailOTP.length !== 6) {
-        newErrors.emailOTP = 'Please enter valid 6-digit email OTP';
-      }
-      if (!formData.smsOTP.trim() || formData.smsOTP.length !== 6) {
-        newErrors.smsOTP = 'Please enter valid 6-digit SMS OTP';
-      }
+      if (!formData.emailOTP?.trim() || formData.emailOTP.length !== 6) newErrors.emailOTP = "Enter valid 6-digit OTP";
+      if (!formData.smsOTP?.trim() || formData.smsOTP.length !== 6) newErrors.smsOTP = "Enter valid 6-digit OTP";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: ''
-      }));
-    }
-  };
-
-  const handleRoleSelect = (role) => {
-    setFormData(prev => ({
-      ...prev,
-      role
-    }));
-    
-    if (errors.role) {
-      setErrors(prev => ({
-        ...prev,
-        role: ''
-      }));
-    }
-  };
-
   const handleNext = () => {
     if (validateStep(currentStep)) {
       if (currentStep === 1) {
-        // Send OTP codes when moving to verification step
         console.log('Sending OTP codes to:', formData.email, formData.phone);
       }
       setCurrentStep(prev => prev + 1);
     }
   };
 
-  const handlePrevious = () => {
-    setCurrentStep(prev => prev - 1);
-  };
+  const handlePrevious = () => setCurrentStep(prev => prev - 1);
 
-  const handleSocialLogin = (provider) => {
-    console.log(`Logging in with ${provider}`);
-    // Mock social login - redirect to appropriate dashboard
-    const dashboardRoutes = {
-      student: '/student-dashboard',
-      parent: '/parent-dashboard',
-      teacher: '/teacher-dashboard',
-      admin: '/admin-dashboard'
-    };
-    
-    // For demo, assume student role for social login
-    navigate('/student-dashboard');
-  };
-
-  const handleResendOTP = (type) => {
-    console.log(`Resending ${type} OTP`);
-    // Mock OTP resend logic
-  };
+  const handleResendOTP = (type) => console.log(`Resending ${type} OTP`);
 
   const handleSubmit = async () => {
     if (!validateStep(3)) return;
 
     setLoading(true);
-    
     try {
-      // Mock registration API call
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
       console.log('Registration successful:', formData);
-      
-      // Redirect to appropriate dashboard based on role
+
       const dashboardRoutes = {
         student: '/student-dashboard',
         parent: '/parent-dashboard',
         teacher: '/teacher-dashboard',
         admin: '/admin-dashboard'
       };
-      
       navigate(dashboardRoutes[formData.role] || '/student-dashboard');
     } catch (error) {
       console.error('Registration failed:', error);
@@ -181,22 +146,59 @@ const UserRegistration = () => {
 
   const renderCurrentStep = () => {
     switch (currentStep) {
+      case 0:
       case 1:
         return (
-          <BasicInfoStep
-            formData={formData}
-            errors={errors}
-            onChange={handleInputChange}
-            onRoleSelect={handleRoleSelect}
-          />
+          <>
+            <LoginSignupProgress currentStep={currentStep} />
+            <BasicInfoStep
+              formData={formData}
+              errors={errors}
+              onChange={handleInputChange}
+              onRoleSelect={handleRoleSelect}
+            />
+            <Button
+              variant="default"
+              onClick={handleNext}
+              iconName="ChevronRight"
+              iconPosition="right"
+              className="w-full mt-6"
+            >
+              Continue
+            </Button>
+          </>
         );
       case 2:
         return (
-          <RoleSpecificStep
-            formData={formData}
-            errors={errors}
-            onChange={handleInputChange}
-          />
+          <>
+            <LoginSignupProgress currentStep={currentStep} />
+            <div className='px-1 max-h-[40vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-10'>
+              <RoleSpecificStep
+                formData={formData}
+                errors={errors}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                variant="default"
+                onClick={handlePrevious}
+                iconName="ArrowLeft"
+                iconPosition="left"
+                className="w-full mt-6 mr-2 bg-muted text-foreground hover:bg-muted/80"
+              >
+                Back
+              </Button>
+              <Button
+                variant="default"
+                onClick={handleNext}
+                iconPosition="right"
+                className="w-full mt-6"
+              >
+                Create Account
+              </Button>
+            </div>
+          </>
         );
       case 3:
         return (
@@ -213,100 +215,13 @@ const UserRegistration = () => {
   };
 
   return (
-    <div className="bg-background">
-      {/* <RegistrationHeader /> */}
-      
-      {/* <main className="pt-16"> */}
-        <div className="max-w-7xl mx-auto">
-          {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-8"> */}
-            {/* Main Registration Form */}
-            {/* <div className="lg:col-span-1"> */}
-              {/* <div className="bg-surface rounded-lg shadow-subtle border border-border p-6 sm:p-8"> */}
-                {currentStep === 1 && (
-                  <>
-                    {/* <SocialLoginSection onSocialLogin={handleSocialLogin} /> */}
-                    {/* <div className="mt-8"> */}
-                      {/* <ProgressIndicator currentStep={currentStep} totalSteps={3} /> */}
-                      {renderCurrentStep()}
-                    {/* </div> */}
-                  </>
-                )}
-                
-                {currentStep > 1 && (
-                  <>
-                    <ProgressIndicator currentStep={currentStep} totalSteps={3} />
-                    {renderCurrentStep()}
-                  </>
-                )}
-
-                {/* Navigation Buttons */}
-                {/* <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                  {currentStep > 1 && (
-                    <Button
-                      variant="outline"
-                      onClick={handlePrevious}
-                      iconName="ChevronLeft"
-                      iconPosition="left"
-                      className="sm:w-auto"
-                    >
-                      Previous
-                    </Button>
-                  )}
-                  
-                  <div className="flex-1" />
-                  
-                  {currentStep < 3 ? (
-                    <Button
-                      variant="default"
-                      onClick={handleNext}
-                      iconName="ChevronRight"
-                      iconPosition="right"
-                      className="sm:w-auto"
-                    >
-                      Next Step
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="default"
-                      onClick={handleSubmit}
-                      loading={loading}
-                      iconName="Check"
-                      iconPosition="left"
-                      className="sm:w-auto"
-                    >
-                      Complete Registration
-                    </Button>
-                  )}
-                </div> */}
-
-                {errors.submit && (
-                  <div className="mt-4 p-4 bg-error/10 border border-error/20 rounded-lg">
-                    <p className="text-sm text-error">{errors.submit}</p>
-                  </div>
-                )}
-              {/* </div> */}
-
-              {/* Login Link */}
-              <div className="mt-6 text-center">
-                <p className="text-sm text-muted-foreground">
-                  Already have an account?{' '}
-                  <a 
-                    href="/login" 
-                    className="text-primary hover:text-primary/80 font-medium transition-smooth"
-                  >
-                    Sign in here 
-                  </a>
-                </p>
-              </div>
-            {/* </div> */}
-
-            {/* Trust Signals Sidebar */}
-            {/* <div className="lg:col-span-1">
-              <TrustSignals />
-            </div> */}
-          </div>
-        {/* </div> */}
-      {/* </main> */}
+    <div className="bg-background p-6">
+      {renderCurrentStep()}
+      {errors.submit && (
+        <div className="mt-4 p-4 bg-error/10 border border-error/20 rounded-lg">
+          <p className="text-sm text-error">{errors.submit}</p>
+        </div>
+      )}
     </div>
   );
 };
