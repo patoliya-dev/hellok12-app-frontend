@@ -75,7 +75,6 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
       else if (formData.password.length < 6) newErrors.password = "Password must be at least 6 characters";
       if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords do not match";
       if (!formData.termsAccepted) newErrors.termsAccepted = "You must accept the terms and conditions";
-      if (!formData.marketingConsent) newErrors.marketingConsent = "You must consent to marketing communications";
 
       // Role-specific validation
       if (formData.role === "student/parent") {

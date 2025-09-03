@@ -10,6 +10,9 @@ export default {
   ],
   theme: {
     extend: {
+      backgroundImage: {
+        "auth-bg": "url('@/assets/auth/bg.png')", // custom class
+      },
       colors: {
         border: 'var(--color-border)', // slate-200
         input: 'var(--color-input)', // white

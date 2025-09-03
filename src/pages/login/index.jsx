@@ -5,7 +5,6 @@ import LoginForm from './components/LoginForm';
 import SocialLoginSection from './components/SocialLoginSection';
 import MFAPrompt from './components/MFAPrompt';
 import TrustSignals from './components/TrustSignals';
-import Icon from '../../components/AppIcon';
 import logo from '../../assets/logo.svg';
 import wavingHand from '../../assets/waving-hand.svg';
 import UserRegistration from '../../pages/user-registration';
@@ -170,7 +169,7 @@ const Login = () => {
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || LoginForm;
 
   return (
-    <div className="min-h-screen bg-background" style={{ backgroundImage: "url('/src/assets/auth/bg.png')" }}>
+    <div className="min-h-screen bg-auth-bg bg-cover bg-center">
       <main className="pt-16 min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-8">
           {/* Header */}
@@ -253,17 +252,6 @@ const Login = () => {
 
           {/* Trust Signals */}
           <TrustSignals />
-
-          {/* Demo Credentials Info */}
-          {/* <div className="bg-muted/50 border border-border rounded-lg p-4">
-            <h3 className="text-sm font-medium text-foreground mb-2">Demo Credentials:</h3>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <p><strong>Student:</strong> student@eduportal.com / student123</p>
-              <p><strong>Parent:</strong> parent@eduportal.com / parent123 (MFA: 123456)</p>
-              <p><strong>Teacher:</strong> teacher@eduportal.com / teacher123</p>
-              <p><strong>Admin:</strong> admin@eduportal.com / admin123 (MFA: 123456)</p>
-            </div>
-          </div> */}
         </div>
       </main>
     </div>
