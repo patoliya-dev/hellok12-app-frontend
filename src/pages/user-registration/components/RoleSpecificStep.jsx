@@ -19,6 +19,8 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
 
 
   const handleInputChange = (field, value, childId = null) => {
+    // console.log('value', value);
+
     if (field === "children" && childId) {
       const updatedChildren = (formData.children || []).map(child =>
         child.id === childId ? { ...child, ...value } : child
@@ -245,8 +247,6 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
         <Checkbox
           label="I would like to receive marketing communications"
           checked={!!formData.marketingConsent}
-          required
-          error={errors.marketingConsent}
           onChange={checked => handleInputChange("marketingConsent", checked)}
         />
       </div>

@@ -252,17 +252,6 @@ const Login = () => {
 
           {/* Trust Signals */}
           <TrustSignals />
-
-          {/* Demo Credentials Info */}
-          {/* <div className="bg-muted/50 border border-border rounded-lg p-4">
-            <h3 className="text-sm font-medium text-foreground mb-2">Demo Credentials:</h3>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <p><strong>Student:</strong> student@eduportal.com / student123</p>
-              <p><strong>Parent:</strong> parent@eduportal.com / parent123 (MFA: 123456)</p>
-              <p><strong>Teacher:</strong> teacher@eduportal.com / teacher123</p>
-              <p><strong>Admin:</strong> admin@eduportal.com / admin123 (MFA: 123456)</p>
-            </div>
-          </div> */}
         </div>
       </main>
     </div>
