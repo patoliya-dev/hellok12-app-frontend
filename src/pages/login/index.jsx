@@ -5,7 +5,6 @@ import LoginForm from './components/LoginForm';
 import SocialLoginSection from './components/SocialLoginSection';
 import MFAPrompt from './components/MFAPrompt';
 import TrustSignals from './components/TrustSignals';
-import Icon from '../../components/AppIcon';
 import logo from '../../assets/logo.svg';
 import wavingHand from '../../assets/waving-hand.svg';
 import UserRegistration from '../../pages/user-registration';
@@ -170,7 +169,7 @@ const Login = () => {
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || LoginForm;
 
   return (
-    <div className="min-h-screen bg-background" style={{ backgroundImage: "url('/src/assets/auth/bg.png')" }}>
+    <div className="min-h-screen bg-auth-bg bg-cover bg-center">
       <main className="pt-16 min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-8">
           {/* Header */}

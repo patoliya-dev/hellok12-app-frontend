@@ -57,7 +57,7 @@ const PasswordReset = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background" style={{ backgroundImage: "url('/src/assets/auth/bg.png')" }}>
+    <div className="min-h-screen bg-auth-bg bg-cover bg-center">
       <main className="pt-16">
         <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
           <div className="w-full max-w-md">
