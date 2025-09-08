@@ -10,6 +10,7 @@ import ParentDashboard from "./pages/parent-dashboard";
 import TeacherDashboard from "./pages/teacher-dashboard";
 import StudentDashboard from "./pages/student-dashboard";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "components/ProtectedRoute";
 
 const Routes = () => {
   return (
@@ -22,9 +23,9 @@ const Routes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/user-registration" element={<UserRegistration />} />
         <Route path="/password-reset" element={<PasswordReset />} />
-        <Route path="/parent-dashboard" element={<ParentDashboard />} />
-        <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
-        <Route path="/student-dashboard" element={<StudentDashboard />} />
+        <Route path="/parent-dashboard" element={<ProtectedRoute><ParentDashboard /></ProtectedRoute>} />
+        <Route path="/teacher-dashboard" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
+        <Route path="/student-dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </RouterRoutes>
       </ErrorBoundary>

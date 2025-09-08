@@ -19,8 +19,6 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
 
 
   const handleInputChange = (field, value, childId = null) => {
-    // console.log('value', value);
-
     if (field === "children" && childId) {
       const updatedChildren = (formData.children || []).map(child =>
         child.id === childId ? { ...child, ...value } : child
@@ -95,7 +93,6 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
       {/* Student/Parent Selection */}
       {formData.role === "student/parent" && (
         <Select
-          label="Sign up as"
           options={userTypeOptions}
           value={formData.userType || "student"}
           onChange={value => handleInputChange("userType", value)}
@@ -242,12 +239,12 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
           checked={!!formData.termsAccepted}
           required
           error={errors.termsAccepted}
-          onChange={checked => handleInputChange("termsAccepted", checked)}
+          onChange={(e) => handleInputChange("termsAccepted", e.target.checked)}
         />
         <Checkbox
           label="I would like to receive marketing communications"
           checked={!!formData.marketingConsent}
-          onChange={checked => handleInputChange("marketingConsent", checked)}
+          onChange={(e) => handleInputChange("marketingConsent", e.target.checked)}
         />
       </div>
     </div>
