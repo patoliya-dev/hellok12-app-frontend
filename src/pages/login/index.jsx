@@ -52,7 +52,6 @@ const Login = () => {
   const handleLogin = async (formData) => {
 
     const resultAction = await dispatch(loginUser(formData));
-    console.log('resultAction', resultAction);
 
     if (loginUser.fulfilled.match(resultAction)) {
       // redirect to dashboard
