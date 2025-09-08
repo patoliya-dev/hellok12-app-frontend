@@ -6,8 +6,8 @@ import Icon from '../../../components/AppIcon';
 
 const LoginForm = ({ onSubmit, isLoading, error }) => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: '', // parent82@yopmail.com',
+    password: '', // 'Secure123',
     rememberMe: false
   });
   const [showPassword, setShowPassword] = useState(false);

@@ -64,21 +64,21 @@ const StudentDashboard = () => {
 
       <div className="min-h-screen bg-background">
         {/* Global Navigation Header */}
-        <GlobalNavigationHeader 
+        <GlobalNavigationHeader
           userRole="student"
           userName={studentData.name}
           notificationCount={5}
         />
 
         {/* Role-based Sidebar */}
-        <RoleBasedSidebar 
+        {/* <RoleBasedSidebar 
           userRole="student"
           isCollapsed={sidebarCollapsed}
           onToggle={toggleSidebar}
-        />
+        /> */}
 
         {/* Notification Panel */}
-        <NotificationPanel 
+        <NotificationPanel
           isOpen={notificationPanelOpen}
           onClose={toggleNotificationPanel}
           userRole="student"
@@ -96,8 +96,8 @@ const StudentDashboard = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
                 <div className="flex items-center space-x-4 mb-4 sm:mb-0">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20">
-                    <img 
-                      src={studentData.avatar} 
+                    <img
+                      src={studentData.avatar}
                       alt={studentData.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -109,13 +109,13 @@ const StudentDashboard = () => {
                     <h1 className="text-2xl font-bold text-foreground">
                       {greeting}, {studentData.name}!
                     </h1>
-                    <p className="text-muted-foreground">
+                    {/* <p className="text-muted-foreground">
                       {studentData.grade} • Section {studentData.section} • ID: {studentData.studentId}
-                    </p>
+                    </p> */}
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
+                {/* <div className="flex items-center space-x-4">
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">Current GPA</p>
                     <p className="text-xl font-semibold text-success">{studentData.currentGPA}</p>
@@ -126,11 +126,11 @@ const StudentDashboard = () => {
                       {studentData.completedCredits}/{studentData.totalCredits}
                     </p>
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* Quick Stats */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <div className="bg-card rounded-lg border border-border p-4 text-center">
                   <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-2">
                     <Icon name="Calendar" size={16} color="var(--color-primary)" />
@@ -159,44 +159,44 @@ const StudentDashboard = () => {
                   <p className="text-2xl font-bold text-foreground">5</p>
                   <p className="text-sm text-muted-foreground">Notifications</p>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Dashboard Widgets Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
               {/* Upcoming Sessions - Full width on mobile, spans 2 columns on xl */}
-              <div className="lg:col-span-2 xl:col-span-2">
+              {/* <div className="lg:col-span-2 xl:col-span-2">
                 <UpcomingSessionsWidget />
-              </div>
+              </div> */}
 
               {/* Quick Actions */}
-              <div className="xl:col-span-1">
+              {/* <div className="xl:col-span-1">
                 <QuickActionsWidget />
-              </div>
+              </div> */}
 
               {/* Assignments Due */}
-              <div className="lg:col-span-1">
+              {/* <div className="lg:col-span-1">
                 <AssignmentsDueWidget />
-              </div>
+              </div> */}
 
               {/* Recent Grades */}
-              <div className="lg:col-span-1">
+              {/* <div className="lg:col-span-1">
                 <RecentGradesWidget />
-              </div>
+              </div> */}
 
               {/* Notifications Panel Widget */}
-              <div className="lg:col-span-1">
+              {/* <div className="lg:col-span-1">
                 <NotificationsPanelWidget />
-              </div>
+              </div> */}
 
               {/* Announcements - Full width */}
-              <div className="lg:col-span-2 xl:col-span-3">
+              {/* <div className="lg:col-span-2 xl:col-span-3">
                 <AnnouncementsWidget />
-              </div>
+              </div> */}
             </div>
 
             {/* Additional Actions */}
-            <div className="bg-card rounded-lg border border-border shadow-subtle p-6">
+            {/* <div className="bg-card rounded-lg border border-border shadow-subtle p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <div className="mb-4 sm:mb-0">
                   <h3 className="text-lg font-semibold text-foreground mb-2">Need Help?</h3>
@@ -216,7 +216,7 @@ const StudentDashboard = () => {
                   </Button>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </main>
 

@@ -52,115 +52,29 @@ const VerificationStep = ({ formData, errors, onChange, onResendOTP }) => {
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground">Verify Your Account</h2>
-        <p className="text-muted-foreground mt-2">
-          We've sent verification codes to secure your account
+      <div className="text-center mb-8">
+        <div className="w-20 h-20 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Icon name="CheckCircle" size={32} color="var(--color-success)" />
+        </div>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Verify Your Account</h1>
+        <p className="text-muted-foreground">
+          We've sent verification link to secure your account
         </p>
       </div>
 
       {/* Email Verification */}
       <div className="bg-muted/50 rounded-lg p-6 space-y-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-            <Icon name="Mail" size={20} color="var(--color-primary)" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground">Email Verification</h3>
-            <p className="text-sm text-muted-foreground">
-              Code sent to {formData.email}
-            </p>
-          </div>
+        <div className="flex text-center items-center space-x-3">
+          <p className="text-sm text-muted-foreground">Please verify your email address by clicking the link send to {formData.email}</p>
         </div>
-
-        <Input
-          label="Email OTP"
-          type="text"
-          placeholder="Enter 6-digit code"
-          value={formData.emailOTP}
-          onChange={handleInputChange('emailOTP')}
-          error={errors.emailOTP}
-          maxLength="6"
-          required
-        />
-
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Didn't receive the code?
-          </p>
-          {emailTimer > 0 ? (
-            <span className="text-sm text-muted-foreground">
-              Resend in {formatTime(emailTimer)}
-            </span>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleResendEmail}
-            >
-              Resend Code
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* SMS Verification */}
-      <div className="bg-muted/50 rounded-lg p-6 space-y-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-success/10 rounded-full flex items-center justify-center">
-            <Icon name="Smartphone" size={20} color="var(--color-success)" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground">SMS Verification</h3>
-            <p className="text-sm text-muted-foreground">
-              Code sent to {formData.phone}
-            </p>
-          </div>
-        </div>
-
-        <Input
-          label="SMS OTP"
-          type="text"
-          placeholder="Enter 6-digit code"
-          value={formData.smsOTP}
-          onChange={handleInputChange('smsOTP')}
-          error={errors.smsOTP}
-          maxLength="6"
-          required
-        />
-
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Didn't receive the code?
-          </p>
-          {smsTimer > 0 ? (
-            <span className="text-sm text-muted-foreground">
-              Resend in {formatTime(smsTimer)}
-            </span>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleResendSMS}
-            >
-              Resend Code
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Security Notice */}
-      <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
-        <div className="flex items-start space-x-3">
-          <Icon name="Shield" size={20} color="var(--color-warning)" />
-          <div>
-            <h4 className="font-medium text-foreground">Security Notice</h4>
-            <p className="text-sm text-muted-foreground mt-1">
-              For your security, verification codes expire in 10 minutes.
-              Don't share these codes with anyone.
-            </p>
-          </div>
-        </div>
+        <Button
+          type="submit"
+          variant="default"
+          fullWidth
+          className="h-12"
+        >
+          Resend Verification Email
+        </Button>
       </div>
     </div>
   );

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
+import { useDispatch } from 'react-redux';
+import { logout } from 'features/auth/authSlice';
 
 const GlobalNavigationHeader = ({ userRole = 'student', userName = 'John Doe', notificationCount = 3 }) => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -13,17 +16,14 @@ const GlobalNavigationHeader = ({ userRole = 'student', userName = 'John Doe', n
       student: 'Student',
       parent: 'Parent',
       teacher: 'Teacher',
-      admin: 'Administrator'
+      school: 'School Admin',
     };
     return roleMap[role] || 'User';
   };
 
   const handleLogout = () => {
-    // Logout logic here
-    console.log('Logging out...');
-
-    localStorage.removeItem('currentUser');
-    navigate('/');
+    dispatch(logout());
+    navigate('/login', { replace: true });
   };
 
   return (
@@ -32,23 +32,23 @@ const GlobalNavigationHeader = ({ userRole = 'student', userName = 'John Doe', n
         <div className="flex items-center justify-between h-16">
           {/* Logo and Brand */}
           <div className="flex items-center space-x-4">
-            <div className="flex items-center">
+            {/* <div className="flex items-center">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <Icon name="GraduationCap" size={20} color="white" />
               </div>
               <span className="ml-2 text-xl font-semibold text-foreground">EduPortal</span>
-            </div>
-            
+            </div> */}
+
             {/* Role Indicator */}
-            <div className="hidden md:flex items-center">
+            {/* <div className="hidden md:flex items-center">
               <span className="text-sm text-muted-foreground">|</span>
               <span className="ml-2 text-sm font-medium text-primary">{getRoleDisplayName(userRole)}</span>
-            </div>
+            </div> */}
           </div>
 
           {/* Center - Search */}
           <div className="flex-1 max-w-lg mx-4 hidden lg:block">
-            <div className="relative">
+            {/* <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Icon name="Search" size={16} color="var(--color-muted-foreground)" />
               </div>
@@ -59,18 +59,18 @@ const GlobalNavigationHeader = ({ userRole = 'student', userName = 'John Doe', n
                 onFocus={() => setShowSearch(true)}
                 onBlur={() => setShowSearch(false)}
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Right side utilities */}
           <div className="flex items-center space-x-2">
             {/* Mobile Search */}
-            <button className="lg:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-smooth">
+            {/* <button className="lg:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-smooth">
               <Icon name="Search" size={20} />
-            </button>
+            </button> */}
 
             {/* Notifications */}
-            <div className="relative">
+            {/* <div className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="relative p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-smooth"
@@ -82,12 +82,12 @@ const GlobalNavigationHeader = ({ userRole = 'student', userName = 'John Doe', n
                   </span>
                 )}
               </button>
-            </div>
+            </div> */}
 
             {/* Quick Actions */}
-            <button className="hidden md:flex p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-smooth">
+            {/* <button className="hidden md:flex p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-smooth">
               <Icon name="Plus" size={20} />
-            </button>
+            </button> */}
 
             {/* Profile Dropdown */}
             <div className="relative">

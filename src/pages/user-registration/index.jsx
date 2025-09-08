@@ -4,11 +4,14 @@ import Button from '../../components/ui/Button';
 import BasicInfoStep from './components/BasicInfoStep';
 import RoleSpecificStep from './components/RoleSpecificStep';
 import VerificationStep from './components/VerificationStep';
-import LoginSignupProgress from '../../pages/login-signup-progress';
+import LoginSignupProgress from './components/login-signup-progress';
+import { useDispatch, useSelector } from 'react-redux';
+import { signupUser } from 'features/auth/authThunks';
 
 const UserRegistration = ({ currentStep, setCurrentStep }) => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const { status, error } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -29,7 +32,6 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
 
   const handleInputChange = (field, value, childId = null) => {
     if (field === "children" && childId) {
-      // Update child field
       setFormData(prev => ({
         ...prev,
         children: prev.children.map(child =>
@@ -37,23 +39,15 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
         )
       }));
 
-      // Clear child errors dynamically
       Object.keys(value).forEach(key => {
         const errorKey = `${key}_${childId}`;
-        if (errors[errorKey]) {
-          setErrors(prev => ({ ...prev, [errorKey]: "" }));
-        }
+        if (errors[errorKey]) setErrors(prev => ({ ...prev, [errorKey]: "" }));
       });
     } else if (field === "clearError") {
       setErrors(prev => ({ ...prev, [value]: "" }));
     } else {
-      // Handle top-level fields including checkboxes
       setFormData(prev => ({ ...prev, [field]: value }));
-
-      // Clear error dynamically
-      if (errors[field]) {
-        setErrors(prev => ({ ...prev, [field]: "" }));
-      }
+      if (errors[field]) setErrors(prev => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -120,27 +114,35 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
 
   const handleResendOTP = (type) => console.log(`Resending ${type} OTP`);
 
-  const handleSubmit = async () => {
-    if (!validateStep(3)) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    // Run validation before submission
+    if (!validateStep(2)) return;
 
-    setLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Registration successful:', formData);
+    // Make sure payload is clean JSON
+    const payload = {
+      ...formData,
+      role: formData.role === 'student/parent' ? formData.userType : formData.role,
+      children: (formData.children || []).map(child => ({
+        id: child.id,
+        name: child.name || "",
+        age: child.age || "",
+        gender: child.gender || ""
+      }))
+    };
 
-      const dashboardRoutes = {
-        student: '/student-dashboard',
-        parent: '/parent-dashboard',
-        teacher: '/teacher-dashboard',
-        admin: '/admin-dashboard'
-      };
-      navigate(dashboardRoutes[formData.role] || '/student-dashboard');
-    } catch (error) {
-      console.error('Registration failed:', error);
-      setErrors({ submit: 'Registration failed. Please try again.' });
-    } finally {
-      setLoading(false);
+    console.log('Submitting signup with payload:', payload);
+
+    const resultAction = await dispatch(signupUser(payload));
+
+    if (signupUser.fulfilled.match(resultAction)) {
+      console.log('Signup successful:', resultAction.payload);
+      handleNext();
+    } else {
+      console.error('Signup failed:', resultAction.error);
+      setErrors({ submit: 'Signup failed. Please try again.' });
     }
+
   };
 
   const renderCurrentStep = () => {
@@ -171,32 +173,38 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
         return (
           <>
             <LoginSignupProgress currentStep={currentStep} />
-            <div className='px-1 max-h-[40vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-10'>
-              <RoleSpecificStep
-                formData={formData}
-                errors={errors}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                variant="default"
-                onClick={handlePrevious}
-                iconName="ArrowLeft"
-                iconPosition="left"
-                className="w-full mt-6 mr-2 bg-muted text-foreground hover:bg-muted/80"
-              >
-                Back
-              </Button>
-              <Button
-                variant="default"
-                onClick={handleNext}
-                iconPosition="right"
-                className="w-full mt-6"
-              >
-                Create Account
-              </Button>
-            </div>
+            <form onSubmit={handleSubmit}>
+              <div className='px-1 max-h-[40vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-10'>
+
+                <RoleSpecificStep
+                  formData={formData}
+                  errors={errors}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  variant="default"
+                  onClick={handlePrevious}
+                  iconName="ArrowLeft"
+                  iconPosition="left"
+                  className="w-full mt-6 mr-2 bg-muted text-foreground hover:bg-muted/80"
+                >
+                  Back
+                </Button>
+                <Button
+                  variant="default"
+                  loading={status === 'loading'}
+                  disabled={status === 'loading'}
+                  type="submit"
+                  iconPosition="right"
+                  className="w-full mt-6"
+                >
+                  Create Account
+                </Button>
+              </div>
+            </form>
           </>
         );
       case 3:
