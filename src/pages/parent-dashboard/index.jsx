@@ -10,12 +10,14 @@ import TeacherFeedback from './components/TeacherFeedback';
 import CommunicationCenter from './components/CommunicationCenter';
 import FeePaymentShortcuts from './components/FeePaymentShortcuts';
 import QuickActionsToolbar from './components/QuickActionsToolbar';
+import { useSelector } from 'react-redux';
 
 const ParentDashboard = () => {
   const [selectedChild, setSelectedChild] = useState(1);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState('en');
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     // Check localStorage for saved language preference
@@ -75,25 +77,25 @@ const ParentDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Global Navigation Header */}
-      <GlobalNavigationHeader 
-        userRole="parent" 
-        userName="Sarah Johnson"
+      <GlobalNavigationHeader
+        userRole={user.role}
+        userName={user.name}
         notificationCount={5}
       />
 
       {/* Role-based Sidebar */}
-      <RoleBasedSidebar 
+      {/* <RoleBasedSidebar 
         userRole="parent"
         isCollapsed={sidebarCollapsed}
         onToggle={toggleSidebar}
-      />
+      /> */}
 
       {/* Notification Panel */}
-      <NotificationPanel 
+      {/* <NotificationPanel 
         isOpen={notificationPanelOpen}
         onClose={toggleNotificationPanel}
         userRole="parent"
-      />
+      /> */}
 
       {/* Main Content */}
       <main className={`
@@ -114,13 +116,13 @@ const ParentDashboard = () => {
             {/* Left Column - Child Selector & Academic Summary */}
             <div className="xl:col-span-3 space-y-6">
               {/* Child Selector */}
-              <ChildSelector 
+              {/* <ChildSelector 
                 selectedChild={selectedChild}
                 onChildChange={handleChildChange}
-              />
+              /> */}
 
               {/* Academic Summary Cards */}
-              <div className="space-y-4">
+              {/* <div className="space-y-4">
                 <h2 className="text-lg font-semibold text-foreground">Academic Overview</h2>
                 {academicSummaryData.map((data, index) => (
                   <AcademicSummaryCard
@@ -133,38 +135,38 @@ const ParentDashboard = () => {
                     color={data.color}
                   />
                 ))}
-              </div>
+              </div> */}
 
               {/* Quick Actions Toolbar */}
-              <QuickActionsToolbar />
+              {/* <QuickActionsToolbar /> */}
             </div>
 
             {/* Center Column - Detailed Academic Information */}
-            <div className="xl:col-span-6 space-y-6">
-              {/* Recent Assignments */}
-              <RecentAssignments />
+            {/* <div className="xl:col-span-6 space-y-6"> */}
+            {/* Recent Assignments */}
+            {/* <RecentAssignments /> */}
 
-              {/* Grade Trends Chart */}
-              <GradeTrendsChart />
+            {/* Grade Trends Chart */}
+            {/* <GradeTrendsChart /> */}
 
-              {/* Teacher Feedback */}
-              <TeacherFeedback />
-            </div>
+            {/* Teacher Feedback */}
+            {/* <TeacherFeedback /> */}
+            {/* </div> */}
 
             {/* Right Column - Communication & Payments */}
-            <div className="xl:col-span-3 space-y-6">
-              {/* Communication Center */}
-              <CommunicationCenter />
+            {/* <div className="xl:col-span-3 space-y-6"> */}
+            {/* Communication Center */}
+            {/* <CommunicationCenter /> */}
 
-              {/* Fee Payment Shortcuts */}
-              <FeePaymentShortcuts />
-            </div>
+            {/* Fee Payment Shortcuts */}
+            {/* <FeePaymentShortcuts /> */}
+            {/* </div> */}
           </div>
 
           {/* Mobile Responsive Stacked Layout */}
-          <div className="xl:hidden mt-8 space-y-6">
-            {/* Mobile view shows components in a single column */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* <div className="xl:hidden mt-8 space-y-6"> */}
+          {/* Mobile view shows components in a single column */}
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {academicSummaryData.map((data, index) => (
                 <AcademicSummaryCard
                   key={`mobile-${index}`}
@@ -176,8 +178,8 @@ const ParentDashboard = () => {
                   color={data.color}
                 />
               ))}
-            </div>
-          </div>
+            </div> */}
+          {/* </div> */}
         </div>
       </main>
     </div>

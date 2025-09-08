@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import {
   loginUser,
   signupUser,
+  verifyEmail,
   refreshToken,
   logoutUser,
   forgotPassword,
@@ -76,6 +77,19 @@ const authSlice = createSlice({
       .addCase(signupUser.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload || action.error?.message || 'Signup failed';
+      })
+
+      // Verify Email
+      .addCase(verifyEmail.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(verifyEmail.fulfilled, (state) => {
+        state.status = "succeeded";
+      })
+      .addCase(verifyEmail.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
       })
 
       // Refresh

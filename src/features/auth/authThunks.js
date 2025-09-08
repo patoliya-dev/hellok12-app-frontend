@@ -27,6 +27,19 @@ export const signupUser = createAsyncThunk(
   }
 );
 
+// Verify Email
+export const verifyEmail = createAsyncThunk(
+  "auth/verifyEmail",
+  async (token, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get(`/auth/verify-email?token=${token}`);
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Verification failed");
+    }
+  }
+);
+
 // refresh (manual refresh call if needed)
 export const refreshToken = createAsyncThunk(
   'auth/refresh',

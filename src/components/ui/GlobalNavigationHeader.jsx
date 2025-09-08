@@ -16,7 +16,7 @@ const GlobalNavigationHeader = ({ userRole = 'student', userName = 'John Doe', n
       student: 'Student',
       parent: 'Parent',
       teacher: 'Teacher',
-      admin: 'Administrator'
+      school: 'School Admin',
     };
     return roleMap[role] || 'User';
   };
@@ -38,7 +38,7 @@ const GlobalNavigationHeader = ({ userRole = 'student', userName = 'John Doe', n
               </div>
               <span className="ml-2 text-xl font-semibold text-foreground">EduPortal</span>
             </div> */}
-            
+
             {/* Role Indicator */}
             {/* <div className="hidden md:flex items-center">
               <span className="text-sm text-muted-foreground">|</span>

@@ -44,7 +44,7 @@ const Login = () => {
       student: '/student-dashboard',
       parent: '/parent-dashboard',
       teacher: '/teacher-dashboard',
-      admin: '/admin-dashboard'
+      school: '/school-dashboard'
     };
     navigate(dashboardRoutes[role] || '/student-dashboard', { replace: true });
   };

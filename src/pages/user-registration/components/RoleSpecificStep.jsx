@@ -114,8 +114,17 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
       </div>
 
       {/* Basic Inputs */}
+      {(formData.role === "school" && <Input
+        label="School Name"
+        type="text"
+        placeholder="Enter a school name"
+        value={formData.schoolName || ""}
+        onChange={e => handleInputChange("schoolName", e.target.value)}
+        error={errors.name}
+        required
+      />)}
       <Input
-        label="Name"
+        label="Full Name"
         type="text"
         placeholder="Enter your name"
         value={formData.name || ""}

@@ -3,9 +3,12 @@ import Icon from '../../../components/AppIcon';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from 'react-redux';
+import { forgotPassword } from 'features/auth/authThunks';
 
 const AccountInfoStep = ({ onNext }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -33,14 +36,20 @@ const AccountInfoStep = ({ onNext }) => {
 
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    const resultAction = await dispatch(forgotPassword({ email }));
+
+    if (forgotPassword.fulfilled.match(resultAction)) {
+      // Success → move to next step
       onNext({
         contactMethod: "email",
         contact: email
       });
-    }, 1500);
+    } else {
+      // Handle error
+      const errorMessage =
+        resultAction.payload?.error || resultAction.error?.message || "Failed to send reset email";
+      setErrors(errorMessage);
+    }
   };
 
   return (

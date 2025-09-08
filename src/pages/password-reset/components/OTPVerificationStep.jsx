@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { useDispatch } from 'react-redux';
+import { verifyResetCode } from 'features/auth/authThunks';
 
 const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
+  const dispatch = useDispatch();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -79,32 +82,49 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
     setLoading(true);
     setError('');
 
-    // Simulate API verification
-    setTimeout(() => {
-      setLoading(false);
-      if (otpString === correctOTP) {
+    try {
+      const resultAction = await dispatch(
+        verifyResetCode({
+          email: verificationInfo.contact,
+          code: otpString,
+        })
+      );
+
+      if (verifyResetCode.fulfilled.match(resultAction)) {
+        // Success → go to next step
         onNext({ ...verificationInfo, otp: otpString });
       } else {
-        setError('Invalid verification code. Please try again.');
-        // Clear OTP inputs
+        const errorMessage =
+          resultAction.payload?.error ||
+          resultAction.error?.message ||
+          'Invalid verification code. Please try again.';
+        setError(errorMessage);
         setOtp(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
       }
-    }, 1500);
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleResend = async () => {
     setResendLoading(true);
 
-    // Simulate resend API call
-    setTimeout(() => {
-      setResendLoading(false);
-      setCanResend(false);
-      setTimeLeft(120); // Reset timer
+    try {
+      // Call forgotPassword API again to resend
+      await dispatch(forgotPassword({ email: verificationInfo.contact }));
+      setTimeLeft(120);
       setOtp(['', '', '', '', '', '']);
-      setError('');
       inputRefs.current[0]?.focus();
-    }, 2000);
+      setCanResend(false);
+      setError('');
+    } catch {
+      setError('Failed to resend code.');
+    } finally {
+      setResendLoading(false);
+    }
   };
 
   const getContactDisplay = () => {

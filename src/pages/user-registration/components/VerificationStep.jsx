@@ -58,7 +58,7 @@ const VerificationStep = ({ formData, errors, onChange, onResendOTP }) => {
         </div>
         <h1 className="text-2xl font-bold text-foreground mb-2">Verify Your Account</h1>
         <p className="text-muted-foreground">
-          We've sent verification codes to secure your account
+          We've sent verification link to secure your account
         </p>
       </div>
 

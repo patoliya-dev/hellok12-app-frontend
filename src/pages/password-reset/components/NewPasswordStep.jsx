@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { resetPassword } from 'features/auth/authThunks';
 import Icon from '../../../components/AppIcon';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 
 const NewPasswordStep = ({ verificationInfo, onNext, onBack }) => {
+  const dispatch = useDispatch();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -57,14 +60,28 @@ const NewPasswordStep = ({ verificationInfo, onNext, onBack }) => {
 
     setLoading(true);
 
-    // Simulate API call to reset password
-    setTimeout(() => {
+    try {
+      const resultAction = await dispatch(
+        resetPassword({
+          email: verificationInfo.contact,
+          code: verificationInfo.otp,
+          newPassword: password,
+        })
+      );
+
+      if (resetPassword.fulfilled.match(resultAction)) {
+        // Success → move to next step or show success message
+        onNext({ ...verificationInfo, newPassword: password });
+      } else {
+        const errorMessage =
+          resultAction.payload?.error || resultAction.error?.message || "Password reset failed";
+        setErrors({ general: errorMessage });
+      }
+    } catch {
+      setErrors({ general: "Something went wrong. Please try again." });
+    } finally {
       setLoading(false);
-      onNext({
-        ...verificationInfo,
-        newPassword: password
-      });
-    }, 2000);
+    }
   };
 
   const strengthInfo = getPasswordStrength();

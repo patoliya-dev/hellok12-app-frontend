@@ -78,18 +78,18 @@ const TeacherDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Global Navigation Header */}
-      <GlobalNavigationHeader 
-        userRole="teacher" 
-        userName="Sarah Johnson" 
-        notificationCount={5} 
+      <GlobalNavigationHeader
+        userRole="teacher"
+        userName="Sarah Johnson"
+        notificationCount={5}
       />
 
       {/* Sidebar */}
-      <RoleBasedSidebar
+      {/* <RoleBasedSidebar
         userRole="teacher"
         isCollapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
+      /> */}
 
       {/* Main Content */}
       <main className={`
@@ -106,7 +106,7 @@ const TeacherDashboard = () => {
                   Welcome back, Sarah! Here's what's happening with your classes today.
                 </p>
               </div>
-              <div className="flex items-center space-x-3">
+              {/* <div className="flex items-center space-x-3">
                 <button className="lg:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-smooth">
                   <Icon name="Menu" size={20} />
                 </button>
@@ -114,11 +114,11 @@ const TeacherDashboard = () => {
                   <Icon name="Plus" size={16} />
                   <span className="hidden sm:inline">Quick Action</span>
                 </button>
-              </div>
+              </div> */}
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {teacherStats.map((stat, index) => (
                 <div key={index} className="bg-card rounded-lg border border-border p-6 shadow-subtle">
                   <div className="flex items-center justify-between">
@@ -145,11 +145,11 @@ const TeacherDashboard = () => {
                   </div>
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
 
           {/* Tab Navigation */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <div className="border-b border-border">
               <nav className="flex space-x-8">
                 {tabs.map((tab) => (
@@ -169,11 +169,11 @@ const TeacherDashboard = () => {
                 ))}
               </nav>
             </div>
-          </div>
+          </div> */}
 
           {/* Tab Content */}
           <div className="min-h-[600px]">
-            <ActiveComponent />
+            {/* <ActiveComponent /> */}
           </div>
         </div>
       </main>
