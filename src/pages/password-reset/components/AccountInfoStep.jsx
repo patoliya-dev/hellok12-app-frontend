@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
-import Icon from '../../../components/AppIcon';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { forgotPassword } from 'features/auth/authThunks';
+import { selectForgotPasswordError, selectForgotPasswordStatus } from 'features/auth/authSelectors';
 
 const AccountInfoStep = ({ onNext }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+
+  // selectors
+  const forgotPasswordError = useSelector(selectForgotPasswordError)
+  const forgotPasswordStatus = useSelector(selectForgotPasswordStatus);
 
   const backToLogin = () => {
     navigate("/login"); // Redirect to /login
@@ -34,8 +37,6 @@ const AccountInfoStep = ({ onNext }) => {
 
     if (!validateForm()) return;
 
-    setLoading(true);
-
     const resultAction = await dispatch(forgotPassword({ email }));
 
     if (forgotPassword.fulfilled.match(resultAction)) {
@@ -44,11 +45,6 @@ const AccountInfoStep = ({ onNext }) => {
         contactMethod: "email",
         contact: email
       });
-    } else {
-      // Handle error
-      const errorMessage =
-        resultAction.payload?.error || resultAction.error?.message || "Failed to send reset email";
-      setErrors(errorMessage);
     }
   };
 
@@ -64,10 +60,6 @@ const AccountInfoStep = ({ onNext }) => {
         >
           Back to Login
         </Button>
-
-        {/* <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Icon name="Lock" size={24} color="var(--color-primary)" />
-        </div> */}
         <h1 className="text-2xl font-bold text-foreground mb-2">Forgot your password?</h1>
         <p className="text-muted-foreground">
           Don’t worry, happens to all of us. Enter your email below to recover your password
@@ -93,13 +85,18 @@ const AccountInfoStep = ({ onNext }) => {
           <Button
             type="submit"
             variant="default"
-            loading={loading}
+            loading={forgotPasswordStatus === "loading"}
             fullWidth
           >
-            {loading ? 'Verifying...' : 'Submit'}
+            {forgotPasswordStatus === "loading" ? 'Verifying...' : 'Submit'}
           </Button>
         </div>
       </form>
+      {forgotPasswordError && (
+        <div className="mt-4 p-4 bg-error/10 border border-error/20 rounded-lg">
+          <p className="text-sm text-error">{forgotPasswordError}</p>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import LoginForm from './components/LoginForm';
 import SocialLoginSection from './components/SocialLoginSection';
 import TrustSignals from './components/TrustSignals';
@@ -9,13 +9,13 @@ import wavingHand from '../../assets/waving-hand.svg';
 import UserRegistration from '../../pages/user-registration';
 import { SignInIcon, SignUpIcon } from '../../components/icons';
 import { loginUser } from 'features/auth/authThunks';
+import { selectLoginStatus } from 'features/auth/authSelectors';
 
 const Login = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('signin');
   const [currentStep, setCurrentStep] = useState(0);
+  const loginStatus = useSelector(selectLoginStatus)
 
   const dispatch = useDispatch();
   const tabs = [{
@@ -54,46 +54,37 @@ const Login = () => {
     const resultAction = await dispatch(loginUser(formData));
 
     if (loginUser.fulfilled.match(resultAction)) {
-      // redirect to dashboard
-      // navigate('/dashboard', { replace: true });
       const { user } = resultAction.payload;
-      redirectToRoleDashboard(user.role)
-    } else {
-      // error is in state; optionally show toast here
-      console.error('Login failed:', resultAction.payload || resultAction.error);
-      // Capture error message
-      const errorMessage =
-        resultAction.payload?.error || resultAction.error?.message || "Login failed. Please try again.";
-      setError(errorMessage);
+      redirectToRoleDashboard(user.role);
     }
   };
 
-  const handleSocialLogin = async (provider) => {
-    setIsLoading(true);
-    setError('');
+  // const handleSocialLogin = async (provider) => {
+  //   setIsLoading(true);
+  //   setError('');
 
-    try {
-      // Simulate social login
-      await new Promise(resolve => setTimeout(resolve, 2000));
+  //   try {
+  //     // Simulate social login
+  //     await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Mock successful social login as student
-      const userData = {
-        email: `${provider.toLowerCase()}user@eduportal.com`,
-        role: 'student',
-        name: `${provider} User`,
-        mfaEnabled: false,
-        loginTime: new Date().toISOString(),
-        socialProvider: provider
-      };
+  //     // Mock successful social login as student
+  //     const userData = {
+  //       email: `${provider.toLowerCase()}user@eduportal.com`,
+  //       role: 'student',
+  //       name: `${provider} User`,
+  //       mfaEnabled: false,
+  //       loginTime: new Date().toISOString(),
+  //       socialProvider: provider
+  //     };
 
-      localStorage.setItem('currentUser', JSON.stringify(userData));
-      redirectToRoleDashboard('student');
-    } catch (err) {
-      setError(`${provider} login failed. Please try again.`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     localStorage.setItem('currentUser', JSON.stringify(userData));
+  //     redirectToRoleDashboard('student');
+  //   } catch (err) {
+  //     setError(`${provider} login failed. Please try again.`);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || LoginForm;
 
@@ -149,17 +140,16 @@ const Login = () => {
             {/* Login Form */}
             <ActiveComponent
               onSubmit={handleLogin}
-              isLoading={isLoading}
-              error={error}
+              isLoading={loginStatus === 'loading'}
               currentStep={currentStep}
               setCurrentStep={setCurrentStep}
             />
 
             {/* Social Login Section */}
             {!currentStep ? <SocialLoginSection
-              onGoogleLogin={() => handleSocialLogin('Google')}
-              onFacebookLogin={() => handleSocialLogin('Facebook')}
-              isLoading={isLoading}
+              // onGoogleLogin={() => handleSocialLogin('Google')}
+              // onFacebookLogin={() => handleSocialLogin('Facebook')}
+              isLoading={loginStatus === 'loading'}
             /> : null}
 
           </div>

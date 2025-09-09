@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, isPending, isFulfilled, isRejected } from '@reduxjs/toolkit';
 import {
   loginUser,
   signupUser,
@@ -10,89 +10,80 @@ import {
   resetPassword,
 } from './authThunks';
 
-import { setAccessToken, setCurrentUser, getCurrentUser, getAccessToken, clearAuthStorage } from '../../utils/storage';
+import {
+  setAccessToken,
+  setCurrentUser,
+  getCurrentUser,
+  getAccessToken,
+  clearAuthStorage,
+} from '../../utils/storage';
+
+// Define all thunks in an array for matchers
+const allThunks = [
+  loginUser,
+  signupUser,
+  verifyEmail,
+  refreshToken,
+  logoutUser,
+  forgotPassword,
+  verifyResetCode,
+  resetPassword,
+];
 
 const initialState = {
   user: getCurrentUser(),
   accessToken: getAccessToken(),
-  status: 'idle', // idle | loading | succeeded | failed
-  error: null,
-  forgotStatus: 'idle',
-  forgotError: null,
+  requests: {
+    loginUser: { status: 'idle', error: null },
+    signupUser: { status: 'idle', error: null },
+    verifyEmail: { status: 'idle', error: null },
+    refreshToken: { status: 'idle', error: null },
+    logoutUser: { status: 'idle', error: null },
+    forgotPassword: { status: 'idle', error: null },
+    verifyResetCode: { status: 'idle', error: null },
+    resetPassword: { status: 'idle', error: null },
+  },
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    // client-only logout (no backend)
     logout: (state) => {
       state.user = null;
       state.accessToken = null;
-      state.status = 'idle';
-      state.error = null;
       clearAuthStorage();
+      // reset all request states
+      Object.keys(state.requests).forEach((key) => {
+        state.requests[key] = { status: 'idle', error: null };
+      });
     },
-    clearError: (state) => {
-      state.error = null;
+    clearError: (state, action) => {
+      const key = action.payload; // pass thunk key like 'loginUser'
+      if (key && state.requests[key]) {
+        state.requests[key].error = null;
+      }
     },
   },
   extraReducers: (builder) => {
-    // Login
+    // Login & Signup store user/token
     builder
-      .addCase(loginUser.pending, (state) => {
-        state.status = 'loading';
-        state.error = null;
-      })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.status = 'succeeded';
         const payload = action.payload || {};
         state.user = payload.user ?? state.user;
         state.accessToken = payload.accessToken ?? state.accessToken;
-        state.error = null;
-
         if (payload.accessToken) setAccessToken(payload.accessToken);
         if (payload.user) setCurrentUser(payload.user);
-      })
-      .addCase(loginUser.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload || action.error?.message || 'Login failed';
-      })
-
-      // Signup
-      .addCase(signupUser.pending, (state) => {
-        state.status = 'loading';
-        state.error = null;
       })
       .addCase(signupUser.fulfilled, (state, action) => {
-        state.status = 'succeeded';
         const payload = action.payload || {};
         state.user = payload.user ?? state.user;
         state.accessToken = payload.accessToken ?? state.accessToken;
-        state.error = null;
-
         if (payload.accessToken) setAccessToken(payload.accessToken);
         if (payload.user) setCurrentUser(payload.user);
       })
-      .addCase(signupUser.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload || action.error?.message || 'Signup failed';
-      })
 
-      // Verify Email
-      .addCase(verifyEmail.pending, (state) => {
-        state.status = "loading";
-        state.error = null;
-      })
-      .addCase(verifyEmail.fulfilled, (state) => {
-        state.status = "succeeded";
-      })
-      .addCase(verifyEmail.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
-      })
-
-      // Refresh
+      // Refresh token
       .addCase(refreshToken.fulfilled, (state, action) => {
         const payload = action.payload || {};
         state.accessToken = payload.accessToken ?? state.accessToken;
@@ -103,7 +94,6 @@ const authSlice = createSlice({
         }
       })
       .addCase(refreshToken.rejected, (state) => {
-        // failed refresh -> clear auth
         state.user = null;
         state.accessToken = null;
         clearAuthStorage();
@@ -113,52 +103,37 @@ const authSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.accessToken = null;
-        state.status = 'idle';
         clearAuthStorage();
       })
       .addCase(logoutUser.rejected, (state) => {
-        // even if server failed, clear client
         state.user = null;
         state.accessToken = null;
-        state.status = 'idle';
         clearAuthStorage();
-      })
+      });
 
-      // forgot password flows (simple)
-      .addCase(forgotPassword.pending, (state) => {
-        state.forgotStatus = 'loading';
-        state.forgotError = null;
+    // Generic matchers for all requests
+    builder
+      .addMatcher(isPending(...allThunks), (state, action) => {
+        const key = action.type.split('/')[1];
+        if (state.requests[key]) {
+          state.requests[key].status = 'loading';
+          state.requests[key].error = null;
+        }
       })
-      .addCase(forgotPassword.fulfilled, (state) => {
-        state.forgotStatus = 'succeeded';
+      .addMatcher(isFulfilled(...allThunks), (state, action) => {
+        const key = action.type.split('/')[1];
+        if (state.requests[key]) {
+          state.requests[key].status = 'succeeded';
+          state.requests[key].error = null;
+        }
       })
-      .addCase(forgotPassword.rejected, (state, action) => {
-        state.forgotStatus = 'failed';
-        state.forgotError = action.payload || action.error?.message;
-      })
-
-      .addCase(verifyResetCode.pending, (state) => {
-        state.forgotStatus = 'loading';
-        state.forgotError = null;
-      })
-      .addCase(verifyResetCode.fulfilled, (state) => {
-        state.forgotStatus = 'succeeded';
-      })
-      .addCase(verifyResetCode.rejected, (state, action) => {
-        state.forgotStatus = 'failed';
-        state.forgotError = action.payload || action.error?.message;
-      })
-
-      .addCase(resetPassword.pending, (state) => {
-        state.forgotStatus = 'loading';
-        state.forgotError = null;
-      })
-      .addCase(resetPassword.fulfilled, (state) => {
-        state.forgotStatus = 'succeeded';
-      })
-      .addCase(resetPassword.rejected, (state, action) => {
-        state.forgotStatus = 'failed';
-        state.forgotError = action.payload || action.error?.message;
+      .addMatcher(isRejected(...allThunks), (state, action) => {
+        const key = action.type.split('/')[1];
+        if (state.requests[key]) {
+          state.requests[key].status = 'failed';
+          const payload = action.payload;
+          state.requests[key].error = payload?.error || payload || action.error?.message || 'Request failed';
+        }
       });
   },
 });
