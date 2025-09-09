@@ -1,22 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
-import { useDispatch } from 'react-redux';
-import { verifyResetCode } from 'features/auth/authThunks';
+import { useDispatch, useSelector } from 'react-redux';
+import { forgotPassword, verifyResetCode } from 'features/auth/authThunks';
+import { selectForgotPasswordStatus, selectVerifyResetCodeError, selectVerifyResetCodeStatus } from 'features/auth/authSelectors';
 
 const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
   const dispatch = useDispatch();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes in seconds
   const [canResend, setCanResend] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
   const inputRefs = useRef([]);
 
-  // Mock correct OTP for demo
-  const correctOTP = '123456';
+  // selectors
+  const forgotPasswordStatus = useSelector(selectForgotPasswordStatus); // 'idle' | 'loading' | 'succeeded' | 'failed'
+  const verifyResetCodeError = useSelector(selectVerifyResetCodeError);
+  const verifyResetCodeStatus = useSelector(selectVerifyResetCodeStatus);
 
+  // Timer effect
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -56,7 +57,6 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-    setError('');
 
     // Auto-focus next input
     if (value && index < 5) {
@@ -74,57 +74,28 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
     e.preventDefault();
     const otpString = otp.join('');
 
-    if (otpString.length !== 6) {
-      setError('Please enter the complete 6-digit code');
-      return;
-    }
+    const resultAction = await dispatch(
+      verifyResetCode({
+        email: verificationInfo.contact,
+        code: otpString,
+      })
+    );
 
-    setLoading(true);
-    setError('');
-
-    try {
-      const resultAction = await dispatch(
-        verifyResetCode({
-          email: verificationInfo.contact,
-          code: otpString,
-        })
-      );
-
-      if (verifyResetCode.fulfilled.match(resultAction)) {
-        // Success → go to next step
-        onNext({ ...verificationInfo, otp: otpString });
-      } else {
-        const errorMessage =
-          resultAction.payload?.error ||
-          resultAction.error?.message ||
-          'Invalid verification code. Please try again.';
-        setError(errorMessage);
-        setOtp(['', '', '', '', '', '']);
-        inputRefs.current[0]?.focus();
-      }
-    } catch {
-      setError('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
+    if (verifyResetCode.fulfilled.match(resultAction)) {
+      onNext({ ...verificationInfo, otp: otpString });
+    } else {
+      // Clear OTP on failure
+      setOtp(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
     }
   };
 
   const handleResend = async () => {
-    setResendLoading(true);
-
-    try {
-      // Call forgotPassword API again to resend
-      await dispatch(forgotPassword({ email: verificationInfo.contact }));
-      setTimeLeft(120);
-      setOtp(['', '', '', '', '', '']);
-      inputRefs.current[0]?.focus();
-      setCanResend(false);
-      setError('');
-    } catch {
-      setError('Failed to resend code.');
-    } finally {
-      setResendLoading(false);
-    }
+    await dispatch(forgotPassword({ email: verificationInfo.contact }));
+    setTimeLeft(180);
+    setOtp(['', '', '', '', '', '']);
+    inputRefs.current[0]?.focus();
+    setCanResend(false);
   };
 
   const getContactDisplay = () => {
@@ -176,7 +147,7 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
                 className={`
                   w-12 h-12 text-center text-lg font-semibold rounded-lg border-2 transition-smooth
                   focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-                  ${error
+                  ${verifyResetCodeError
                     ? 'border-error bg-error/5 text-error' : 'border-border bg-input text-foreground hover:border-primary/50'
                   }
                 `}
@@ -184,10 +155,10 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
               />
             ))}
           </div>
-          {error && (
+          {(verifyResetCodeError) && (
             <div className="flex items-center space-x-2 text-sm text-error">
               <Icon name="AlertCircle" size={14} />
-              <span>{error}</span>
+              <span>{verifyResetCodeError}</span>
             </div>
           )}
         </div>
@@ -211,11 +182,11 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
                 type="button"
                 variant="ghost"
                 onClick={handleResend}
-                loading={resendLoading}
+                loading={forgotPasswordStatus === 'loading'}
                 iconName="RefreshCw"
                 iconPosition="left"
               >
-                {resendLoading ? 'Sending...' : 'Resend Code'}
+                {forgotPasswordStatus === 'loading' ? 'Sending...' : 'Resend Code'}
               </Button>
             ) : (
               <span className="text-sm text-muted-foreground">
@@ -230,13 +201,13 @@ const OTPVerificationStep = ({ verificationInfo, onNext, onBack }) => {
           <Button
             type="submit"
             variant="default"
-            loading={loading}
-            disabled={otp.join('').length !== 6}
+            loading={verifyResetCodeStatus === 'loading'}
+            disabled={(otp.join('').length !== 6) || (verifyResetCodeStatus === 'loading')}
             fullWidth
             iconName="Check"
             iconPosition="right"
           >
-            {loading ? 'Verifying...' : 'Verify'}
+            {verifyResetCodeStatus === 'loading' ? 'Verifying...' : 'Verify'}
           </Button>
         </div>
       </form>

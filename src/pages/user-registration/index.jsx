@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/Button';
 import BasicInfoStep from './components/BasicInfoStep';
 import RoleSpecificStep from './components/RoleSpecificStep';
@@ -7,11 +6,14 @@ import VerificationStep from './components/VerificationStep';
 import LoginSignupProgress from './components/login-signup-progress';
 import { useDispatch, useSelector } from 'react-redux';
 import { signupUser } from 'features/auth/authThunks';
+import { selectSignupError, selectSignupStatus } from 'features/auth/authSelectors';
 
 const UserRegistration = ({ currentStep, setCurrentStep }) => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { status, error } = useSelector((state) => state.auth);
+  // selectors
+  const signupStatus = useSelector(selectSignupStatus);
+  const signupError = useSelector(selectSignupError);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -138,9 +140,6 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
     if (signupUser.fulfilled.match(resultAction)) {
       console.log('Signup successful:', resultAction.payload);
       handleNext();
-    } else {
-      console.error('Signup failed:', resultAction.error);
-      setErrors({ submit: 'Signup failed. Please try again.' });
     }
 
   };
@@ -195,8 +194,8 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
                 </Button>
                 <Button
                   variant="default"
-                  loading={status === 'loading'}
-                  disabled={status === 'loading'}
+                  loading={signupStatus === 'loading'}
+                  disabled={signupStatus === 'loading'}
                   type="submit"
                   iconPosition="right"
                   className="w-full mt-6"
@@ -224,9 +223,9 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
   return (
     <div className="bg-background p-6">
       {renderCurrentStep()}
-      {errors.submit && (
+      {signupError && (
         <div className="mt-4 p-4 bg-error/10 border border-error/20 rounded-lg">
-          <p className="text-sm text-error">{errors.submit}</p>
+          <p className="text-sm text-error">{signupError}</p>
         </div>
       )}
     </div>

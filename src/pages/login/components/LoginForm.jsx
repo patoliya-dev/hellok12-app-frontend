@@ -3,8 +3,10 @@ import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import Icon from '../../../components/AppIcon';
+import { selectLoginError } from 'features/auth/authSelectors';
+import { useSelector } from 'react-redux';
 
-const LoginForm = ({ onSubmit, isLoading, error }) => {
+const LoginForm = ({ onSubmit, isLoading }) => {
   const [formData, setFormData] = useState({
     email: '', // parent82@yopmail.com',
     password: '', // 'Secure123',
@@ -12,6 +14,9 @@ const LoginForm = ({ onSubmit, isLoading, error }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+
+  // selectors  
+  const loginError = useSelector(selectLoginError);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -50,11 +55,11 @@ const LoginForm = ({ onSubmit, isLoading, error }) => {
   return (
     <div className="p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {error && (
+        {loginError && (
           <div className="p-4 bg-error/10 border border-error/20 rounded-lg">
             <div className="flex items-center space-x-2">
               <Icon name="AlertCircle" size={16} color="var(--color-error)" />
-              <p className="text-sm text-error font-medium">{error}</p>
+              <p className="text-sm text-error font-medium">{loginError}</p>
             </div>
           </div>
         )}
@@ -112,6 +117,7 @@ const LoginForm = ({ onSubmit, isLoading, error }) => {
         <Button
           type="submit"
           variant="default"
+          disabled={isLoading}
           loading={isLoading}
           fullWidth
           className="h-12"

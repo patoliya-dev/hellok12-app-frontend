@@ -3,7 +3,7 @@ import api from '../../utils/axiosInstance';
 
 // login
 export const loginUser = createAsyncThunk(
-  'auth/login',
+  'auth/loginUser',
   async (credentials, { rejectWithValue }) => {
     try {
       const { data } = await api.post('/auth/login', credentials);
@@ -16,7 +16,7 @@ export const loginUser = createAsyncThunk(
 
 // signup
 export const signupUser = createAsyncThunk(
-  'auth/signup',
+  'auth/signupUser',
   async (formData, { rejectWithValue }) => {
     try {
       const { data } = await api.post('/auth/signup', formData);
@@ -42,7 +42,7 @@ export const verifyEmail = createAsyncThunk(
 
 // refresh (manual refresh call if needed)
 export const refreshToken = createAsyncThunk(
-  'auth/refresh',
+  'auth/refreshToken',
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await api.post('/auth/refresh', {}, { withCredentials: true });
@@ -55,7 +55,7 @@ export const refreshToken = createAsyncThunk(
 
 // logout (call backend to revoke refresh token if present)
 export const logoutUser = createAsyncThunk(
-  'auth/logout',
+  'auth/logoutUser',
   async (_, { rejectWithValue }) => {
     try {
       // best-effort call; if no backend, remove client side state in reducer

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
 const SuccessStep = () => {
+  const navigator = useNavigate();
   const [countdown, setCountdown] = useState(5);
   const [autoRedirect, setAutoRedirect] = useState(true);
 
@@ -13,7 +15,7 @@ const SuccessStep = () => {
       setCountdown((prev) => {
         if (prev <= 1) {
           // Redirect to login
-          // window.location.href = '/login';
+          navigator('/login');
           return 0;
         }
         return prev - 1;
@@ -24,7 +26,7 @@ const SuccessStep = () => {
   }, [autoRedirect]);
 
   const handleManualRedirect = () => {
-    window.location.href = '/login';
+    navigator('/login');
   };
 
   const handleStayOnPage = () => {

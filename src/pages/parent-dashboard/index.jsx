@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import GlobalNavigationHeader from '../../components/ui/GlobalNavigationHeader';
 import RoleBasedSidebar from '../../components/ui/RoleBasedSidebar';
 import NotificationPanel from '../../components/ui/NotificationPanel';
@@ -10,14 +11,15 @@ import TeacherFeedback from './components/TeacherFeedback';
 import CommunicationCenter from './components/CommunicationCenter';
 import FeePaymentShortcuts from './components/FeePaymentShortcuts';
 import QuickActionsToolbar from './components/QuickActionsToolbar';
-import { useSelector } from 'react-redux';
+import { selectAuthUser } from 'features/auth/authSelectors';
 
 const ParentDashboard = () => {
   const [selectedChild, setSelectedChild] = useState(1);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState('en');
-  const { user } = useSelector((state) => state.auth);
+  
+  const user = useSelector(selectAuthUser);
 
   useEffect(() => {
     // Check localStorage for saved language preference
