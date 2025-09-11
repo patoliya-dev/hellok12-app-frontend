@@ -2,14 +2,17 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { verifyEmail } from "features/auth/authThunks";
+import { selectVerifyEmailError, selectVerifyEmailStatus } from "features/auth/authSelectors";
 
 export default function VerifyEmailPage() {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
 
-  const { status, error } = useSelector((state) => state.auth);
+  // selectors
+  const verifyEmailStatus = useSelector(selectVerifyEmailStatus)
+  const verifyEmailError = useSelector(selectVerifyEmailError)
 
   useEffect(() => {
     if (token) {
@@ -18,18 +21,18 @@ export default function VerifyEmailPage() {
   }, [token, dispatch]);
 
   useEffect(() => {
-    if (status === "succeeded") {
+    if (verifyEmailStatus === "succeeded") {
       setTimeout(() => {
         navigate("/login", { replace: true });
       }, 3000);
     }
-  }, [status, navigate]);
+  }, [verifyEmailStatus, navigate]);
 
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-      {status === "loading" && <p>Verifying your email...</p>}
-      {status === "succeeded" && <p>Email verified ✅ Redirecting to login...</p>}
-      {status === "failed" && <p style={{ color: "red" }}>❌ {error}</p>}
+      {verifyEmailStatus === "loading" && <p>Verifying your email...</p>}
+      {verifyEmailStatus === "succeeded" && <p>Email verified ✅ Redirecting to login...</p>}
+      {verifyEmailError && <p style={{ color: "red" }}>❌ {verifyEmailError}</p>}
     </div>
   );
 }

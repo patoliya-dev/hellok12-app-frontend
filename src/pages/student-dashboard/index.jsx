@@ -1,245 +1,197 @@
 import React, { useState, useEffect } from 'react';
-import { Helmet } from 'react-helmet';
-import GlobalNavigationHeader from '../../components/ui/GlobalNavigationHeader';
-import RoleBasedSidebar from '../../components/ui/RoleBasedSidebar';
-import NotificationPanel from '../../components/ui/NotificationPanel';
-import UpcomingSessionsWidget from './components/UpcomingSessionsWidget';
-import AssignmentsDueWidget from './components/AssignmentsDueWidget';
-import RecentGradesWidget from './components/RecentGradesWidget';
-import AnnouncementsWidget from './components/AnnouncementsWidget';
-import QuickActionsWidget from './components/QuickActionsWidget';
-import NotificationsPanelWidget from './components/NotificationsPanelWidget';
+import { useNavigate } from 'react-router-dom';
+import RoleBasedHeader from '../../components/ui/RoleBasedHeader';
+import NotificationCenter from '../../components/ui/NotificationCenter';
+import BookingStatusIndicator from '../../components/ui/BookingStatusIndicator';
+import UpcomingSessionsCard from './components/UpcomingSessionsCard';
+import ProgressTrackingSection from './components/ProgressTrackingSection';
+import QuickAccessTiles from './components/QuickAccessTiles';
+import ScheduleWidget from './components/ScheduleWidget';
+import RecentFeedbackCard from './components/RecentFeedbackCard';
+import GamificationElements from './components/OverallProgressCard';
+import MobileBottomNavigation from './components/MobileBottomNavigation';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 
 const StudentDashboard = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState('en');
-  const [greeting, setGreeting] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [studentData, setStudentData] = useState({});
+  const navigate = useNavigate();
 
-  // Mock student data
-  const studentData = {
-    name: "Alex Johnson",
-    studentId: "STU2025001",
-    grade: "Grade 11",
-    section: "A",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-    currentGPA: "3.85",
-    totalCredits: 24,
-    completedCredits: 18
-  };
-
-  // Set greeting based on time of day
   useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) {
-      setGreeting('Good Morning');
-    } else if (hour < 17) {
-      setGreeting('Good Afternoon');
-    } else {
-      setGreeting('Good Evening');
-    }
+    // Update current time every minute
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
 
-    // Check for saved language preference
-    const savedLanguage = localStorage.getItem('preferredLanguage') || 'en';
-    setCurrentLanguage(savedLanguage);
+    return () => clearInterval(timer);
   }, []);
 
-  const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
+  useEffect(() => {
+    // Mock student data
+    const mockStudentData = {
+      name: "Alex Johnson",
+      grade: "5th Grade",
+      school: "Riverside Elementary",
+      avatar: "/assets/images/student-avatar.jpg",
+      currentLevel: 12,
+      xpPoints: 2450,
+      learningStreak: 7,
+      todaySessions: 2,
+      weeklyGoal: 5,
+      weeklyCompleted: 3
+    };
+
+    setStudentData(mockStudentData);
+  }, []);
+
+  const TodayDate = () => {
+    const today = new Date();
+    const formattedDate = today.toLocaleString("en-US", {
+      weekday: "long",    // Thursday
+      year: "numeric",    // 2025
+      month: "long",      // July
+      day: "numeric",     // 31
+      hour: "numeric",    // 5
+      minute: "2-digit",  // 42
+      hour12: true,       // AM/PM
+    });
+
+    return <div>{formattedDate}</div>;
   };
 
-  const toggleNotificationPanel = () => {
-    setNotificationPanelOpen(!notificationPanelOpen);
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
+  const handleEmergencyHelp = () => {
+    // Mock emergency help action
+    console.log('Emergency help requested');
   };
 
   return (
-    <>
-      <Helmet>
-        <title>Student Dashboard - EduPortal</title>
-        <meta name="description" content="Access your academic information, assignments, grades, and school resources from your personalized student dashboard." />
-        <meta name="keywords" content="student dashboard, academics, assignments, grades, school portal" />
-      </Helmet>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <RoleBasedHeader />
 
-      <div className="min-h-screen bg-background">
-        {/* Global Navigation Header */}
-        <GlobalNavigationHeader
-          userRole="student"
-          userName={studentData.name}
-          notificationCount={5}
-        />
+      {/* Notification Center */}
+      <NotificationCenter
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        userRole="student"
+      />
 
-        {/* Role-based Sidebar */}
-        {/* <RoleBasedSidebar 
-          userRole="student"
-          isCollapsed={sidebarCollapsed}
-          onToggle={toggleSidebar}
-        /> */}
-
-        {/* Notification Panel */}
-        <NotificationPanel
-          isOpen={notificationPanelOpen}
-          onClose={toggleNotificationPanel}
-          userRole="student"
-        />
-
-        {/* Main Content */}
-        <main className={`
-          pt-16 transition-all duration-300 ease-smooth min-h-screen
-          ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-72'}
-          ${notificationPanelOpen ? 'lg:mr-80' : ''}
-        `}>
-          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-            {/* Welcome Section */}
-            <div className="mb-8">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-                <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20">
-                    <img
-                      src={studentData.avatar}
-                      alt={studentData.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.src = '/assets/images/no_image.png';
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold text-foreground">
-                      {greeting}, {studentData.name}!
-                    </h1>
-                    {/* <p className="text-muted-foreground">
-                      {studentData.grade} • Section {studentData.section} • ID: {studentData.studentId}
-                    </p> */}
-                  </div>
-                </div>
-
-                {/* <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Current GPA</p>
-                    <p className="text-xl font-semibold text-success">{studentData.currentGPA}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Credits</p>
-                    <p className="text-xl font-semibold text-primary">
-                      {studentData.completedCredits}/{studentData.totalCredits}
-                    </p>
-                  </div>
-                </div> */}
-              </div>
-
-              {/* Quick Stats */}
-              {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                <div className="bg-card rounded-lg border border-border p-4 text-center">
-                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-2">
-                    <Icon name="Calendar" size={16} color="var(--color-primary)" />
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">4</p>
-                  <p className="text-sm text-muted-foreground">Classes Today</p>
-                </div>
-                <div className="bg-card rounded-lg border border-border p-4 text-center">
-                  <div className="w-8 h-8 bg-warning/10 rounded-lg flex items-center justify-center mx-auto mb-2">
-                    <Icon name="FileText" size={16} color="var(--color-warning)" />
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">3</p>
-                  <p className="text-sm text-muted-foreground">Due Soon</p>
-                </div>
-                <div className="bg-card rounded-lg border border-border p-4 text-center">
-                  <div className="w-8 h-8 bg-success/10 rounded-lg flex items-center justify-center mx-auto mb-2">
-                    <Icon name="Award" size={16} color="var(--color-success)" />
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">2</p>
-                  <p className="text-sm text-muted-foreground">New Grades</p>
-                </div>
-                <div className="bg-card rounded-lg border border-border p-4 text-center">
-                  <div className="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-2">
-                    <Icon name="Bell" size={16} color="var(--color-accent)" />
-                  </div>
-                  <p className="text-2xl font-bold text-foreground">5</p>
-                  <p className="text-sm text-muted-foreground">Notifications</p>
-                </div>
-              </div> */}
-            </div>
-
-            {/* Dashboard Widgets Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-              {/* Upcoming Sessions - Full width on mobile, spans 2 columns on xl */}
-              {/* <div className="lg:col-span-2 xl:col-span-2">
-                <UpcomingSessionsWidget />
-              </div> */}
-
-              {/* Quick Actions */}
-              {/* <div className="xl:col-span-1">
-                <QuickActionsWidget />
-              </div> */}
-
-              {/* Assignments Due */}
-              {/* <div className="lg:col-span-1">
-                <AssignmentsDueWidget />
-              </div> */}
-
-              {/* Recent Grades */}
-              {/* <div className="lg:col-span-1">
-                <RecentGradesWidget />
-              </div> */}
-
-              {/* Notifications Panel Widget */}
-              {/* <div className="lg:col-span-1">
-                <NotificationsPanelWidget />
-              </div> */}
-
-              {/* Announcements - Full width */}
-              {/* <div className="lg:col-span-2 xl:col-span-3">
-                <AnnouncementsWidget />
-              </div> */}
-            </div>
-
-            {/* Additional Actions */}
-            {/* <div className="bg-card rounded-lg border border-border shadow-subtle p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <div className="mb-4 sm:mb-0">
-                  <h3 className="text-lg font-semibold text-foreground mb-2">Need Help?</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Access support resources, contact your teachers, or get technical assistance.
+      {/* Main Content */}
+      <main className="pt-16 pb-20 lg:pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Welcome Section */}
+          <div className="my-8">
+            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6 border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                    {getGreeting()}, {studentData.name}! 👋
+                  </h1>
+                  <p className="text-muted-foreground mb-4">
+                    {TodayDate()}
+                  </p>
+                  <p className="text-muted-foreground mb-4">
+                    Ready to continue your learning journey?
                   </p>
                 </div>
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                  <Button variant="outline" iconName="HelpCircle" iconPosition="left">
-                    Help Center
-                  </Button>
-                  <Button variant="outline" iconName="MessageSquare" iconPosition="left">
-                    Contact Support
-                  </Button>
-                  <Button variant="default" iconName="Phone" iconPosition="left">
-                    Emergency Contact
-                  </Button>
-                </div>
               </div>
-            </div> */}
+            </div>
           </div>
-        </main>
 
-        {/* Mobile Navigation Toggle */}
-        <button
-          onClick={toggleSidebar}
-          className="fixed bottom-6 left-6 lg:hidden w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-modal flex items-center justify-center z-40"
-        >
-          <Icon name="Menu" size={24} />
-        </button>
+          {/* Desktop Layout */}
+          <div className="hidden lg:grid lg:grid-cols-12 lg:gap-8">
+            {/* Left Column */}
+            <div className="lg:col-span-8 space-y-8">
+              {/* Upcoming Sessions */}
+              <UpcomingSessionsCard />
 
-        {/* Mobile Notification Toggle */}
-        <button
-          onClick={toggleNotificationPanel}
-          className="fixed bottom-6 right-20 lg:hidden w-12 h-12 bg-surface border border-border text-foreground rounded-full shadow-elevated flex items-center justify-center z-40"
-        >
-          <Icon name="Bell" size={20} />
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-error text-white text-xs rounded-full flex items-center justify-center">
-            5
-          </span>
-        </button>
-      </div>
-    </>
+              {/* Quick Access Tiles */}
+              {/* <QuickAccessTiles /> */}
+
+              {/* Recent Feedback */}
+              {/* <RecentFeedbackCard /> */}
+            </div>
+
+            {/* Right Column */}
+            <div className="lg:col-span-4 space-y-8">
+              {/* Booking Status */}
+              {/* <BookingStatusIndicator userRole="student" /> */}
+
+              {/* Progress Tracking */}
+              <ProgressTrackingSection />
+
+              {/* Schedule Widget */}
+            </div>
+            <div className="lg:col-span-12 space-y-8">
+
+              <ScheduleWidget />
+            </div>
+          </div>
+
+          {/* Mobile Layout */}
+          <div className="lg:hidden space-y-6">
+            {/* Booking Status */}
+            {/* <BookingStatusIndicator userRole="student" /> */}
+
+            {/* Upcoming Sessions */}
+            <UpcomingSessionsCard />
+
+            {/* Quick Access Tiles */}
+            {/* <QuickAccessTiles /> */}
+
+            {/* Gamification Elements */}
+            <GamificationElements />
+
+            {/* Schedule Widget */}
+            <ScheduleWidget />
+
+            {/* Recent Feedback */}
+            {/* <RecentFeedbackCard /> */}
+
+            {/* Progress Tracking */}
+            <ProgressTrackingSection />
+          </div>
+
+          {/* Floating Action Button (Mobile) */}
+          <div className="fixed bottom-24 right-4 lg:hidden z-50">
+            <Button
+              variant="default"
+              size="icon"
+              iconName="Plus"
+              iconSize={24}
+              onClick={() => navigate('/booking-system')}
+              className="w-14 h-14 rounded-full shadow-modal"
+            >
+            </Button>
+          </div>
+
+          {/* Emergency Help (Mobile) */}
+          <div className="fixed bottom-24 left-4 lg:hidden z-50">
+            <Button
+              variant="outline"
+              size="icon"
+              iconName="HelpCircle"
+              iconSize={20}
+              onClick={handleEmergencyHelp}
+              className="w-12 h-12 rounded-full shadow-modal bg-card"
+            >
+            </Button>
+          </div>
+        </div>
+      </main>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNavigation />
+    </div>
   );
 };
 

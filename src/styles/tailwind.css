@@ -37,6 +37,10 @@
     --color-accent: #F59E0B; /* amber-500 */
     --color-accent-foreground: #FFFFFF; /* white */
     
+    /* Primary Colors */
+    --color-purple: #A855F7; /* blue-600 */
+    --color-purple-foreground: #FFFFFF; /* white */
+    
     /* Success Colors */
     --color-success: #10B981; /* emerald-500 */
     --color-success-foreground: #FFFFFF; /* white */
