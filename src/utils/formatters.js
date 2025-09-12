@@ -1,0 +1,29 @@
+import { format, formatDistanceToNowStrict, differenceInHours, differenceInDays } from 'date-fns';
+
+export const formatLessonTime = (date) => {
+  return format(new Date(date), 'hh:mm a');
+};
+
+export const formatLessonDate = (date, formatStr = 'dd MMM yyyy') => {
+  return format(new Date(date), formatStr);
+};
+
+export const getCountdown = (dateStr) => {
+  const date = new Date(dateStr);
+  const now = new Date();
+  if (date < now) return 'Started';
+
+  const days = differenceInDays(date, now);
+  const hours = differenceInHours(date, now) % 24;
+  const minutes = Math.floor((date.getTime() - now.getTime()) / (1000 * 60)) % 60;
+
+
+  if (days > 0) {
+    return `${days}d ${hours}h`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  
+  return formatDistanceToNowStrict(date, { unit: 'minute' });
+};

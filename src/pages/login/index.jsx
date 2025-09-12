@@ -1,35 +1,37 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import LoginForm from './components/LoginForm';
-import SocialLoginSection from './components/SocialLoginSection';
-import TrustSignals from './components/TrustSignals';
-import logo from '../../assets/logo.svg';
-import wavingHand from '../../assets/waving-hand.svg';
-import UserRegistration from '../../pages/user-registration';
-import { SignInIcon, SignUpIcon } from '../../components/icons';
-import { loginUser } from 'features/auth/authThunks';
-import { selectLoginStatus } from 'features/auth/authSelectors';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import LoginForm from "./components/LoginForm";
+import SocialLoginSection from "./components/SocialLoginSection";
+import TrustSignals from "./components/TrustSignals";
+import logo from "../../assets/logo.svg";
+import wavingHand from "../../assets/waving-hand.svg";
+import UserRegistration from "../../pages/user-registration";
+import { SignInIcon, SignUpIcon } from "../../components/icons";
+import { loginUser } from "features/auth/authThunks";
+import { selectLoginStatus } from "features/auth/authSelectors";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('signin');
+  const [activeTab, setActiveTab] = useState("signin");
   const [currentStep, setCurrentStep] = useState(0);
-  const loginStatus = useSelector(selectLoginStatus)
+  const loginStatus = useSelector(selectLoginStatus);
 
   const dispatch = useDispatch();
-  const tabs = [{
-    id: 'signin',
-    label: 'Sign In',
-    icon: SignInIcon,
-    component: LoginForm
-  },
-  {
-    id: 'signup',
-    label: 'Sign Up',
-    icon: SignUpIcon,
-    component: UserRegistration
-  }];
+  const tabs = [
+    {
+      id: "signin",
+      label: "Sign In",
+      icon: SignInIcon,
+      component: LoginForm,
+    },
+    {
+      id: "signup",
+      label: "Sign Up",
+      icon: SignUpIcon,
+      component: UserRegistration,
+    },
+  ];
 
   // Mock credentials for different user roles
   // const mockCredentials = {
@@ -41,16 +43,15 @@ const Login = () => {
 
   const redirectToRoleDashboard = (role) => {
     const dashboardRoutes = {
-      student: '/student-dashboard',
-      parent: '/parent-dashboard',
-      teacher: '/teacher-dashboard',
-      school: '/school-dashboard'
+      student: "/student/dashboard",
+      parent: "/parent/dashboard",
+      teacher: "/teacher/dashboard",
+      school: "/school/dashboard",
     };
-    navigate(dashboardRoutes[role] || '/student-dashboard', { replace: true });
+    navigate(dashboardRoutes[role] || "/student/dashboard", { replace: true });
   };
 
   const handleLogin = async (formData) => {
-
     const resultAction = await dispatch(loginUser(formData));
 
     if (loginUser.fulfilled.match(resultAction)) {
@@ -86,7 +87,8 @@ const Login = () => {
   //   }
   // };
 
-  const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || LoginForm;
+  const ActiveComponent =
+    tabs.find((tab) => tab.id === activeTab)?.component || LoginForm;
 
   return (
     <div className="min-h-screen bg-auth-bg bg-cover bg-center">
@@ -94,16 +96,26 @@ const Login = () => {
         <div className="w-full max-w-md space-y-8">
           {/* Header */}
           <div className="text-center">
-            <img src={logo} alt="Company Logo" className='mx-auto' />
-            {activeTab == 'signin' ? (<div className="flex justify-center">
-              <h1 className="text-xl font-bold text-foreground">Welcome Back!</h1>
-              <img src={wavingHand} alt="Company Logo" className='ml-1' />
-            </div>) : (<div className="flex justify-center">
-              <h1 className="text-xl font-bold text-foreground">Join HelloK12</h1>
-            </div>)}
+            <img src={logo} alt="Company Logo" className="mx-auto" />
+            {activeTab == "signin" ? (
+              <div className="flex justify-center">
+                <h1 className="text-xl font-bold text-foreground">
+                  Welcome Back!
+                </h1>
+                <img src={wavingHand} alt="Company Logo" className="ml-1" />
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <h1 className="text-xl font-bold text-foreground">
+                  Join HelloK12
+                </h1>
+              </div>
+            )}
 
             <p className="mt-2 text-muted-foreground">
-              {activeTab == 'signin' ? 'Sign in to continue your learning journey' : 'Create your account to get started'}
+              {activeTab == "signin"
+                ? "Sign in to continue your learning journey"
+                : "Create your account to get started"}
             </p>
           </div>
 
@@ -114,44 +126,45 @@ const Login = () => {
                 {tabs.map((tab) => {
                   const IconComponent = tab.icon;
                   return (
-
                     <button
                       key={tab.id}
                       onClick={() => {
-                        setActiveTab(tab.id)
+                        setActiveTab(tab.id);
                         setCurrentStep(0);
                       }}
                       className={`
                             flex flex-1 justify-center text-center items-center space-x-2 py-[18px] px-1 border-b-2 font-medium text-sm transition-smooth
-                            ${activeTab === tab.id
-                          ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted'
-                        }
+                            ${
+                              activeTab === tab.id
+                                ? "border-primary text-primary"
+                                : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
+                            }
                           `}
                     >
                       <IconComponent selected={activeTab === tab.id} />
-                      <span className='text-sm'>{tab.label}</span>
+                      <span className="text-sm">{tab.label}</span>
                     </button>
                   );
-                }
-                )}
+                })}
               </nav>
             </div>
 
             {/* Login Form */}
             <ActiveComponent
               onSubmit={handleLogin}
-              isLoading={loginStatus === 'loading'}
+              isLoading={loginStatus === "loading"}
               currentStep={currentStep}
               setCurrentStep={setCurrentStep}
             />
 
             {/* Social Login Section */}
-            {!currentStep ? <SocialLoginSection
-              // onGoogleLogin={() => handleSocialLogin('Google')}
-              // onFacebookLogin={() => handleSocialLogin('Facebook')}
-              isLoading={loginStatus === 'loading'}
-            /> : null}
-
+            {!currentStep ? (
+              <SocialLoginSection
+                // onGoogleLogin={() => handleSocialLogin('Google')}
+                // onFacebookLogin={() => handleSocialLogin('Facebook')}
+                isLoading={loginStatus === "loading"}
+              />
+            ) : null}
           </div>
 
           {/* Trust Signals */}

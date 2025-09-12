@@ -1,39 +1,69 @@
 import React from "react";
-import { BrowserRouter, Routes as RouterRoutes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes as RouterRoutes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import ErrorBoundary from "./components/ErrorBoundary";
-// Add your imports here
 import Login from "./pages/login";
 import UserRegistration from "./pages/user-registration";
 import PasswordReset from "./pages/password-reset";
-import ParentDashboard from "./pages/parent-dashboard";
-import TeacherDashboard from "./pages/teacher-dashboard";
-import StudentDashboard from "./pages/student-dashboard";
-import SchoolDashboard from "./pages/school-dashboard";
 import NotFound from "./pages/NotFound";
-import ProtectedRoute from "components/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 import VerifyEmailPage from "./pages/user-registration/components/VerifyEmailPage";
+import StudentRoutes from "./routes/StudentRoutes";
+import ParentRoutes from "./routes/ParentRoutes";
+import TeacherRoutes from "./routes/TeacherRoutes";
+import SchoolRoutes from "./routes/SchoolRoutes";
+
+const Protected = ({ children }) => <ProtectedRoute>{children}</ProtectedRoute>;
+
+// 🔹 Public routes
+const publicRoutes = [
+  { path: "/login", element: <Login /> },
+  { path: "/user-registration", element: <UserRegistration /> },
+  { path: "/verify-email", element: <VerifyEmailPage /> },
+  { path: "/password-reset", element: <PasswordReset /> },
+];
+
+// 🔹 Protected routes
+const protectedRoutes = [
+  { path: "/parent/*", element: <ParentRoutes /> },
+  { path: "/teacher/*", element: <TeacherRoutes /> },
+  { path: "/student/*", element: <StudentRoutes /> },
+  { path: "/school/*", element: <SchoolRoutes /> },
+];
 
 const Routes = () => {
   return (
-    <BrowserRouter>
+    <Router>
       <ErrorBoundary>
         <ScrollToTop />
         <RouterRoutes>
-          {/* Define your routes here */}
+          {/* Redirect root to /login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/user-registration" element={<UserRegistration />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route path="/password-reset" element={<PasswordReset />} />
-          <Route path="/parent-dashboard" element={<ProtectedRoute><ParentDashboard /></ProtectedRoute>} />
-          <Route path="/teacher-dashboard" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
-          <Route path="/student-dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
-          <Route path="/school-dashboard" element={<ProtectedRoute><SchoolDashboard /></ProtectedRoute>} />
+
+          {/* Public routes */}
+          {publicRoutes.map(({ path, element }) => (
+            <Route key={path} path={path} element={element} />
+          ))}
+
+          {/* Protected routes */}
+          {protectedRoutes.map(({ path, element }) => (
+            <Route
+              key={path}
+              path={path}
+              element={<Protected>{element}</Protected>}
+            />
+          ))}
+
+          {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
         </RouterRoutes>
       </ErrorBoundary>
-    </BrowserRouter>
+    </Router>
   );
 };
 

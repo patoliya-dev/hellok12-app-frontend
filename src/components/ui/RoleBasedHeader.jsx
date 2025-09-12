@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import Icon from '../AppIcon';
-import Button from './Button';
-import logo from '../../assets/logo.svg';
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import Icon from "../AppIcon";
+import Button from "./Button";
+import logo from "../../assets/logo.svg";
 
 const RoleBasedHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userRole, setUserRole] = useState('student');
+  const [userRole, setUserRole] = useState("student");
   const [showProfile, setShowProfile] = useState(false);
   const [notifications, setNotifications] = useState(3);
   const [currentUser, setCurrentUser] = useState({
-    name: 'Alex Johnson',
-    avatar: '/assets/logo.svg',
+    name: "Alex Johnson",
+    avatar: "/assets/logo.svg",
     // school: 'Riverside Elementary'
   });
 
@@ -21,52 +21,86 @@ const RoleBasedHeader = () => {
   useEffect(() => {
     // Determine user role based on current route
     const path = location.pathname;
-    if (path.includes('student-dashboard')) setUserRole('student');
-    else if (path.includes('parent-dashboard')) setUserRole('parent');
-    else if (path.includes('teacher-dashboard')) setUserRole('teacher');
-    else if (path.includes('school-admin-dashboard')) setUserRole('admin');
-    else setUserRole('guest');
+
+    if (path.includes("/student")) setUserRole("student");
+    else if (path.includes("/parent")) setUserRole("parent");
+    else if (path.includes("/teacher")) setUserRole("teacher");
+    else if (path.includes("/school")) setUserRole("admin");
+    else setUserRole("guest");
   }, [location.pathname]);
 
   const getRoleDisplayName = (role) => {
     const roleMap = {
-      student: 'Student',
-      parent: 'Parent',
-      teacher: 'Teacher',
-      school: 'School Admin',
+      student: "Student",
+      parent: "Parent",
+      teacher: "Teacher",
+      school: "School Admin",
     };
-    return roleMap[role] || 'User';
+    return roleMap[role] || "User";
   };
 
   const getNavigationItems = () => {
     const baseItems = {
       student: [
-        { label: 'My Classes', path: '/student-dashboard', icon: 'BookOpen' },
-        { label: 'Schedule', path: '/booking-system', icon: 'Calendar' },
-        { label: 'Progress', path: '/student-dashboard/progress', icon: 'TrendingUp' },
-        { label: 'Games', path: '/student-dashboard/games', icon: 'Gamepad2' }
+        { label: "Dashboard", path: "/student/dashboard", icon: "House" },
+        { label: "Find Teacher", path: "/teachers", icon: "Search" },
+        // { label: "Schedule", path: "/booking-system", icon: "Calendar" },
+        { label: "Lessons", path: "/student/lessons", icon: "Book" },
+        // { label: "Progress",  path: "/student/progress", icon: "TrendingUp" },
+        { label: "Practice", path: "/student/games", icon: "Gamepad2" },
+        { label: "Messages", path: "/student/messages", icon: "MessageCircle" },
       ],
       parent: [
-        { label: 'Dashboard', path: '/parent-dashboard', icon: 'Home' },
-        { label: 'Book Sessions', path: '/booking-system', icon: 'Calendar' },
-        { label: 'Children', path: '/parent-dashboard/children', icon: 'Users' },
-        { label: 'Payments', path: '/parent-dashboard/payments', icon: 'CreditCard' }
+        { label: "Dashboard", path: "/parent/dashboard", icon: "Home" },
+        { label: "Book Sessions", path: "/booking-system", icon: "Calendar" },
+        {
+          label: "Children",
+          path: "/parent/children",
+          icon: "Users",
+        },
+        {
+          label: "Payments",
+          path: "/parent/payments",
+          icon: "CreditCard",
+        },
       ],
       teacher: [
-        { label: 'Dashboard', path: '/teacher-dashboard', icon: 'Home' },
-        { label: 'My Students', path: '/teacher-dashboard/students', icon: 'Users' },
-        { label: 'Schedule', path: '/booking-system', icon: 'Calendar' },
-        { label: 'Earnings', path: '/teacher-dashboard/earnings', icon: 'DollarSign' }
+        { label: "Dashboard", path: "/teacher/dashboard", icon: "Home" },
+        {
+          label: "My Students",
+          path: "/teacher/students",
+          icon: "Users",
+        },
+        { label: "Schedule", path: "/booking-system", icon: "Calendar" },
+        {
+          label: "Earnings",
+          path: "/teacher/earnings",
+          icon: "DollarSign",
+        },
       ],
       admin: [
-        { label: 'Overview', path: '/school-admin-dashboard', icon: 'BarChart3' },
-        { label: 'Teachers', path: '/school-admin-dashboard/teachers', icon: 'Users' },
-        { label: 'Students', path: '/school-admin-dashboard/students', icon: 'GraduationCap' },
-        { label: 'Reports', path: '/school-admin-dashboard/reports', icon: 'FileText' }
+        {
+          label: "Overview",
+          path: "/school/dashboard",
+          icon: "BarChart3",
+        },
+        {
+          label: "Teachers",
+          path: "/school/teachers",
+          icon: "Users",
+        },
+        {
+          label: "Students",
+          path: "/school/students",
+          icon: "GraduationCap",
+        },
+        {
+          label: "Reports",
+          path: "/school/reports",
+          icon: "FileText",
+        },
       ],
-      guest: [
-        { label: 'Login', path: '/login-register', icon: 'LogIn' }
-      ]
+      guest: [{ label: "Login", path: "/login", icon: "LogIn" }],
     };
 
     return baseItems[userRole] || baseItems.guest;
@@ -78,14 +112,14 @@ const RoleBasedHeader = () => {
   };
 
   const handleLogout = () => {
-    navigate('/login-register');
+    navigate("/login");
     setIsMenuOpen(false);
   };
 
   const navigationItems = getNavigationItems();
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-card border-b border-border z-1200">
+    <header className="fixed top-0 left-0 right-0 bg-card border-b border-border z-50">
       <div className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Logo Section */}
         <div className="flex items-center space-x-3">
@@ -95,9 +129,16 @@ const RoleBasedHeader = () => {
             </div> */}
             <div className="flex flex-col">
               {/* <span className="text-lg font-semibold text-foreground">HelloK12</span> */}
-              <img src={logo} alt="Company Logo" height={20} className='mx-auto' />
-              {userRole !== 'guest' && (
-                <span className="text-xs text-muted-foreground">{currentUser.school}</span>
+              <img
+                src={logo}
+                alt="Company Logo"
+                height={20}
+                className="mx-auto"
+              />
+              {userRole !== "guest" && (
+                <span className="text-xs text-muted-foreground">
+                  {currentUser.school}
+                </span>
               )}
             </div>
           </div>
@@ -123,7 +164,7 @@ const RoleBasedHeader = () => {
 
         {/* Right Section */}
         <div className="flex items-center space-x-3">
-          {userRole !== 'guest' && (
+          {userRole !== "guest" && (
             <>
               {/* Notifications */}
               <div className="relative">
@@ -168,7 +209,9 @@ const RoleBasedHeader = () => {
                   <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                     <Icon name="User" size={16} color="var(--color-primary)" />
                   </div>
-                  <span className="hidden md:block text-sm font-medium text-foreground">{currentUser.name}</span>
+                  <span className="hidden md:block text-sm font-medium text-foreground">
+                    {currentUser.name}
+                  </span>
                   <Icon name="ChevronDown" size={14} />
                 </button>
 
@@ -176,8 +219,12 @@ const RoleBasedHeader = () => {
                 {showProfile && (
                   <div className="absolute right-0 mt-2 w-56 bg-popover border border-border rounded-lg shadow-elevated z-50">
                     <div className="px-4 py-3 border-b border-border">
-                      <p className="text-sm font-medium text-foreground">{currentUser.name}</p>
-                      <p className="text-xs text-muted-foreground">{getRoleDisplayName(userRole)}</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {currentUser.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {getRoleDisplayName(userRole)}
+                      </p>
                     </div>
                     <div className="py-1">
                       <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
@@ -239,16 +286,24 @@ const RoleBasedHeader = () => {
               </Button>
             ))}
 
-            {userRole !== 'guest' && (
+            {userRole !== "guest" && (
               <>
                 <div className="border-t border-border my-2"></div>
                 <div className="flex items-center space-x-3 px-3 py-2">
                   <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                    <Icon name="User" size={20} color="var(--color-muted-foreground)" />
+                    <Icon
+                      name="User"
+                      size={20}
+                      color="var(--color-muted-foreground)"
+                    />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-foreground">{currentUser.name}</div>
-                    <div className="text-xs text-muted-foreground capitalize">{userRole}</div>
+                    <div className="text-sm font-medium text-foreground">
+                      {currentUser.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground capitalize">
+                      {userRole}
+                    </div>
                   </div>
                 </div>
                 <Button
