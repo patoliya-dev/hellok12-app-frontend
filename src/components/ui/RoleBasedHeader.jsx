@@ -42,14 +42,13 @@ const RoleBasedHeader = () => {
   const getNavigationItems = () => {
     const baseItems = {
       student: [
-        { label: "My Classes", path: "/student/dashboard", icon: "BookOpen" },
-        { label: "Schedule", path: "/booking-system", icon: "Calendar" },
-        {
-          label: "Progress",
-          path: "/student/progress",
-          icon: "TrendingUp",
-        },
-        { label: "Games", path: "/student/games", icon: "Gamepad2" },
+        { label: "Dashboard", path: "/student/dashboard", icon: "House" },
+        { label: "Find Teacher", path: "/teachers", icon: "Search" },
+        // { label: "Schedule", path: "/booking-system", icon: "Calendar" },
+        { label: "Lessons", path: "/student/lessons", icon: "Book" },
+        // { label: "Progress",  path: "/student/progress", icon: "TrendingUp" },
+        { label: "Practice", path: "/student/games", icon: "Gamepad2" },
+        { label: "Messages", path: "/student/messages", icon: "MessageCircle" },
       ],
       parent: [
         { label: "Dashboard", path: "/parent/dashboard", icon: "Home" },
@@ -120,7 +119,7 @@ const RoleBasedHeader = () => {
   const navigationItems = getNavigationItems();
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-card border-b border-border z-1200">
+    <header className="fixed top-0 left-0 right-0 bg-card border-b border-border z-50">
       <div className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Logo Section */}
         <div className="flex items-center space-x-3">

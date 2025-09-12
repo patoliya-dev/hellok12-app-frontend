@@ -12,6 +12,14 @@ export default {
         "auth-bg": "url('@/assets/auth/bg.png')", // custom class
       },
       colors: {
+        'brand-blue': '#2563EB',
+        'brand-gray': {
+          100: '#F9FAFB', // Light background
+          200: '#F3F4F6', // Tab background
+          500: '#6B7280', // Body text
+          600: '#4B5563', // Subheadings
+          800: '#1F2937', // Headings
+        },
         border: "var(--color-border)", // slate-200
         input: "var(--color-input)", // white
         ring: "var(--color-ring)", // blue-600

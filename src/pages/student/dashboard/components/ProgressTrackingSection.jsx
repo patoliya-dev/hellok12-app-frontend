@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import Icon from "../../../../components/AppIcon";
-import Button from "../../../../components/ui/Button";
+import { useNavigate } from 'react-router-dom';
 
 const ProgressTrackingSection = () => {
   const [progressData, setProgressData] = useState({});
   const [achievements, setAchievements] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Mock progress data
@@ -118,26 +119,14 @@ const ProgressTrackingSection = () => {
               Your Progress
             </h2>
           </div>
-          <div className="text-right">
+          <div className="text-right cursor-pointer" onClick={() => {
+            navigate('/student/progress-analytics');
+          }}>
             <div className="text-sm font-bold text-primary">View Details</div>
           </div>
         </div>
-
-        {/* XP Progress Bar */}
-        {/* <div className="mb-6">
-          <div className="flex justify-between text-sm mb-2">
-            <span className="text-muted-foreground">Progress to Level {progressData.currentLevel + 1}</span>
-            <span className="text-foreground">{  .xpToNextLevel} XP to go</span>
-          </div>
-          <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500"
-              style={{ width: `${getProgressPercentage()}%` }}
-            />
-          </div>
-        </div> */}
         <div className="text-center">
-          <div className="relative w-20 h-20 mx-auto mb-3">
+          <div className="relative z-10 w-20 h-20 mx-auto mb-3">
             <svg
               className="w-20 h-20 transform -rotate-90 z-1000"
               viewBox="0 0 36 36"

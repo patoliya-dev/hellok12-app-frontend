@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
+import { CourseIcon } from 'components/icons';
+import LessonDetailsModal from "./LessonDetailsModal";
 
 const UpcomingSessionsCard = () => {
   const [upcomingSessions, setUpcomingSessions] = useState([]);
@@ -35,7 +37,8 @@ const UpcomingSessionsCard = () => {
         type: "video-call",
         meetingLink: "https://meet.google.com/abc-defg-hij",
         status: "starting-soon",
-        room: "Virtual Room A",
+        courseName: "English 101",
+        // room: "Virtual Room A"
       },
       {
         id: 2,
@@ -50,7 +53,8 @@ const UpcomingSessionsCard = () => {
         type: "video-call",
         meetingLink: "https://meet.google.com/xyz-uvwx-yz",
         status: "scheduled",
-        room: "Virtual Room B",
+        courseName: "Spanish Basics",
+        // room: "Virtual Room B"
       },
       {
         id: 3,
@@ -65,8 +69,9 @@ const UpcomingSessionsCard = () => {
         type: "video-call",
         meetingLink: "https://meet.google.com/def-ghij-klm",
         status: "completed",
-        room: "Virtual Room C",
-      },
+        courseName: "Japanese Advanced",
+        // room: "Virtual Room C"
+      }
     ];
 
     setUpcomingSessions(mockSessions);
@@ -91,7 +96,7 @@ const UpcomingSessionsCard = () => {
   };
 
   const handleViewSchedule = () => {
-    navigate("/booking-system");
+    navigate("/student/lessons");
   };
 
   const handleSessionClick = (session) => {
@@ -130,9 +135,9 @@ const UpcomingSessionsCard = () => {
     <div className="bg-card rounded-lg border border-border p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-2">
-          <Icon name="Calendar" size={24} color="var(--color-primary)" />
+          <Icon name="CalendarClock" size={24} color="var(--color-primary)" />
           <h2 className="text-xl font-semibold text-foreground">
-            Upcoming Sessions
+            Upcoming Lessons
           </h2>
         </div>
         <Button
@@ -175,11 +180,8 @@ const UpcomingSessionsCard = () => {
           {upcomingSessions.slice(0, 3).map((session) => (
             <div
               key={session.id}
-              className={`p-4 rounded-lg border transition-micro ${
-                session.status === "starting-soon"
-                  ? "border-warning bg-warning/5"
-                  : "border-border bg-muted/30"
-              }`}
+              className={`p-4 rounded-lg border transition-micro ${session.status === 'starting-soon' ? 'border-warning bg-warning/5' : 'border-border bg-muted/30'
+                }`}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-3">
@@ -201,19 +203,14 @@ const UpcomingSessionsCard = () => {
                 </div>
 
                 <div className="text-right">
-                  <div
-                    className={`text-sm font-medium ${
-                      session.status === "starting-soon"
-                        ? "text-warning"
-                        : "text-primary"
-                    }`}
-                  >
+                  <div className={`text-sm font-medium ${session.status === 'starting-soon' ? 'text-warning' : 'text-primary'
+                    }`}>
                     {getTimeUntilSession(session.startTime)}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {session.startTime.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
+                      hour: '2-digit',
+                      minute: '2-digit'
                     })}
                   </div>
                 </div>
@@ -232,18 +229,12 @@ const UpcomingSessionsCard = () => {
                     </span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <Icon
-                      name="Video"
-                      size={14}
-                      color="var(--color-muted-foreground)"
-                    />
-                    <span className="text-muted-foreground">
-                      {session.room}
-                    </span>
+                    <CourseIcon selected={false} />
+                    <span className="text-muted-foreground">{session.courseName}</span>
                   </div>
                 </div>
 
-                {session.status === "starting-soon" && (
+                {session.status === 'starting-soon' && (
                   <div className="flex items-center space-x-1 text-warning">
                     <Icon name="AlertCircle" size={14} />
                     <span className="text-xs font-medium">Starting Soon</span>
@@ -293,6 +284,11 @@ const UpcomingSessionsCard = () => {
         </div>
       )}
       {/* Session Detail Modal */}
+      {/* The functional details modal */}
+      {/* {selectedSession && <LessonDetailsModal 
+        lesson={selectedSession} 
+        onClose={() => setSelectedSession(null)} 
+      />} */}
       {selectedSession && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -318,12 +314,7 @@ const UpcomingSessionsCard = () => {
                   <h3 className="text-lg font-medium text-foreground">
                     {selectedSession.subject}
                   </h3>
-
-                  <span
-                    className={`inline-block px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                      selectedSession?.status
-                    )}`}
-                  >
+                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(selectedSession?.status)}`}>
                     {selectedSession?.status}
                   </span>
                 </div>
@@ -487,31 +478,6 @@ const UpcomingSessionsCard = () => {
                   </div>
                 </div>
               )}
-
-              {/* Actions */}
-              <div className="flex items-center space-x-2 pt-4 border-t border-border">
-                {selectedSession?.status === "upcoming" &&
-                  selectedSession?.meetingLink && (
-                    <Button
-                      variant="default"
-                      iconName="Video"
-                      onClick={() => handleJoinSession(selectedSession)}
-                    >
-                      Join Session
-                    </Button>
-                  )}
-                <Button variant="outline" iconName="Edit">
-                  Edit Session
-                </Button>
-                <Button variant="outline" iconName="MessageCircle">
-                  Message Student
-                </Button>
-                {selectedSession?.status === "upcoming" && (
-                  <Button variant="destructive" iconName="X">
-                    Cancel Session
-                  </Button>
-                )}
-              </div>
             </div>
           </div>
         </div>

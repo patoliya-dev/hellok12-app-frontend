@@ -4,12 +4,8 @@ import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import NotificationCenter from "../../../components/ui/NotificationCenter";
 import UpcomingSessionsCard from "./components/UpcomingSessionsCard";
 import ProgressTrackingSection from "./components/ProgressTrackingSection";
-import QuickAccessTiles from "./components/QuickAccessTiles";
 import ScheduleWidget from "./components/ScheduleWidget";
-import RecentFeedbackCard from "./components/RecentFeedbackCard";
-import GamificationElements from "./components/OverallProgressCard";
 import MobileBottomNavigation from "./components/MobileBottomNavigation";
-import Icon from "../../../components/AppIcon";
 import Button from "../../../components/ui/Button";
 
 const StudentDashboard = () => {
@@ -95,7 +91,7 @@ const StudentDashboard = () => {
                   <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
                     {getGreeting()}, {studentData.name}! 👋
                   </h1>
-                  <p className="text-muted-foreground mb-4">{TodayDate()}</p>
+                  <div className="text-muted-foreground mb-4">{TodayDate()}</div>
                   <p className="text-muted-foreground mb-4">
                     Ready to continue your learning journey?
                   </p>
@@ -110,19 +106,10 @@ const StudentDashboard = () => {
             <div className="lg:col-span-8 space-y-8">
               {/* Upcoming Sessions */}
               <UpcomingSessionsCard />
-
-              {/* Quick Access Tiles */}
-              {/* <QuickAccessTiles /> */}
-
-              {/* Recent Feedback */}
-              {/* <RecentFeedbackCard /> */}
             </div>
 
             {/* Right Column */}
             <div className="lg:col-span-4 space-y-8">
-              {/* Booking Status */}
-              {/* <BookingStatusIndicator userRole="student" /> */}
-
               {/* Progress Tracking */}
               <ProgressTrackingSection />
 
@@ -135,23 +122,11 @@ const StudentDashboard = () => {
 
           {/* Mobile Layout */}
           <div className="lg:hidden space-y-6">
-            {/* Booking Status */}
-            {/* <BookingStatusIndicator userRole="student" /> */}
-
             {/* Upcoming Sessions */}
             <UpcomingSessionsCard />
 
-            {/* Quick Access Tiles */}
-            {/* <QuickAccessTiles /> */}
-
-            {/* Gamification Elements */}
-            <GamificationElements />
-
             {/* Schedule Widget */}
             <ScheduleWidget />
-
-            {/* Recent Feedback */}
-            {/* <RecentFeedbackCard /> */}
 
             {/* Progress Tracking */}
             <ProgressTrackingSection />
