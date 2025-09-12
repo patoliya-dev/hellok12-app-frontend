@@ -1,4 +1,9 @@
-import { createSlice, isPending, isFulfilled, isRejected } from '@reduxjs/toolkit';
+import {
+  createSlice,
+  isPending,
+  isFulfilled,
+  isRejected,
+} from "@reduxjs/toolkit";
 import {
   loginUser,
   signupUser,
@@ -8,7 +13,7 @@ import {
   forgotPassword,
   verifyResetCode,
   resetPassword,
-} from './authThunks';
+} from "./authThunks";
 
 import {
   setAccessToken,
@@ -16,7 +21,7 @@ import {
   getCurrentUser,
   getAccessToken,
   clearAuthStorage,
-} from '../../utils/storage';
+} from "../../utils/storage";
 
 // Define all thunks in an array for matchers
 const allThunks = [
@@ -34,19 +39,19 @@ const initialState = {
   user: getCurrentUser(),
   accessToken: getAccessToken(),
   requests: {
-    loginUser: { status: 'idle', error: null },
-    signupUser: { status: 'idle', error: null },
-    verifyEmail: { status: 'idle', error: null },
-    refreshToken: { status: 'idle', error: null },
-    logoutUser: { status: 'idle', error: null },
-    forgotPassword: { status: 'idle', error: null },
-    verifyResetCode: { status: 'idle', error: null },
-    resetPassword: { status: 'idle', error: null },
+    loginUser: { status: "idle", error: null },
+    signupUser: { status: "idle", error: null },
+    verifyEmail: { status: "idle", error: null },
+    refreshToken: { status: "idle", error: null },
+    logoutUser: { status: "idle", error: null },
+    forgotPassword: { status: "idle", error: null },
+    verifyResetCode: { status: "idle", error: null },
+    resetPassword: { status: "idle", error: null },
   },
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     logout: (state) => {
@@ -55,7 +60,7 @@ const authSlice = createSlice({
       clearAuthStorage();
       // reset all request states
       Object.keys(state.requests).forEach((key) => {
-        state.requests[key] = { status: 'idle', error: null };
+        state.requests[key] = { status: "idle", error: null };
       });
     },
     clearError: (state, action) => {
@@ -114,25 +119,29 @@ const authSlice = createSlice({
     // Generic matchers for all requests
     builder
       .addMatcher(isPending(...allThunks), (state, action) => {
-        const key = action.type.split('/')[1];
+        const key = action.type.split("/")[1];
         if (state.requests[key]) {
-          state.requests[key].status = 'loading';
+          state.requests[key].status = "loading";
           state.requests[key].error = null;
         }
       })
       .addMatcher(isFulfilled(...allThunks), (state, action) => {
-        const key = action.type.split('/')[1];
+        const key = action.type.split("/")[1];
         if (state.requests[key]) {
-          state.requests[key].status = 'succeeded';
+          state.requests[key].status = "succeeded";
           state.requests[key].error = null;
         }
       })
       .addMatcher(isRejected(...allThunks), (state, action) => {
-        const key = action.type.split('/')[1];
+        const key = action.type.split("/")[1];
         if (state.requests[key]) {
-          state.requests[key].status = 'failed';
+          state.requests[key].status = "failed";
           const payload = action.payload;
-          state.requests[key].error = payload?.error || payload || action.error?.message || 'Request failed';
+          state.requests[key].error =
+            payload?.error ||
+            payload ||
+            action.error?.message ||
+            "Request failed";
         }
       });
   },

@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Icon from "../AppIcon";
 import Button from "./Button";
 import logo from "../../assets/logo.svg";
+import { useDispatch } from "react-redux";
+import { logout } from "../../features/auth/authSlice";
 
 const RoleBasedHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,6 +19,7 @@ const RoleBasedHeader = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     // Determine user role based on current route
@@ -112,6 +115,7 @@ const RoleBasedHeader = () => {
   };
 
   const handleLogout = () => {
+    dispatch(logout());
     navigate("/login");
     setIsMenuOpen(false);
   };
