@@ -39,7 +39,7 @@ const MobileBottomNavigation = () => {
       id: "messages",
       label: "Messages",
       icon: "MessageCircle",
-      path: "/student/messages",
+      path: "/student/messaging-communication",
       badge: "3",
     },
   ];
