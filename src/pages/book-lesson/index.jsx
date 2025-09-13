@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import RoleBasedHeader from "../../components/ui/RoleBasedHeader";
 import CommonStepper from "./components/CommonStepper";
 import Breadcrumb from "../../components/ui/Breadcrumb";
@@ -51,7 +52,7 @@ const classData = {
   title: "Conversational English Mastery",
   description:
     "Improve your speaking confidence through engaging conversations about daily topics, current events, and personal interests. Perfect for intermediate to advanced learners.",
-  type: "1-on-1", // or "1-on-1"
+  type: "1-on-1", // or "Group"
   duration: 60,
   price: 45,
   teacher: {
@@ -73,9 +74,12 @@ const classData = {
   },
 };
 
-const BookLession = () => {
+const BookLesson = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [location, setLocation] = useState("");
+
+  const currentUser = useSelector((state) => state.auth.user);
 
   const handleNextStep = () => {
     if (currentStep < StepperStep.length) {
@@ -102,6 +106,10 @@ const BookLession = () => {
     else return `Confirm & Pay $${calculateTotal()}`;
   };
 
+  const handleLocationChange = (event) => {
+    setLocation(event.target.value);
+  };
+
   const getCurrentStepComponent = () => {
     switch (currentStep) {
       case 1:
@@ -116,6 +124,8 @@ const BookLession = () => {
                     students={mockStudents}
                     selectedStudent={selectedStudent}
                     onStudentSelect={handleStudentSelect}
+                    location={location}
+                    onLocationChange={handleLocationChange}
                   />
 
                   <BookingSummary
@@ -154,6 +164,8 @@ const BookLession = () => {
                 students={mockStudents}
                 selectedStudent={selectedStudent}
                 onStudentSelect={handleStudentSelect}
+                location={location}
+                onLocationChange={handleLocationChange}
               />
 
               <BookingSummary
@@ -237,4 +249,4 @@ const BookLession = () => {
   );
 };
 
-export default BookLession;
+export default BookLesson;

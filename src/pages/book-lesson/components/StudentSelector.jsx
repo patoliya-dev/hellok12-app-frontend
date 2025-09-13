@@ -1,8 +1,15 @@
 import React from "react";
 import Select from "../../../components/ui/Select";
 import Icon from "../../../components/AppIcon";
+import Input from "../../../components/ui/Input";
 
-const StudentSelector = ({ students, selectedStudent, onStudentSelect }) => {
+const StudentSelector = ({
+  students,
+  selectedStudent,
+  onStudentSelect,
+  location,
+  onLocationChange,
+}) => {
   const studentOptions = students?.map((student) => ({
     value: student?.id,
     label: student?.name,
@@ -78,9 +85,16 @@ const StudentSelector = ({ students, selectedStudent, onStudentSelect }) => {
 
         <div className="pb-4">
           <h3 className="font-medium text-foreground mb-4">Address</h3>
-          <p className="text-body2 text-[#9A9A9A] ml-2">
-            19 Washington Square N, New York, NY 10011, USA
-          </p>
+          <Input
+            // label="Email Address"
+            type="email"
+            placeholder="19 Washington Square N, New York, NY 10011, USA"
+            value={location}
+            onChange={(e) => onLocationChange(e)}
+            // error={fieldErrors.email}
+            required
+            // disabled={isLoading}
+          />
         </div>
 
         {/* Info Note */}
