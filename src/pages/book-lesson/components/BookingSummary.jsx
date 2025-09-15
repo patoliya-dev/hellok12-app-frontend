@@ -137,7 +137,7 @@ const BookingSummary = ({
         </div>
 
         {/* Total */}
-        <div className="border-t border-border pt-4">
+        <div className="border-y border-border py-4 !mt-4">
           <div className="flex justify-between items-center">
             <span className="text-lg font-semibold text-foreground">Total</span>
             <span className="text-xl font-bold text-primary">${total}</span>

@@ -7,8 +7,8 @@ const StudentSelector = ({
   students,
   selectedStudent,
   onStudentSelect,
-  location,
-  onLocationChange,
+  address,
+  onAddressChange,
 }) => {
   const studentOptions = students?.map((student) => ({
     value: student?.id,
@@ -89,8 +89,8 @@ const StudentSelector = ({
             // label="Email Address"
             type="email"
             placeholder="19 Washington Square N, New York, NY 10011, USA"
-            value={location}
-            onChange={(e) => onLocationChange(e)}
+            value={address}
+            onChange={(e) => onAddressChange(e)}
             // error={fieldErrors.email}
             required
             // disabled={isLoading}
