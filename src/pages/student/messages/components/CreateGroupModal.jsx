@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Image from "../../../../components/AppImage";
 import Icon from "../../../../components/AppIcon";
-import { Checkbox } from "../../../../components/ui/Checkbox";
 
 const mockData = [
   {
@@ -29,11 +28,12 @@ const mockData = [
   },
 ];
 
-const BookModal = ({ isOpen, onClose }) => {
+const CreateGroupModal = ({ isOpen, onClose }) => {
   const [groupName, setGroupName] = useState("");
   const [step, setStep] = useState(1);
   const [tempSelected, setTempSelected] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
+  const [error, setError] = useState("");
 
   if (!isOpen) return null;
 
@@ -54,6 +54,11 @@ const BookModal = ({ isOpen, onClose }) => {
   };
 
   const handleSumbit = () => {
+    if (!groupName.trim()) {
+      setError("Group name is required");
+      return;
+    }
+    setError("");
     setStep(3);
   };
 
@@ -67,6 +72,8 @@ const BookModal = ({ isOpen, onClose }) => {
               placeholder="Enter group name"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
+              required
+              error={error}
             />
 
             <div className="mt-6">
@@ -116,12 +123,14 @@ const BookModal = ({ isOpen, onClose }) => {
                     </h4>
                   </div>
 
-                  {/* Controlled checkbox */}
-                  <Checkbox
+                  {/* Normal checkbox */}
+                  <input
+                    type="checkbox"
                     checked={isChecked}
                     onChange={() =>
                       toggleTempMember({ name: data.name, image: data.image })
                     }
+                    className="h-6 w-6 rounded-full bg-[#E8E8E8] border-none cursor-pointer appearance-none  checked:bg-primary checked:border-primary checked:before:text-white checked:before:flex checked:before:items-center checked:before:justify-center outline-none focus:outline-none focus:ring-0"
                   />
                 </div>
               );
@@ -209,4 +218,4 @@ const BookModal = ({ isOpen, onClose }) => {
   );
 };
 
-export default BookModal;
+export default CreateGroupModal;

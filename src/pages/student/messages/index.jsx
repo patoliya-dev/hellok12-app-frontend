@@ -4,17 +4,16 @@ import ConversationList from "./components/ConversationList";
 import ChatArea from "./components/ChatArea";
 import ParticipantPanel from "./components/ParticipantPanel";
 import Icon from "../../../components/AppIcon";
-import MessageNotifications from "./components/MessageNotifications";
-import BookModal from "./components/BookModal";
+import CreateGroupModal from "./components/CreateGroupModal";
 import MobileBottomNavigation from "../dashboard/components/MobileBottomNavigation";
 
-const MessagingCommunication = () => {
+const Messages = () => {
   const [activeConversation, setActiveConversation] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showParticipants, setShowParticipants] = useState(false);
   const [messages, setMessages] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [createBookModal, setCreateBookModal] = useState(false);
+  const [isCreateGroupModal, setIsCreateGroupModal] = useState(false);
 
   // Mock current user
   const currentUser = {
@@ -320,50 +319,17 @@ const MessagingCommunication = () => {
     }, 3000);
   };
 
-  const handleMarkAsRead = (notificationId) => {
-    setNotifications((prev) =>
-      prev?.map((notif) =>
-        notif?.id === notificationId ? { ...notif, isRead: true } : notif
-      )
-    );
-  };
-
-  const handleMarkAllAsRead = () => {
-    setNotifications((prev) =>
-      prev?.map((notif) => ({ ...notif, isRead: true }))
-    );
-  };
-
-  const handleNotificationClick = (notification) => {
-    // Navigate to the conversation
-    const conversation = conversations?.find(
-      (conv) => conv?.id === notification?.conversationId
-    );
-    if (conversation) {
-      setActiveConversation(conversation);
-    }
-    handleMarkAsRead(notification?.id);
-  };
-
-  const handleBookCreate = () => {
-    setCreateBookModal(true);
+  const handleGroupCreate = () => {
+    setIsCreateGroupModal(true);
   };
 
   return (
     <div className="min-h-screen bg-background">
       <RoleBasedHeader />
 
-      {/* Message Notifications */}
-      {/* <MessageNotifications
-        notifications={notifications}
-        onMarkAsRead={handleMarkAsRead}
-        onMarkAllAsRead={handleMarkAllAsRead}
-        onNotificationClick={handleNotificationClick}
-      /> */}
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
-        <div className="flex h-[calc(100vh-4rem)] mt-10 border border-border">
+        <div className="flex h-[calc(100vh-9rem)] mt-10 border border-border">
           {/* Conversation List */}
           <div className="w-full lg:w-80 lg:flex-shrink-0">
             <ConversationList
@@ -372,7 +338,7 @@ const MessagingCommunication = () => {
               onConversationSelect={handleConversationSelect}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
-              onBookCreate={handleBookCreate}
+              onGroupCreate={handleGroupCreate}
             />
           </div>
 
@@ -426,14 +392,14 @@ const MessagingCommunication = () => {
         </div>
       )}
 
-      {createBookModal && (
-        <BookModal
-          isOpen={createBookModal}
-          onClose={() => setCreateBookModal(false)}
+      {isCreateGroupModal && (
+        <CreateGroupModal
+          isOpen={isCreateGroupModal}
+          onClose={() => setIsCreateGroupModal(false)}
         />
       )}
     </div>
   );
 };
 
-export default MessagingCommunication;
+export default Messages;

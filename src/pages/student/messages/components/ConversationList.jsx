@@ -12,7 +12,7 @@ const ConversationList = ({
   onConversationSelect,
   searchQuery,
   onSearchChange,
-  onBookCreate,
+  onGroupCreate,
 }) => {
   const [buttonType, setButtonType] = useState("all");
 
@@ -226,7 +226,7 @@ const ConversationList = ({
       <div className="p-4 border-t border-border flex flex-col items-center gap-6">
         <button
           className="w-52 border border-primary text-primary rounded-lg py-2 px-4 flex items-center justify-center space-x-2 hover:bg-primary/90 transition-colors duration-200"
-          onClick={onBookCreate}
+          onClick={onGroupCreate}
         >
           <Icon name="Users" size={16} />
           <span className="font-medium">New Group</span>

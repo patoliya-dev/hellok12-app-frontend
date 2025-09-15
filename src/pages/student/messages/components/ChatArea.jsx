@@ -185,13 +185,7 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon">
-              <Icon name="Phone" size={18} />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Icon name="Video" size={18} />
-            </Button>
+          <div className="">
             <Button variant="ghost" size="icon">
               <Icon name="MoreVertical" size={18} />
             </Button>

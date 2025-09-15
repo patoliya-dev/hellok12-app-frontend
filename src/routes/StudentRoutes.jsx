@@ -4,7 +4,7 @@ import BookLession from "../pages/book-lession";
 import NotFound from "../pages/NotFound";
 import ProgressAnalytics from "../pages/student/progress-analytics";
 import Lessons from "../pages/student/lessons";
-import MessagingCommunication from "../pages/student/messages";
+import Messages from "../pages/student/messages";
 
 const StudentRoutes = () => {
   return (
@@ -13,10 +13,7 @@ const StudentRoutes = () => {
       <Route path="/book-lession/:id" element={<BookLession />} />
       <Route path="/progress-analytics" element={<ProgressAnalytics />} />
       <Route path="/lessons" element={<Lessons />} />
-      <Route
-        path="/messaging-communication"
-        element={<MessagingCommunication />}
-      />
+      <Route path="/messages" element={<Messages />} />
 
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />

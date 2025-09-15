@@ -50,7 +50,7 @@ const RoleBasedHeader = () => {
         { label: "Practice", path: "/student/games", icon: "Gamepad2" },
         {
           label: "Messages",
-          path: "/student/messaging-communication",
+          path: "/student/messages",
           icon: "MessageCircle",
         },
       ],
