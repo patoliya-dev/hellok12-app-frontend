@@ -1,7 +1,7 @@
 import React from "react";
 import Icon from "../../../components/AppIcon";
 
-const ClassDetails = ({ classData }) => {
+const ClassDetails = ({ classData, type = "enroll" }) => {
   const formatDuration = (minutes) => {
     if (minutes < 60) {
       return `${minutes} min`;
@@ -81,13 +81,15 @@ const ClassDetails = ({ classData }) => {
             </p>
           </div>
 
-          <div className="space-y-1">
-            <div className="flex items-center text-text-secondary text-sm">
-              <Icon name="DollarSign" size={16} className="mr-2" />
-              Price
+          {type === "enroll" && (
+            <div className="space-y-1">
+              <div className="flex items-center text-text-secondary text-sm">
+                <Icon name="DollarSign" size={16} className="mr-2" />
+                Price
+              </div>
+              <p className="font-medium text-foreground">${classData?.price}</p>
             </div>
-            <p className="font-medium text-foreground">${classData?.price}</p>
-          </div>
+          )}
 
           {classData?.type === "Group" && (
             <>
@@ -112,6 +114,15 @@ const ClassDetails = ({ classData }) => {
                 </p>
               </div>
             </>
+          )}
+
+          {type === "trial" && (
+            <div className="space-y-1">
+              <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium bg-[#DDF2FF] text-[#009DFF]">
+                <Icon name={"Gift"} size={16} className="mr-1" />
+                Trial Lessons
+              </span>
+            </div>
           )}
 
           {classData?.type === "1-on-1" && (
