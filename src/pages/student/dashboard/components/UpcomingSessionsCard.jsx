@@ -38,7 +38,9 @@ const UpcomingSessionsCard = () => {
         meetingLink: "https://meet.google.com/abc-defg-hij",
         status: "starting-soon",
         courseName: "English 101",
-        // room: "Virtual Room A"
+        tags: ["1-on-1", "Online Course"],
+        description: "A deep dive into Shakespeare's sonnets and their impact on modern literature.",
+        address: "19 Washington Square N, New York, NY 10011, USA"
       },
       {
         id: 2,
@@ -54,7 +56,8 @@ const UpcomingSessionsCard = () => {
         meetingLink: "https://meet.google.com/xyz-uvwx-yz",
         status: "scheduled",
         courseName: "Spanish Basics",
-        // room: "Virtual Room B"
+        tags: ["Trial Lessons", "1-on-1"],
+        description: "Practice conversational Spanish with a native speaker. Focus on pronunciation and common phrases.",
       },
       {
         id: 3,
@@ -68,9 +71,10 @@ const UpcomingSessionsCard = () => {
         duration: 90,
         type: "video-call",
         meetingLink: "https://meet.google.com/def-ghij-klm",
-        status: "completed",
+        status: "scheduled",
         courseName: "Japanese Advanced",
-        // room: "Virtual Room C"
+        tags: ["Curriculum-Aligned Games", "Online Course"],
+        description: "Learn advanced Kanji and writing techniques through interactive exercises.",
       }
     ];
 
@@ -101,34 +105,6 @@ const UpcomingSessionsCard = () => {
 
   const handleSessionClick = (session) => {
     setSelectedSession(session);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "upcoming":
-        return "bg-primary/10 text-primary border-primary/20";
-      case "completed":
-        return "bg-success/10 text-success border-success/20";
-      case "cancelled":
-        return "bg-error/10 text-error border-error/20";
-      default:
-        return "bg-muted text-muted-foreground border-border";
-    }
-  };
-
-  const formatDateTime = (date, time) => {
-    const dateObj = new Date(`${date}T${time}`);
-    return {
-      date: dateObj?.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
-      time: dateObj?.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      }),
-    };
   };
 
   return (
@@ -210,7 +186,8 @@ const UpcomingSessionsCard = () => {
                   <div className="text-xs text-muted-foreground">
                     {session.startTime.toLocaleTimeString([], {
                       hour: '2-digit',
-                      minute: '2-digit'
+                      minute: '2-digit',
+                      hour12: true
                     })}
                   </div>
                 </div>
@@ -255,19 +232,17 @@ const UpcomingSessionsCard = () => {
                   >
                     Join Now
                   </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    iconName="Calendar"
-                    iconPosition="left"
-                    iconSize={16}
-                    onClick={() => handleSessionClick(session)}
-                    className="flex-1"
-                  >
-                    View Details
-                  </Button>
-                )}
+                ) : (<div className="flex-1"></div>)}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  iconName="ReceiptText"
+                  iconPosition="left"
+                  iconSize={16}
+                  onClick={() => handleSessionClick(session)}
+                >
+                  View Details
+                </Button>
 
                 <Button
                   variant="ghost"
@@ -283,204 +258,13 @@ const UpcomingSessionsCard = () => {
           ))}
         </div>
       )}
+
       {/* Session Detail Modal */}
-      {/* The functional details modal */}
-      {/* {selectedSession && <LessonDetailsModal 
-        lesson={selectedSession} 
-        onClose={() => setSelectedSession(null)} 
-      />} */}
       {selectedSession && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-border">
-              <div>
-                {/* <h2 className="text-xl font-semibold text-foreground">{selectedSession?.student}</h2> */}
-                <p className="text-muted-foreground">Lesson Details</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                iconName="X"
-                onClick={() => setSelectedSession(null)}
-              />
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
-              {/* Session Details */}
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-medium text-foreground">
-                    {selectedSession.subject}
-                  </h3>
-                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(selectedSession?.status)}`}>
-                    {selectedSession?.status}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-3 p-[15px] px-[20px] bg-gray-100 rounded-lg sm:space-x-4 sm:p-5 sm:px-6">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-muted">
-                    <Image
-                      src={selectedSession.teacher.avatar}
-                      alt={selectedSession.teacher.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground text-sm sm:text-base">
-                      {selectedSession.subject}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground">
-                      {selectedSession.teacher.name}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      Date & Time
-                    </label>
-                    <p className="text-sm text-muted-foreground">
-                      {
-                        formatDateTime(
-                          selectedSession?.date,
-                          selectedSession?.time
-                        )?.date
-                      }{" "}
-                      at{" "}
-                      {
-                        formatDateTime(
-                          selectedSession?.date,
-                          selectedSession?.time
-                        )?.time
-                      }
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      Duration
-                    </label>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedSession?.duration} minutes
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      Type
-                    </label>
-                    <p className="text-sm text-muted-foreground capitalize">
-                      {selectedSession?.type}
-                    </p>
-                  </div>
-                  {/* <div>
-                    <label className="text-sm font-medium text-foreground">Status</label>
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(selectedSession?.status)}`}>
-                      {selectedSession?.status}
-                    </span>
-                  </div> */}
-                </div>
-              </div>
-
-              {/* Materials */}
-              {selectedSession?.materials?.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-medium text-foreground mb-4">
-                    Session Materials
-                  </h3>
-                  <div className="space-y-2">
-                    {selectedSession?.materials?.map((material, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <Icon
-                            name="FileText"
-                            size={16}
-                            className="text-muted-foreground"
-                          />
-                          <span className="text-sm text-foreground">
-                            {material}
-                          </span>
-                        </div>
-                        <Button variant="ghost" size="xs" iconName="Download">
-                          Download
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    iconName="Share"
-                    className="mt-3"
-                    onClick={() => handleShareMaterials(selectedSession?.id)}
-                  >
-                    Share Additional Materials
-                  </Button>
-                </div>
-              )}
-
-              {/* Attendance & Feedback */}
-              {selectedSession?.status === "completed" && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-medium text-foreground mb-4">
-                      Session Summary
-                    </h3>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium text-foreground">
-                          Attendance
-                        </label>
-                        <p className="text-sm text-muted-foreground capitalize">
-                          {selectedSession?.attendance}
-                        </p>
-                      </div>
-
-                      {selectedSession?.feedback && (
-                        <div>
-                          <label className="text-sm font-medium text-foreground">
-                            Feedback
-                          </label>
-                          <p className="text-sm text-muted-foreground">
-                            {selectedSession?.feedback}
-                          </p>
-                        </div>
-                      )}
-
-                      {selectedSession?.rating && (
-                        <div>
-                          <label className="text-sm font-medium text-foreground">
-                            Rating
-                          </label>
-                          <div className="flex items-center space-x-1 mt-1">
-                            {Array.from({ length: 5 }, (_, i) => (
-                              <Icon
-                                key={i}
-                                name="Star"
-                                size={16}
-                                className={
-                                  i < selectedSession?.rating
-                                    ? "text-accent fill-current"
-                                    : "text-muted"
-                                }
-                              />
-                            ))}
-                            <span className="text-sm text-muted-foreground ml-2">
-                              ({selectedSession?.rating}/5)
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <LessonDetailsModal
+          lesson={selectedSession}
+          onClose={() => setSelectedSession(null)}
+        />
       )}
     </div>
   );

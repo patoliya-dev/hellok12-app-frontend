@@ -45,6 +45,10 @@
     --color-success: #10b981; /* emerald-500 */
     --color-success-foreground: #ffffff; /* white */
 
+    /* Sky Colors */
+    --color-sky: #0ea5e9; /* sky-500 */
+    --color-sky-foreground: #ffffff; /* white */
+
     /* Warning Colors */
     --color-warning: #f59e0b; /* amber-500 */
     --color-warning-foreground: #ffffff; /* white */

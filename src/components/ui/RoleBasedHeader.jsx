@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import Icon from "../AppIcon";
 import Button from "./Button";
 import logo from "../../assets/logo.svg";
-import { useDispatch } from "react-redux";
+import { selectAuthUser } from "features/auth/authSelectors";
 import { logout } from "../../features/auth/authSlice";
 
 const RoleBasedHeader = () => {
@@ -17,6 +18,7 @@ const RoleBasedHeader = () => {
     // school: 'Riverside Elementary'
   });
 
+  const authUser = useSelector(selectAuthUser);
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -145,7 +147,7 @@ const RoleBasedHeader = () => {
               />
               {userRole !== "guest" && (
                 <span className="text-xs text-muted-foreground">
-                  {currentUser.school}
+                  {authUser.schoolName}
                 </span>
               )}
             </div>
@@ -218,7 +220,7 @@ const RoleBasedHeader = () => {
                     <Icon name="User" size={16} color="var(--color-primary)" />
                   </div>
                   <span className="hidden md:block text-sm font-medium text-foreground">
-                    {currentUser.name}
+                    {authUser.name}
                   </span>
                   <Icon name="ChevronDown" size={14} />
                 </button>
@@ -228,7 +230,7 @@ const RoleBasedHeader = () => {
                   <div className="absolute right-0 mt-2 w-56 bg-popover border border-border rounded-lg shadow-elevated z-50">
                     <div className="px-4 py-3 border-b border-border">
                       <p className="text-sm font-medium text-foreground">
-                        {currentUser.name}
+                        {authUser.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {getRoleDisplayName(userRole)}
@@ -307,7 +309,7 @@ const RoleBasedHeader = () => {
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-medium text-foreground">
-                      {currentUser.name}
+                      {authUser.name}
                     </div>
                     <div className="text-xs text-muted-foreground capitalize">
                       {userRole}

@@ -5,6 +5,7 @@ import NotFound from "../pages/NotFound";
 import ProgressAnalytics from "../pages/student/progress-analytics";
 import Lessons from "../pages/student/lessons";
 import Messages from "../pages/student/messages";
+import LessonsCalendar from "../pages/student/lesson-calendar";
 
 const StudentRoutes = () => {
   return (
@@ -14,6 +15,7 @@ const StudentRoutes = () => {
       <Route path="/progress-analytics" element={<ProgressAnalytics />} />
       <Route path="/lessons" element={<Lessons />} />
       <Route path="/messages" element={<Messages />} />
+      <Route path="/lesson-calendar" element={<LessonsCalendar />} />
 
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />

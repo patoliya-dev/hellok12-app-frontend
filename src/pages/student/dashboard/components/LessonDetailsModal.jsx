@@ -1,144 +1,165 @@
 import React from 'react';
-import Image from "../../../../components/AppImage";
-import Icon from "../../../../components/AppIcon";
-import Button from "../../../../components/ui/Button";
-import { CourseIcon } from 'components/icons';
+import {
+  X, MessageSquare, Star, Calendar, Clock, Gamepad2, FlaskConical, User, Video, AlertCircle,
+  Gift,
+  MapPin,
+} from 'lucide-react';
+import Badge from '../../../../components/ui/Badge'; // Adjusted path to your Badge component
+import { VideoIcon } from 'components/icons';
 
-const SessionCard = ({ session, getTimeUntilSession, onViewDetails }) => {
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "starting-soon":
-        return "text-warning";
-      case "scheduled":
-        return "text-primary";
-      case "completed":
-        return "text-success";
-      case "cancelled":
-        return "text-error";
-      default:
-        return "text-muted-foreground";
-    }
+// Helper to format date and time as required by the design
+const formatDate = (date) => {
+  if (!date) return { fullDate: '', time: '' };
+  return {
+    fullDate: new Date(date).toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    }),
+    time: new Date(date).toLocaleTimeString('en-US', {
+      hour: 'numeric', minute: '2-digit', hour12: true,
+    }),
   };
+};
 
-  const getCardBgColor = (status) => {
-    switch (status) {
-      case "starting-soon":
-        return "border-warning bg-warning/5";
-      default:
-        return "border-border bg-muted/30";
-    }
-  };
+// Map tag names to icons and colors for the Badge component
+const tagDetails = {
+  'Curriculum-Aligned Games': { icon: <Gamepad2 size={16} />, color: 'orange' },
+  'Trial Lessons': { icon: <Gift size={16} />, color: 'sky' },
+  '1-on-1': { icon: <User size={16} />, color: 'blue' }, // Assuming you add 'purple' to your Badge colors
+  'Online Course': { icon: <VideoIcon size={14} className="w-[12px] h-[10px]" selected={true} />, color: 'green' },
 
-  const handleJoinSession = (session) => {
-    if (session.meetingLink) {
-      // In a real app, this would redirect to the meeting link
-      alert(`Joining session for: ${session.subject}`);
-    }
-  };
+};
+
+const statusDetails = {
+  'starting-soon': { color: 'orange', icon: <AlertCircle size={14} />, text: 'Starting Soon' },
+  'scheduled': { color: 'blue', icon: <Calendar size={14} />, text: 'Scheduled' },
+  'completed': { color: 'green', text: 'Completed' },
+  'pending': { color: 'sky', text: 'Pending' },
+  'cancelled': { color: 'error', text: 'Cancelled' }
+}
+
+const LessonDetailsModal = ({ lesson, onClose }) => {
+  if (!lesson) {
+    return null;
+  }
+
+  const { fullDate, time } = formatDate(lesson.startTime);
+  const statusInfo = statusDetails[lesson.status] || statusDetails['pending'];
 
   return (
-    <div
-      key={session.id}
-      className={`p-4 rounded-lg border transition-micro ${getCardBgColor(session.status)}`}
-    >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-full overflow-hidden bg-muted">
-            <Image
-              src={session.teacher.avatar}
-              alt={session.teacher.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div>
-            <h3 className="font-medium text-foreground">
-              {session.subject}
+    // Modal overlay
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 font-sans">
+      <div className="w-full max-w-2xl rounded-2xl bg-white p-6 sm:p-8 shadow-modal animate-in fade-in-0 zoom-in-95">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-brand-gray-800">
+            Lessons Details
+          </h2>
+          <button className="text-brand-gray-500 hover:text-brand-gray-800" onClick={onClose}>
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="mt-6 border-t border-gray-200 pt-6">
+          {/* Section Title: Subject */}
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-brand-gray-800">
+              {lesson.subject}
             </h3>
-            <p className="text-sm text-muted-foreground">
-              {session.teacher.name}
-            </p>
+            <Badge text={statusInfo.text} color={statusInfo.color} icon={statusInfo.icon} />
           </div>
-        </div>
 
-        <div className="text-right">
-          <div className={`text-sm font-medium ${getStatusColor(session.status)}`}>
-            {getTimeUntilSession(session.startTime)}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {session.startTime.toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between text-sm mb-3">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-1">
-            <Icon
-              name="Clock"
-              size={14}
-              color="var(--color-muted-foreground)"
+          {/* Tutor Information Card */}
+          <div className="mt-4 flex items-center gap-4 rounded-lg bg-brand-gray-100 p-4">
+            <img
+              src={lesson.teacher.avatar}
+              alt={lesson.teacher.name}
+              className="h-16 w-16 rounded-full object-cover"
             />
-            <span className="text-muted-foreground">
-              {session.duration} min
-            </span>
+            <div className="flex-grow">
+              <h4 className="text-lg font-bold text-brand-gray-800">
+                {lesson.teacher.name}
+              </h4>
+              <div className="my-1 flex items-center">
+                <div className="flex text-yellow-400">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={20} fill="currentColor" />
+                  ))}
+                </div>
+                <span className="ml-2 text-sm text-brand-gray-600">(5.0)</span>
+              </div>
+              <p className="text-sm text-brand-gray-500">{lesson.courseName}</p>
+            </div>
+            <button className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-brand-gray-600 hover:bg-gray-200">
+              <MessageSquare size={18} />
+              <span>Message</span>
+            </button>
           </div>
-          <div className="flex items-center space-x-1">
-            <CourseIcon selected={false} />
-            <span className="text-muted-foreground">{session.courseName}</span>
+
+          {/* Date, Duration, and Time Section */}
+          <div className="mt-6 grid grid-cols-1 gap-y-4 sm:grid-cols-2 sm:gap-x-6">
+            <div className="flex items-start gap-3">
+              <Calendar className="mt-1 h-5 w-5 text-brand-gray-500" />
+              <div>
+                <p className="text-sm text-brand-gray-500">Date</p>
+                <p className="font-semibold text-brand-gray-800">{fullDate}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              {lesson.address && (<>
+                <MapPin className="mt-1 h-5 w-5 text-brand-gray-500" />
+                <div>
+                  <p className="text-sm text-brand-gray-500">Location</p>
+                  <p className="font-semibold text-brand-gray-800">{lesson.address}</p>
+                </div>
+              </>
+              )}
+            </div>
+            <div className="flex items-start gap-3">
+              <Clock className="mt-1 h-5 w-5 text-brand-gray-500" />
+              <div>
+                <p className="text-sm text-brand-gray-500">Duration</p>
+                <p className="font-semibold text-brand-gray-800">{lesson.duration} min</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3"></div>
+            <div className="flex items-start gap-3">
+              <Clock className="mt-1 h-5 w-5 text-brand-gray-500" />
+              <div>
+                <p className="text-sm text-brand-gray-500">Time</p>
+                <p className="font-semibold text-brand-gray-800">{time}</p>
+              </div>
+            </div>
           </div>
+
+          {/* Tags Section */}
+          {lesson.tags && lesson.tags.length > 0 && (
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              {lesson.tags.map((tag) => (
+                <Badge
+                  key={tag}
+                  text={tag}
+                  color={tagDetails[tag]?.color || 'sky'}
+                  icon={tagDetails[tag]?.icon}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Lessons Description Section */}
+          {lesson.description && (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-brand-gray-800">
+                Lessons Description
+              </h3>
+              <p className="mt-2 text-base text-brand-gray-500">
+                {lesson.description}
+              </p>
+            </div>
+          )}
         </div>
-
-        {session.status === 'starting-soon' && (
-          <div className="flex items-center space-x-1 text-warning">
-            <Icon name="AlertCircle" size={14} />
-            <span className="text-xs font-medium">Starting Soon</span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex space-x-2">
-        {session.status === "starting-soon" ? (
-          <Button
-            variant="default"
-            size="sm"
-            iconName="Video"
-            iconPosition="left"
-            iconSize={16}
-            onClick={() => handleJoinSession(session)}
-            className="flex-1"
-          >
-            Join Now
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            iconName="Calendar"
-            iconPosition="left"
-            iconSize={16}
-            onClick={() => onViewDetails(session)}
-            className="flex-1"
-          >
-            View Details
-          </Button>
-        )}
-
-        <Button
-          variant="ghost"
-          size="sm"
-          iconName="MessageCircle"
-          iconPosition="left"
-          iconSize={16}
-        >
-          Message
-        </Button>
       </div>
     </div>
   );
 };
 
-export default SessionCard;
+export default LessonDetailsModal;

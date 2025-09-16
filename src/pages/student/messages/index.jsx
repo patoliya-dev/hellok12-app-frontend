@@ -328,7 +328,7 @@ const Messages = () => {
       <RoleBasedHeader />
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
         <div className="flex h-[calc(100vh-9rem)] mt-10 border border-border">
           {/* Conversation List */}
           <div className="w-full lg:w-80 lg:flex-shrink-0">

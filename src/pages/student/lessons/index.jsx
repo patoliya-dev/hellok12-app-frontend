@@ -20,7 +20,7 @@ const LessonsPage = () => {
       <RoleBasedHeader />
       <main className="pt-16 pb-20 lg:pb-8">
 
-        <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
           <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
               <h1 className="text-3xl font-bold text-brand-gray-800">Lessons</h1>
