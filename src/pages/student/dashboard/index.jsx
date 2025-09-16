@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import NotificationCenter from "../../../components/ui/NotificationCenter";
 import UpcomingSessionsCard from "./components/UpcomingSessionsCard";
@@ -7,12 +8,13 @@ import ProgressTrackingSection from "./components/ProgressTrackingSection";
 import ScheduleWidget from "./components/ScheduleWidget";
 import MobileBottomNavigation from "./components/MobileBottomNavigation";
 import Button from "../../../components/ui/Button";
+import { selectAuthUser } from "features/auth/authSelectors";
 
 const StudentDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [studentData, setStudentData] = useState({});
   const navigate = useNavigate();
+  const authUser = useSelector(selectAuthUser);
 
   useEffect(() => {
     // Update current time every minute
@@ -21,24 +23,6 @@ const StudentDashboard = () => {
     }, 60000);
 
     return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    // Mock student data
-    const mockStudentData = {
-      name: "Alex Johnson",
-      grade: "5th Grade",
-      school: "Riverside Elementary",
-      avatar: "/assets/images/student-avatar.jpg",
-      currentLevel: 12,
-      xpPoints: 2450,
-      learningStreak: 7,
-      todaySessions: 2,
-      weeklyGoal: 5,
-      weeklyCompleted: 3,
-    };
-
-    setStudentData(mockStudentData);
   }, []);
 
   const TodayDate = () => {
@@ -82,14 +66,14 @@ const StudentDashboard = () => {
 
       {/* Main Content */}
       <main className="pt-16 pb-20 lg:pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           {/* Welcome Section */}
           <div className="my-8">
             <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6 border border-primary/20">
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                    {getGreeting()}, {studentData.name}! 👋
+                    {getGreeting()}, <span className="capitalize">{authUser.name}</span>! 👋
                   </h1>
                   <div className="text-muted-foreground mb-4">{TodayDate()}</div>
                   <p className="text-muted-foreground mb-4">

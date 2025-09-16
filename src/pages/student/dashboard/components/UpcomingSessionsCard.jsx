@@ -38,7 +38,9 @@ const UpcomingSessionsCard = () => {
         meetingLink: "https://meet.google.com/abc-defg-hij",
         status: "starting-soon",
         courseName: "English 101",
-        // room: "Virtual Room A"
+        tags: ["1-on-1", "Online Course"],
+        description: "A deep dive into Shakespeare's sonnets and their impact on modern literature.",
+        address: "19 Washington Square N, New York, NY 10011, USA"
       },
       {
         id: 2,
@@ -54,7 +56,8 @@ const UpcomingSessionsCard = () => {
         meetingLink: "https://meet.google.com/xyz-uvwx-yz",
         status: "scheduled",
         courseName: "Spanish Basics",
-        // room: "Virtual Room B"
+        tags: ["Trial Lessons", "1-on-1"],
+        description: "Practice conversational Spanish with a native speaker. Focus on pronunciation and common phrases.",
       },
       {
         id: 3,
@@ -68,9 +71,10 @@ const UpcomingSessionsCard = () => {
         duration: 90,
         type: "video-call",
         meetingLink: "https://meet.google.com/def-ghij-klm",
-        status: "completed",
+        status: "scheduled",
         courseName: "Japanese Advanced",
-        // room: "Virtual Room C"
+        tags: ["Curriculum-Aligned Games", "Online Course"],
+        description: "Learn advanced Kanji and writing techniques through interactive exercises.",
       }
     ];
 
@@ -101,34 +105,6 @@ const UpcomingSessionsCard = () => {
 
   const handleSessionClick = (session) => {
     setSelectedSession(session);
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "upcoming":
-        return "bg-primary/10 text-primary border-primary/20";
-      case "completed":
-        return "bg-success/10 text-success border-success/20";
-      case "cancelled":
-        return "bg-error/10 text-error border-error/20";
-      default:
-        return "bg-muted text-muted-foreground border-border";
-    }
-  };
-
-  const formatDateTime = (date, time) => {
-    const dateObj = new Date(`${date}T${time}`);
-    return {
-      date: dateObj?.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
-      time: dateObj?.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      }),
-    };
   };
 
   return (
@@ -210,7 +186,8 @@ const UpcomingSessionsCard = () => {
                   <div className="text-xs text-muted-foreground">
                     {session.startTime.toLocaleTimeString([], {
                       hour: '2-digit',
-                      minute: '2-digit'
+                      minute: '2-digit',
+                      hour12: true
                     })}
                   </div>
                 </div>
@@ -255,19 +232,29 @@ const UpcomingSessionsCard = () => {
                   >
                     Join Now
                   </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    iconName="Calendar"
-                    iconPosition="left"
-                    iconSize={16}
-                    onClick={() => handleSessionClick(session)}
-                    className="flex-1"
-                  >
-                    View Details
-                  </Button>
+                ) : (<div className="flex-1"></div>
+                  // <Button
+                  //   variant="outline"
+                  //   size="sm"
+                  //   iconName="Calendar"
+                  //   iconPosition="left"
+                  //   iconSize={16}
+                  //   onClick={() => handleSessionClick(session)}
+                  //   className="flex-1"
+                  // >
+                  //   View Details
+                  // </Button>
                 )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  iconName="ReceiptText"
+                  iconPosition="left"
+                  iconSize={16}
+                  onClick={() => handleSessionClick(session)}
+                >
+                  View Details
+                </Button>
 
                 <Button
                   variant="ghost"
@@ -289,13 +276,19 @@ const UpcomingSessionsCard = () => {
         lesson={selectedSession} 
         onClose={() => setSelectedSession(null)} 
       />} */}
+      {/* RENDER THE MODAL HERE */}
       {selectedSession && (
+        <LessonDetailsModal
+          lesson={selectedSession}
+          onClose={() => setSelectedSession(null)}
+        />
+      )}
+      {/* {selectedSession && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-border">
+          <div className="bg-card rounded-lg border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto"> */}
+      {/* Modal Header */}
+      {/* <div className="flex items-center justify-between p-6 border-b border-border">
               <div>
-                {/* <h2 className="text-xl font-semibold text-foreground">{selectedSession?.student}</h2> */}
                 <p className="text-muted-foreground">Lesson Details</p>
               </div>
               <Button
@@ -304,12 +297,12 @@ const UpcomingSessionsCard = () => {
                 iconName="X"
                 onClick={() => setSelectedSession(null)}
               />
-            </div>
+            </div> */}
 
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
-              {/* Session Details */}
-              <div>
+      {/* Modal Content */}
+      {/* <div className="p-6 space-y-6"> */}
+      {/* Session Details */}
+      {/* <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-medium text-foreground">
                     {selectedSession.subject}
@@ -372,18 +365,12 @@ const UpcomingSessionsCard = () => {
                     <p className="text-sm text-muted-foreground capitalize">
                       {selectedSession?.type}
                     </p>
-                  </div>
-                  {/* <div>
-                    <label className="text-sm font-medium text-foreground">Status</label>
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(selectedSession?.status)}`}>
-                      {selectedSession?.status}
-                    </span>
-                  </div> */}
+                  </div>                  
                 </div>
-              </div>
+              </div> */}
 
-              {/* Materials */}
-              {selectedSession?.materials?.length > 0 && (
+      {/* Materials */}
+      {/* {selectedSession?.materials?.length > 0 && (
                 <div>
                   <h3 className="text-lg font-medium text-foreground mb-4">
                     Session Materials
@@ -420,10 +407,10 @@ const UpcomingSessionsCard = () => {
                     Share Additional Materials
                   </Button>
                 </div>
-              )}
+              )} */}
 
-              {/* Attendance & Feedback */}
-              {selectedSession?.status === "completed" && (
+      {/* Attendance & Feedback */}
+      {/* {selectedSession?.status === "completed" && (
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-lg font-medium text-foreground mb-4">
@@ -477,11 +464,11 @@ const UpcomingSessionsCard = () => {
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
+              )} */}
+      {/* </div> */}
+      {/* </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

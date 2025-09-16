@@ -31,7 +31,7 @@ const ProgressAnalytics = () => {
       <RoleBasedHeader />
       <main className="pt-16 pb-20 lg:pb-8">
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="text-body2 text-muted-foreground my-8">
             Dashboard &gt; Your Progress
           </nav>

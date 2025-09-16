@@ -9,7 +9,7 @@ const colorClasses = {
 
 const Badge = ({ text, color, icon }) => {
   return (
-    <span className={`flex px-3 py-1.5 text-xs font-medium rounded-full align-items-center ${colorClasses[color]}`}>
+    <span className={`flex px-3 py-1.5 text-xs font-medium rounded-full items-center ${colorClasses[color]}`}>
       <span className='mr-1'>{icon}</span> {text}
     </span>
   );

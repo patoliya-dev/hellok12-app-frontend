@@ -45,6 +45,10 @@ export default {
           DEFAULT: "var(--color-accent)", // amber-500
           foreground: "var(--color-accent-foreground)", // white
         },
+        sky: {
+          DEFAULT: "var(--color-sky)", // sky-500
+          foreground: "var(--color-sky-foreground)", // white
+        },
         popover: {
           DEFAULT: "var(--color-popover)", // white
           foreground: "var(--color-popover-foreground)", // slate-800
