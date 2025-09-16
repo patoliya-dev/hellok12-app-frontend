@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import RoleBasedHeader from "../../components/ui/RoleBasedHeader";
 import BookingSteps from "./components/BookingSteps";
 import Breadcrumb from "../../components/ui/Breadcrumb";
@@ -10,21 +11,18 @@ import Icon from "../../components/AppIcon";
 import Button from "../../components/ui/Button";
 import PaymentMethodSelector from "./components/PaymentMethodSelector";
 import BookingConfirmation from "./components/BookingConfirmation";
-import { Link } from "react-router-dom";
 
-const StepperStep = [
-  {
-    id: 1,
-    title: "Student Info",
-  },
-  {
-    id: 2,
-    title: "Payment",
-  },
-  {
-    id: 3,
-    title: "Confirm",
-  },
+// Steps for enrollment
+const stepsForEntrollment = [
+  { id: 1, title: "Student Info", icon: "User" },
+  { id: 2, title: "Payment", icon: "CreditCard" },
+  { id: 3, title: "Confirm", icon: "CheckCircle" },
+];
+
+// Steps for trial
+const stepsForTrial = [
+  { id: 1, title: "Student Info", icon: "User" },
+  { id: 2, title: "Confirm", icon: "CheckCircle" },
 ];
 
 const breadCrumbData = [
@@ -102,16 +100,28 @@ const savedCards = [
 ];
 
 const BookLesson = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams(); // enroll && trial
+  const action = searchParams.get("action");
+
+  // ✅ Validate both path param and query param
+  if (!["enroll", "trial"].includes(action)) {
+    return <Navigate to="/404" replace />; // custom 404 page
+  }
+
+  const [type, setType] = useState(action);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [address, setAddress] = useState("");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const currentUser = useSelector((state) => state.auth.user);
+  const steps = type === "trial" ? stepsForTrial : stepsForEntrollment;
+
+  const currentUser = useSelector((state) => state.auth.user); //for get current user
 
   const handleNextStep = () => {
-    if (currentStep < StepperStep.length) {
+    if (currentStep < steps?.length) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -136,9 +146,19 @@ const BookLesson = () => {
   };
 
   const getButtonText = () => {
-    if (currentStep === 1) return "Next";
-    else if (currentStep === 2) return "Review Booking";
-    else return `Confirm & Pay $${calculateTotal()}`;
+    const texts = {
+      enroll: {
+        1: "Next",
+        2: "Review Booking",
+        default: `Confirm & Pay $${calculateTotal()}`,
+      },
+      trial: {
+        1: "Next",
+        default: "Confirm",
+      },
+    };
+
+    return texts[type]?.[currentStep] ?? texts[type]?.default ?? "Next";
   };
 
   const handleAddressChange = (event) => {
@@ -164,24 +184,69 @@ const BookLesson = () => {
 
   const onCloseSuccessModal = () => {
     setShowSuccessModal(false);
-    setCurrentStep(1);
     setAddress("");
     setSelectedStudent(null);
-    const defaultCard =
-      savedCards?.find((card) => card?.isDefault) || savedCards?.[0];
-    setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
+    if (type === "enroll") {
+      setCurrentStep(1);
+      const defaultCard =
+        savedCards?.find((card) => card?.isDefault) || savedCards?.[0];
+      setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
+    }
+    navigate(`/${currentUser?.role}/dashboard`);
   };
 
   const getCurrentStepComponent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <>
-            {/* Desktop View */}
-            <div className="hidden lg:block">
-              <div className="grid grid-cols-12 gap-8">
-                {/* Left Panel - Booking Form */}
-                <div className="col-span-6 space-y-6">
+    switch (type) {
+      case "enroll":
+        switch (currentStep) {
+          case 1:
+            return (
+              <>
+                {/* Desktop View */}
+                <div className="hidden lg:block">
+                  <div className="grid grid-cols-12 gap-8">
+                    {/* Left Panel - Booking Form */}
+                    <div className="col-span-6 space-y-6">
+                      <StudentSelector
+                        students={mockStudents}
+                        selectedStudent={selectedStudent}
+                        onStudentSelect={handleStudentSelect}
+                        address={address}
+                        onAddressChange={handleAddressChange}
+                      />
+
+                      <BookingSummary
+                        classData={classData}
+                        selectedStudent={selectedStudent}
+                        total={calculateTotal()}
+                      />
+                    </div>
+
+                    {/* Right Panel - Class Details */}
+                    <div className="col-span-6">
+                      <div className="sticky top-24">
+                        <ClassDetails classData={classData} />
+                        <div className="mt-6 flex justify-end">
+                          <Button
+                            onClick={handleNextStep}
+                            disabled={!isFormValid()}
+                            className="w-56 h-12"
+                            size="lg"
+                            iconName="ChevronRight"
+                            iconPosition="right"
+                            iconSize={16}
+                          >
+                            {getButtonText()}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Mobile View */}
+                <div className="lg:hidden space-y-6">
+                  <ClassDetails classData={classData} />
+
                   <StudentSelector
                     students={mockStudents}
                     selectedStudent={selectedStudent}
@@ -195,13 +260,9 @@ const BookLesson = () => {
                     selectedStudent={selectedStudent}
                     total={calculateTotal()}
                   />
-                </div>
 
-                {/* Right Panel - Class Details */}
-                <div className="col-span-6">
-                  <div className="sticky top-24">
-                    <ClassDetails classData={classData} />
-                    <div className="mt-6 flex justify-end">
+                  <div className="sticky bottom-4">
+                    <div className="mt-6 flex justify-center">
                       <Button
                         onClick={handleNextStep}
                         disabled={!isFormValid()}
@@ -216,81 +277,105 @@ const BookLesson = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            {/* Mobile View */}
-            <div className="lg:hidden space-y-6">
-              <ClassDetails classData={classData} />
-
-              <StudentSelector
-                students={mockStudents}
-                selectedStudent={selectedStudent}
-                onStudentSelect={handleStudentSelect}
-                address={address}
-                onAddressChange={handleAddressChange}
-              />
-
-              <BookingSummary
-                classData={classData}
-                selectedStudent={selectedStudent}
-                total={calculateTotal()}
-              />
-
-              <div className="sticky bottom-4">
-                <div className="mt-6 flex justify-center">
-                  <Button
-                    onClick={handleNextStep}
-                    disabled={!isFormValid()}
-                    className="w-56 h-12"
-                    size="lg"
-                    iconName="ChevronRight"
-                    iconPosition="right"
-                    iconSize={16}
-                  >
-                    {getButtonText()}
-                  </Button>
+              </>
+            );
+          case 2:
+          case 3:
+            return (
+              <>
+                {/* Desktop View */}
+                <div className="hidden lg:block">
+                  <div className="grid grid-cols-12 gap-8">
+                    {/* Left Panel - Booking Form */}
+                    {currentStep === 2 && (
+                      <div className="col-span-6 space-y-6">
+                        <PaymentMethodSelector
+                          savedCards={savedCards}
+                          onPaymentMethodSelect={handlePaymentMethodSelect}
+                          selectedMethod={selectedPaymentMethod}
+                        />
+                      </div>
+                    )}
+                    {currentStep === 3 && (
+                      <div className="col-span-6 space-y-6">
+                        <BookingConfirmation
+                          classData={classData}
+                          selectedPaymentMethod={selectedPaymentMethod}
+                          teacherData={classData?.teacher}
+                          selectedStudent={selectedStudent}
+                        />
+                      </div>
+                    )}
+                    <div className="col-span-6">
+                      <div className="sticky top-24">
+                        <BookingSummary
+                          classData={classData}
+                          selectedStudent={selectedStudent}
+                          total={calculateTotal()}
+                        />
+                        <div
+                          className={`mt-6 flex justify-end ${
+                            currentStep === 3 && "gap-10"
+                          }`}
+                        >
+                          {currentStep === 3 && (
+                            <Button
+                              variant="ghost"
+                              size="lg"
+                              className="h-12"
+                              onClick={() => setCurrentStep(2)}
+                            >
+                              Back to Edit
+                            </Button>
+                          )}
+                          <Button
+                            onClick={
+                              currentStep === 3 ? handleSubmit : handleNextStep
+                            }
+                            disabled={selectedPaymentMethod === null}
+                            className={`h-12 ${
+                              currentStep === 3 ? "w-72" : "w-56"
+                            }`}
+                            size="lg"
+                            iconName="ChevronRight"
+                            iconPosition="right"
+                            iconSize={16}
+                          >
+                            {getButtonText()}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </>
-        );
-      case 2:
-      case 3:
-        return (
-          <>
-            {/* Desktop View */}
-            <div className="hidden lg:block">
-              <div className="grid grid-cols-12 gap-8">
-                {/* Left Panel - Booking Form */}
-                {currentStep === 2 && (
-                  <div className="col-span-6 space-y-6">
+                {/* Mobile View */}
+                <div className="lg:hidden space-y-6">
+                  {currentStep === 2 && (
                     <PaymentMethodSelector
                       savedCards={savedCards}
                       onPaymentMethodSelect={handlePaymentMethodSelect}
                       selectedMethod={selectedPaymentMethod}
                     />
-                  </div>
-                )}
-                {currentStep === 3 && (
-                  <div className="col-span-6 space-y-6">
+                  )}
+                  {currentStep === 3 && (
                     <BookingConfirmation
                       classData={classData}
                       selectedPaymentMethod={selectedPaymentMethod}
                       teacherData={classData?.teacher}
                       selectedStudent={selectedStudent}
                     />
-                  </div>
-                )}
-                <div className="col-span-6">
-                  <div className="sticky top-24">
-                    <BookingSummary
-                      classData={classData}
-                      selectedStudent={selectedStudent}
-                      total={calculateTotal()}
-                    />
+                  )}
+                  <BookingSummary
+                    classData={classData}
+                    selectedStudent={selectedStudent}
+                    total={calculateTotal()}
+                  />
+                  <div className="sticky bottom-4">
                     <div
-                      className={`mt-6 flex justify-end ${
-                        currentStep === 3 && "gap-10"
+                      className={`mt-6 flex ${
+                        currentStep === 3
+                          ? "flex-col items-center gap-4"
+                          : "justify-center"
                       }`}
                     >
                       {currentStep === 3 && (
@@ -321,64 +406,183 @@ const BookLesson = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            {/* Mobile View */}
-            <div className="lg:hidden space-y-6">
-              {currentStep === 2 && (
-                <PaymentMethodSelector
-                  savedCards={savedCards}
-                  onPaymentMethodSelect={handlePaymentMethodSelect}
-                  selectedMethod={selectedPaymentMethod}
-                />
-              )}
-              {currentStep === 3 && (
-                <BookingConfirmation
-                  classData={classData}
-                  selectedPaymentMethod={selectedPaymentMethod}
-                  teacherData={classData?.teacher}
-                  selectedStudent={selectedStudent}
-                />
-              )}
-              <BookingSummary
-                classData={classData}
-                selectedStudent={selectedStudent}
-                total={calculateTotal()}
-              />
-              <div className="sticky bottom-4">
-                <div
-                  className={`mt-6 flex ${
-                    currentStep === 3
-                      ? "flex-col items-center gap-4"
-                      : "justify-center"
-                  }`}
-                >
-                  {currentStep === 3 && (
-                    <Button
-                      variant="ghost"
-                      size="lg"
-                      className="h-12"
-                      onClick={() => setCurrentStep(2)}
-                    >
-                      Back to Edit
-                    </Button>
-                  )}
-                  <Button
-                    onClick={currentStep === 3 ? handleSubmit : handleNextStep}
-                    disabled={selectedPaymentMethod === null}
-                    className={`h-12 ${currentStep === 3 ? "w-72" : "w-56"}`}
-                    size="lg"
-                    iconName="ChevronRight"
-                    iconPosition="right"
-                    iconSize={16}
-                  >
-                    {getButtonText()}
-                  </Button>
+              </>
+            );
+        }
+        break;
+      case "trial":
+        switch (currentStep) {
+          case 1:
+            return (
+              <>
+                {/* Desktop View */}
+                <div className="hidden lg:block">
+                  <div className="grid grid-cols-12 gap-8">
+                    {/* Left Panel - Booking Form */}
+                    <div className="col-span-6 space-y-6">
+                      <StudentSelector
+                        students={mockStudents}
+                        selectedStudent={selectedStudent}
+                        onStudentSelect={handleStudentSelect}
+                        address={address}
+                        onAddressChange={handleAddressChange}
+                      />
+                    </div>
+
+                    {/* Right Panel - Class Details */}
+                    <div className="col-span-6">
+                      <div className="sticky top-24">
+                        <ClassDetails classData={classData} type="trial" />
+                        <div className="mt-6 flex justify-end">
+                          <Button
+                            onClick={handleNextStep}
+                            disabled={!isFormValid()}
+                            className="w-56 h-12"
+                            size="lg"
+                            iconName="ChevronRight"
+                            iconPosition="right"
+                            iconSize={16}
+                          >
+                            {getButtonText()}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </>
-        );
+                {/* Mobile View */}
+                <div className="lg:hidden space-y-6">
+                  <ClassDetails classData={classData} type="trial" />
+
+                  <StudentSelector
+                    students={mockStudents}
+                    selectedStudent={selectedStudent}
+                    onStudentSelect={handleStudentSelect}
+                    address={address}
+                    onAddressChange={handleAddressChange}
+                  />
+
+                  <div className="sticky bottom-4">
+                    <div className="mt-6 flex justify-center">
+                      <Button
+                        onClick={handleNextStep}
+                        disabled={!isFormValid()}
+                        className="w-56 h-12"
+                        size="lg"
+                        iconName="ChevronRight"
+                        iconPosition="right"
+                        iconSize={16}
+                      >
+                        {getButtonText()}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          case 2:
+            return (
+              <>
+                {/* Desktop View */}
+                <div className="hidden lg:block">
+                  <div className="grid grid-cols-12 gap-8">
+                    <div className="col-span-6 space-y-6">
+                      <BookingConfirmation
+                        classData={classData}
+                        selectedPaymentMethod={selectedPaymentMethod}
+                        teacherData={classData?.teacher}
+                        selectedStudent={selectedStudent}
+                        type="trial"
+                      />
+                    </div>
+                    <div className="col-span-6">
+                      <div className="sticky top-24">
+                        <ClassDetails classData={classData} type="trial" />
+                        <div
+                          className={`mt-6 flex justify-end ${
+                            currentStep === 2 && "gap-10"
+                          }`}
+                        >
+                          {currentStep === 2 && (
+                            <Button
+                              variant="ghost"
+                              size="lg"
+                              className="h-12"
+                              onClick={() => setCurrentStep(1)}
+                            >
+                              Back to Edit
+                            </Button>
+                          )}
+                          <Button
+                            onClick={
+                              currentStep === 2 ? handleSubmit : handleNextStep
+                            }
+                            disabled={selectedPaymentMethod === null}
+                            className={`h-12 ${
+                              currentStep === 2 ? "w-72" : "w-56"
+                            }`}
+                            size="lg"
+                            iconName="ChevronRight"
+                            iconPosition="right"
+                            iconSize={16}
+                          >
+                            {getButtonText()}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile View */}
+                <div className="lg:hidden space-y-6">
+                  <BookingConfirmation
+                    classData={classData}
+                    selectedPaymentMethod={selectedPaymentMethod}
+                    teacherData={classData?.teacher}
+                    selectedStudent={selectedStudent}
+                    type="trial"
+                  />
+                  <ClassDetails classData={classData} type="trial" />
+                  <div className="sticky bottom-4">
+                    <div
+                      className={`mt-6 flex ${
+                        currentStep === 2
+                          ? "flex-col items-center gap-4"
+                          : "justify-center"
+                      }`}
+                    >
+                      {currentStep === 2 && (
+                        <Button
+                          variant="ghost"
+                          size="lg"
+                          className="h-12"
+                          onClick={() => setCurrentStep(1)}
+                        >
+                          Back to Edit
+                        </Button>
+                      )}
+                      <Button
+                        onClick={
+                          currentStep === 2 ? handleSubmit : handleNextStep
+                        }
+                        disabled={selectedPaymentMethod === null}
+                        className={`h-12 ${
+                          currentStep === 2 ? "w-72" : "w-56"
+                        }`}
+                        size="lg"
+                        iconName="ChevronRight"
+                        iconPosition="right"
+                        iconSize={16}
+                      >
+                        {getButtonText()}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+        }
     }
   };
 
@@ -398,7 +602,12 @@ const BookLesson = () => {
           </p>
         </section>
         {/* Booking Steps */}
-        <BookingSteps currentStep={currentStep} onStepClick={handleStepClick} />
+        <BookingSteps
+          steps={steps}
+          currentStep={currentStep}
+          onStepClick={handleStepClick}
+          type={type}
+        />
 
         {getCurrentStepComponent()}
       </main>
@@ -418,30 +627,40 @@ const BookLesson = () => {
             <div className="w-28 h-28 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
               <Icon name="Check" size={64} color="white" />
             </div>
-            <h3 className="text-h4 font-bold text-foreground mb-2">
+            <h3 className="text-h4 font-bold text-foreground mb-4">
               Booking Confirmed!
             </h3>
             <p className="text-sm text-brand-gray-800 mb-4 leading-relaxed md:px-10">
-              Our lesson has been successfully booked. You'll receive a
-              confirmation email shortly with lesson details and joining
-              instructions
+              {type === "enroll"
+                ? "Our lesson has been successfully booked. You'll receive a confirmation email shortly with lesson details and joining instructions"
+                : "Our trial lesson has been successfully booked. You'll receive a confirmation email shortly with lesson details and joining instructions"}{" "}
             </p>
-            <div className="border border-[#E5E7EB] rounded-md py-5 px-8">
-              <p className="mb-2 leading-relaxed">
-                Refer & get 20% off on your next lesson for each new course
-                signup
-              </p>
-              <div className="bg-blue-50 border-2 border-primary rounded-lg p-3 cursor-pointer">
-                <a
-                  className="text-sm text-blue-800"
-                  href="https://www.temporary-url.com/C5E602"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  https://www.temporary-url.com/C5E602
-                </a>
+            {type === "enroll" ? (
+              <div className="border border-[#E5E7EB] rounded-md py-5 px-8">
+                <p className="mb-2 leading-relaxed">
+                  Refer & get 20% off on your next lesson for each new course
+                  signup
+                </p>
+                <div className="bg-blue-50 border-2 border-primary rounded-lg p-3 cursor-pointer">
+                  <a
+                    className="text-sm text-blue-800"
+                    href="https://www.temporary-url.com/C5E602"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    https://www.temporary-url.com/C5E602
+                  </a>
+                </div>
               </div>
-            </div>
+            ) : (
+              <Button
+                size="xl"
+                onClick={() => navigate(`/${currentUser?.role}/dashboard`)}
+                className="mb-6"
+              >
+                Start learning
+              </Button>
+            )}
           </div>
         </div>
       )}

@@ -1,13 +1,7 @@
 import React from "react";
 import Icon from "../../../components/AppIcon";
 
-const BookingSteps = ({ currentStep, onStepClick }) => {
-  const steps = [
-    { id: 1, title: "Student Info", icon: "User" },
-    { id: 2, title: "Payment", icon: "CreditCard" },
-    { id: 3, title: "Confirm", icon: "CheckCircle" },
-  ];
-
+const BookingSteps = ({ steps, type, currentStep, onStepClick }) => {
   const getStepStatus = (stepId) => {
     if (stepId < currentStep) return "completed";
     if (stepId === currentStep) return "current";
@@ -15,7 +9,11 @@ const BookingSteps = ({ currentStep, onStepClick }) => {
   };
 
   return (
-    <div className="my-7 bg-card border border-border rounded-lg p-4 shadow-elevation-1 w-full max-w-[820px]">
+    <div
+      className={`my-7 bg-card border border-border rounded-lg p-4 shadow-elevation-1 w-full ${
+        type === "enroll" ? "lg:max-w-[820px]" : "lg:max-w-[680px]"
+      }`}
+    >
       <div className="flex items-center justify-between">
         {steps.map((step, index) => (
           <React.Fragment key={step.id}>

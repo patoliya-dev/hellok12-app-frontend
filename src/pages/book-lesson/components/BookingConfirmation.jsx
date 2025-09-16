@@ -7,6 +7,7 @@ const BookingConfirmation = ({
   selectedPaymentMethod,
   teacherData,
   selectedStudent,
+  type = "enroll",
 }) => {
   const formatDate = (date) => {
     return date.toLocaleDateString("en-US", {
@@ -55,46 +56,48 @@ const BookingConfirmation = ({
       </div>
 
       {/* Class Details */}
-      <div className="mb-6">
-        <h4 className="font-medium text-foreground mb-3">Class Details</h4>
-        <div className="bg-muted rounded-lg p-4">
-          <div className="flex flex-col gap-5 md:gap-0 md:flex-row md:justify-between">
-            <div className="flex items-start space-x-4">
-              <Image
-                src={teacherData?.profileImage}
-                alt={teacherData?.name}
-                className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-              />
-              <div className="flex-1">
-                <h5 className="font-medium text-foreground">
-                  {classData?.title}
-                </h5>
-                <p className="text-sm text-muted-foreground mb-2">
-                  with {teacherData?.name}
-                </p>
-                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                  <div className="flex items-center space-x-1">
-                    <Icon name="Clock" size={14} />
-                    <span>{classData?.duration} minutes</span>
+      {type === "enroll" && (
+        <div className="mb-6">
+          <h4 className="font-medium text-foreground mb-3">Class Details</h4>
+          <div className="bg-muted rounded-lg p-4">
+            <div className="flex flex-col gap-5 md:gap-0 md:flex-row md:justify-between">
+              <div className="flex items-start space-x-4">
+                <Image
+                  src={teacherData?.profileImage}
+                  alt={teacherData?.name}
+                  className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                />
+                <div className="flex-1">
+                  <h5 className="font-medium text-foreground">
+                    {classData?.title}
+                  </h5>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    with {teacherData?.name}
+                  </p>
+                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                    <div className="flex items-center space-x-1">
+                      <Icon name="Clock" size={14} />
+                      <span>{classData?.duration} minutes</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="flex flex-col md:items-end gap-5">
-              <div className="flex items-center">
-                <Icon name="SchoolIcon" size={22} className="mr-2" />
-                <span className="text-body2 text-brand-gray-500">
-                  {teacherData?.school}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {getClassTypeBadge(classData?.type)}
-                {getClassTypeBadge(classData?.courseType)}
+              <div className="flex flex-col md:items-end gap-5">
+                <div className="flex items-center">
+                  <Icon name="SchoolIcon" size={22} className="mr-2" />
+                  <span className="text-body2 text-brand-gray-500">
+                    {teacherData?.school}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {getClassTypeBadge(classData?.type)}
+                  {getClassTypeBadge(classData?.courseType)}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Schedule Details */}
       <div className="mb-6">
@@ -151,29 +154,36 @@ const BookingConfirmation = ({
       </div>
 
       {/* Payment Summary */}
-      <div className="mb-6">
-        <h4 className="font-medium text-foreground mb-3">Payment Summary</h4>
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Lesson Fee:</span>
-          <span className="font-medium text-foreground">
-            ${classData?.price.toFixed(2)}
-          </span>
-        </div>
-      </div>
-
-      {/* Payment Method */}
-      <div className="mb-6">
-        <h4 className="font-medium text-foreground mb-3">Payment Method</h4>
-        <div className="flex justify-between p-3 bg-muted rounded-lg text-[16px]">
-          <div className="flex items-center space-x-3 ">
-            <Icon name="CreditCard" size={20} className="text-primary" />
-            <span className="text-foreground font-medium">Card</span>
+      {type === "enroll" && (
+        <>
+          {/* Payment Summary */}
+          <div className="mb-6">
+            <h4 className="font-medium text-foreground mb-3">
+              Payment Summary
+            </h4>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Lesson Fee:</span>
+              <span className="font-medium text-foreground">
+                ${classData?.price.toFixed(2)}
+              </span>
+            </div>
           </div>
-          <span className="text-brand-gray-800 font-medium">
-            {selectedPaymentMethod?.data?.last4}
-          </span>
-        </div>
-      </div>
+
+          {/* Payment Method */}
+          <div className="mb-6">
+            <h4 className="font-medium text-foreground mb-3">Payment Method</h4>
+            <div className="flex justify-between p-3 bg-muted rounded-lg text-[16px]">
+              <div className="flex items-center space-x-3 ">
+                <Icon name="CreditCard" size={20} className="text-primary" />
+                <span className="text-foreground font-medium">Card</span>
+              </div>
+              <span className="text-brand-gray-800 font-medium">
+                {selectedPaymentMethod?.data?.last4}
+              </span>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
