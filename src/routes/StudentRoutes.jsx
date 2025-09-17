@@ -7,6 +7,7 @@ import Lessons from "../pages/student-parent/lessons";
 import Messages from "../pages/student-parent/messages";
 import LessonsCalendar from "../pages/student-parent/lesson-calendar";
 import ProfileAccountSettings from "../pages/student-parent/profile-settings";
+import PaymentBilling from "../pages/student-parent/payment-billing";
 
 const StudentRoutes = () => {
   return (
@@ -18,6 +19,7 @@ const StudentRoutes = () => {
       <Route path="/messages" element={<Messages />} />
       <Route path="/lesson-calendar" element={<LessonsCalendar />} />
       <Route path="/profile-settings" element={<ProfileAccountSettings />} />
+      <Route path="/payment-billing" element={<PaymentBilling />} />
 
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
