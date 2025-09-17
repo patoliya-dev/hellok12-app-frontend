@@ -8,16 +8,15 @@ const LessonsPage = () => {
   const [activeTab, setActiveTab] = useState("upcoming");
 
   const getTabClass = (tabName) => {
-    return `px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
-      activeTab === tabName
+    return `px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200 flex items-center gap-2 ${activeTab === tabName
         ? "bg-white shadow-sm text-brand-gray-800"
         : "bg-transparent text-brand-gray-600 hover:bg-gray-50"
-    }`;
+      }`;
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* <Header /> */}
+      {/* Header */}
       <RoleBasedHeader />
       <main className="pt-16 pb-20 lg:pb-8">
         <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
