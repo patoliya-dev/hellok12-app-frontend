@@ -170,10 +170,10 @@ const ParticipantPanel = ({
                     {participant?.status === "online"
                       ? "Online"
                       : participant?.status === "away"
-                      ? "Away"
-                      : participant?.status === "busy"
-                      ? "Busy"
-                      : "Offline"}
+                        ? "Away"
+                        : participant?.status === "busy"
+                          ? "Busy"
+                          : "Offline"}
                   </span>
                 </div>
               </div>

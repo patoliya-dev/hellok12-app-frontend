@@ -1,12 +1,13 @@
 import { Routes, Route } from "react-router-dom";
-import StudentDashboard from "../pages/student/dashboard";
+import StudentDashboard from "../pages/student-parent/dashboard";
 import BookLesson from "../pages/book-lesson";
 import NotFound from "../pages/NotFound";
-import ProgressAnalytics from "../pages/student/progress-analytics";
-import Lessons from "../pages/student/lessons";
-import Messages from "../pages/student/messages";
-import LessonsCalendar from "../pages/student/lesson-calendar";
-import PaymentBilling from "../pages/student/payment-billing";
+import ProgressAnalytics from "../pages/student-parent/progress-analytics";
+import Lessons from "../pages/student-parent/lessons";
+import Messages from "../pages/student-parent/messages";
+import LessonsCalendar from "../pages/student-parent/lesson-calendar";
+import ProfileAccountSettings from "../pages/student-parent/profile-settings";
+import PaymentBilling from "../pages/student-parent/payment-billing";
 
 const StudentRoutes = () => {
   return (
@@ -17,6 +18,7 @@ const StudentRoutes = () => {
       <Route path="/lessons" element={<Lessons />} />
       <Route path="/messages" element={<Messages />} />
       <Route path="/lesson-calendar" element={<LessonsCalendar />} />
+      <Route path="/profile-settings" element={<ProfileAccountSettings />} />
       <Route path="/payment-billing" element={<PaymentBilling />} />
 
       {/* Catch-all */}

@@ -120,7 +120,7 @@ const ProgressTrackingSection = () => {
             </h2>
           </div>
           <div className="text-right cursor-pointer" onClick={() => {
-            navigate('/student/progress-analytics');
+            navigate('/student-parent/progress-analytics');
           }}>
             <div className="text-sm font-bold text-primary">View Details</div>
           </div>

@@ -30,9 +30,8 @@ const publicRoutes = [
 
 // 🔹 Protected routes
 const protectedRoutes = [
-  { path: "/parent/*", element: <ParentRoutes /> },
   { path: "/teacher/*", element: <TeacherRoutes /> },
-  { path: "/student/*", element: <StudentRoutes /> },
+  { path: "/student-parent/*", element: <StudentRoutes /> },
   { path: "/school/*", element: <SchoolRoutes /> },
 ];
 
