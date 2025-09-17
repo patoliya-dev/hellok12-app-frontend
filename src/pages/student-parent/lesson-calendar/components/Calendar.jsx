@@ -50,8 +50,8 @@ const Calendar = ({ currentDate, setCurrentDate, lessons, today, selectedDate, s
       const lessonsForDay = lessonsByDate[cellDate.toDateString()] || [];
 
       cells.push(
-        <div 
-          key={day} 
+        <div
+          key={day}
           // NEW: Add click handler to update the selected date
           onClick={() => setSelectedDate(cellDate)}
           // NEW: Add classes for hover, cursor, and selection highlight
@@ -88,7 +88,7 @@ const Calendar = ({ currentDate, setCurrentDate, lessons, today, selectedDate, s
           <ChevronRight size={20} />
         </button>
       </div>
-      
+
       <div className="grid grid-cols-7">
         {daysOfWeek.map(day => (
           <div key={day} className="p-3 text-center text-sm font-medium text-muted-foreground border-b border-r border-border">

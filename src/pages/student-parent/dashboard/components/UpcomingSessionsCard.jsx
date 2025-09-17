@@ -100,7 +100,7 @@ const UpcomingSessionsCard = () => {
   };
 
   const handleViewSchedule = () => {
-    navigate("/student/lessons");
+    navigate("/student-parent/lessons");
   };
 
   const handleSessionClick = (session) => {

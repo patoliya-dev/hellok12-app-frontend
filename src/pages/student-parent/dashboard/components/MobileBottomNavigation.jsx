@@ -11,7 +11,7 @@ const MobileBottomNavigation = () => {
       id: "dashboard",
       label: "Home",
       icon: "Home",
-      path: "/student/dashboard",
+      path: "/student-parent/dashboard",
       badge: null,
     },
     {
@@ -25,21 +25,21 @@ const MobileBottomNavigation = () => {
       id: "games",
       label: "Games",
       icon: "Gamepad2",
-      path: "/student/games",
+      path: "/student-parent/games",
       badge: "New",
     },
     {
       id: "progress",
       label: "Progress",
       icon: "TrendingUp",
-      path: "/student/progress",
+      path: "/student-parent/progress",
       badge: null,
     },
     {
       id: "messages",
       label: "Messages",
       icon: "MessageCircle",
-      path: "/student/messages",
+      path: "/student-parent/messages",
       badge: "3",
     },
   ];
@@ -59,11 +59,10 @@ const MobileBottomNavigation = () => {
           <button
             key={item.id}
             onClick={() => handleNavigation(item.path)}
-            className={`relative flex flex-col items-center justify-center p-2 min-w-0 flex-1 transition-micro ${
-              isActive(item.path)
+            className={`relative flex flex-col items-center justify-center p-2 min-w-0 flex-1 transition-micro ${isActive(item.path)
                 ? "text-primary"
                 : "text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             {/* Badge */}
             {item.badge && (
@@ -74,9 +73,8 @@ const MobileBottomNavigation = () => {
 
             {/* Icon */}
             <div
-              className={`mb-1 ${
-                isActive(item.path) ? "scale-110" : ""
-              } transition-transform duration-200`}
+              className={`mb-1 ${isActive(item.path) ? "scale-110" : ""
+                } transition-transform duration-200`}
             >
               <Icon
                 name={item.icon}
@@ -89,9 +87,8 @@ const MobileBottomNavigation = () => {
 
             {/* Label */}
             <span
-              className={`text-xs font-medium truncate ${
-                isActive(item.path) ? "text-primary" : "text-muted-foreground"
-              }`}
+              className={`text-xs font-medium truncate ${isActive(item.path) ? "text-primary" : "text-muted-foreground"
+                }`}
             >
               {item.label}
             </span>

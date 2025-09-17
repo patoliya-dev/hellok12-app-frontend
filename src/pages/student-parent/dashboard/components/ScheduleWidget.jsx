@@ -151,7 +151,7 @@ const ScheduleWidget = () => {
   };
 
   const handleViewFullSchedule = () => {
-    navigate("/student/lesson-calendar");
+    navigate("/student-parent/lesson-calendar");
   };
 
   return (
@@ -216,16 +216,16 @@ const ScheduleWidget = () => {
           <div
             key={day.id}
             className={`min-w-[230px] flex-shrink-0 p-4 rounded-lg border transition-micro ${isToday(day.date)
-                ? "border-primary bg-primary/5"
-                : "border-border bg-muted/30"
+              ? "border-primary bg-primary/5"
+              : "border-border bg-muted/30"
               }`}
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-3">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center ${isToday(day.date)
-                      ? "bg-primary text-white"
-                      : "bg-muted text-muted-foreground"
+                    ? "bg-primary text-white"
+                    : "bg-muted text-muted-foreground"
                     }`}
                 >
                   <span className="text-sm font-medium">

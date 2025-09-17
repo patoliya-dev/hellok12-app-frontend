@@ -19,7 +19,7 @@ export const lessonsData = [
   { id: 17, title: 'English Literature', date: '2025-07-29', color: 'blue', status: 'completed' },
   { id: 18, title: 'English Literature', date: '2025-08-17', color: 'blue', status: 'completed' },
   { id: 19, title: 'English Literature', date: '2025-08-19', color: 'blue', status: 'completed' },
-  
+
   // Pending Lessons (Future Dates)
   { id: 20, title: 'Spanish Conversation', date: '2025-09-16', color: 'green', status: 'pending' },
   { id: 21, title: 'English Literature', date: '2025-09-17', color: 'blue', status: 'pending' },

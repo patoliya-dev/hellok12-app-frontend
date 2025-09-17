@@ -34,28 +34,18 @@ const RoleBasedHeader = () => {
     else setUserRole("guest");
   }, [location.pathname]);
 
-  const getRoleDisplayName = (role) => {
-    const roleMap = {
-      student: "Student",
-      parent: "Parent",
-      teacher: "Teacher",
-      school: "School Admin",
-    };
-    return roleMap[role] || "User";
-  };
-
   const getNavigationItems = () => {
     const baseItems = {
       student: [
-        { label: "Dashboard", path: "/student/dashboard", icon: "House" },
+        { label: "Dashboard", path: "/student-parent/dashboard", icon: "House" },
         { label: "Find Teacher", path: "/teachers", icon: "Search" },
         // { label: "Schedule", path: "/booking-system", icon: "Calendar" },
-        { label: "Lessons", path: "/student/lessons", icon: "Book" },
-        // { label: "Progress",  path: "/student/progress", icon: "TrendingUp" },
-        { label: "Practice", path: "/student/games", icon: "Gamepad2" },
+        { label: "Lessons", path: "/student-parent/lessons", icon: "Book" },
+        // { label: "Progress",  path: "/student-parent/progress", icon: "TrendingUp" },
+        { label: "Practice", path: "/student-parent/games", icon: "Gamepad2" },
         {
           label: "Messages",
-          path: "/student/messages",
+          path: "/student-parent/messages",
           icon: "MessageCircle",
         },
       ],
@@ -233,22 +223,24 @@ const RoleBasedHeader = () => {
                         {authUser.name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {getRoleDisplayName(userRole)}
+                        {authUser.email}
                       </p>
                     </div>
                     <div className="py-1">
-                      <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
+                      <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth" onClick={() =>
+                        navigate(`/${['student', 'parent'].includes(authUser.role) ? 'student-parent' : authUser.role}/profile-settings`)
+                      }>
                         <Icon name="User" size={16} className="mr-3" />
                         Profile Settings
                       </button>
                       <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
-                        <Icon name="Settings" size={16} className="mr-3" />
-                        Preferences
+                        <Icon name="CreditCard" size={16} className="mr-3" />
+                        Payment & Billing
                       </button>
-                      <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
+                      {/* <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
                         <Icon name="HelpCircle" size={16} className="mr-3" />
                         Help & Support
-                      </button>
+                      </button> */}
                       <div className="border-t border-border mt-1 pt-1">
                         <button
                           onClick={handleLogout}
