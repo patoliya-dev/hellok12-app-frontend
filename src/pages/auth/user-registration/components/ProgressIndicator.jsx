@@ -16,10 +16,10 @@ const ProgressIndicator = ({ currentStep, totalSteps }) => {
             <div className="flex flex-col items-center">
               <div className={`
                 w-10 h-10 rounded-full flex items-center justify-center border-2 transition-smooth
-                ${currentStep > step.number 
-                  ? 'bg-success border-success text-success-foreground' 
-                  : currentStep === step.number 
-                    ? 'bg-primary border-primary text-primary-foreground' 
+                ${currentStep > step.number
+                  ? 'bg-success border-success text-success-foreground'
+                  : currentStep === step.number
+                    ? 'bg-primary border-primary text-primary-foreground'
                     : 'bg-surface border-border text-muted-foreground'
                 }
               `}>
@@ -30,9 +30,8 @@ const ProgressIndicator = ({ currentStep, totalSteps }) => {
                 )}
               </div>
               <div className="mt-2 text-center">
-                <p className={`text-xs font-medium ${
-                  currentStep >= step.number ? 'text-foreground' : 'text-muted-foreground'
-                }`}>
+                <p className={`text-xs font-medium ${currentStep >= step.number ? 'text-foreground' : 'text-muted-foreground'
+                  }`}>
                   {step.title}
                 </p>
                 <p className="text-xs text-muted-foreground hidden sm:block">

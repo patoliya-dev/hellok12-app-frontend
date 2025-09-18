@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
+import Icon from 'components/AppIcon';
+import Button from 'components/ui/Button';
 import { useDispatch, useSelector } from 'react-redux';
 import { forgotPassword, verifyResetCode } from 'features/auth/authThunks';
 import { selectForgotPasswordStatus, selectVerifyResetCodeError, selectVerifyResetCodeStatus } from 'features/auth/authSelectors';

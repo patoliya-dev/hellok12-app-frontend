@@ -7,14 +7,13 @@ import {
 } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import ErrorBoundary from "./components/ErrorBoundary";
-import Login from "./pages/login";
-import UserRegistration from "./pages/user-registration";
-import PasswordReset from "./pages/password-reset";
+import Login from "./pages/auth/login";
+import UserRegistration from "./pages/auth/user-registration";
+import PasswordReset from "./pages/auth/password-reset";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
-import VerifyEmailPage from "./pages/user-registration/components/VerifyEmailPage";
+import VerifyEmailPage from "./pages/auth/user-registration/components/VerifyEmailPage";
 import StudentRoutes from "./routes/StudentRoutes";
-import ParentRoutes from "./routes/ParentRoutes";
 import TeacherRoutes from "./routes/TeacherRoutes";
 import SchoolRoutes from "./routes/SchoolRoutes";
 

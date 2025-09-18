@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid"; // Standard for unique IDs
-import Input from "../../../components/ui/Input";
-import Select from "../../../components/ui/Select";
-import Icon from "../../../components/AppIcon";
-import { Checkbox } from "../../../components/ui/Checkbox";
-import Button from "../../../components/ui/Button";
+import Input from "components/ui/Input";
+import Select from "components/ui/Select";
+import Icon from "components/AppIcon";
+import { Checkbox } from "components/ui/Checkbox";
+import Button from "components/ui/Button";
 
 const RoleSpecificStep = ({ formData, errors, onChange }) => {
   const [showPassword, setShowPassword] = useState(false);

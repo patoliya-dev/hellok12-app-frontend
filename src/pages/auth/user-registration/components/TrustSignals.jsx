@@ -26,7 +26,7 @@ const TrustSignals = () => {
         <h3 className="text-lg font-semibold text-foreground mb-4">
           Why Choose EduPortal?
         </h3>
-        
+
         <div className="space-y-4">
           {trustFeatures.map((feature, index) => (
             <div key={index} className="flex items-start space-x-3">

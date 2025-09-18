@@ -47,7 +47,7 @@ const ProfileAccountSettings = () => {
       <main className="pt-16 pb-20 lg:pb-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header and language/role indicators */}
-          <div className="mb-8">
+          <div className="my-8">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Profile & Account Settings</h1>
