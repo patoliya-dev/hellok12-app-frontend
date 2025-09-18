@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import RoleBasedHeader from "../../components/ui/RoleBasedHeader";
+import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import BookingSteps from "./components/BookingSteps";
-import Breadcrumb from "../../components/ui/Breadcrumb";
+import Breadcrumb from "../../../components/ui/Breadcrumb";
 import StudentSelector from "./components/StudentSelector";
 import ClassDetails from "./components/ClassDetails";
 import BookingSummary from "./components/BookingSummary";
-import Icon from "../../components/AppIcon";
-import Button from "../../components/ui/Button";
+import Icon from "../../../components/AppIcon";
+import Button from "../../../components/ui/Button";
 import PaymentMethodSelector from "./components/PaymentMethodSelector";
 import BookingConfirmation from "./components/BookingConfirmation";
+import { selectAuthUser } from "features/auth/authSelectors";
 
 // Steps for enrollment
 const stepsForEntrollment = [
@@ -106,8 +107,12 @@ const BookLesson = () => {
 
   // ✅ Validate both path param and query param
   if (!["enroll", "trial"].includes(action)) {
-    return <Navigate to="/404" replace />; // custom 404 page
+    return <Navigate to="/404" replace />;
   }
+
+  const currentUser = useSelector(selectAuthUser);
+  const isStudent = currentUser?.role === "student";
+  const isParent = currentUser?.role === "parent";
 
   const [type, setType] = useState(action);
   const [currentStep, setCurrentStep] = useState(1);
@@ -118,7 +123,20 @@ const BookLesson = () => {
 
   const steps = type === "trial" ? stepsForTrial : stepsForEntrollment;
 
-  const currentUser = useSelector((state) => state.auth.user); //for get current user
+  useEffect(() => {
+    if (isStudent) {
+      setSelectedStudent(currentUser);
+    }
+  });
+
+  useEffect(() => {
+    // Set default payment method
+    if (savedCards?.length > 0) {
+      const defaultCard =
+        savedCards?.find((card) => card?.isDefault) || savedCards?.[0];
+      setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
+    }
+  }, []);
 
   const handleNextStep = () => {
     if (currentStep < steps?.length) {
@@ -145,6 +163,43 @@ const BookLesson = () => {
     return !!hasSelectedStudent;
   };
 
+  const handleAddressChange = (event) => {
+    setAddress(event.target.value);
+  };
+
+  const handlePaymentMethodSelect = (method) => {
+    setSelectedPaymentMethod(method);
+  };
+
+  const handleSubmit = () => {
+    setShowSuccessModal(true);
+  };
+
+  const handleAddPaymentMethod = (data) => {
+    const updateData = {
+      id: `card_${savedCards?.length + 1}`,
+      last4: data?.cardNumber?.slice(-4),
+      brand: "Card",
+      expiry: data?.expiryDate,
+      isDefault: false,
+    };
+    savedCards.push(updateData);
+    setSelectedPaymentMethod({ type: "new_card", data: updateData });
+  };
+
+  const onCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    setAddress("");
+    setSelectedStudent(null);
+    if (type === "enroll") {
+      setCurrentStep(1);
+      const defaultCard =
+        savedCards?.find((card) => card?.isDefault) || savedCards?.[0];
+      setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
+    }
+    navigate(`/student-parent/dashboard`);
+  };
+
   const getButtonText = () => {
     const texts = {
       enroll: {
@@ -161,40 +216,6 @@ const BookLesson = () => {
     return texts[type]?.[currentStep] ?? texts[type]?.default ?? "Next";
   };
 
-  const handleAddressChange = (event) => {
-    setAddress(event.target.value);
-  };
-
-  const handlePaymentMethodSelect = (method) => {
-    setSelectedPaymentMethod(method);
-  };
-
-  const handleSubmit = () => {
-    setShowSuccessModal(true);
-  };
-
-  useEffect(() => {
-    // Set default payment method
-    if (savedCards?.length > 0) {
-      const defaultCard =
-        savedCards?.find((card) => card?.isDefault) || savedCards?.[0];
-      setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
-    }
-  }, []);
-
-  const onCloseSuccessModal = () => {
-    setShowSuccessModal(false);
-    setAddress("");
-    setSelectedStudent(null);
-    if (type === "enroll") {
-      setCurrentStep(1);
-      const defaultCard =
-        savedCards?.find((card) => card?.isDefault) || savedCards?.[0];
-      setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
-    }
-    navigate(`/${currentUser?.role}/dashboard`);
-  };
-
   const getCurrentStepComponent = () => {
     switch (type) {
       case "enroll":
@@ -207,13 +228,15 @@ const BookLesson = () => {
                   <div className="grid grid-cols-12 gap-8">
                     {/* Left Panel - Booking Form */}
                     <div className="col-span-6 space-y-6">
-                      <StudentSelector
-                        students={mockStudents}
-                        selectedStudent={selectedStudent}
-                        onStudentSelect={handleStudentSelect}
-                        address={address}
-                        onAddressChange={handleAddressChange}
-                      />
+                      {isParent && (
+                        <StudentSelector
+                          students={mockStudents}
+                          selectedStudent={selectedStudent}
+                          onStudentSelect={handleStudentSelect}
+                          address={address}
+                          onAddressChange={handleAddressChange}
+                        />
+                      )}
 
                       <BookingSummary
                         classData={classData}
@@ -247,13 +270,15 @@ const BookLesson = () => {
                 <div className="lg:hidden space-y-6">
                   <ClassDetails classData={classData} />
 
-                  <StudentSelector
-                    students={mockStudents}
-                    selectedStudent={selectedStudent}
-                    onStudentSelect={handleStudentSelect}
-                    address={address}
-                    onAddressChange={handleAddressChange}
-                  />
+                  {isParent && (
+                    <StudentSelector
+                      students={mockStudents}
+                      selectedStudent={selectedStudent}
+                      onStudentSelect={handleStudentSelect}
+                      address={address}
+                      onAddressChange={handleAddressChange}
+                    />
+                  )}
 
                   <BookingSummary
                     classData={classData}
@@ -293,6 +318,7 @@ const BookLesson = () => {
                           savedCards={savedCards}
                           onPaymentMethodSelect={handlePaymentMethodSelect}
                           selectedMethod={selectedPaymentMethod}
+                          onAddPaymentMethod={handleAddPaymentMethod}
                         />
                       </div>
                     )}
@@ -355,6 +381,7 @@ const BookLesson = () => {
                       savedCards={savedCards}
                       onPaymentMethodSelect={handlePaymentMethodSelect}
                       selectedMethod={selectedPaymentMethod}
+                      onAddPaymentMethod={handleAddPaymentMethod}
                     />
                   )}
                   {currentStep === 3 && (
@@ -419,15 +446,17 @@ const BookLesson = () => {
                 <div className="hidden lg:block">
                   <div className="grid grid-cols-12 gap-8">
                     {/* Left Panel - Booking Form */}
-                    <div className="col-span-6 space-y-6">
-                      <StudentSelector
-                        students={mockStudents}
-                        selectedStudent={selectedStudent}
-                        onStudentSelect={handleStudentSelect}
-                        address={address}
-                        onAddressChange={handleAddressChange}
-                      />
-                    </div>
+                    {isParent && (
+                      <div className="col-span-6 space-y-6">
+                        <StudentSelector
+                          students={mockStudents}
+                          selectedStudent={selectedStudent}
+                          onStudentSelect={handleStudentSelect}
+                          address={address}
+                          onAddressChange={handleAddressChange}
+                        />
+                      </div>
+                    )}
 
                     {/* Right Panel - Class Details */}
                     <div className="col-span-6">
@@ -454,13 +483,15 @@ const BookLesson = () => {
                 <div className="lg:hidden space-y-6">
                   <ClassDetails classData={classData} type="trial" />
 
-                  <StudentSelector
-                    students={mockStudents}
-                    selectedStudent={selectedStudent}
-                    onStudentSelect={handleStudentSelect}
-                    address={address}
-                    onAddressChange={handleAddressChange}
-                  />
+                  {isParent && (
+                    <StudentSelector
+                      students={mockStudents}
+                      selectedStudent={selectedStudent}
+                      onStudentSelect={handleStudentSelect}
+                      address={address}
+                      onAddressChange={handleAddressChange}
+                    />
+                  )}
 
                   <div className="sticky bottom-4">
                     <div className="mt-6 flex justify-center">
@@ -655,7 +686,7 @@ const BookLesson = () => {
             ) : (
               <Button
                 size="xl"
-                onClick={() => navigate(`/${currentUser?.role}/dashboard`)}
+                onClick={() => navigate(`/student-parent/dashboard`)}
                 className="mb-6"
               >
                 Start learning

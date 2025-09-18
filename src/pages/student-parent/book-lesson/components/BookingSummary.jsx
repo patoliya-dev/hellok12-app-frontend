@@ -1,7 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
-import Icon from "../../../components/AppIcon";
-import { Checkbox } from "../../../components/ui/Checkbox";
+import Icon from "../../../../components/AppIcon";
+import { Checkbox } from "../../../../components/ui/Checkbox";
 
 const BookingSummary = ({
   classData,

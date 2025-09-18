@@ -9,7 +9,7 @@ import LessonsCalendar from "../pages/student-parent/lesson-calendar";
 import ProfileAccountSettings from "../pages/student-parent/profile-settings";
 import PaymentBilling from "../pages/student-parent/payment-billing";
 
-const StudentRoutes = () => {
+const StudentParentRoutes = () => {
   return (
     <Routes>
       <Route path="/dashboard" element={<StudentDashboard />} />
@@ -27,4 +27,4 @@ const StudentRoutes = () => {
   );
 };
 
-export default StudentRoutes;
+export default StudentParentRoutes;

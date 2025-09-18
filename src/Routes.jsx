@@ -13,7 +13,7 @@ import PasswordReset from "./pages/auth/password-reset";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import VerifyEmailPage from "./pages/auth/user-registration/components/VerifyEmailPage";
-import StudentRoutes from "./routes/StudentRoutes";
+import StudentParentRoutes from "./routes/StudentParentRoutes";
 import TeacherRoutes from "./routes/TeacherRoutes";
 import SchoolRoutes from "./routes/SchoolRoutes";
 
@@ -30,7 +30,7 @@ const publicRoutes = [
 // 🔹 Protected routes
 const protectedRoutes = [
   { path: "/teacher/*", element: <TeacherRoutes /> },
-  { path: "/student-parent/*", element: <StudentRoutes /> },
+  { path: "/student-parent/*", element: <StudentParentRoutes /> },
   { path: "/school/*", element: <SchoolRoutes /> },
 ];
 
