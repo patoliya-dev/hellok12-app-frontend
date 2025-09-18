@@ -1,6 +1,6 @@
 import React from 'react';
 // import Icon from '../../../components/AppIcon';
-import { TeacherIcon, SchoolIcon, StudentParentIcon } from '../../../components/icons';
+import { TeacherIcon, SchoolIcon, StudentParentIcon } from 'components/icons';
 
 const RoleSelectionCard = ({ role, isSelected, onSelect }) => {
   const roleConfig = {

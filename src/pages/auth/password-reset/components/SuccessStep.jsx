@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
+import Icon from 'components/AppIcon';
+import Button from 'components/ui/Button';
 
 const SuccessStep = () => {
   const navigator = useNavigate();

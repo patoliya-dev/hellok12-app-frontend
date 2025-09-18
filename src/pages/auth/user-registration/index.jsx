@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Button from '../../components/ui/Button';
+import Button from 'components/ui/Button';
 import BasicInfoStep from './components/BasicInfoStep';
 import RoleSpecificStep from './components/RoleSpecificStep';
 import VerificationStep from './components/VerificationStep';

@@ -4,7 +4,7 @@ import OTPVerificationStep from './components/OTPVerificationStep';
 import NewPasswordStep from './components/NewPasswordStep';
 import SuccessStep from './components/SuccessStep';
 import TrustSignals from '../login/components/TrustSignals';
-import logo from '../../assets/logo.svg';
+import logo from '../../../assets/logo.svg';
 
 const PasswordReset = () => {
   const [currentStep, setCurrentStep] = useState(1);

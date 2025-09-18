@@ -4,10 +4,10 @@ import { useDispatch, useSelector } from "react-redux";
 import LoginForm from "./components/LoginForm";
 import SocialLoginSection from "./components/SocialLoginSection";
 import TrustSignals from "./components/TrustSignals";
-import logo from "../../assets/logo.svg";
-import wavingHand from "../../assets/waving-hand.svg";
-import UserRegistration from "../../pages/user-registration";
-import { SignInIcon, SignUpIcon } from "../../components/icons";
+import logo from "../../../assets/logo.svg";
+import wavingHand from "../../../assets/waving-hand.svg";
+import UserRegistration from "../user-registration";
+import { SignInIcon, SignUpIcon } from "components/icons";
 import { loginUser } from "features/auth/authThunks";
 import { selectLoginStatus } from "features/auth/authSelectors";
 
