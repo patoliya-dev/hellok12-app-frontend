@@ -1,7 +1,7 @@
 import React from "react";
-import Select from "../../../components/ui/Select";
-import Icon from "../../../components/AppIcon";
-import Input from "../../../components/ui/Input";
+import Select from "../../../../components/ui/Select";
+import Icon from "../../../../components/AppIcon";
+import Input from "../../../../components/ui/Input";
 
 const StudentSelector = ({
   students,

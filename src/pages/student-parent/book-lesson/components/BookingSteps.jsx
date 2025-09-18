@@ -1,5 +1,5 @@
 import React from "react";
-import Icon from "../../../components/AppIcon";
+import Icon from "../../../../components/AppIcon";
 
 const BookingSteps = ({ steps, type, currentStep, onStepClick }) => {
   const getStepStatus = (stepId) => {

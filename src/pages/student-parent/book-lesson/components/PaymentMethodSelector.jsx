@@ -1,15 +1,18 @@
 import React, { useState } from "react";
-import Icon from "../../../components/AppIcon";
-import Button from "../../../components/ui/Button";
-import Input from "../../../components/ui/Input";
+import Icon from "../../../../components/AppIcon";
+import Button from "../../../../components/ui/Button";
+import Input from "../../../../components/ui/Input";
 import Image from "components/AppImage";
 
 const PaymentMethodSelector = ({
   savedCards,
   onPaymentMethodSelect,
   selectedMethod,
+  onAddPaymentMethod,
 }) => {
   const [showNewCardForm, setShowNewCardForm] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+
   const [newCardData, setNewCardData] = useState({
     cardNumber: "",
     expiryDate: "",
@@ -19,42 +22,78 @@ const PaymentMethodSelector = ({
 
   const handleNewCardSubmit = (e) => {
     e?.preventDefault();
-    onPaymentMethodSelect({
-      type: "new_card",
-      data: newCardData,
+
+    const errors = validateCardData(newCardData);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors); // show errors
+      return;
+    }
+
+    setFieldErrors({});
+    onAddPaymentMethod(newCardData);
+    setNewCardData({
+      cardNumber: "",
+      expiryDate: "",
+      cvv: "",
+      cardholderName: "",
     });
     setShowNewCardForm(false);
   };
 
   const handleInputChange = (field, value) => {
-    if (field?.includes(".")) {
-      const [parent, child] = field?.split(".");
-      setNewCardData((prev) => ({
-        ...prev,
-        [parent]: {
-          ...prev?.[parent],
-          [child]: value,
-        },
-      }));
-    } else {
-      setNewCardData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
+    setNewCardData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const validateCardData = (data) => {
+    const errors = {};
+
+    // Cardholder Name
+    if (!data.cardholderName?.trim()) {
+      errors.cardholderName = "Cardholder name is required";
     }
+
+    // Card Number
+    if (!data.cardNumber?.trim()) {
+      errors.cardNumber = "Card number is required";
+    } else if (!/^\d{16}$/.test(data.cardNumber.replace(/\s+/g, ""))) {
+      errors.cardNumber = "Card number must be 16 digits";
+    }
+
+    // Expiry Date
+    if (!data.expiryDate?.trim()) {
+      errors.expiryDate = "Expiry date is required";
+    } else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(data.expiryDate)) {
+      errors.expiryDate = "Expiry date must be in MM/YY format";
+    }
+
+    // CVV
+    if (!data.cvv?.trim()) {
+      errors.cvv = "CVV is required";
+    } else if (!/^\d{3,4}$/.test(data.cvv)) {
+      errors.cvv = "CVV must be 3 or 4 digits";
+    }
+
+    return errors;
   };
 
   return (
-    <div className="bg-card rounded-lg border border-border p-6">
+    <div className="bg-card rounded-lg">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-foreground">
-          Payment Method
+          Saved Payment Methods
         </h2>
       </div>
       {/* Saved Cards */}
       {savedCards?.length > 0 && (
         <div className="mb-6">
-          <div className="space-y-3">
+          <div
+            className={`space-y-3 overflow-auto ${
+              savedCards?.length > 2 && "max-h-[250px]"
+            }`}
+          >
             {savedCards?.map((card) => (
               <div
                 key={card?.id}
@@ -69,14 +108,22 @@ const PaymentMethodSelector = ({
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <Image
-                      src={`${
-                        card?.brand === "Visa"
-                          ? "/assets/images/visa.svg"
-                          : "/assets/images/mastercard.svg"
-                      }`}
-                      alt="abcd"
-                    />
+                    {card?.brand === "Card" ? (
+                      <Icon
+                        name={"CreditCard"}
+                        size={30}
+                        className="text-primary"
+                      />
+                    ) : (
+                      <Image
+                        src={`${
+                          card?.brand === "Visa"
+                            ? "/assets/images/visa.svg"
+                            : "/assets/images/mastercard.svg"
+                        }`}
+                        alt={card?.brand}
+                      />
+                    )}
                     <div>
                       <p className="font-medium text-foreground">
                         •••• •••• •••• {card?.last4}
@@ -144,6 +191,7 @@ const PaymentMethodSelector = ({
                   handleInputChange("cardholderName", e?.target?.value)
                 }
                 required
+                error={fieldErrors.cardholderName}
               />
               <Input
                 label="Card Number"
@@ -154,6 +202,7 @@ const PaymentMethodSelector = ({
                   handleInputChange("cardNumber", e?.target?.value)
                 }
                 required
+                error={fieldErrors.cardNumber}
               />
             </div>
 
@@ -167,6 +216,7 @@ const PaymentMethodSelector = ({
                   handleInputChange("expiryDate", e?.target?.value)
                 }
                 required
+                error={fieldErrors.expiryDate}
               />
               <Input
                 label="CVV"
@@ -175,6 +225,7 @@ const PaymentMethodSelector = ({
                 value={newCardData?.cvv}
                 onChange={(e) => handleInputChange("cvv", e?.target?.value)}
                 required
+                error={fieldErrors.cvv}
               />
             </div>
 
@@ -182,7 +233,11 @@ const PaymentMethodSelector = ({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setShowNewCardForm(false)}
+                onClick={() => {
+                  setFieldErrors({});
+                  setNewCardData({});
+                  setShowNewCardForm(false);
+                }}
               >
                 Cancel
               </Button>
@@ -193,7 +248,6 @@ const PaymentMethodSelector = ({
           </form>
         )}
       </div>
-
       {/* Coupon Code */}
       <div className="">
         <h3 className="font-semibold text-foreground mb-5">
@@ -203,6 +257,7 @@ const PaymentMethodSelector = ({
           <Input
             placeholder="Enter coupon code"
             className="focus:!ring-0 focus:!border-none focus:!outline-none focus:!ring-offset-0"
+            required
           />
           <Button variant="default" className="px-10">
             Apply
