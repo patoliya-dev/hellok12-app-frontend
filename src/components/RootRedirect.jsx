@@ -7,7 +7,9 @@ const RootRedirect = () => {
   const currentUser = useSelector(selectAuthUser);
 
   if (currentUser) {
-    return <Navigate to={DEFAULT_ROUTES[currentUser.role]} replace />;
+    // Add a fallback to a generic dashboard or home page
+    const redirectPath = DEFAULT_ROUTES[currentUser.role] || '/dashboard';
+    return <Navigate to={redirectPath} replace />;
   } else {
     return <Navigate to="/login" replace />;
   }

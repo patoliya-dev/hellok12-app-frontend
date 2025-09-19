@@ -6,6 +6,7 @@ import Button from "./Button";
 import logo from "../../assets/logo.svg";
 import { selectAuthUser } from "features/auth/authSelectors";
 import { logout } from "../../features/auth/authSlice";
+import Image from "components/AppImage";
 
 const RoleBasedHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -129,11 +130,10 @@ const RoleBasedHeader = () => {
             </div> */}
             <div className="flex flex-col">
               {/* <span className="text-lg font-semibold text-foreground">HelloK12</span> */}
-              <img
+              <Image
                 src={logo}
                 alt="Company Logo"
-                height={20}
-                className="mx-auto"
+                className="h-10 object-contain"
               />
               {userRole !== "guest" && (
                 <span className="text-xs text-muted-foreground">
