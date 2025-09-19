@@ -3,7 +3,6 @@ import {
   BrowserRouter as Router,
   Routes as RouterRoutes,
   Route,
-  Navigate,
 } from "react-router-dom";
 import ScrollToTop from "./components/ScrollToTop";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -16,23 +15,7 @@ import VerifyEmailPage from "./pages/auth/user-registration/components/VerifyEma
 import StudentParentRoutes from "./routes/StudentParentRoutes";
 import TeacherRoutes from "./routes/TeacherRoutes";
 import SchoolRoutes from "./routes/SchoolRoutes";
-
-const Protected = ({ children }) => <ProtectedRoute>{children}</ProtectedRoute>;
-
-// 🔹 Public routes
-const publicRoutes = [
-  { path: "/login", element: <Login /> },
-  { path: "/user-registration", element: <UserRegistration /> },
-  { path: "/verify-email", element: <VerifyEmailPage /> },
-  { path: "/password-reset", element: <PasswordReset /> },
-];
-
-// 🔹 Protected routes
-const protectedRoutes = [
-  { path: "/teacher/*", element: <TeacherRoutes /> },
-  { path: "/student-parent/*", element: <StudentParentRoutes /> },
-  { path: "/school/*", element: <SchoolRoutes /> },
-];
+import RootRedirect from "components/RootRedirect";
 
 const Routes = () => {
   return (
@@ -40,22 +23,25 @@ const Routes = () => {
       <ErrorBoundary>
         <ScrollToTop />
         <RouterRoutes>
-          {/* Redirect root to /login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* Root and Public Routes */}
+          <Route path="/" element={<RootRedirect />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/user-registration" element={<UserRegistration />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/password-reset" element={<PasswordReset />} />
 
-          {/* Public routes */}
-          {publicRoutes.map(({ path, element }) => (
-            <Route key={path} path={path} element={element} />
-          ))}
+          {/* Protected Routes - Grouped by role */}
+          <Route element={<ProtectedRoute allowedRoles={["teacher"]} />}>
+            <Route path="/teacher/*" element={<TeacherRoutes />} />
+          </Route>
 
-          {/* Protected routes */}
-          {protectedRoutes.map(({ path, element }) => (
-            <Route
-              key={path}
-              path={path}
-              element={<Protected>{element}</Protected>}
-            />
-          ))}
+          <Route element={<ProtectedRoute allowedRoles={["student", "parent"]} />}>
+            <Route path="/student-parent/*" element={<StudentParentRoutes />} />
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={["admin", "school"]} />}>
+            <Route path="/school/*" element={<SchoolRoutes />} />
+          </Route>
 
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />

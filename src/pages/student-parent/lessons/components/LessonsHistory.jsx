@@ -3,15 +3,15 @@ import LessonCard from 'components/ui/LessonCard';
 import { historyLessons } from '../../../../services/mockApi';
 
 const LessonsHistory = () => {
-  const [activeFilter, setActiveFilter] = useState('All');
+  const [activeFilter, setActiveFilter] = useState('All Lessons');
 
   const filteredLessons = useMemo(() => {
-    if (activeFilter === 'All') return historyLessons;
+    if (activeFilter === 'All Lessons') return historyLessons;
     return historyLessons.filter(lesson => lesson.status === activeFilter);
   }, [activeFilter]);
 
   const counts = useMemo(() => ({
-    All: historyLessons.length,
+    'All Lessons': historyLessons.length,
     Completed: historyLessons.filter(l => l.status === 'Completed').length,
     Cancelled: historyLessons.filter(l => l.status === 'Cancelled').length,
   }), []);
@@ -19,7 +19,7 @@ const LessonsHistory = () => {
   return (
     <div>
       <div className="flex items-center gap-2 mb-6">
-        {['All', 'Completed', 'Cancelled'].map(filter => (
+        {['All Lessons', 'Completed', 'Cancelled'].map(filter => (
           <button
             key={filter}
             onClick={() => setActiveFilter(filter)}

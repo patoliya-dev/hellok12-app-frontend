@@ -12,6 +12,7 @@ const PaymentMethodSelector = ({
 }) => {
   const [showNewCardForm, setShowNewCardForm] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [coupon, setCoupon] = useState("");
 
   const [newCardData, setNewCardData] = useState({
     cardNumber: "",
@@ -77,6 +78,16 @@ const PaymentMethodSelector = ({
     }
 
     return errors;
+  };
+
+  const handleApply = () => {
+    if (!coupon.trim()) {
+      setFieldErrors({ coupon: "Coupon code is required" });
+    } else {
+      setFieldErrors({});
+      setCoupon("");
+      alert("Coupon applied successfully!");
+    }
   };
 
   return (
@@ -253,13 +264,15 @@ const PaymentMethodSelector = ({
         <h3 className="font-semibold text-foreground mb-5">
           Apply coupon code
         </h3>
-        <div className="flex items-center justify-between space-x-3 border border-[#E2E8F0] rounded-[8px] py-3 pr-3">
+        <div className="flex items-center justify-between space-x-3 border border-[#E2E8F0] rounded-[8px] p-3">
           <Input
             placeholder="Enter coupon code"
+            value={coupon}
+            onChange={(e) => setCoupon(e.target.value)}
             className="focus:!ring-0 focus:!border-none focus:!outline-none focus:!ring-offset-0"
-            required
+            error={fieldErrors.coupon}
           />
-          <Button variant="default" className="px-10">
+          <Button variant="default" className="px-10" onClick={handleApply}>
             Apply
           </Button>
         </div>

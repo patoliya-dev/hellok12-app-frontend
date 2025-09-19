@@ -10,6 +10,7 @@ import UserRegistration from "../user-registration";
 import { SignInIcon, SignUpIcon } from "components/icons";
 import { loginUser } from "features/auth/authThunks";
 import { selectLoginStatus } from "features/auth/authSelectors";
+import { DEFAULT_ROUTES } from "../../../utils/constant";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -42,13 +43,9 @@ const Login = () => {
   // };
 
   const redirectToRoleDashboard = (role) => {
-    const dashboardRoutes = {
-      student: "/student-parent/dashboard",
-      parent: "/student-parent/dashboard",
-      teacher: "/teacher/dashboard",
-      school: "/school/dashboard",
-    };
-    navigate(dashboardRoutes[role] || "/student-parent/dashboard", { replace: true });
+    navigate(DEFAULT_ROUTES[role] || "/student-parent/dashboard", {
+      replace: true,
+    });
   };
 
   const handleLogin = async (formData) => {
@@ -134,10 +131,11 @@ const Login = () => {
                       }}
                       className={`
                             flex flex-1 justify-center text-center items-center space-x-2 py-[18px] px-1 border-b-2 font-medium text-sm transition-smooth
-                            ${activeTab === tab.id
-                          ? "border-primary text-primary"
-                          : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
-                        }
+                            ${
+                              activeTab === tab.id
+                                ? "border-primary text-primary"
+                                : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
+                            }
                           `}
                     >
                       <IconComponent selected={activeTab === tab.id} />
