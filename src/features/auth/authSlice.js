@@ -138,9 +138,9 @@ const authSlice = createSlice({
           state.requests[key].status = "failed";
           const payload = action.payload;
           state.requests[key].error =
+            payload?.message ||
             payload?.error ||
-            payload ||
-            action.error?.message ||
+            (typeof payload === 'string' ? payload : action.error?.message) ||
             "Request failed";
         }
       });
