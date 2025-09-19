@@ -8,10 +8,11 @@ const LessonsPage = () => {
   const [activeTab, setActiveTab] = useState("upcoming");
 
   const getTabClass = (tabName) => {
-    return `px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200 flex items-center gap-2 ${activeTab === tabName
+    return `px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
+      activeTab === tabName
         ? "bg-white shadow-sm text-brand-gray-800"
         : "bg-transparent text-brand-gray-600 hover:bg-gray-50"
-      }`;
+    }`;
   };
 
   return (

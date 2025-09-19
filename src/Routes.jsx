@@ -16,8 +16,9 @@ import VerifyEmailPage from "./pages/auth/user-registration/components/VerifyEma
 import StudentParentRoutes from "./routes/StudentParentRoutes";
 import TeacherRoutes from "./routes/TeacherRoutes";
 import SchoolRoutes from "./routes/SchoolRoutes";
-
-const Protected = ({ children }) => <ProtectedRoute>{children}</ProtectedRoute>;
+import { useSelector } from "react-redux";
+import { selectAuthUser } from "features/auth/authSelectors";
+import RootRedirect from "components/RootRedirect";
 
 // 🔹 Public routes
 const publicRoutes = [
@@ -29,9 +30,21 @@ const publicRoutes = [
 
 // 🔹 Protected routes
 const protectedRoutes = [
-  { path: "/teacher/*", element: <TeacherRoutes /> },
-  { path: "/student-parent/*", element: <StudentParentRoutes /> },
-  { path: "/school/*", element: <SchoolRoutes /> },
+  {
+    path: "/teacher/*",
+    element: <TeacherRoutes />,
+    allowedRoles: ["teacher"],
+  },
+  {
+    path: "/student-parent/*",
+    element: <StudentParentRoutes />,
+    allowedRoles: ["student", "parent"],
+  },
+  {
+    path: "/school/*",
+    element: <SchoolRoutes />,
+    allowedRoles: ["admin", "school"],
+  },
 ];
 
 const Routes = () => {
@@ -41,7 +54,7 @@ const Routes = () => {
         <ScrollToTop />
         <RouterRoutes>
           {/* Redirect root to /login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<RootRedirect />} />
 
           {/* Public routes */}
           {publicRoutes.map(({ path, element }) => (
@@ -49,11 +62,15 @@ const Routes = () => {
           ))}
 
           {/* Protected routes */}
-          {protectedRoutes.map(({ path, element }) => (
+          {protectedRoutes.map(({ path, element, allowedRoles }) => (
             <Route
               key={path}
               path={path}
-              element={<Protected>{element}</Protected>}
+              element={
+                <ProtectedRoute allowedRoles={allowedRoles}>
+                  {element}
+                </ProtectedRoute>
+              }
             />
           ))}
 
