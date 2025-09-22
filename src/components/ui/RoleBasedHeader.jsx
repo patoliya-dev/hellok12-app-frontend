@@ -38,7 +38,11 @@ const RoleBasedHeader = () => {
   const getNavigationItems = () => {
     const baseItems = {
       student: [
-        { label: "Dashboard", path: "/student-parent/dashboard", icon: "House" },
+        {
+          label: "Dashboard",
+          path: "/student-parent/dashboard",
+          icon: "House",
+        },
         { label: "Find Teacher", path: "/teachers", icon: "Search" },
         // { label: "Schedule", path: "/booking-system", icon: "Calendar" },
         { label: "Lessons", path: "/student-parent/lessons", icon: "Book" },
@@ -67,15 +71,24 @@ const RoleBasedHeader = () => {
       teacher: [
         { label: "Dashboard", path: "/teacher/dashboard", icon: "Home" },
         {
-          label: "My Students",
-          path: "/teacher/students",
+          label: "Manage Lessons",
+          path: "/teacher/lessons",
           icon: "Users",
         },
-        { label: "Schedule", path: "/booking-system", icon: "Calendar" },
         {
-          label: "Earnings",
-          path: "/teacher/earnings",
-          icon: "DollarSign",
+          label: "Manage Schedule",
+          path: "/teacher/schedule",
+          icon: "Calendar",
+        },
+        {
+          label: "Messages",
+          path: "/teacher/messages",
+          icon: "MessageCircle",
+        },
+        {
+          label: "Progress",
+          path: "/teacher/progress",
+          icon: "TrendingUp",
         },
       ],
       admin: [
@@ -133,7 +146,8 @@ const RoleBasedHeader = () => {
               <Image
                 src={logo}
                 alt="Company Logo"
-                className="h-10 object-contain"
+                className="h-10 object-contain cursor-pointer"
+                onClick={() => navigate("/")}
               />
               {userRole !== "guest" && (
                 <span className="text-xs text-muted-foreground">
@@ -227,15 +241,32 @@ const RoleBasedHeader = () => {
                       </p>
                     </div>
                     <div className="py-1">
-                      <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth" onClick={() =>
-                        navigate(`/${['student', 'parent'].includes(authUser.role) ? 'student-parent' : authUser.role}/profile-settings`)
-                      }>
+                      <button
+                        className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
+                        onClick={() =>
+                          navigate(
+                            `/${
+                              ["student", "parent"].includes(authUser.role)
+                                ? "student-parent"
+                                : authUser.role
+                            }/profile-settings`
+                          )
+                        }
+                      >
                         <Icon name="User" size={16} className="mr-3" />
                         Profile Settings
                       </button>
                       <button
                         className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
-                        onClick={() => navigate(`/${['student', 'parent'].includes(authUser.role) ? 'student-parent' : authUser.role}/payment-billing`)}
+                        onClick={() =>
+                          navigate(
+                            `/${
+                              ["student", "parent"].includes(authUser.role)
+                                ? "student-parent"
+                                : authUser.role
+                            }/payment-billing`
+                          )
+                        }
                       >
                         <Icon name="CreditCard" size={16} className="mr-3" />
                         Payment & Billing
