@@ -1,184 +1,265 @@
-import React, { useState } from "react";
-import GlobalNavigationHeader from "../../../components/ui/GlobalNavigationHeader";
-import RoleBasedSidebar from "../../../components/ui/RoleBasedSidebar";
-import Icon from "../../../components/AppIcon";
-import OverviewTab from "./components/OverviewTab";
-import StudentManagementTab from "./components/StudentManagementTab";
-import AssignmentTrackingTab from "./components/AssignmentTrackingTab";
+import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { selectAuthUser } from "features/auth/authSelectors";
+import RoleBasedHeader from "components/ui/RoleBasedHeader";
+import NotificationCenter from "components/ui/NotificationCenter";
+import MetricsCard from "./components/MetricsCard";
+import TodaySchedule from "./components/TodaySchedule";
+import AvailabilityCalendar from "./components/AvailabilityCalendar";
+import StudentFeedback from "./components/StudentFeedback";
+
+const metricsData = [
+  {
+    title: "Upcoming Sessions",
+    value: "12",
+    subtitle: "This week",
+    icon: "Calendar",
+    trend: "up",
+    trendValue: "+3 from last week",
+    color: "primary",
+  },
+  {
+    title: "Trial Bookings",
+    value: "5",
+    subtitle: "Pending approval",
+    icon: "Clock",
+    trend: "up",
+    trendValue: "+2 new requests",
+    color: "warning",
+  },
+  {
+    title: "Average Rating",
+    value: "4.8",
+    subtitle: "Based on 47 reviews",
+    icon: "Star",
+    trend: "up",
+    trendValue: "+0.2 this month",
+    color: "success",
+  },
+  {
+    title: "Monthly Earnings",
+    value: "$2,450",
+    subtitle: "January 2025",
+    icon: "DollarSign",
+    trend: "up",
+    trendValue: "+15% from last month",
+    color: "accent",
+  },
+];
 
 const TeacherDashboard = () => {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [showNotifications, setShowNotifications] = useState(false);
+  const authUser = useSelector(selectAuthUser);
+  const navigate = useNavigate();
 
-  const tabs = [
+  // Mock today's sessions
+  const [todaySessions] = useState([
     {
-      id: "overview",
-      label: "Overview",
-      icon: "LayoutDashboard",
-      component: OverviewTab,
+      id: "session-001",
+      student: {
+        id: "student-001",
+        name: "Emma Wilson",
+        avatar:
+          "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face",
+      },
+      subject: "English Literature",
+      startTime: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
+      duration: 60,
+      type: "Video Call",
+      earnings: 45,
+      meetingLink: "https://meet.google.com/abc-defg-hij",
     },
     {
-      id: "students",
-      label: "Student Management",
-      icon: "Users",
-      component: StudentManagementTab,
+      id: "session-002",
+      student: {
+        id: "student-002",
+        name: "Alex Chen",
+        avatar:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
+      },
+      subject: "Creative Writing",
+      startTime: new Date(Date.now() + 3 * 60 * 60 * 1000), // 3 hours from now
+      duration: 45,
+      type: "Video Call",
+      earnings: 38,
     },
     {
-      id: "assignments",
-      label: "Assignment Tracking",
-      icon: "FileText",
-      component: AssignmentTrackingTab,
+      id: "session-003",
+      student: {
+        id: "student-003",
+        name: "Sophia Martinez",
+        avatar:
+          "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face",
+      },
+      subject: "English Literature",
+      startTime: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago (completed)
+      duration: 60,
+      type: "Video Call",
+      earnings: 45,
     },
-  ];
+  ]);
 
-  const ActiveComponent =
-    tabs.find((tab) => tab.id === activeTab)?.component || OverviewTab;
+  // Mock availability data
+  const [availability, setAvailability] = useState({
+    mon: ["09:00", "10:00", "14:00", "15:00", "16:00"],
+    tue: ["09:00", "10:00", "11:00", "14:00", "15:00"],
+    wed: ["10:00", "11:00", "14:00", "15:00", "16:00"],
+    thu: ["09:00", "10:00", "14:00", "15:00"],
+    fri: ["09:00", "10:00", "11:00", "14:00"],
+    sat: ["10:00", "11:00"],
+    sun: [],
+  });
 
-  const teacherStats = [
+  // Mock student feedback
+  const [studentFeedbacks] = useState([
     {
-      label: "Total Students",
-      value: "78",
-      change: "+5",
-      changeType: "positive",
-      icon: "Users",
+      id: "feedback-001",
+      student: {
+        id: "student-001",
+        name: "Emma Wilson",
+        avatar:
+          "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face",
+      },
+      subject: "English Literature",
+      rating: 5,
+      comment: `Ms. Johnson is an amazing teacher! She helped me understand Shakespeare in a way that finally makes sense. Her explanations are clear and she's very patient with questions.`,
+      date: "2024-12-14",
+      sessionDate: "December 14, 2024",
+      tags: ["Patient", "Clear Explanations", "Knowledgeable"],
+      parentFeedback: true,
     },
     {
-      label: "Active Classes",
-      value: "3",
-      change: "0",
-      changeType: "neutral",
-      icon: "BookOpen",
+      id: "feedback-002",
+      student: {
+        id: "student-002",
+        name: "Alex Chen",
+        avatar:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
+      },
+      subject: "Creative Writing",
+      rating: 3,
+      comment: `The creative writing session was fantastic! Ms. Johnson gave me great feedback on my story and helped me develop my characters better. I feel much more confident now.`,
+      date: "2024-12-13",
+      sessionDate: "December 13, 2024",
+      tags: ["Creative", "Encouraging", "Detailed Feedback"],
     },
-    {
-      label: "Pending Grades",
-      value: "24",
-      change: "-8",
-      changeType: "positive",
-      icon: "Award",
-    },
-    {
-      label: "This Week's Classes",
-      value: "15",
-      change: "+2",
-      changeType: "positive",
-      icon: "Calendar",
-    },
-  ];
+  ]);
 
-  const getChangeColor = (type) => {
-    switch (type) {
-      case "positive":
-        return "text-success";
-      case "negative":
-        return "text-error";
-      default:
-        return "text-muted-foreground";
+  useEffect(() => {
+    // Update current time every minute
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
+  const TodayDate = () => {
+    const today = new Date();
+    const formattedDate = today.toLocaleString("en-US", {
+      weekday: "long", // Thursday
+      year: "numeric", // 2025
+      month: "long", // July
+      day: "numeric", // 31
+      hour: "numeric", // 5
+      minute: "2-digit", // 42
+      hour12: true, // AM/PM
+    });
+
+    return <div>{formattedDate}</div>;
+  };
+
+  const handleJoinSession = (session) => {
+    if (session.meetingLink) {
+      window.open(session.meetingLink, "_blank");
     }
+  };
+
+  const handleCancelSession = (session) => {
+    alert("Session canceled successfully!");
+  };
+
+  const handleViewAllFeedback = () => {
+    navigate("/teacher/students-feedback");
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Global Navigation Header */}
-      <GlobalNavigationHeader
+      {/* Header */}
+      <RoleBasedHeader />
+
+      {/* Notification Center */}
+      <NotificationCenter
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
         userRole="teacher"
-        userName="Sarah Johnson"
-        notificationCount={5}
       />
 
-      {/* Sidebar */}
-      {/* <RoleBasedSidebar
-        userRole="teacher"
-        isCollapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-      /> */}
-
       {/* Main Content */}
-      <main
-        className={`
-        pt-16 transition-all duration-300 ease-smooth
-        ${sidebarCollapsed ? "lg:ml-16" : "lg:ml-72"}
-      `}
-      >
-        <div className="p-6">
-          {/* Page Header */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">
-                  Teacher Dashboard
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                  Welcome back, Sarah! Here's what's happening with your classes
-                  today.
-                </p>
-              </div>
-              {/* <div className="flex items-center space-x-3">
-                <button className="lg:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-smooth">
-                  <Icon name="Menu" size={20} />
-                </button>
-                <button className="flex items-center space-x-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-smooth">
-                  <Icon name="Plus" size={16} />
-                  <span className="hidden sm:inline">Quick Action</span>
-                </button>
-              </div> */}
-            </div>
-
-            {/* Stats Cards */}
-            {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {teacherStats.map((stat, index) => (
-                <div key={index} className="bg-card rounded-lg border border-border p-6 shadow-subtle">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{stat.label}</p>
-                      <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
-                      {stat.change !== '0' && (
-                        <div className="flex items-center mt-2">
-                          <Icon 
-                            name={stat.changeType === 'positive' ? 'TrendingUp' : 'TrendingDown'} 
-                            size={14} 
-                            className={getChangeColor(stat.changeType)}
-                          />
-                          <span className={`text-sm ml-1 ${getChangeColor(stat.changeType)}`}>
-                            {stat.change}
-                          </span>
-                          <span className="text-sm text-muted-foreground ml-1">this week</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <Icon name={stat.icon} size={24} color="var(--color-primary)" />
-                    </div>
+      <main className="pt-16 pb-20 lg:pb-8">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Welcome Section */}
+          <div className="my-8">
+            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-4 border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
+                    {getGreeting()},{" "}
+                    <span className="capitalize">{authUser.name}</span>! 👋
+                  </h1>
+                  <div className="text-muted-foreground mb-1">
+                    {TodayDate()}
                   </div>
                 </div>
-              ))}
-            </div> */}
+              </div>
+            </div>
           </div>
 
-          {/* Tab Navigation */}
-          {/* <div className="mb-6">
-            <div className="border-b border-border">
-              <nav className="flex space-x-8">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`
-                      flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-smooth
-                      ${activeTab === tab.id
-                        ? 'border-primary text-primary' :'border-transparent text-muted-foreground hover:text-foreground hover:border-muted'
-                      }
-                    `}
-                  >
-                    <Icon name={tab.icon} size={16} />
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
-              </nav>
-            </div>
-          </div> */}
+          {/* Metrics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+            {metricsData?.map((metric, index) => (
+              <MetricsCard
+                key={index}
+                title={metric?.title}
+                value={metric?.value}
+                subtitle={metric?.subtitle}
+                icon={metric?.icon}
+                trend={metric?.trend}
+                trendValue={metric?.trendValue}
+                color={metric?.color}
+              />
+            ))}
+          </div>
 
-          {/* Tab Content */}
-          <div className="min-h-[600px]">{/* <ActiveComponent /> */}</div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="lg:col-span-2">
+              <TodaySchedule
+                sessions={todaySessions}
+                onJoinSession={handleJoinSession}
+                onCancelSession={handleCancelSession}
+              />
+            </div>
+            <div className="lg:col-span-1">
+              <AvailabilityCalendar
+                availability={availability}
+                onUpdateAvailability={setAvailability}
+              />
+            </div>
+          </div>
+
+          <StudentFeedback
+            feedbacks={studentFeedbacks}
+            onViewAllFeedback={handleViewAllFeedback}
+          />
         </div>
       </main>
     </div>
