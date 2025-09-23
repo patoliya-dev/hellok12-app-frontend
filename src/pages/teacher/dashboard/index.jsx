@@ -188,6 +188,10 @@ const TeacherDashboard = () => {
     alert("Session canceled successfully!");
   };
 
+  const handleViewAllSchedules = () => {
+    navigate("/teacher/scheduled-lessons");
+  };
+
   const handleViewAllFeedback = () => {
     navigate("/teacher/students-feedback");
   };
@@ -246,6 +250,7 @@ const TeacherDashboard = () => {
                 sessions={todaySessions}
                 onJoinSession={handleJoinSession}
                 onCancelSession={handleCancelSession}
+                onViewAllSchedules={handleViewAllSchedules}
               />
             </div>
             <div className="lg:col-span-1">

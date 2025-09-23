@@ -3,7 +3,12 @@ import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
 
-const TodaySchedule = ({ sessions, onJoinSession, onCancelSession }) => {
+const TodaySchedule = ({
+  sessions,
+  onJoinSession,
+  onCancelSession,
+  onViewAllSchedules,
+}) => {
   const [currentTime] = useState(new Date());
 
   const getSessionStatus = (session) => {
@@ -65,7 +70,7 @@ const TodaySchedule = ({ sessions, onJoinSession, onCancelSession }) => {
         <h3 className="text-lg font-semibold text-foreground">
           Today's Schedule
         </h3>
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" onClick={onViewAllSchedules}>
           View All
         </Button>
       </div>
