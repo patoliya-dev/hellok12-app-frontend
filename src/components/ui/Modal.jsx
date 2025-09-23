@@ -10,7 +10,7 @@ const Modal = ({ title, children, onClose, width = "max-w-2xl w-full" }) => {
           <h2 className="text-lg font-semibold text-brand-gray-800">{title}</h2>
           <Button variant="ghost" size="icon" iconName="X" onClick={onClose} />
         </div>
-        <div className="p-4">{children}</div>
+        <div className="">{children}</div>
       </div>
     </div>
   );
