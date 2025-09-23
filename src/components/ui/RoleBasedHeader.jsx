@@ -72,12 +72,12 @@ const RoleBasedHeader = () => {
         { label: "Dashboard", path: "/teacher/dashboard", icon: "Home" },
         {
           label: "Manage Lessons",
-          path: "/teacher/lessons",
+          path: "/teacher/manage-lessons",
           icon: "Users",
         },
         {
           label: "Manage Schedule",
-          path: "/teacher/schedule",
+          path: "/teacher/manage-schedule",
           icon: "Calendar",
         },
         {

@@ -232,10 +232,10 @@ const TodaySchedule = ({
                       iconSize={16}
                       className="flex-1"
                       onClick={() => {
-                        alert("Feedback added successfully!");
+                        alert("Session details");
                       }}
                     >
-                      Add Feedback
+                      View Details
                     </Button>
                   )}
                 </div>
