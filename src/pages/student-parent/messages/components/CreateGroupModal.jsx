@@ -100,7 +100,7 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
         );
       case 2:
         return (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 h-[350px] overflow-y-scroll">
             {mockData.map((data, index) => {
               const isChecked = tempSelected.some((m) => m.name === data.name);
 
@@ -157,13 +157,15 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div
-        className={`${step === 3 ? "w-full max-w-4xl" : "w-[500px] max-w-2xl max-h-[90vh]"
-          } bg-card rounded-lg shadow-large mx-4 overflow-hidden p-6`}
+        className={`${
+          step === 3 ? "w-full max-w-4xl" : "w-[500px] max-w-2xl max-h-[90vh]"
+        } bg-card rounded-lg shadow-large mx-4 overflow-hidden p-6`}
       >
         {/* Header */}
         <div
-          className={`flex items-center gap-6 mb-10 ${step === 3 && "justify-end !mb-0 md:!mb-10"
-            }`}
+          className={`flex items-center gap-6 mb-10 ${
+            step === 3 && "justify-end !mb-0 md:!mb-10"
+          }`}
         >
           {step === 2 && (
             <Icon
@@ -196,7 +198,7 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
               type="button"
               variant="outline"
               onClick={onClose}
-            // disabled={isLoading}
+              // disabled={isLoading}
             >
               Cancel
             </Button>
@@ -204,7 +206,7 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
               type="submit"
               className="px-10"
               onClick={step === 1 ? handleSumbit : handleAddClick}
-            // loading={isLoading}
+              // loading={isLoading}
             >
               {step === 1 ? "Create" : "Add"}
             </Button>

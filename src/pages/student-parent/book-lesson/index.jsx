@@ -12,6 +12,7 @@ import Button from "../../../components/ui/Button";
 import PaymentMethodSelector from "./components/PaymentMethodSelector";
 import BookingConfirmation from "./components/BookingConfirmation";
 import { selectAuthUser } from "features/auth/authSelectors";
+import { copyToClipboard } from "../../../utils/utils";
 
 // Steps for enrollment
 const stepsForEntrollment = [
@@ -673,14 +674,14 @@ const BookLesson = () => {
                   signup
                 </p>
                 <div className="bg-blue-50 border-2 border-primary rounded-lg p-3 cursor-pointer">
-                  <a
+                  <p
                     className="text-sm text-blue-800"
-                    href="https://www.temporary-url.com/C5E602"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    onClick={() =>
+                      copyToClipboard("https://www.temporary-url.com/C5E602")
+                    }
                   >
                     https://www.temporary-url.com/C5E602
-                  </a>
+                  </p>
                 </div>
               </div>
             ) : (

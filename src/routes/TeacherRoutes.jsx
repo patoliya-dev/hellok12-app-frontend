@@ -5,6 +5,7 @@ import StudentsFeedback from "../pages/teacher/students-feedback";
 import ScheduledLessons from "../pages/teacher/scheduled-lessons";
 import ManageLessons from "../pages/teacher/manage-lessons";
 import ManageSchedule from "../pages/teacher/manage-schedule";
+import Messages from "../pages/student-parent/messages";
 
 const TeacherRoutes = () => {
   return (
@@ -14,6 +15,7 @@ const TeacherRoutes = () => {
       <Route path="/scheduled-lessons" element={<ScheduledLessons />} />
       <Route path="/manage-lessons" element={<ManageLessons />} />
       <Route path="/manage-schedule" element={<ManageSchedule />} />
+      <Route path="/messages" element={<Messages />} />
 
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
