@@ -5,10 +5,12 @@ import Select from "components/ui/Select";
 import Icon from "components/AppIcon";
 import { Checkbox } from "components/ui/Checkbox";
 import Button from "components/ui/Button";
+import { validatePhone, validatePassword, validateEmail, validateName } from "../../../../utils/validation";
 
 const RoleSpecificStep = ({ formData, errors, onChange }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [realTimeErrors, setRealTimeErrors] = useState({});
 
   // Ensure at least one child exists for parent
   useEffect(() => {
@@ -36,8 +38,40 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
     } else {
       onChange(field, value);
 
-      // Clear top-level error
-      if (errors[field]) onChange("clearError", field);
+      // Real-time validation
+      let error = '';
+      switch (field) {
+        case 'name':
+          error = validateName(value);
+          break;
+        case 'email':
+          error = validateEmail(value);
+          break;
+        case 'phone':
+          error = validatePhone(value);
+          break;
+        case 'password':
+          error = validatePassword(value);
+          break;
+        case 'confirmPassword':
+          if (value !== formData.password) {
+            error = 'Passwords do not match';
+          }
+          break;
+        default:
+          break;
+      }
+
+      // Update real-time errors
+      setRealTimeErrors(prev => ({
+        ...prev,
+        [field]: error
+      }));
+
+      // Clear server errors when user starts typing
+      if (errors[field]) {
+        onChange("clearError", field);
+      }
     }
   };
 
@@ -120,7 +154,7 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
         placeholder="Enter a school name"
         value={formData.schoolName || ""}
         onChange={e => handleInputChange("schoolName", e.target.value)}
-        error={errors.name}
+        error={errors.name || realTimeErrors.schoolName}
         required
       />)}
       <Input
@@ -129,7 +163,7 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
         placeholder="Enter your name"
         value={formData.name || ""}
         onChange={e => handleInputChange("name", e.target.value)}
-        error={errors.name}
+        error={errors.name || realTimeErrors.name}
         required
       />
       <Input
@@ -138,7 +172,7 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
         placeholder="Enter your phone number"
         value={formData.phone || ""}
         onChange={e => handleInputChange("phone", e.target.value)}
-        error={errors.phone}
+        error={errors.phone || realTimeErrors.phone}
         required
       />
       <Input
@@ -147,7 +181,7 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
         placeholder="Enter your email"
         value={formData.email || ""}
         onChange={e => handleInputChange("email", e.target.value)}
-        error={errors.email}
+        error={errors.email || realTimeErrors.email}
         required
       />
 
@@ -158,7 +192,7 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
         showPassword,
         setShowPassword,
         e => handleInputChange("password", e.target.value),
-        errors.password
+        errors.password || realTimeErrors.password
       )}
       {renderPasswordField(
         "Confirm Password",
@@ -166,7 +200,7 @@ const RoleSpecificStep = ({ formData, errors, onChange }) => {
         showConfirmPassword,
         setShowConfirmPassword,
         e => handleInputChange("confirmPassword", e.target.value),
-        errors.confirmPassword
+        errors.confirmPassword || realTimeErrors.confirmPassword
       )}
 
       {/* Children for Parent */}
