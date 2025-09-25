@@ -7,6 +7,7 @@ import LoginSignupProgress from './components/login-signup-progress';
 import { useDispatch, useSelector } from 'react-redux';
 import { signupUser } from 'features/auth/authThunks';
 import { selectSignupError, selectSignupStatus } from 'features/auth/authSelectors';
+import { validatePhone, validatePassword, validateEmail, validateName } from '../../../utils/validation';
 
 const UserRegistration = ({ currentStep, setCurrentStep }) => {
   const dispatch = useDispatch();
@@ -62,14 +63,24 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
     const newErrors = {};
 
     if (step === 2) {
-      if (!formData.name.trim()) newErrors.name = "Name is required";
-      if (!formData.email.trim()) newErrors.email = "Email is required";
-      else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email is invalid";
-      if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+      const nameError = validateName(formData.name);
+      if (nameError) newErrors.name = nameError;
+
+      const emailError = validateEmail(formData.email);
+      if (emailError) newErrors.email = emailError;
+
+      const phoneError = validatePhone(formData.phone);
+      if (phoneError) newErrors.phone = phoneError;
+
+      const passwordError = validatePassword(formData.password);
+      if (passwordError) newErrors.password = passwordError;
+
+      if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = "Passwords do not match";
+      }
+
+
       if (!formData.role) newErrors.role = "Please select a role";
-      if (!formData.password) newErrors.password = "Password is required";
-      else if (formData.password.length < 6) newErrors.password = "Password must be at least 6 characters";
-      if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords do not match";
       if (!formData.termsAccepted) newErrors.termsAccepted = "You must accept the terms and conditions";
 
       // Role-specific validation
@@ -81,7 +92,8 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
             newErrors.children = "Please add at least one student";
           } else {
             formData.children.forEach((child) => {
-              if (!child.name?.trim()) newErrors[`name_${child.id}`] = "Name is required";
+              const childNameError = validateName(child.name);
+              if (childNameError) newErrors[`name_${child.id}`] = childNameError;
               if (!child.age) newErrors[`age_${child.id}`] = "Age is required";
               if (!child.gender) newErrors[`gender_${child.id}`] = "Gender is required";
             });
@@ -118,6 +130,10 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Clear previous errors
+    setErrors({});
+
     // Run validation before submission
     if (!validateStep(2)) return;
 
@@ -140,6 +156,17 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
     if (signupUser.fulfilled.match(resultAction)) {
       console.log('Signup successful:', resultAction.payload);
       handleNext();
+    } else {
+      // Handle validation errors from server
+      if (resultAction.payload && resultAction.payload.errors) {
+        const serverErrors = {};
+        resultAction.payload.errors.forEach(error => {
+          // Map server field names to frontend field names
+          const fieldName = error.field.replace('body.', '');
+          serverErrors[fieldName] = error.message;
+        });
+        setErrors(serverErrors);
+      }
     }
 
   };

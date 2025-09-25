@@ -7,6 +7,15 @@ export const loginUser = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const { data } = await api.post('/auth/login', credentials);
+
+      if (data.success) {
+        return {
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          user: data.user
+        };
+      }
+
       return data; // expected { accessToken, user }
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
@@ -20,9 +29,27 @@ export const signupUser = createAsyncThunk(
   async (formData, { rejectWithValue }) => {
     try {
       const { data } = await api.post('/auth/signup', formData);
+
+      if (data.success) {
+        return {
+          user: data.data.user,
+          userId: data.data.userId,
+          requiresEmailVerification: data.data.requiresEmailVerification
+        };
+      }
+
       return data;
     } catch (err) {
-      return rejectWithValue(err.response?.data || err.message);
+      // Enhanced error handling for validation errors
+      if (err.response?.status === 400 && err.response?.data?.errors) {
+        return rejectWithValue({
+          message: err.response.data.message || 'Validation failed',
+          errors: err.response.data.errors
+        });
+      }
+
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message;
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -33,6 +60,15 @@ export const verifyEmail = createAsyncThunk(
   async (token, { rejectWithValue }) => {
     try {
       const { data } = await api.get(`/auth/verify-email?token=${token}`);
+
+      if (data.success) {
+        return {
+          user: data.user,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken
+        };
+      }
+
       return data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Verification failed");
