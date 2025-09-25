@@ -8,6 +8,7 @@ const TodaySchedule = ({
   onJoinSession,
   onCancelSession,
   onViewAllSchedules,
+  onMessage,
 }) => {
   const [currentTime] = useState(new Date());
 
@@ -206,6 +207,7 @@ const TodaySchedule = ({
                         iconPosition="left"
                         iconSize={16}
                         className="flex-1"
+                        onClick={onMessage}
                       >
                         Message Student
                       </Button>

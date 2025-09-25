@@ -196,6 +196,10 @@ const TeacherDashboard = () => {
     navigate("/teacher/students-feedback");
   };
 
+  const handleMessages = () => {
+    navigate("/teacher/messages");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -251,6 +255,7 @@ const TeacherDashboard = () => {
                 onJoinSession={handleJoinSession}
                 onCancelSession={handleCancelSession}
                 onViewAllSchedules={handleViewAllSchedules}
+                onMessage={handleMessages}
               />
             </div>
             <div className="lg:col-span-1">
