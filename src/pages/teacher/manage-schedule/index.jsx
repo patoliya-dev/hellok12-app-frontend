@@ -109,7 +109,10 @@ const ManageSchedule = () => {
               </div>
             </div>
             <div className="lg:col-span-1">
-              <AvailabilityCalendar availability={availability} />
+              <AvailabilityCalendar
+                availability={availability}
+                currentDate={currentDate}
+              />
             </div>
           </div>
         </section>

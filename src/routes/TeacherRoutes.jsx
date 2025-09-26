@@ -7,6 +7,7 @@ import ManageLessons from "../pages/teacher/manage-lessons";
 import ManageSchedule from "../pages/teacher/manage-schedule";
 import Messages from "../pages/student-parent/messages";
 import Progress from "../pages/teacher/progress";
+import ProfileAccountSettings from "../pages/teacher/profile-settings";
 
 const TeacherRoutes = () => {
   return (
@@ -18,6 +19,7 @@ const TeacherRoutes = () => {
       <Route path="/manage-schedule" element={<ManageSchedule />} />
       <Route path="/messages" element={<Messages />} />
       <Route path="/progress" element={<Progress />} />
+      <Route path="/profile-settings" element={<ProfileAccountSettings />} />
 
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
