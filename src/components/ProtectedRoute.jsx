@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { selectAuthUser } from "features/auth/authSelectors";
+import { selectAuthUser } from "reducers/auth/authSelectors";
 import { DEFAULT_ROUTES } from "../utils/constant";
 
 export default function ProtectedRoute({ allowedRoles }) {

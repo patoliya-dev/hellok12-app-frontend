@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
 import { useDispatch } from 'react-redux';
-import { logout } from 'features/auth/authSlice';
-
+import { logout } from 'reducers/auth/authSlice';
 const GlobalNavigationHeader = ({ userRole = 'student', userName = 'John Doe', notificationCount = 3 }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();

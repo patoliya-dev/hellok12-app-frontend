@@ -6,7 +6,7 @@ import StudentProfileSection from "./components/StudentProfileSection";
 import ChildSelector from "./components/ChildSelector";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import ChangePasswordModal from "./components/ChangePasswordModal";
-import { selectAuthUser } from "features/auth/authSelectors";
+import { selectAuthUser } from "reducers/auth/authSelectors";
 import { capitalize } from "../../../utils/utils";
 
 const ProfileAccountSettings = () => {

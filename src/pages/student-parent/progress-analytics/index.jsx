@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProgress, fetchCourses, setSelectedCourse } from '../../../features/progress/progressSlice';
+import { fetchProgress, fetchCourses, setSelectedCourse } from 'reducers/progress/progressSlice';
 import { Clock, CheckSquare, TrendingUp, CalendarClock } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer

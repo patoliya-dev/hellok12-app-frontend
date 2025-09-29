@@ -5,8 +5,8 @@ import RoleSpecificStep from './components/RoleSpecificStep';
 import VerificationStep from './components/VerificationStep';
 import LoginSignupProgress from './components/login-signup-progress';
 import { useDispatch, useSelector } from 'react-redux';
-import { signupUser } from 'features/auth/authThunks';
-import { selectSignupError, selectSignupStatus } from 'features/auth/authSelectors';
+import { signupUser } from 'reducers/auth/authThunks';
+import { selectSignupError, selectSignupStatus } from 'reducers/auth/authSelectors';
 import { validatePhone, validatePassword, validateEmail, validateName } from '../../../utils/validation';
 
 const UserRegistration = ({ currentStep, setCurrentStep }) => {
