@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { selectAuthUser } from "features/auth/authSelectors";
+import { selectAuthUser } from "reducers/auth/authSelectors";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import NotificationCenter from "components/ui/NotificationCenter";
 import MetricsCard from "./components/MetricsCard";

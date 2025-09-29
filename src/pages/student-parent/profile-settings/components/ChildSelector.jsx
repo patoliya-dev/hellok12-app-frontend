@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectStudent } from 'features/profile/profileSlice';
+import { selectStudent } from 'reducers/profile/profileSlice';
 
 const ChildSelector = () => {
   const dispatch = useDispatch();

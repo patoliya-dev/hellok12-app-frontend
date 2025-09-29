@@ -1,4 +1,4 @@
-import { selectAuthUser } from "features/auth/authSelectors";
+import { selectAuthUser } from "reducers/auth/authSelectors";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 import { DEFAULT_ROUTES } from "../utils/constant";

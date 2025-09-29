@@ -3,7 +3,7 @@ import Input from 'components/ui/Input';
 import Button from 'components/ui/Button';
 import { Checkbox } from 'components/ui/Checkbox';
 import Icon from 'components/AppIcon';
-import { selectLoginError } from 'features/auth/authSelectors';
+import { selectLoginError } from 'reducers/auth/authSelectors';
 import { useSelector } from 'react-redux';
 
 const LoginForm = ({ onSubmit, isLoading }) => {

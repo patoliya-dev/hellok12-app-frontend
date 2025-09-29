@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import ChildProfileCard from './ChildProfileCard';
 import AddChildForm from './AddChildForm';
 import Button from 'components/ui/Button';
-import { updateStudent, deleteStudent, addStudent } from 'features/profile/profileSlice';
+import { updateStudent, deleteStudent, addStudent } from 'reducers/profile/profileSlice';
 
 const StudentInfoSection = ({ isExpanded, onToggle }) => {
   const dispatch = useDispatch();

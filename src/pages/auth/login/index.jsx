@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import LoginForm from "./components/LoginForm";
@@ -8,8 +8,8 @@ import logo from "../../../assets/logo.svg";
 import wavingHand from "../../../assets/waving-hand.svg";
 import UserRegistration from "../user-registration";
 import { SignInIcon, SignUpIcon } from "components/icons";
-import { loginUser } from "features/auth/authThunks";
-import { selectLoginStatus } from "features/auth/authSelectors";
+import { loginUser } from "reducers/auth/authThunks";
+import { selectLoginStatus } from "reducers/auth/authSelectors";
 import { DEFAULT_ROUTES } from "../../../utils/constant";
 
 const Login = () => {
@@ -33,6 +33,14 @@ const Login = () => {
       component: UserRegistration,
     },
   ];
+
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash === "signin" || hash === "signup") {
+      setActiveTab(hash);
+      setCurrentStep(0);
+    }
+  }, []);
 
   // Mock credentials for different user roles
   // const mockCredentials = {
@@ -131,11 +139,10 @@ const Login = () => {
                       }}
                       className={`
                             flex flex-1 justify-center text-center items-center space-x-2 py-[18px] px-1 border-b-2 font-medium text-sm transition-smooth
-                            ${
-                              activeTab === tab.id
-                                ? "border-primary text-primary"
-                                : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
-                            }
+                            ${activeTab === tab.id
+                          ? "border-primary text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
+                        }
                           `}
                     >
                       <IconComponent selected={activeTab === tab.id} />

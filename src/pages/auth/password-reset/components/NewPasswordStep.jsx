@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { resetPassword } from 'features/auth/authThunks';
+import { resetPassword } from 'reducers/auth/authThunks';
 import Icon from 'components/AppIcon';
 import Input from 'components/ui/Input';
 import Button from 'components/ui/Button';
