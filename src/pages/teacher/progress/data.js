@@ -1,5 +1,6 @@
 const students = [
   {
+    id: 1,
     studentName: "Priya Sharma",
     studentAge: 15,
     studentImage: "https://i.pravatar.cc/150?img=5",
@@ -9,6 +10,7 @@ const students = [
     lessons: ["algebra-basics"],
   },
   {
+    id: 2,
     studentName: "Yash Agarwal",
     studentAge: 23,
     studentImage: "https://i.pravatar.cc/150?img=31",
@@ -18,6 +20,7 @@ const students = [
     lessons: ["warmup-techniques"],
   },
   {
+    id: 3,
     studentName: "Dev Patel",
     studentAge: 19,
     studentImage: "https://i.pravatar.cc/150?img=55",
@@ -27,6 +30,7 @@ const students = [
     lessons: ["html-css-basics"],
   },
   {
+    id: 4,
     studentName: "Rhea Nair",
     studentAge: 12,
     studentImage: "https://i.pravatar.cc/150?img=36",
@@ -36,6 +40,7 @@ const students = [
     lessons: ["floor-work"],
   },
   {
+    id: 5,
     studentName: "Rohan Kapoor",
     studentAge: 14,
     studentImage: "https://i.pravatar.cc/150?img=20",
@@ -45,6 +50,7 @@ const students = [
     lessons: ["geometry-fundamentals"],
   },
   {
+    id: 6,
     studentName: "Anaya Gupta",
     studentAge: 18,
     studentImage: "https://i.pravatar.cc/150?img=24",
@@ -54,6 +60,7 @@ const students = [
     lessons: ["basic-chords"],
   },
   {
+    id: 7,
     studentName: "Meera Iyer",
     studentAge: 15,
     studentImage: "https://i.pravatar.cc/150?img=7",
@@ -63,6 +70,7 @@ const students = [
     lessons: ["newtons-laws", "work-energy", "circular-motion"],
   },
   {
+    id: 8,
     studentName: "Ishita Dutta",
     studentAge: 13,
     studentImage: "https://i.pravatar.cc/150?img=22",
@@ -72,6 +80,7 @@ const students = [
     lessons: ["probability-intro"],
   },
   {
+    id: 9,
     studentName: "Kabir Joshi",
     studentAge: 17,
     studentImage: "https://i.pravatar.cc/150?img=44",
@@ -81,6 +90,7 @@ const students = [
     lessons: ["newtons-laws", "work-energy", "circular-motion"],
   },
   {
+    id: 10,
     studentName: "Lina Roy",
     studentAge: 21,
     studentImage: "https://i.pravatar.cc/150?img=8",
@@ -90,6 +100,7 @@ const students = [
     lessons: ["javascript-fundamentals"],
   },
   {
+    id: 11,
     studentName: "Aarav Mehta",
     studentAge: 12,
     studentImage: "https://i.pravatar.cc/150?img=12",
@@ -99,6 +110,7 @@ const students = [
     lessons: ["algebra-basics", "geometry-fundamentals", "probability-intro"],
   },
   {
+    id: 12,
     studentName: "Arjun Desai",
     studentAge: 20,
     studentImage: "https://i.pravatar.cc/150?img=29",
@@ -108,6 +120,7 @@ const students = [
     lessons: ["responsive-design"],
   },
   {
+    id: 13,
     studentName: "Sara Khan",
     studentAge: 16,
     studentImage: "https://i.pravatar.cc/150?img=33",
@@ -117,6 +130,7 @@ const students = [
     lessons: ["newtons-laws", "work-energy", "circular-motion"],
   },
   {
+    id: 14,
     studentName: "Siddhant Rao",
     studentAge: 20,
     studentImage: "https://i.pravatar.cc/150?img=48",
@@ -126,6 +140,7 @@ const students = [
     lessons: ["strumming-patterns"],
   },
   {
+    id: 15,
     studentName: "Tara Sen",
     studentAge: 13,
     studentImage: "https://i.pravatar.cc/150?img=14",
@@ -135,6 +150,7 @@ const students = [
     lessons: ["performance-routine"],
   },
   {
+    id: 16,
     studentName: "Nisha Verma",
     studentAge: 22,
     studentImage: "https://i.pravatar.cc/150?img=16",
@@ -148,6 +164,7 @@ const students = [
     ],
   },
   {
+    id: 17,
     studentName: "Vikram Singh",
     studentAge: 19,
     studentImage: "https://i.pravatar.cc/150?img=3",
@@ -157,6 +174,7 @@ const students = [
     lessons: ["simple-songs"],
   },
   {
+    id: 18,
     studentName: "Ayaan Pillai",
     studentAge: 15,
     studentImage: "https://i.pravatar.cc/150?img=41",

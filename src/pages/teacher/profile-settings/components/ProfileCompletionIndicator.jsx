@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { selectAuthUser } from "features/auth/authSelectors";
 
 const ProfileCompletionIndicator = ({ formData, activeTab }) => {
+  const visibleTabs = tabs.slice(0, 5);
   const user = useSelector(selectAuthUser);
   const calculateTabCompletion = (tabName) => {
     switch (tabName) {
@@ -69,8 +70,10 @@ const ProfileCompletionIndicator = ({ formData, activeTab }) => {
   };
 
   const overallCompletion = Math.round(
-    tabs?.reduce((sum, tab) => sum + calculateTabCompletion(tab?.id), 0) /
-      tabs?.length
+    visibleTabs?.reduce(
+      (sum, tab) => sum + calculateTabCompletion(tab?.id),
+      0
+    ) / visibleTabs?.length
   );
 
   const getCompletionColor = (percentage) => {
@@ -119,7 +122,7 @@ const ProfileCompletionIndicator = ({ formData, activeTab }) => {
       </div>
       {/* Individual Tab Progress */}
       <div className="space-y-3">
-        {tabs?.map((tab) => {
+        {visibleTabs?.map((tab) => {
           const completion = calculateTabCompletion(tab?.id);
           const isActive = activeTab === tab?.id;
 

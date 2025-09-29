@@ -4,6 +4,7 @@ const tabs = [
   { id: "certifications", name: "Certifications", icon: "Award" },
   { id: "availability", name: "Availability", icon: "Calendar" },
   { id: "preferences", name: "Teaching Preferences", icon: "Settings" },
+  { id: "highlights", name: "Teaching Highlights", icon: "Image" },
 ];
 
 const daysOfWeek = [
@@ -119,6 +120,64 @@ const timezoneOptions = [
   { value: "Pacific/Auckland", label: "(UTC+12:00) Auckland, Wellington" },
 ];
 
+// Mock data for demonstration
+const mockMediaItems = [
+  {
+    id: 1,
+    name: "Spanish Conversation Class - Beginner Level",
+    type: "video",
+    url: "https://images.pexels.com/photos/8471919/pexels-photo-8471919.jpeg",
+    size: 15728640, // 15MB
+    uploadDate: new Date("2024-08-10T14:30:00"),
+    format: "mp4",
+  },
+  {
+    id: 2,
+    name: "Grammar Lesson Whiteboard",
+    type: "image",
+    url: "https://images.pixabay.com/photo/2017/05/13/12/40/fashion-2309519_1280.jpg",
+    size: 2097152, // 2MB
+    uploadDate: new Date("2024-08-09T10:15:00"),
+    format: "jpg",
+  },
+  {
+    id: 3,
+    name: "Student Presentation - French Culture",
+    type: "video",
+    url: "https://images.unsplash.com/photo-1544717297-fa95b6ee9643",
+    size: 25165824, // 24MB
+    uploadDate: new Date("2024-08-08T16:45:00"),
+    format: "mov",
+  },
+  {
+    id: 4,
+    name: "Vocabulary Cards Activity",
+    type: "image",
+    url: "https://images.pexels.com/photos/8471918/pexels-photo-8471918.jpeg",
+    size: 1572864, // 1.5MB
+    uploadDate: new Date("2024-08-07T11:20:00"),
+    format: "png",
+  },
+  {
+    id: 5,
+    name: "Interactive Language Game Session",
+    type: "video",
+    url: "https://images.pixabay.com/photo/2015/07/17/22/43/student-849825_1280.jpg",
+    size: 18874368, // 18MB
+    uploadDate: new Date("2024-08-06T13:10:00"),
+    format: "mp4",
+  },
+  {
+    id: 6,
+    name: "Classroom Setup for Group Work",
+    type: "image",
+    url: "https://images.unsplash.com/photo-1509062522246-3755977927d7",
+    size: 3145728, // 3MB
+    uploadDate: new Date("2024-08-05T09:30:00"),
+    format: "jpg",
+  },
+];
+
 export {
   tabs,
   daysOfWeek,
@@ -126,4 +185,5 @@ export {
   languageOptions,
   ageGroupOptions,
   timezoneOptions,
+  mockMediaItems,
 };

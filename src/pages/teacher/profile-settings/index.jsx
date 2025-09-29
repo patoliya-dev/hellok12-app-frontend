@@ -10,6 +10,7 @@ import BioSpecializationsTab from "./components/BioSpecializationsTab";
 import CertificationsTab from "./components/CertificationsTab";
 import AvailabilityTab from "./components/AvailabilityTab";
 import TeachingPreferencesTab from "./components/TeachingPreferencesTab";
+import TeachingHighlightsTab from "./components/TeachingHighlightsTab";
 
 const ProfileAccountSettings = () => {
   const [saveStatus, setSaveStatus] = useState("");
@@ -198,6 +199,8 @@ const ProfileAccountSettings = () => {
         return <AvailabilityTab {...commonProps} />;
       case "preferences":
         return <TeachingPreferencesTab {...commonProps} />;
+      case "highlights":
+        return <TeachingHighlightsTab />;
       default:
         return <PersonalInfoTab {...commonProps} />;
     }
@@ -332,6 +335,7 @@ const ProfileAccountSettings = () => {
                       }
                       iconName="ChevronLeft"
                       iconPosition="left"
+                      className="disabled:!cursor-not-allowed"
                     >
                       Previous
                     </Button>
@@ -351,26 +355,28 @@ const ProfileAccountSettings = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end px-6 pt-4">
-                {!isEdit ? (
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    iconName="Edit"
-                    onClick={handleEdit}
-                  >
-                    {`Edit ${getEditButtonText()}`}
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => setIsEdit(false)}
-                  >
-                    Cancle
-                  </Button>
-                )}
-              </div>
+              {activeTab !== "highlights" && (
+                <div className="flex justify-end px-6 pt-4">
+                  {!isEdit ? (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      iconName="Edit"
+                      onClick={handleEdit}
+                    >
+                      {`Edit ${getEditButtonText()}`}
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => setIsEdit(false)}
+                    >
+                      Cancle
+                    </Button>
+                  )}
+                </div>
+              )}
 
               {/* Tab Content */}
               <div className="p-6">{renderTabContent()}</div>
