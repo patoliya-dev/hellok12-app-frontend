@@ -3,8 +3,8 @@ import Input from 'components/ui/Input';
 import Button from 'components/ui/Button';
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
-import { forgotPassword } from 'features/auth/authThunks';
-import { selectForgotPasswordError, selectForgotPasswordStatus } from 'features/auth/authSelectors';
+import { forgotPassword } from 'reducers/auth/authThunks';
+import { selectForgotPasswordError, selectForgotPasswordStatus } from 'reducers/auth/authSelectors';
 
 const AccountInfoStep = ({ onNext }) => {
   const navigate = useNavigate();

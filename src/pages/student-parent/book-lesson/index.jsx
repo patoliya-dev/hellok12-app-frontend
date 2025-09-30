@@ -11,7 +11,7 @@ import Icon from "../../../components/AppIcon";
 import Button from "../../../components/ui/Button";
 import PaymentMethodSelector from "./components/PaymentMethodSelector";
 import BookingConfirmation from "./components/BookingConfirmation";
-import { selectAuthUser } from "features/auth/authSelectors";
+import { selectAuthUser } from "reducers/auth/authSelectors";
 import { copyToClipboard } from "../../../utils/utils";
 
 // Steps for enrollment

@@ -4,8 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import Icon from "../AppIcon";
 import Button from "./Button";
 import logo from "../../assets/logo.svg";
-import { selectAuthUser } from "features/auth/authSelectors";
-import { logout } from "../../features/auth/authSlice";
+import { selectAuthUser } from "reducers/auth/authSelectors";
+import { logout } from "reducers/auth/authSlice";
 import Image from "components/AppImage";
 
 const RoleBasedHeader = () => {

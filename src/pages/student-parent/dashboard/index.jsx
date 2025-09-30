@@ -8,7 +8,7 @@ import ProgressTrackingSection from "./components/ProgressTrackingSection";
 import ScheduleWidget from "./components/ScheduleWidget";
 import MobileBottomNavigation from "./components/MobileBottomNavigation";
 import Button from "../../../components/ui/Button";
-import { selectAuthUser } from "features/auth/authSelectors";
+import { selectAuthUser } from "reducers/auth/authSelectors";
 
 const StudentDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);

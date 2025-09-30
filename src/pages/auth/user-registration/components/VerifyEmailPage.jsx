@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { verifyEmail } from "features/auth/authThunks";
-import { selectVerifyEmailError, selectVerifyEmailStatus } from "features/auth/authSelectors";
+import { verifyEmail } from "reducers/auth/authThunks";
+import { selectVerifyEmailError, selectVerifyEmailStatus } from "reducers/auth/authSelectors";
 
 export default function VerifyEmailPage() {
   const dispatch = useDispatch();
