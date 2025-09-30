@@ -6,7 +6,7 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials, { rejectWithValue }) => {
     try {
-      const { data } = await api.post('/auth/login', credentials);
+      const { data } = await api.post('/auth/login', credentials, { skipRefresh: true });
 
       if (data.success) {
         return {
