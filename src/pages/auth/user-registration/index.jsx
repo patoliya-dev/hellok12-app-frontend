@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from 'components/ui/Button';
 import BasicInfoStep from './components/BasicInfoStep';
 import RoleSpecificStep from './components/RoleSpecificStep';
@@ -9,7 +9,7 @@ import { signupUser } from 'reducers/auth/authThunks';
 import { selectSignupError, selectSignupStatus } from 'reducers/auth/authSelectors';
 import { validatePhone, validatePassword, validateEmail, validateName } from '../../../utils/validation';
 
-const UserRegistration = ({ currentStep, setCurrentStep }) => {
+const UserRegistration = ({ currentStep, setCurrentStep, initialRoleData }) => {
   const dispatch = useDispatch();
   // selectors
   const signupStatus = useSelector(selectSignupStatus);
@@ -20,7 +20,7 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
     email: '',
     phone: '',
     role: '',
-    userType: 'student', // Added userType selection for student/parent
+    userType: initialRoleData?.userType || "student", // Added userType selection for student/parent
     schoolName: '',
     children: [],
     termsAccepted: false,
@@ -32,6 +32,17 @@ const UserRegistration = ({ currentStep, setCurrentStep }) => {
   });
 
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (initialRoleData) {
+      setFormData((prev) => ({
+        ...prev,
+        role: initialRoleData.role || "",
+        userType: initialRoleData.userType || "student",
+      }));
+      setCurrentStep(1);
+    }
+  }, [initialRoleData]);
 
   const handleInputChange = (field, value, childId = null) => {
     if (field === "children" && childId) {

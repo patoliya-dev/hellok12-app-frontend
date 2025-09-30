@@ -11,13 +11,20 @@ import { SignInIcon, SignUpIcon } from "components/icons";
 import { loginUser } from "reducers/auth/authThunks";
 import { selectLoginStatus } from "reducers/auth/authSelectors";
 import { DEFAULT_ROUTES } from "../../../utils/constant";
+import useAuthHash from "../../../hooks/useAuthHash";
 
 const Login = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("signin");
   const [currentStep, setCurrentStep] = useState(0);
   const loginStatus = useSelector(selectLoginStatus);
+  // Get tab and roleData from URL hash via custom hook
+  const { tab, roleData: initialRoleData } = useAuthHash();
 
+  useEffect(() => {
+    setActiveTab(tab);
+  }, [tab]);
+  
   const dispatch = useDispatch();
   const tabs = [
     {
@@ -33,14 +40,6 @@ const Login = () => {
       component: UserRegistration,
     },
   ];
-
-  useEffect(() => {
-    const hash = window.location.hash.replace("#", "");
-    if (hash === "signin" || hash === "signup") {
-      setActiveTab(hash);
-      setCurrentStep(0);
-    }
-  }, []);
 
   // Mock credentials for different user roles
   // const mockCredentials = {
@@ -94,6 +93,11 @@ const Login = () => {
 
   const ActiveComponent =
     tabs.find((tab) => tab.id === activeTab)?.component || LoginForm;
+
+  const componentProps =
+    activeTab === "signup"
+      ? { currentStep, setCurrentStep, initialRoleData }
+      : { currentStep, setCurrentStep };
 
   return (
     <div className="min-h-screen bg-auth-bg bg-cover bg-center">
@@ -157,8 +161,7 @@ const Login = () => {
             <ActiveComponent
               onSubmit={handleLogin}
               isLoading={loginStatus === "loading"}
-              currentStep={currentStep}
-              setCurrentStep={setCurrentStep}
+              {...componentProps}
             />
 
             {/* Social Login Section */}
