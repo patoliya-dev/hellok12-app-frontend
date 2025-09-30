@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Icon from "../../../../components/AppIcon";
 import { timeSlots } from "../data";
 
-const AvailabilityCalendar = ({ availability }) => {
+const AvailabilityCalendar = ({ availability, currentDate }) => {
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   const getCurrentWeekDates = () => {
@@ -25,6 +25,11 @@ const AvailabilityCalendar = ({ availability }) => {
     return availability[dayName]?.includes(timeSlot) || false;
   };
 
+  const isToday = (date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
   return (
     <div className="bg-card rounded-lg border border-border p-6">
       <div className="mb-4">
@@ -39,7 +44,12 @@ const AvailabilityCalendar = ({ availability }) => {
           <div className="grid grid-cols-8 gap-1 mb-2">
             <div className="p-2 text-xs font-medium text-muted-foreground"></div>
             {daysOfWeek.map((day, index) => (
-              <div key={day} className="p-2 text-center">
+              <div
+                key={day}
+                className={`p-2 text-center ${
+                  isToday(weekDates[index]) ? "bg-muted" : ""
+                }`}
+              >
                 <div className="text-xs font-medium text-foreground">{day}</div>
                 <div className="text-xs text-muted-foreground">
                   {weekDates[index].getDate()}

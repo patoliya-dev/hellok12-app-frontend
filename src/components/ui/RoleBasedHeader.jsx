@@ -256,21 +256,23 @@ const RoleBasedHeader = () => {
                         <Icon name="User" size={16} className="mr-3" />
                         Profile Settings
                       </button>
-                      <button
-                        className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
-                        onClick={() =>
-                          navigate(
-                            `/${
-                              ["student", "parent"].includes(authUser.role)
-                                ? "student-parent"
-                                : authUser.role
-                            }/payment-billing`
-                          )
-                        }
-                      >
-                        <Icon name="CreditCard" size={16} className="mr-3" />
-                        Payment & Billing
-                      </button>
+                      {["student", "parent"].includes(authUser.role) && (
+                        <button
+                          className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
+                          onClick={() =>
+                            navigate(
+                              `/${
+                                ["student", "parent"].includes(authUser.role)
+                                  ? "student-parent"
+                                  : authUser.role
+                              }/payment-billing`
+                            )
+                          }
+                        >
+                          <Icon name="CreditCard" size={16} className="mr-3" />
+                          Payment & Billing
+                        </button>
+                      )}
                       {/* <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
                         <Icon name="HelpCircle" size={16} className="mr-3" />
                         Help & Support

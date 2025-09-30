@@ -63,7 +63,7 @@ const StudentTable = ({
             <tr>
               <th className="px-6 py-4 text-left">
                 <button
-                  onClick={() => onSort("date")}
+                  onClick={() => onSort("studentName")}
                   className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
                 >
                   Student Name
