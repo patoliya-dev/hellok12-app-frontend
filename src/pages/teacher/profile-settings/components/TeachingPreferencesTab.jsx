@@ -4,7 +4,7 @@ import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import { Checkbox } from "../../../../components/ui/Checkbox";
 import Icon from "../../../../components/AppIcon";
-import { selectAuthUser } from "features/auth/authSelectors";
+import { selectAuthUser } from "../../../../reducers/auth/authSelectors";
 
 const TeachingPreferencesTab = ({
   formData,

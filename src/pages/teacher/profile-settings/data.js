@@ -178,6 +178,30 @@ const mockMediaItems = [
   },
 ];
 
+const validationRules = {
+  personal: [
+    "fullName",
+    "email",
+    "phone",
+    "experience",
+    "country",
+    "state",
+    "city",
+  ],
+  bio: [
+    "bio",
+    "teachingStyle",
+    "whyLoveTeaching",
+    "languagesTaught",
+    "nativeLanguage",
+    "ageGroups",
+  ],
+  certifications: ["education"],
+  availability: [],
+  preferences: [],
+  highlights: [], // no required fields
+};
+
 export {
   tabs,
   daysOfWeek,
@@ -186,4 +210,5 @@ export {
   ageGroupOptions,
   timezoneOptions,
   mockMediaItems,
+  validationRules,
 };

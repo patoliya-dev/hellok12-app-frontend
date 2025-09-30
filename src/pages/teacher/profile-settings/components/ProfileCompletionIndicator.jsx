@@ -2,7 +2,7 @@ import React from "react";
 import Icon from "../../../../components/AppIcon";
 import { tabs } from "../data";
 import { useSelector } from "react-redux";
-import { selectAuthUser } from "features/auth/authSelectors";
+import { selectAuthUser } from "reducers/auth/authSelectors";
 
 const ProfileCompletionIndicator = ({ formData, activeTab }) => {
   const visibleTabs = tabs.slice(0, 5);

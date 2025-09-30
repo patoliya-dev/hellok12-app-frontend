@@ -10,9 +10,9 @@ const PersonalInfoTab = ({
   onSave,
   isSaving,
   isEdit,
+  errors,
 }) => {
   const fileInputRef = useRef(null);
-
   const handleButtonClick = () => {
     fileInputRef.current.click();
   };
@@ -127,6 +127,7 @@ const PersonalInfoTab = ({
             onChange={(e) => handleInputChange("fullName", e?.target?.value)}
             required
             disabled={!isEdit}
+            error={errors?.fullName}
           />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -138,6 +139,7 @@ const PersonalInfoTab = ({
             onChange={(e) => handleInputChange("email", e?.target?.value)}
             required
             disabled={!isEdit}
+            error={errors?.email}
           />
           <Input
             label="Phone Number"
@@ -147,6 +149,7 @@ const PersonalInfoTab = ({
             onChange={(e) => handleInputChange("phone", e?.target?.value)}
             required
             disabled={!isEdit}
+            error={errors?.phone}
           />
           <Input
             label="Date of Birth"
@@ -165,6 +168,7 @@ const PersonalInfoTab = ({
             onChange={(e) => handleInputChange("experience", e?.target?.value)}
             required
             disabled={!isEdit}
+            error={errors?.experience}
           />
         </div>
       </div>
@@ -180,6 +184,7 @@ const PersonalInfoTab = ({
             onChange={(e) => handleInputChange("country", e?.target?.value)}
             required
             disabled={!isEdit}
+            error={errors?.country}
           />
           <Input
             label="State/Province"
@@ -189,6 +194,7 @@ const PersonalInfoTab = ({
             onChange={(e) => handleInputChange("state", e?.target?.value)}
             required
             disabled={!isEdit}
+            error={errors?.state}
           />
           <Input
             label="City"
@@ -198,6 +204,7 @@ const PersonalInfoTab = ({
             onChange={(e) => handleInputChange("city", e?.target?.value)}
             required
             disabled={!isEdit}
+            error={errors?.city}
           />
         </div>
       </div>

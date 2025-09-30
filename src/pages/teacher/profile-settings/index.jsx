@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import Button from "components/ui/Button";
 import Icon from "components/AppIcon";
-import { tabs } from "./data";
+import { tabs, validationRules } from "./data";
 import ProfileCompletionIndicator from "./components/ProfileCompletionIndicator";
-import { successToast } from "../../../utils/utils";
+import { errorToast, successToast } from "../../../utils/utils";
 import PersonalInfoTab from "./components/PersonalInfoTab";
 import BioSpecializationsTab from "./components/BioSpecializationsTab";
 import CertificationsTab from "./components/CertificationsTab";
@@ -82,6 +82,33 @@ const ProfileAccountSettings = () => {
     specialRequirements:
       "Reliable internet connection required for online lessons. For in-person lessons, I can provide materials or use student's preferred textbooks.",
   });
+  const [errors, setErrors] = useState({});
+
+  const validateFields = (tabName, data) => {
+    let newErrors = {};
+
+    if (tabName) {
+      // ✅ validate only the selected tab
+      const requiredFields = validationRules[tabName] || [];
+      requiredFields.forEach((field) => {
+        if (!data[field] || data[field].toString().trim() === "") {
+          newErrors[field] = "This field is required";
+        }
+      });
+    } else {
+      // ✅ global save → validate all tabs
+      Object.keys(validationRules).forEach((tab) => {
+        const requiredFields = validationRules[tab] || [];
+        requiredFields.forEach((field) => {
+          if (!data[field] || data[field].toString().trim() === "") {
+            newErrors[field] = "This field is required";
+          }
+        });
+      });
+    }
+
+    return newErrors;
+  };
 
   const getSaveStatusIcon = () => {
     switch (saveStatus) {
@@ -126,6 +153,17 @@ const ProfileAccountSettings = () => {
   };
 
   const handleSave = async (tabName = "") => {
+    console.log(tabName, "tabName");
+
+    const newErrors = validateFields(tabName, formData);
+
+    console.log(newErrors, "handle save");
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      errorToast("Please fill all required fields before saving.");
+      return; // stop execution
+    }
     setIsSaving(true);
     setSaveStatus("saving");
 
@@ -177,6 +215,19 @@ const ProfileAccountSettings = () => {
   const handleFormChange = (updatedData) => {
     setFormData(updatedData);
     setSaveStatus("unsaved");
+
+    // Clear errors for fields that are now valid
+    setErrors((prevErrors) => {
+      const newErrors = { ...prevErrors };
+
+      Object.keys(newErrors).forEach((field) => {
+        if (updatedData[field] && updatedData[field].toString().trim() !== "") {
+          delete newErrors[field];
+        }
+      });
+
+      return newErrors;
+    });
   };
 
   const renderTabContent = () => {
@@ -186,6 +237,7 @@ const ProfileAccountSettings = () => {
       onSave: () => handleSave(activeTab),
       isSaving,
       isEdit,
+      errors,
     };
 
     switch (activeTab) {
@@ -372,7 +424,7 @@ const ProfileAccountSettings = () => {
                       size="lg"
                       onClick={() => setIsEdit(false)}
                     >
-                      Cancle
+                      Cancel
                     </Button>
                   )}
                 </div>

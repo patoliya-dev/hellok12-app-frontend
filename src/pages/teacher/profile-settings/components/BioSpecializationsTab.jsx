@@ -10,6 +10,7 @@ const BioSpecializationsTab = ({
   onSave,
   isSaving,
   isEdit,
+  errors,
 }) => {
   const [bioLength, setBioLength] = useState(formData?.bio?.length || 0);
   const maxBioLength = 500;
@@ -40,13 +41,19 @@ const BioSpecializationsTab = ({
               About You <span className="text-error">*</span>
             </label>
             <textarea
-              className="w-full min-h-[120px] px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50"
+              className={`w-full min-h-[120px] px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                errors?.bio &&
+                "border-destructive focus-visible:ring-destructive"
+              }`}
               placeholder="Tell students about your teaching experience, methodology, and what makes you unique as a language instructor..."
               value={formData?.bio || ""}
               onChange={handleBioChange}
               required
               disabled={!isEdit}
             />
+            {errors?.bio && (
+              <p className="text-sm text-destructive">{errors?.bio}</p>
+            )}
             <div className="flex justify-between items-center mt-2">
               <p className="text-xs text-muted-foreground">
                 Share your teaching philosophy and what students can expect from
@@ -68,7 +75,10 @@ const BioSpecializationsTab = ({
               Teaching Style <span className="text-error">*</span>
             </label>
             <textarea
-              className="w-full px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50"
+              className={`w-full px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                errors?.teachingStyle &&
+                "border-destructive focus-visible:ring-destructive"
+              }`}
               placeholder="Tell students about your teaching experience, methodology, and what makes you unique as a language instructor..."
               value={formData?.teachingStyle || ""}
               onChange={(e) =>
@@ -78,12 +88,18 @@ const BioSpecializationsTab = ({
               disabled={!isEdit}
             />
           </div>
+          {errors?.teachingStyle && (
+            <p className="text-sm text-destructive">{errors?.teachingStyle}</p>
+          )}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
               Why They Love Teaching <span className="text-error">*</span>
             </label>
             <textarea
-              className="w-full px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50"
+              className={`w-full px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                errors?.whyLoveTeaching &&
+                "border-destructive focus-visible:ring-destructive"
+              }`}
               placeholder="Tell students about your teaching experience, methodology, and what makes you unique as a language instructor..."
               value={formData?.whyLoveTeaching || ""}
               onChange={(e) =>
@@ -93,6 +109,11 @@ const BioSpecializationsTab = ({
               disabled={!isEdit}
             />
           </div>
+          {errors?.whyLoveTeaching && (
+            <p className="text-sm text-destructive">
+              {errors?.whyLoveTeaching}
+            </p>
+          )}
         </div>
       </div>
       {/* Language Proficiency */}
@@ -113,6 +134,7 @@ const BioSpecializationsTab = ({
             placeholder="Select languages..."
             required
             disabled={!isEdit}
+            error={errors?.languagesTaught}
           />
           <Select
             label="Native Language"
@@ -123,6 +145,7 @@ const BioSpecializationsTab = ({
             placeholder="Select your native language"
             required
             disabled={!isEdit}
+            error={errors?.nativeLanguage}
           />
         </div>
       </div>
@@ -142,6 +165,7 @@ const BioSpecializationsTab = ({
             placeholder="Select age groups..."
             required
             disabled={!isEdit}
+            error={errors?.ageGroups}
           />
 
           <Input

@@ -10,6 +10,7 @@ const CertificationsTab = ({
   onSave,
   isSaving,
   isEdit,
+  errors,
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
@@ -109,6 +110,7 @@ const CertificationsTab = ({
             onChange={(e) => handleInputChange("education", e?.target?.value)}
             required
             disabled={!isEdit}
+            error={errors?.education}
           />
           <Input
             label="Teaching License/Certification"
