@@ -1,23 +1,43 @@
-import axios from 'axios';
-import { getAccessToken, setAccessToken, clearAuthStorage } from './storage';
+// api.js
+import axios from "axios";
+import {
+  getAccessToken,
+  setAccessToken,
+  clearAuthStorage,
+} from "./storage";
 
-// base URL from env
-const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL || '/api';
+// Base URL from env
+const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL || "/api";
 
+/**
+ * List of endpoints to exclude from triggering token refresh logic.
+ * Add any other auth-related endpoints here to prevent refresh in those calls.
+ */
+const EXCLUDED_URLS_FOR_REFRESH = ["/auth/login", "/auth/refresh-token"];
+
+/**
+ * Axios instance for API calls with token refresh handling.
+ */
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // if refresh token is in httpOnly cookie
-  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true, // for httpOnly cookie refresh token
+  headers: { "Content-Type": "application/json" },
 });
 
-// attach access token
+/**
+ * Attach access token to request headers
+ */
 api.interceptors.request.use((config) => {
   const token = getAccessToken();
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
-// refresh flow
+/**
+ * Queue for pending requests while refreshing token
+ */
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -29,16 +49,34 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
+/**
+ * Response interceptor: handle 401 errors and attempt token refresh
+ */
 api.interceptors.response.use(
-  (res) => res,
-  async (err) => {
-    const originalRequest = err.config;
-    if (!originalRequest) return Promise.reject(err);
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
 
-    // if 401 and not retrying already -> try refresh
-    if (err.response?.status === 401 && !originalRequest._retry) {
+    if (!originalRequest) return Promise.reject(error);
+
+    // Check for skipRefresh flag in request config
+    if (originalRequest.skipRefresh) {
+      return Promise.reject(error);
+    }
+
+    // Exclude requests to certain URLs (like login, refresh) from refresh logic
+    if (
+      EXCLUDED_URLS_FOR_REFRESH.some((url) =>
+        originalRequest.url?.includes(url)
+      )
+    ) {
+      return Promise.reject(error);
+    }
+
+    // Handle 401 Unauthorized for retry logic and refresh flow
+    if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // queue requests while refreshing
+        // Queue requests while refresh is in progress
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
         })
@@ -46,31 +84,36 @@ api.interceptors.response.use(
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return api(originalRequest);
           })
-          .catch((error) => Promise.reject(error));
+          .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        // call refresh endpoint — backend should return new access token
-        const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {}, { withCredentials: true });
+        const refreshResponse = await axios.post(
+          `${API_BASE_URL}/auth/refresh-token`,
+          {},
+          { withCredentials: true }
+        );
         const newToken = refreshResponse.data?.accessToken;
+        if (!newToken) {
+          throw new Error("No access token in refresh response");
+        }
         setAccessToken(newToken);
         api.defaults.headers.Authorization = `Bearer ${newToken}`;
         processQueue(null, newToken);
         return api(originalRequest);
-      } catch (refreshErr) {
-        processQueue(refreshErr, null);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
         clearAuthStorage();
-        // optional: redirect to login - but avoid doing it here (let components handle)
-        return Promise.reject(refreshErr);
+        return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }
     }
 
-    return Promise.reject(err);
+    return Promise.reject(error);
   }
 );
 
