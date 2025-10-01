@@ -14,6 +14,6 @@ const root = createRoot(container);
 root.render(
   <Provider store={store}>
     <App />
-    <ToastContainer position="bottom-right" autoClose={2000} />
+    <ToastContainer position="top-right" autoClose={2000} />
   </Provider>
 );

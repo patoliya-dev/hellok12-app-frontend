@@ -8,6 +8,8 @@ import ManageSchedule from "../pages/teacher/manage-schedule";
 import Messages from "../pages/student-parent/messages";
 import Progress from "../pages/teacher/progress";
 import ProfileAccountSettings from "../pages/teacher/profile-settings";
+import ManageCourses from "../pages/teacher/manage-courses";
+import CreateCourse from "../pages/teacher/create-course";
 
 const TeacherRoutes = () => {
   return (
@@ -20,6 +22,8 @@ const TeacherRoutes = () => {
       <Route path="/messages" element={<Messages />} />
       <Route path="/progress" element={<Progress />} />
       <Route path="/profile-settings" element={<ProfileAccountSettings />} />
+      <Route path="/manage-courses" element={<ManageCourses />} />
+      <Route path="/create-course" element={<CreateCourse />} />
 
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />

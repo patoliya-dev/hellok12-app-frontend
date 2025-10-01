@@ -9,6 +9,11 @@ import { logout } from "reducers/auth/authSlice";
 import Image from "components/AppImage";
 
 const RoleBasedHeader = () => {
+  const authUser = useSelector(selectAuthUser);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState("student");
   const [showProfile, setShowProfile] = useState(false);
@@ -18,11 +23,9 @@ const RoleBasedHeader = () => {
     avatar: "/assets/logo.svg",
     // school: 'Riverside Elementary'
   });
-
-  const authUser = useSelector(selectAuthUser);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const teacherType =
+    (authUser?.role === "teacher" && authUser?.profile?.employmentType) ||
+    "independent";
 
   useEffect(() => {
     // Determine user role based on current route
@@ -68,7 +71,7 @@ const RoleBasedHeader = () => {
           icon: "CreditCard",
         },
       ],
-      teacher: [
+      teacherBase: [
         { label: "Dashboard", path: "/teacher/dashboard", icon: "Home" },
         {
           label: "Manage Lessons",
@@ -84,11 +87,6 @@ const RoleBasedHeader = () => {
           label: "Messages",
           path: "/teacher/messages",
           icon: "MessageCircle",
-        },
-        {
-          label: "Progress",
-          path: "/teacher/progress",
-          icon: "TrendingUp",
         },
       ],
       admin: [
@@ -115,6 +113,33 @@ const RoleBasedHeader = () => {
       ],
       guest: [{ label: "Login", path: "/login", icon: "LogIn" }],
     };
+
+    // Independent teacher extra tabs
+    const independentTeacherTabs = [
+      {
+        label: "Manage Courses",
+        path: "/teacher/manage-courses",
+        image: "/assets/images/manage_courses.svg",
+      },
+      {
+        label: "Earnings",
+        path: "/teacher/earnings",
+        icon: "DollarSign",
+      },
+    ];
+
+    // School teacher extra tabs
+    const schoolTeacherTabs = [
+      { label: "Progress", path: "/teacher/progress", icon: "TrendingUp" },
+    ];
+
+    if (userRole === "teacher") {
+      if (teacherType === "independent") {
+        return [...baseItems.teacherBase, ...independentTeacherTabs];
+      } else {
+        return [...baseItems.teacherBase, ...schoolTeacherTabs];
+      }
+    }
 
     return baseItems[userRole] || baseItems.guest;
   };
@@ -160,20 +185,35 @@ const RoleBasedHeader = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center space-x-1">
-          {navigationItems.map((item) => (
-            <Button
-              key={item.path}
-              variant={location.pathname === item.path ? "default" : "ghost"}
-              size="sm"
-              iconName={item.icon}
-              iconPosition="left"
-              iconSize={16}
-              onClick={() => handleNavigation(item.path)}
-              className="transition-micro"
-            >
-              {item.label}
-            </Button>
-          ))}
+          {navigationItems.map((item) => {
+            const isActive = location.pathname === item.path;
+
+            const commonProps = {
+              key: item.path,
+              variant: isActive ? "default" : "ghost",
+              size: "sm",
+              onClick: () => handleNavigation(item.path),
+              className: "transition-micro",
+              children: item.label,
+            };
+
+            return item?.icon ? (
+              <Button
+                {...commonProps}
+                iconName={item.icon}
+                iconPosition="left"
+                iconSize={16}
+              />
+            ) : (
+              <Button
+                {...commonProps}
+                imageName={item.image}
+                imagePosition="left"
+                imageWidth={16}
+                imageHeight={16}
+              />
+            );
+          })}
         </nav>
 
         {/* Right Section */}
