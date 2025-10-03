@@ -16,15 +16,15 @@ const CreateCourse = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1
-    courseName: "Testing",
-    language: "english",
+    courseName: "",
+    language: "",
     description: "",
     lessonType: "",
-    introImage: "IMG_20250926_142756.jpg",
+    introImage: "",
     capacity: 10,
     ageRange: { min: 18, max: 65 },
     price: 50,
-    startDate: "10/10/2025",
+    startDate: "",
     endDate: "",
 
     // Step 2

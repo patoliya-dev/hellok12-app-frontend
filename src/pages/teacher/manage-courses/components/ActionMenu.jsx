@@ -2,31 +2,25 @@ import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
 import React from "react";
 
-const ActionMenu = ({
-  course,
-  setOpenMenuId,
-  onEdit,
-  onDuplicate,
-  onDelete,
-}) => {
+const ActionMenu = ({ data, setOpenMenuId, onEdit, onDuplicate, onDelete }) => {
   const actions = [
     {
       label: "Edit",
       icon: "Edit",
       color: "",
-      onClick: (course) => onEdit(course),
+      onClick: (data) => onEdit(data),
     },
     {
       label: "Duplicate",
       icon: "Copy",
       color: "",
-      onClick: (course) => onDuplicate(course),
+      onClick: (data) => onDuplicate(data),
     },
     {
       label: "Remove",
       icon: "Trash",
       color: "text-error",
-      onClick: (course) => onDelete(course?.id),
+      onClick: (data) => onDelete(data?.id),
     },
   ];
 
@@ -39,7 +33,7 @@ const ActionMenu = ({
             iconName={action.icon}
             className={`!justify-start w-full ${action.color}`}
             onClick={() => {
-              action.onClick(course);
+              action.onClick(data);
               setOpenMenuId(null); // optional: close menu after action
             }}
           >

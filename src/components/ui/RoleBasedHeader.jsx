@@ -120,6 +120,7 @@ const RoleBasedHeader = () => {
         label: "Manage Courses",
         path: "/teacher/manage-courses",
         image: "/assets/images/manage_courses.svg",
+        children: ["/teacher/create-course", "/teacher/lessons"],
       },
       {
         label: "Earnings",
@@ -186,10 +187,13 @@ const RoleBasedHeader = () => {
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center space-x-1">
           {navigationItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive =
+              location.pathname === item.path ||
+              item.children?.some((child) =>
+                location.pathname.startsWith(child)
+              );
 
             const commonProps = {
-              key: item.path,
               variant: isActive ? "default" : "ghost",
               size: "sm",
               onClick: () => handleNavigation(item.path),
@@ -199,6 +203,7 @@ const RoleBasedHeader = () => {
 
             return item?.icon ? (
               <Button
+                key={item.path}
                 {...commonProps}
                 iconName={item.icon}
                 iconPosition="left"
@@ -206,6 +211,7 @@ const RoleBasedHeader = () => {
               />
             ) : (
               <Button
+                key={item.path}
                 {...commonProps}
                 imageName={item.image}
                 imagePosition="left"

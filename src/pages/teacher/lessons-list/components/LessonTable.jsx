@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Icon from "components/AppIcon";
 import Pagination from "components/ui/Pagination";
-import ActionMenu from "./ActionMenu";
+import ActionMenu from "../../../../pages/teacher/manage-courses/components/ActionMenu";
+import { capitalize } from "../../../../utils/utils";
 
-const CourseTable = ({
+const LessonsTable = ({
   data,
   onSort,
   sortConfig,
@@ -16,7 +16,6 @@ const CourseTable = ({
   onDuplicate,
   onDelete,
 }) => {
-  const navigate = useNavigate();
   const [openMenuId, setOpenMenuId] = useState(null);
 
   const getSortIcon = (column) => {
@@ -32,52 +31,44 @@ const CourseTable = ({
     );
   };
 
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      active: {
-        bg: "bg-green-50",
-        text: "text-green-700",
-        border: "border-green-500",
-        label: "Active",
-      },
-      draft: {
-        bg: "bg-yellow-50",
-        text: "text-yellow-700",
-        border: "border-yellow-500",
-        label: "Draft",
-      },
-      archived: {
-        bg: "bg-gray-100",
-        text: "text-gray-600",
-        border: "border-gray-500",
-        label: "Archived",
-      },
-      full: {
-        bg: "bg-red-50",
-        text: "text-red-700",
-        border: "border-red-500",
-        label: "Full",
-      },
+  function formatDateTime(dateString) {
+    const dateObj = new Date(dateString);
+    return {
+      date: dateObj.toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      }),
+      time: dateObj.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }),
     };
+  }
 
-    const config = statusConfig?.[status] || statusConfig?.draft;
-
+  const getStatus = (status) => {
+    const isPublished = status === "published";
     return (
-      <span
-        className={`inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium border ${config.border} ${config.bg} ${config.text}`}
-      >
-        {config.label}
-      </span>
+      <div className="flex items-center gap-2">
+        {isPublished ? (
+          <Icon name="CheckCircle" size={16} className="text-green-600" />
+        ) : (
+          <Icon name="Clock" size={16} className="text-warning" />
+        )}
+        <span
+          className={`text-xs font-medium ${
+            isPublished ? "text-green-600" : "text-warning"
+          }`}
+        >
+          {capitalize(status)}
+        </span>
+      </div>
     );
   };
 
   const toggleMenu = (courseId) => {
     setOpenMenuId(openMenuId === courseId ? null : courseId);
-  };
-
-  const handleNavigate = (id) => {
-    navigate(`/teacher/lessons/${id}`);
-    setOpenMenuId(null);
   };
 
   return (
@@ -91,31 +82,17 @@ const CourseTable = ({
                   onClick={() => onSort("title")}
                   className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
                 >
-                  Course Title
+                  Lesson Title
                   {getSortIcon("title")}
                 </button>
               </th>
               <th className="px-6 py-4 text-left">
                 <button
-                  onClick={() => onSort("language")}
+                  onClick={() => onSort("createdAt")}
                   className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
                 >
-                  Language
-                  {getSortIcon("language")}
-                </button>
-              </th>
-              <th className="px-6 py-4 text-left">
-                <span className="text-sm font-medium text-foreground">
-                  Students
-                </span>
-              </th>
-              <th className="px-6 py-4 text-left">
-                <button
-                  onClick={() => onSort("price")}
-                  className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
-                >
-                  Price
-                  {getSortIcon("price")}
+                  Date & Time
+                  {getSortIcon("createdAt")}
                 </button>
               </th>
               <th className="px-6 py-4 text-left">
@@ -135,53 +112,47 @@ const CourseTable = ({
             </tr>
           </thead>
           <tbody>
-            {data?.map((course) => (
+            {data?.map((lesson) => (
               <tr
-                key={course?.id}
+                key={lesson?.id}
                 className="border-t border-border hover:bg-muted/30 transition-smooth"
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-4">
                     <Icon name="BookOpen" size={20} className="text-primary" />
                     <div>
-                      <div
-                        className="font-medium text-foreground hover:cursor-pointer"
-                        onClick={() => handleNavigate(course?.id)}
-                      >
-                        {course?.title}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {course?.lessonCount} lessons
+                      <div className="font-medium text-brand-gray-800">
+                        {lesson?.title}
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="font-medium text-foreground">
-                    {course?.language}
-                  </span>
+                  {(() => {
+                    const { date, time } = formatDateTime(lesson?.createdAt);
+                    return (
+                      <div>
+                        <div className="font-medium text-foreground">
+                          {date}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {time}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </td>
-                <td className="px-6 py-4">
-                  <span className="font-medium text-foreground">
-                    {`${course?.studentCount}/${course?.maxStudents}`}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="font-medium text-foreground">
-                    ${course?.price}
-                  </span>
-                </td>
-                <td className="px-6 py-4">{getStatusBadge(course?.status)}</td>
+                <td className="px-6 py-4">{getStatus(lesson?.status)}</td>
                 <td className="relative px-6 py-4">
                   <Icon
                     name="MoreVertical"
                     size={20}
                     className="text-muted-foreground cursor-pointer"
-                    onClick={() => toggleMenu(course?.id)}
+                    onClick={() => toggleMenu(lesson?.id)}
                   />
-                  {openMenuId === course?.id && (
+                  {openMenuId === lesson?.id && (
                     <ActionMenu
-                      data={course}
+                      data={lesson}
                       setOpenMenuId={toggleMenu}
                       onEdit={onEdit}
                       onDuplicate={onDuplicate}
@@ -219,4 +190,4 @@ const CourseTable = ({
   );
 };
 
-export default CourseTable;
+export default LessonsTable;
