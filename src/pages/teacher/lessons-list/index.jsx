@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import Breadcrumb from "components/ui/Breadcrumb";
 import Button from "components/ui/Button";
-import { useParams } from "react-router-dom";
 import { mockCourses } from "../manage-courses/data";
 import CourseDetails from "./components/CourseDetails";
 import Icon from "components/AppIcon";
@@ -13,6 +13,7 @@ import LessonsTable from "./components/LessonTable";
 
 const LessonsList = () => {
   const { courseId } = useParams();
+  const navigate = useNavigate();
   const [course, setCourse] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [lessons, setLessons] = useState(mockLessons);
@@ -47,7 +48,7 @@ const LessonsList = () => {
           path: "/teacher/manage-courses",
         },
         {
-          label: course.title,
+          label: course.courseName,
           path: "#",
           current: true,
         },
@@ -134,8 +135,8 @@ const LessonsList = () => {
     setCurrentPage(page);
   };
 
-  const handleEditLesson = (lesson) => {
-    successToast("Lesson edited successfully!");
+  const handleEditLesson = () => {
+    navigate(`/teacher/edit-lesson/${courseId}`);
   };
 
   const handleDuplicateLesson = (lesson) => {
@@ -154,8 +155,7 @@ const LessonsList = () => {
   };
 
   const handleCreateLesson = () => {
-    successToast("Lesson created successfully!");
-    // Handle create lesson logic here
+    navigate(`/teacher/create-lesson/${courseId}`);
   };
 
   return (

@@ -2,7 +2,7 @@ import { useState } from "react";
 import Icon from "components/AppIcon";
 import Pagination from "components/ui/Pagination";
 import ActionMenu from "../../../../pages/teacher/manage-courses/components/ActionMenu";
-import { capitalize } from "../../../../utils/utils";
+import { capitalize, successToast } from "../../../../utils/utils";
 import DeleteModal from "components/ui/DeleteModal";
 
 const LessonsTable = ({
@@ -293,6 +293,7 @@ const LessonsTable = ({
             onDelete(deleteLessonId);
             setDeleteLessonId(null);
             handleDeleteModal();
+            successToast("Lesson deleted successfully!");
           }}
           onClose={() => {
             setDeleteLessonId(null);

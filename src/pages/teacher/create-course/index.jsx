@@ -1,19 +1,22 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Breadcrumb from "components/ui/Breadcrumb";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
-import { breadCrumbData, steps } from "./data";
+import { commonBreadCrumbData, steps } from "./data";
 import Stepper from "./components/Stepper";
 import CourseForm from "./components/CourseForm";
 import Button from "components/ui/Button";
 import LessonForm from "./components/LessonForm";
 import { successToast } from "../../../utils/utils";
-import Modal from "components/ui/Modal";
 import Icon from "components/AppIcon";
+import { mockCourses } from "../manage-courses/data";
 
 const CreateCourse = () => {
+  const { courseId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
+  const [mode, setMode] = useState("add");
   const [formData, setFormData] = useState({
     // Step 1
     courseName: "",
@@ -21,9 +24,9 @@ const CreateCourse = () => {
     description: "",
     lessonType: "",
     introImage: "",
-    capacity: 10,
-    ageRange: { min: 18, max: 65 },
-    price: 50,
+    capacity: "",
+    ageRange: { min: "", max: "" },
+    price: "",
     startDate: "",
     endDate: "",
 
@@ -40,6 +43,9 @@ const CreateCourse = () => {
   });
   const [errors, setErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
+  const [breadCrumbData, setBreadCrumbData] = useState(
+    commonBreadCrumbData?.add
+  );
   const defaultLesson = {
     lessonTitle: "",
     lessonDescription: "",
@@ -47,6 +53,46 @@ const CreateCourse = () => {
     trialCapacity: 1,
     curriculumGames: false,
   };
+  const isEdit = mode === "edit";
+  const isLesson = location.pathname.includes("lesson");
+  const isCreateLesson = location.pathname.includes("create-lesson");
+
+  useEffect(() => {
+    if (courseId) {
+      setMode("edit");
+      setBreadCrumbData(commonBreadCrumbData?.edit);
+      isLesson && setCurrentStep(2);
+    } else {
+      setMode("add");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (courseId) {
+      const courseData = mockCourses.find((course) => course?.id === courseId);
+      const formData = {
+        courseName: courseData?.courseName,
+        language: courseData?.language,
+        description: courseData?.description,
+        capacity: courseData?.capacity,
+        lessonType: courseData?.lessonType,
+        introImage: courseData?.introImage,
+        ageRange: courseData?.ageRange,
+        price: courseData?.price,
+        startDate: courseData?.startDate,
+        endDate: courseData?.endDate,
+        lessons: courseData?.lessons || [],
+      };
+      setFormData(formData);
+
+      if (isCreateLesson) {
+        setFormData((prev) => ({
+          ...prev,
+          lessons: [...(prev.lessons || []), { ...defaultLesson }],
+        }));
+      }
+    }
+  }, [courseId]);
 
   const handleStepClick = (stepId) => {
     if (stepId < currentStep) {
@@ -198,6 +244,27 @@ const CreateCourse = () => {
     });
   };
 
+  const handleSubmit = () => {
+    if (!validateStep(currentStep)) return;
+
+    const entity = isLesson ? "Lesson" : "Course";
+    const action = isEdit ? "updated" : "created";
+    successToast(`${entity} ${action} successfully!`);
+
+    if (isLesson || isCreateLesson) {
+      navigate(`/teacher/lessons/${courseId}`);
+    } else if (isEdit) {
+      navigate("/teacher/manage-courses");
+    } else {
+      setShowModal(true);
+    }
+  };
+
+  const onCloseSuccessModal = () => {
+    setShowModal(false);
+    navigate("/teacher/manage-courses");
+  };
+
   const getCurrentStepComponent = () => {
     switch (currentStep) {
       case 1:
@@ -208,7 +275,8 @@ const CreateCourse = () => {
                 Course Information
               </h1>
               <p className="text-lg text-brand-gray-500">
-                Set up the fundamental details of your course
+                {isEdit ? "Update " : "Set up "}the fundamental details of your
+                course
               </p>
             </div>
             <CourseForm {...{ formData, handleInputChange, errors }} />
@@ -222,7 +290,8 @@ const CreateCourse = () => {
                 Lesson Information
               </h1>
               <p className="text-lg text-brand-gray-500">
-                Configure lesson type, duration, and capacity
+                {isEdit ? "Update " : "Configure "}lesson type, duration, and
+                capacity
               </p>
             </div>
             <LessonForm
@@ -241,18 +310,6 @@ const CreateCourse = () => {
     }
   };
 
-  const handleSubmit = () => {
-    if (validateStep(currentStep)) {
-      successToast("Course created successfully!");
-      setShowModal(true);
-    }
-  };
-
-  const onCloseSuccessModal = () => {
-    setShowModal(false);
-    navigate("/teacher/manage-courses");
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -263,10 +320,11 @@ const CreateCourse = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
             <div>
               <h1 className="text-2xl font-semibold text-foreground mb-2">
-                Create New Course & Lesson
+                {isEdit ? "Update " : "Create New "}Course & Lesson
               </h1>
               <p className="text-muted-foreground">
-                Set up a new course with scheduling and configuration
+                {isEdit ? "Update " : "Set up a new "}course with scheduling and
+                configuration
               </p>
             </div>
           </div>
@@ -311,7 +369,7 @@ const CreateCourse = () => {
                 iconName="Check"
                 iconPosition="left"
               >
-                Create
+                {isEdit ? "Update" : "Create"}
               </Button>
             )}
           </div>

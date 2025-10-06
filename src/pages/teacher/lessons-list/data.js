@@ -12,6 +12,7 @@ const mockLessons = [
     materials: "Business dictionary, vocabulary worksheets",
     createdAt: "2025-08-10T10:00:00Z",
     isTrailAvailable: true,
+    courseId: "3",
   },
   {
     id: "2",
@@ -26,6 +27,7 @@ const mockLessons = [
     materials: "Email templates, style guide",
     createdAt: "2025-08-11T10:30:00Z",
     isTrailAvailable: false,
+    courseId: "1",
   },
   {
     id: "3",
@@ -40,6 +42,7 @@ const mockLessons = [
     materials: "Case studies, negotiation handbook",
     createdAt: "2025-08-12T11:00:00Z",
     isTrailAvailable: true,
+    courseId: "5",
   },
   {
     id: "4",
@@ -54,6 +57,7 @@ const mockLessons = [
     materials: "Slides, presentation checklist",
     createdAt: "2025-08-13T09:15:00Z",
     isTrailAvailable: false,
+    courseId: "2",
   },
   {
     id: "5",
@@ -68,6 +72,7 @@ const mockLessons = [
     materials: "Culture guidebook, videos",
     createdAt: "2025-08-14T14:00:00Z",
     isTrailAvailable: true,
+    courseId: "6",
   },
   {
     id: "6",
@@ -81,6 +86,7 @@ const mockLessons = [
     materials: "Report templates, style guide",
     createdAt: "2025-08-15T16:30:00Z",
     isTrailAvailable: true,
+    courseId: "4",
   },
   {
     id: "7",
@@ -95,6 +101,7 @@ const mockLessons = [
     materials: "Meeting agenda samples",
     createdAt: "2025-08-16T12:45:00Z",
     isTrailAvailable: true,
+    courseId: "7",
   },
   {
     id: "8",
@@ -108,6 +115,7 @@ const mockLessons = [
     materials: "Time-tracking templates",
     createdAt: "2025-08-17T08:20:00Z",
     isTrailAvailable: false,
+    courseId: "5",
   },
   {
     id: "9",
@@ -121,6 +129,7 @@ const mockLessons = [
     materials: "Confidence-building exercises",
     createdAt: "2025-08-18T11:10:00Z",
     isTrailAvailable: false,
+    courseId: "2",
   },
   {
     id: "10",
@@ -135,6 +144,7 @@ const mockLessons = [
     materials: "Role-play guides, feedback forms",
     createdAt: "2025-08-19T15:25:00Z",
     isTrailAvailable: false,
+    courseId: "7",
   },
   {
     id: "11",
@@ -149,6 +159,7 @@ const mockLessons = [
     materials: "Writing handbook, sample memos",
     createdAt: "2025-08-20T09:40:00Z",
     isTrailAvailable: true,
+    courseId: "6",
   },
   {
     id: "12",
@@ -162,6 +173,7 @@ const mockLessons = [
     materials: "Leadership workbook",
     createdAt: "2025-08-21T13:50:00Z",
     isTrailAvailable: false,
+    courseId: "1",
   },
   {
     id: "13",
@@ -175,6 +187,7 @@ const mockLessons = [
     materials: "Etiquette handbook",
     createdAt: "2025-08-22T10:05:00Z",
     isTrailAvailable: false,
+    courseId: "4",
   },
   {
     id: "14",
@@ -188,6 +201,7 @@ const mockLessons = [
     materials: "Collaboration tools, worksheets",
     createdAt: "2025-08-23T17:30:00Z",
     isTrailAvailable: true,
+    courseId: "3",
   },
   {
     id: "15",
@@ -202,6 +216,7 @@ const mockLessons = [
     materials: "Case study book",
     createdAt: "2025-08-24T12:15:00Z",
     isTrailAvailable: false,
+    courseId: "5",
   },
   {
     id: "16",
@@ -215,6 +230,7 @@ const mockLessons = [
     materials: "Networking guide, profile examples",
     createdAt: "2025-08-25T14:45:00Z",
     isTrailAvailable: false,
+    courseId: "7",
   },
 ];
 

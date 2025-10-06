@@ -81,7 +81,7 @@ const Input = React.forwardRef(
             )}
           >
             <span className="text-[#1F29378C] text-sm truncate max-w-[70%] font-medium">
-              {props.fileName || props.placeholder || "Upload file"}
+              {props.filename || props.placeholder || "Upload file"}
             </span>
             <label className="cursor-pointer">
               <span className="px-3 py-1.5 border border-[#E5E7EB] rounded-md text-sm font-medium text-brand-gray-800 flex items-center gap-1">

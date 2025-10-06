@@ -1,7 +1,13 @@
-const breadCrumbData = [
-  { label: "Manage Courses", path: "/teacher/manage-courses" },
-  { label: "Create New Course", path: "#", current: true },
-];
+const commonBreadCrumbData = {
+  add: [
+    { label: "Manage Courses", path: "/teacher/manage-courses" },
+    { label: "Create New Course", path: "#", current: true },
+  ],
+  edit: [
+    { label: "Manage Courses", path: "/teacher/manage-courses" },
+    { label: "Edit Course", path: "#", current: true },
+  ],
+};
 
 const steps = [
   { id: 1, title: "Course Info" },
@@ -20,9 +26,9 @@ const languageOptions = [
 ];
 
 const lessonTypeOptions = [
-  { value: "Online", label: "Online" },
-  { value: "In-Person", label: "In-Person" },
-  { value: "Hybrid", label: "Hybrid" },
+  { value: "online", label: "Online" },
+  { value: "in-person", label: "In-Person" },
+  { value: "hybrid", label: "Hybrid" },
 ];
 
-export { breadCrumbData, steps, languageOptions, lessonTypeOptions };
+export { commonBreadCrumbData, steps, languageOptions, lessonTypeOptions };

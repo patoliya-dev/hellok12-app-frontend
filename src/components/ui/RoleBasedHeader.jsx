@@ -120,7 +120,13 @@ const RoleBasedHeader = () => {
         label: "Manage Courses",
         path: "/teacher/manage-courses",
         image: "/assets/images/manage_courses.svg",
-        children: ["/teacher/create-course", "/teacher/lessons"],
+        children: [
+          "/teacher/create-course",
+          "/teacher/lessons",
+          "/teacher/edit-course",
+          "/teacher/edit-lesson",
+          "/teacher/create-lesson",
+        ],
       },
       {
         label: "Earnings",

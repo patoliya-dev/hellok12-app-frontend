@@ -25,6 +25,9 @@ const TeacherRoutes = () => {
       <Route path="/profile-settings" element={<ProfileAccountSettings />} />
       <Route path="/manage-courses" element={<ManageCourses />} />
       <Route path="/create-course" element={<CreateCourse />} />
+      <Route path="/edit-course/:courseId" element={<CreateCourse />} />
+      <Route path="/edit-lesson/:courseId" element={<CreateCourse />} />
+      <Route path="/create-lesson/:courseId" element={<CreateCourse />} />
       <Route path="/lessons/:courseId" element={<LessonsList />} />
 
       {/* Catch-all */}

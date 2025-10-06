@@ -2,8 +2,10 @@ import Icon from "components/AppIcon";
 import Image from "components/AppImage";
 import Button from "components/ui/Button";
 import { capitalize, successToast } from "../../../../utils/utils";
+import { useNavigate } from "react-router-dom";
 
 const CourseDetails = ({ course }) => {
+  const navigate = useNavigate();
   const getCourseModeBadge = (mode) => {
     const isInPerson = mode === "in-person";
     const isOnline = mode === "online";
@@ -36,7 +38,7 @@ const CourseDetails = ({ course }) => {
   );
 
   const handleEditCourse = () => {
-    successToast("Course edited successfully!");
+    navigate(`/teacher/edit-course/${course?.id}`);
   };
 
   return (

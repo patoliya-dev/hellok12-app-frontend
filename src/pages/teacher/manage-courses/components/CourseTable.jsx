@@ -4,6 +4,7 @@ import Icon from "components/AppIcon";
 import Pagination from "components/ui/Pagination";
 import ActionMenu from "./ActionMenu";
 import DeleteModal from "components/ui/DeleteModal";
+import { successToast } from "../../../../utils/utils";
 
 const CourseTable = ({
   data,
@@ -95,11 +96,11 @@ const CourseTable = ({
             <tr>
               <th className="px-6 py-4 text-left">
                 <button
-                  onClick={() => onSort("title")}
+                  onClick={() => onSort("courseName")}
                   className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
                 >
                   Course Title
-                  {getSortIcon("title")}
+                  {getSortIcon("courseName")}
                 </button>
               </th>
               <th className="px-6 py-4 text-left">
@@ -159,7 +160,7 @@ const CourseTable = ({
                         className="font-medium text-foreground hover:cursor-pointer line-clamp-1 hover:text-primary transition-smooth w-[300px]"
                         onClick={() => handleNavigate(course?.id)}
                       >
-                        {course?.title}
+                        {course?.courseName}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {course?.lessonCount} lessons
@@ -174,7 +175,7 @@ const CourseTable = ({
                 </td>
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
-                    {`${course?.studentCount}/${course?.maxStudents}`}
+                    {`${course?.studentCount}/${course?.capacity}`}
                   </span>
                 </td>
                 <td className="px-6 py-4">
@@ -237,6 +238,7 @@ const CourseTable = ({
             onDelete(deleteCourseId);
             setDeleteCourseId(null);
             handleDeleteModal();
+            successToast("Course deleted successfully!");
           }}
           onClose={() => {
             setDeleteCourseId(null);

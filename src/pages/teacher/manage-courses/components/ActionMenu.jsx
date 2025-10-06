@@ -15,7 +15,7 @@ const ActionMenu = ({
       label: "Edit",
       icon: "Edit",
       color: "",
-      onClick: (data) => onEdit(data),
+      onClick: onEdit,
     },
     {
       label: "Duplicate",

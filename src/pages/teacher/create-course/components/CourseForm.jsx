@@ -48,13 +48,14 @@ const CourseForm = ({ formData, handleInputChange, errors }) => {
           error={errors?.introImage}
           onChange={(e) => handleInputChange("introImage", e.target.files[0])}
           accept="image/*"
-          fileName={formData?.introImage}
+          filename={formData?.introImage}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Input
           label="Student Capacity"
+          placeholder="e.g., 10"
           type="number"
           min="1"
           max="50"
@@ -67,6 +68,7 @@ const CourseForm = ({ formData, handleInputChange, errors }) => {
 
         <Input
           label="Price per Lesson ($)"
+          placeholder="Enter the price per lesson"
           type="number"
           min="0"
           step="0.01"

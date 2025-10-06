@@ -77,14 +77,14 @@ const LessonFormInstance = ({
           )}
         </div>
 
-        <Checkbox
+        {/* <Checkbox
           label="Curriculum-Aligned Games"
           description="Allow curriculum-aligned games for this lesson"
           checked={!!formData.curriculumGames}
           onChange={(e) =>
             handleInputChange("curriculumGames", e.target.checked)
           }
-        />
+        /> */}
       </div>
 
       {showAddButton && (
@@ -105,8 +105,6 @@ export default function LessonForm({
   addLesson,
   removeLesson,
 }) {
-  console.log(formData?.lessons, "formData");
-
   return (
     <>
       {formData?.lessons.map((lesson, index) => (

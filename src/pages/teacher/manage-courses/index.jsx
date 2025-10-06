@@ -21,7 +21,7 @@ const ManageCourses = () => {
     dateRange: { start: "", end: "" },
   });
   const [sortConfig, setSortConfig] = useState({
-    key: "title",
+    key: "courseName",
     direction: "desc",
   });
   const [courseCount, setCourseCount] = useState([
@@ -71,7 +71,9 @@ const ManageCourses = () => {
     if (searchTerm && searchTerm.length > 0) {
       filtered = filtered?.filter(
         (course) =>
-          course?.title?.toLowerCase()?.includes(searchTerm?.toLowerCase()) ||
+          course?.courseName
+            ?.toLowerCase()
+            ?.includes(searchTerm?.toLowerCase()) ||
           course?.description
             ?.toLowerCase()
             ?.includes(searchTerm?.toLowerCase()) ||
@@ -119,17 +121,17 @@ const ManageCourses = () => {
       });
     }
 
-    if (filters?.dateRange?.startDate) {
+    if (filters?.dateRange?.start) {
       filtered = filtered?.filter(
         (course) =>
-          new Date(course.startDate) >= new Date(filters?.dateRange?.startDate)
+          new Date(course.startDate) >= new Date(filters?.dateRange?.start)
       );
     }
 
-    if (filters?.dateRange?.endDate) {
+    if (filters?.dateRange?.end) {
       filtered = filtered?.filter(
         (course) =>
-          new Date(course.endDate) <= new Date(filters?.dateRange?.endDate)
+          new Date(course.endDate) <= new Date(filters?.dateRange?.end)
       );
     }
 
@@ -177,14 +179,14 @@ const ManageCourses = () => {
   };
 
   const handleEditCourse = (course) => {
-    alert("Course edited successfully!");
+    navigate(`/teacher/edit-course/${course?.id}`);
   };
 
   const handleDuplicateCourse = (course) => {
     const duplicatedCourse = {
       ...course,
       id: Date.now()?.toString(),
-      title: `${course?.title} (Copy)`,
+      courseName: `${course?.courseName} (Copy)`,
       status: "draft",
       studentCount: 0,
       createdAt: new Date()?.toISOString()?.split("T")?.[0],
