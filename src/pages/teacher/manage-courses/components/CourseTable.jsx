@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Icon from "components/AppIcon";
 import Pagination from "components/ui/Pagination";
 import ActionMenu from "./ActionMenu";
+import DeleteModal from "components/ui/DeleteModal";
 
 const CourseTable = ({
   data,
@@ -18,6 +19,8 @@ const CourseTable = ({
 }) => {
   const navigate = useNavigate();
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteCourseId, setDeleteCourseId] = useState(null);
 
   const getSortIcon = (column) => {
     if (sortConfig?.key !== column) {
@@ -78,6 +81,10 @@ const CourseTable = ({
   const handleNavigate = (id) => {
     navigate(`/teacher/lessons/${id}`);
     setOpenMenuId(null);
+  };
+
+  const handleDeleteModal = () => {
+    setShowDeleteModal(!showDeleteModal);
   };
 
   return (
@@ -142,10 +149,14 @@ const CourseTable = ({
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-4">
-                    <Icon name="BookOpen" size={20} className="text-primary" />
+                    <Icon
+                      name="BookOpen"
+                      size={20}
+                      className="text-primary flex-shrink-0"
+                    />
                     <div>
                       <div
-                        className="font-medium text-foreground hover:cursor-pointer"
+                        className="font-medium text-foreground hover:cursor-pointer line-clamp-1 hover:text-primary transition-smooth w-[300px]"
                         onClick={() => handleNavigate(course?.id)}
                       >
                         {course?.title}
@@ -185,7 +196,10 @@ const CourseTable = ({
                       setOpenMenuId={toggleMenu}
                       onEdit={onEdit}
                       onDuplicate={onDuplicate}
-                      onDelete={onDelete}
+                      onDelete={() => {
+                        setDeleteCourseId(course?.id);
+                        handleDeleteModal();
+                      }}
                     />
                   )}
                 </td>
@@ -215,6 +229,21 @@ const CourseTable = ({
         totalItems={totalItems}
         onPageChange={onPageChange}
       />
+
+      {showDeleteModal && (
+        <DeleteModal
+          type="course"
+          onConfirm={() => {
+            onDelete(deleteCourseId);
+            setDeleteCourseId(null);
+            handleDeleteModal();
+          }}
+          onClose={() => {
+            setDeleteCourseId(null);
+            handleDeleteModal();
+          }}
+        />
+      )}
     </section>
   );
 };

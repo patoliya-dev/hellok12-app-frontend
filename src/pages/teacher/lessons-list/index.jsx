@@ -163,7 +163,7 @@ const LessonsList = () => {
       {/* Header */}
       <RoleBasedHeader />
       <main className="max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
-        <section className="my-8 flex flex-col gap-y-6 lg:gap-y-0 lg:flex-row lg:justify-between lg:items-center">
+        <section className="my-8 flex flex-col gap-y-6 md:gap-y-0 md:flex-row md:justify-between md:items-center">
           <Breadcrumb customPath={breadCrumbData} />
           <Button size="sm" iconName="Plus" onClick={handleCreateLesson}>
             Create New Lesson
@@ -172,8 +172,8 @@ const LessonsList = () => {
         <CourseDetails course={course} />
 
         <section className="my-8">
-          <div className="flex flex-row justify-between gap-3">
-            <div className="relative w-[80%]">
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
+            <div className="relative md:w-[65%] lg:w-[70%] xl:w-[80%]">
               <Icon
                 name="Search"
                 size={16}

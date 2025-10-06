@@ -2,7 +2,14 @@ import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
 import React from "react";
 
-const ActionMenu = ({ data, setOpenMenuId, onEdit, onDuplicate, onDelete }) => {
+const ActionMenu = ({
+  className = "",
+  data,
+  setOpenMenuId,
+  onEdit,
+  onDuplicate,
+  onDelete,
+}) => {
   const actions = [
     {
       label: "Edit",
@@ -20,14 +27,16 @@ const ActionMenu = ({ data, setOpenMenuId, onEdit, onDuplicate, onDelete }) => {
       label: "Remove",
       icon: "Trash",
       color: "text-error",
-      onClick: (data) => onDelete(data?.id),
+      onClick: onDelete,
     },
   ];
 
   return (
-    <div className="absolute right-24 mt-2 w-34 bg-popover border border-border rounded-lg shadow-lg z-50">
+    <div
+      className={`absolute right-4 md:right-8 lg:right-12 xl:right-24 mt-2 w-34 bg-popover border border-border rounded-lg shadow-lg z-50 ${className}`}
+    >
       {actions.map((action, index) => (
-        <div className="flex items-center">
+        <div key={index} className="flex items-center">
           <Button
             variant="ghost"
             iconName={action.icon}

@@ -11,6 +11,7 @@ const mockLessons = [
     objectives: "Learn 100+ business terms",
     materials: "Business dictionary, vocabulary worksheets",
     createdAt: "2025-08-10T10:00:00Z",
+    isTrailAvailable: true,
   },
   {
     id: "2",
@@ -24,6 +25,7 @@ const mockLessons = [
     objectives: "Draft 5 professional emails",
     materials: "Email templates, style guide",
     createdAt: "2025-08-11T10:30:00Z",
+    isTrailAvailable: false,
   },
   {
     id: "3",
@@ -37,6 +39,7 @@ const mockLessons = [
     objectives: "Role-play 3 negotiation scenarios",
     materials: "Case studies, negotiation handbook",
     createdAt: "2025-08-12T11:00:00Z",
+    isTrailAvailable: true,
   },
   {
     id: "4",
@@ -50,6 +53,7 @@ const mockLessons = [
     objectives: "Deliver a 5-minute presentation",
     materials: "Slides, presentation checklist",
     createdAt: "2025-08-13T09:15:00Z",
+    isTrailAvailable: false,
   },
   {
     id: "5",
@@ -63,6 +67,7 @@ const mockLessons = [
     objectives: "Analyze 3 cultural case studies",
     materials: "Culture guidebook, videos",
     createdAt: "2025-08-14T14:00:00Z",
+    isTrailAvailable: true,
   },
   {
     id: "6",
@@ -75,6 +80,7 @@ const mockLessons = [
     objectives: "Write a 2-page report",
     materials: "Report templates, style guide",
     createdAt: "2025-08-15T16:30:00Z",
+    isTrailAvailable: true,
   },
   {
     id: "7",
@@ -88,6 +94,7 @@ const mockLessons = [
     objectives: "Simulate 2 meetings",
     materials: "Meeting agenda samples",
     createdAt: "2025-08-16T12:45:00Z",
+    isTrailAvailable: true,
   },
   {
     id: "8",
@@ -100,6 +107,7 @@ const mockLessons = [
     objectives: "Create a personal time plan",
     materials: "Time-tracking templates",
     createdAt: "2025-08-17T08:20:00Z",
+    isTrailAvailable: false,
   },
   {
     id: "9",
@@ -112,6 +120,7 @@ const mockLessons = [
     objectives: "Deliver a speech in class",
     materials: "Confidence-building exercises",
     createdAt: "2025-08-18T11:10:00Z",
+    isTrailAvailable: false,
   },
   {
     id: "10",
@@ -125,6 +134,7 @@ const mockLessons = [
     objectives: "Handle 3 customer scenarios",
     materials: "Role-play guides, feedback forms",
     createdAt: "2025-08-19T15:25:00Z",
+    isTrailAvailable: false,
   },
   {
     id: "11",
@@ -138,6 +148,7 @@ const mockLessons = [
     objectives: "Write 3 business documents",
     materials: "Writing handbook, sample memos",
     createdAt: "2025-08-20T09:40:00Z",
+    isTrailAvailable: true,
   },
   {
     id: "12",
@@ -150,6 +161,7 @@ const mockLessons = [
     objectives: "Develop a leadership plan",
     materials: "Leadership workbook",
     createdAt: "2025-08-21T13:50:00Z",
+    isTrailAvailable: false,
   },
   {
     id: "13",
@@ -162,6 +174,7 @@ const mockLessons = [
     objectives: "Practice 5 etiquette scenarios",
     materials: "Etiquette handbook",
     createdAt: "2025-08-22T10:05:00Z",
+    isTrailAvailable: false,
   },
   {
     id: "14",
@@ -174,6 +187,7 @@ const mockLessons = [
     objectives: "Complete a group project",
     materials: "Collaboration tools, worksheets",
     createdAt: "2025-08-23T17:30:00Z",
+    isTrailAvailable: true,
   },
   {
     id: "15",
@@ -187,6 +201,7 @@ const mockLessons = [
     objectives: "Solve 3 case studies",
     materials: "Case study book",
     createdAt: "2025-08-24T12:15:00Z",
+    isTrailAvailable: false,
   },
   {
     id: "16",
@@ -199,6 +214,7 @@ const mockLessons = [
     objectives: "Build a LinkedIn profile",
     materials: "Networking guide, profile examples",
     createdAt: "2025-08-25T14:45:00Z",
+    isTrailAvailable: false,
   },
 ];
 
