@@ -7,22 +7,27 @@ import logo from "../../assets/logo.svg";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { logout } from "reducers/auth/authSlice";
 import Image from "components/AppImage";
+import ManageCourseIcon from "components/icons/ManageCourseIcon";
 
 const RoleBasedHeader = () => {
+  const authUser = useSelector(selectAuthUser);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState("student");
   const [showProfile, setShowProfile] = useState(false);
   const [notifications, setNotifications] = useState(3);
+  const [hoveredPath, setHoveredPath] = useState(null);
   const [currentUser, setCurrentUser] = useState({
     name: "Alex Johnson",
     avatar: "/assets/logo.svg",
     // school: 'Riverside Elementary'
   });
-
-  const authUser = useSelector(selectAuthUser);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const teacherType =
+    (authUser?.role === "teacher" && authUser?.profile?.employmentType) ||
+    "independent";
 
   useEffect(() => {
     // Determine user role based on current route
@@ -68,7 +73,7 @@ const RoleBasedHeader = () => {
           icon: "CreditCard",
         },
       ],
-      teacher: [
+      teacherBase: [
         { label: "Dashboard", path: "/teacher/dashboard", icon: "Home" },
         {
           label: "Manage Lessons",
@@ -84,11 +89,6 @@ const RoleBasedHeader = () => {
           label: "Messages",
           path: "/teacher/messages",
           icon: "MessageCircle",
-        },
-        {
-          label: "Progress",
-          path: "/teacher/progress",
-          icon: "TrendingUp",
         },
       ],
       admin: [
@@ -115,6 +115,40 @@ const RoleBasedHeader = () => {
       ],
       guest: [{ label: "Login", path: "/login", icon: "LogIn" }],
     };
+
+    // Independent teacher extra tabs
+    const independentTeacherTabs = [
+      {
+        label: "Manage Courses",
+        path: "/teacher/manage-courses",
+        iconComponent: ManageCourseIcon,
+        children: [
+          "/teacher/create-course",
+          "/teacher/lessons",
+          "/teacher/edit-course",
+          "/teacher/edit-lesson",
+          "/teacher/create-lesson",
+        ],
+      },
+      {
+        label: "Earnings",
+        path: "/teacher/earnings",
+        icon: "DollarSign",
+      },
+    ];
+
+    // School teacher extra tabs
+    const schoolTeacherTabs = [
+      { label: "Progress", path: "/teacher/progress", icon: "TrendingUp" },
+    ];
+
+    if (userRole === "teacher") {
+      if (teacherType === "independent") {
+        return [...baseItems.teacherBase, ...independentTeacherTabs];
+      } else {
+        return [...baseItems.teacherBase, ...schoolTeacherTabs];
+      }
+    }
 
     return baseItems[userRole] || baseItems.guest;
   };
@@ -160,20 +194,44 @@ const RoleBasedHeader = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center space-x-1">
-          {navigationItems.map((item) => (
-            <Button
-              key={item.path}
-              variant={location.pathname === item.path ? "default" : "ghost"}
-              size="sm"
-              iconName={item.icon}
-              iconPosition="left"
-              iconSize={16}
-              onClick={() => handleNavigation(item.path)}
-              className="transition-micro"
-            >
-              {item.label}
-            </Button>
-          ))}
+          {navigationItems.map((item) => {
+            const isActive =
+              location.pathname === item.path ||
+              item.children?.some((child) =>
+                location.pathname.startsWith(child)
+              );
+
+            return item?.icon ? (
+              <Button
+                key={item.path}
+                variant={isActive ? "default" : "ghost"}
+                size="sm"
+                onClick={() => handleNavigation(item.path)}
+                className="transition-micro"
+                children={item.label}
+                iconName={item.icon}
+                iconPosition="left"
+                iconSize={16}
+              />
+            ) : (
+              <button
+                key={item.path}
+                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-9 px-3 gap-2 ${
+                  isActive
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "hover:bg-accent hover:text-accent-foreground"
+                }`}
+                onClick={() => handleNavigation(item.path)}
+                onMouseEnter={() => setHoveredPath(item.path)}
+                onMouseLeave={() => setHoveredPath(null)}
+              >
+                <item.iconComponent
+                  selected={isActive || hoveredPath === item.path}
+                />
+                {item.label}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Right Section */}

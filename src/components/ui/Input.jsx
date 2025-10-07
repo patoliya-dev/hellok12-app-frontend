@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "../../utils/cn";
+import Icon from "components/AppIcon";
 
 const Input = React.forwardRef(
   (
@@ -15,6 +16,8 @@ const Input = React.forwardRef(
     },
     ref
   ) => {
+    const [fileName, setFileName] = useState("");
+
     // Generate unique ID if not provided
     const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -54,7 +57,56 @@ const Input = React.forwardRef(
       );
     }
 
-    // For regular inputs with wrapper structure
+    // File upload style (custom wrapper like your design)
+    if (type === "file") {
+      return (
+        <div className="space-y-2">
+          {label && (
+            <label
+              htmlFor={inputId}
+              className={cn(
+                "text-sm font-medium leading-none",
+                "text-foreground"
+              )}
+            >
+              {label}
+              {required && <span className="text-destructive ml-1">*</span>}
+            </label>
+          )}
+
+          <div
+            className={cn(
+              "flex items-center justify-between w-full border-2 border-dashed border-[#E5E7EB] rounded-lg px-4 py-1.5 bg-white",
+              error && "border-destructive focus-visible:ring-destructive"
+            )}
+          >
+            <span className="text-[#1F29378C] text-sm truncate max-w-[70%] font-medium">
+              {props.filename || props.placeholder || "Upload file"}
+            </span>
+            <label className="cursor-pointer">
+              <span className="px-3 py-1.5 border border-[#E5E7EB] rounded-md text-sm font-medium text-brand-gray-800 flex items-center gap-1">
+                <Icon name="FolderOpen" size={16} /> Choose File
+              </span>
+              <input
+                type="file"
+                id={inputId}
+                className="hidden"
+                ref={ref}
+                {...props}
+              />
+            </label>
+          </div>
+
+          {description && !error && (
+            <p className="text-sm text-muted-foreground">{description}</p>
+          )}
+
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
+      );
+    }
+
+    // Default: text/email/password/etc.
     return (
       <div className="space-y-2">
         {label && (
