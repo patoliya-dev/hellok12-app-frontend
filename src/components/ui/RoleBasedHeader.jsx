@@ -7,6 +7,7 @@ import logo from "../../assets/logo.svg";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { logout } from "reducers/auth/authSlice";
 import Image from "components/AppImage";
+import ManageCourseIcon from "components/icons/ManageCourseIcon";
 
 const RoleBasedHeader = () => {
   const authUser = useSelector(selectAuthUser);
@@ -18,6 +19,7 @@ const RoleBasedHeader = () => {
   const [userRole, setUserRole] = useState("student");
   const [showProfile, setShowProfile] = useState(false);
   const [notifications, setNotifications] = useState(3);
+  const [hoveredPath, setHoveredPath] = useState(null);
   const [currentUser, setCurrentUser] = useState({
     name: "Alex Johnson",
     avatar: "/assets/logo.svg",
@@ -119,7 +121,7 @@ const RoleBasedHeader = () => {
       {
         label: "Manage Courses",
         path: "/teacher/manage-courses",
-        image: "/assets/images/manage_courses.svg",
+        iconComponent: ManageCourseIcon,
         children: [
           "/teacher/create-course",
           "/teacher/lessons",
@@ -199,31 +201,35 @@ const RoleBasedHeader = () => {
                 location.pathname.startsWith(child)
               );
 
-            const commonProps = {
-              variant: isActive ? "default" : "ghost",
-              size: "sm",
-              onClick: () => handleNavigation(item.path),
-              className: "transition-micro",
-              children: item.label,
-            };
-
             return item?.icon ? (
               <Button
                 key={item.path}
-                {...commonProps}
+                variant={isActive ? "default" : "ghost"}
+                size="sm"
+                onClick={() => handleNavigation(item.path)}
+                className="transition-micro"
+                children={item.label}
                 iconName={item.icon}
                 iconPosition="left"
                 iconSize={16}
               />
             ) : (
-              <Button
+              <button
                 key={item.path}
-                {...commonProps}
-                imageName={item.image}
-                imagePosition="left"
-                imageWidth={16}
-                imageHeight={16}
-              />
+                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-9 px-3 gap-2 ${
+                  isActive
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "hover:bg-accent hover:text-accent-foreground"
+                }`}
+                onClick={() => handleNavigation(item.path)}
+                onMouseEnter={() => setHoveredPath(item.path)}
+                onMouseLeave={() => setHoveredPath(null)}
+              >
+                <item.iconComponent
+                  selected={isActive || hoveredPath === item.path}
+                />
+                {item.label}
+              </button>
             );
           })}
         </nav>
