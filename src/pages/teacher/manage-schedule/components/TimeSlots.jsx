@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Button from "components/ui/Button";
 import { daysOfWeek, timeSlots } from "../data";
+import { successToast } from "../../../../utils/utils";
 
 const TimeSlots = ({
   selectedDay,
@@ -85,7 +86,7 @@ const TimeSlots = ({
           iconName="Save"
           disabled={disabled}
           onClick={() => {
-            alert("Schedule saved successfully!");
+            successToast("Schedule saved successfully!");
           }}
         >
           Save
