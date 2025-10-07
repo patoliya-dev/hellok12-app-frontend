@@ -5,6 +5,7 @@ import FilterTabs from "./FilterTabs";
 import BulkActionsBar from "./BulkActionsBar";
 import MediaGallery from "./MediaGallery";
 import DeleteModal from "components/ui/DeleteModal";
+import { errorToast, successToast } from "../../../../utils/utils";
 
 const TeachingHighlightsTab = () => {
   const [mediaItems, setMediaItems] = useState([]);
@@ -99,15 +100,38 @@ const TeachingHighlightsTab = () => {
   };
 
   const handleBulkDelete = () => {
-    setMediaItems((prev) =>
-      prev?.filter((item) => !selectedItems?.includes(item?.id))
+    const introItems = mediaItems.filter(
+      (item) => selectedItems.includes(item.id) && item.isIntro
     );
+
+    setMediaItems((prev) =>
+      prev.filter((item) => !selectedItems.includes(item.id) || item.isIntro)
+    );
+
     setSelectedItems([]);
+
+    if (introItems.length) {
+      errorToast("Some highlights were kept because they’re intro highlights.");
+    } else {
+      successToast("Selected highlights deleted successfully.");
+    }
   };
 
   const handleItemDelete = (itemId) => {
-    setMediaItems((prev) => prev?.filter((item) => item?.id !== itemId));
-    setSelectedItems((prev) => prev?.filter((id) => id !== itemId));
+    const item = mediaItems.find((m) => m.id === itemId);
+
+    if (!item) return; // safety check
+
+    if (item.isIntro) {
+      return errorToast(
+        "You can’t delete this highlight. It’s an intro media highlight."
+      );
+    }
+
+    setMediaItems((items) => items.filter((m) => m.id !== itemId));
+    setSelectedItems((ids) => ids.filter((id) => id !== itemId));
+
+    return successToast("Highlight removed successfully.");
   };
 
   const handleItemReplace = (itemId) => {

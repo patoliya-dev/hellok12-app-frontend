@@ -4,6 +4,7 @@ import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
 import MediaModal from "./MediaModal";
 import DeleteModal from "components/ui/DeleteModal";
+import { successToast } from "../../../../utils/utils";
 
 const MediaGallery = ({
   mediaItems,
