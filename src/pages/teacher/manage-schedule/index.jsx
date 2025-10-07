@@ -101,6 +101,7 @@ const ManageSchedule = () => {
                 />
                 <TimeSlots
                   selectedDay={dayName}
+                  selectedDate={currentDate}
                   availability={availability}
                   setAvailability={handleAvailabilitySelect}
                   toggleAllSlotsForDay={toggleAllSlotsForDay}

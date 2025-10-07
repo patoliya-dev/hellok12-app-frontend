@@ -3,6 +3,7 @@ import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Image from "../../../../components/AppImage";
 import Icon from "../../../../components/AppIcon";
+import DeleteModal from "components/ui/DeleteModal";
 
 const CertificationsTab = ({
   formData,
@@ -13,6 +14,8 @@ const CertificationsTab = ({
   errors,
 }) => {
   const [dragActive, setDragActive] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [certificateId, setCertificateId] = useState(null);
   const fileInputRef = useRef(null);
 
   const handleFileButtonClick = () => {
@@ -93,6 +96,10 @@ const CertificationsTab = ({
   };
 
   const certificates = formData?.certificates || [];
+
+  const handleDeleteModalVisibility = () => {
+    setShowDeleteModal(!showDeleteModal);
+  };
 
   return (
     <div className="space-y-6">
@@ -223,8 +230,11 @@ const CertificationsTab = ({
                       </p>
                     </div>
                     <button
-                      onClick={() => removeCertificate(certificate?.id)}
-                      className="ml-2 p-1 text-muted-foreground hover:text-error transition-smooth"
+                      onClick={() => {
+                        setCertificateId(certificate?.id);
+                        handleDeleteModalVisibility();
+                      }}
+                      className="ml-2 p-1 text-muted-foreground hover:text-error transition-smooth disabled:cursor-not-allowed"
                       disabled={!isEdit}
                     >
                       <Icon name="Trash2" size={16} />
@@ -307,6 +317,17 @@ const CertificationsTab = ({
           Save Certifications
         </Button>
       </div>
+
+      {showDeleteModal && (
+        <DeleteModal
+          type="certificate"
+          onConfirm={() => {
+            removeCertificate(certificateId);
+            handleDeleteModalVisibility();
+          }}
+          onClose={handleDeleteModalVisibility}
+        />
+      )}
     </div>
   );
 };

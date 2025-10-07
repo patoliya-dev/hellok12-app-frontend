@@ -1,9 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
+import DeleteModal from "components/ui/DeleteModal";
 
 const MediaModal = ({ item, onClose, onDelete, onReplace }) => {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const handleDeleteModalVisibility = () => {
+    setShowDeleteModal(!showDeleteModal);
+  };
+
   const formatFileSize = (bytes) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -114,7 +121,7 @@ const MediaModal = ({ item, onClose, onDelete, onReplace }) => {
             </Button>
             <Button
               variant="destructive"
-              onClick={onDelete}
+              onClick={handleDeleteModalVisibility}
               iconName="Trash2"
               iconPosition="left"
             >
@@ -123,6 +130,17 @@ const MediaModal = ({ item, onClose, onDelete, onReplace }) => {
           </div>
         </div>
       </div>
+
+      {showDeleteModal && (
+        <DeleteModal
+          type="highlight"
+          onConfirm={() => {
+            onDelete();
+            handleDeleteModalVisibility();
+          }}
+          onClose={handleDeleteModalVisibility}
+        />
+      )}
     </div>
   );
 };

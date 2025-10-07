@@ -1,3 +1,5 @@
+import { getAllCountries } from "../../../utils/utils";
+
 const tabs = [
   { id: "personal", name: "Personal Info", icon: "User" },
   { id: "bio", name: "Bio & Specializations", icon: "FileText" },
@@ -130,6 +132,7 @@ const mockMediaItems = [
     size: 15728640, // 15MB
     uploadDate: new Date("2024-08-10T14:30:00"),
     format: "mp4",
+    isIntro: true,
   },
   {
     id: 2,
@@ -139,6 +142,7 @@ const mockMediaItems = [
     size: 2097152, // 2MB
     uploadDate: new Date("2024-08-09T10:15:00"),
     format: "jpg",
+    isIntro: false,
   },
   {
     id: 3,
@@ -148,6 +152,7 @@ const mockMediaItems = [
     size: 25165824, // 24MB
     uploadDate: new Date("2024-08-08T16:45:00"),
     format: "mov",
+    isIntro: false,
   },
   {
     id: 4,
@@ -157,6 +162,7 @@ const mockMediaItems = [
     size: 1572864, // 1.5MB
     uploadDate: new Date("2024-08-07T11:20:00"),
     format: "png",
+    isIntro: false,
   },
   {
     id: 5,
@@ -166,6 +172,7 @@ const mockMediaItems = [
     size: 18874368, // 18MB
     uploadDate: new Date("2024-08-06T13:10:00"),
     format: "mp4",
+    isIntro: false,
   },
   {
     id: 6,
@@ -175,6 +182,7 @@ const mockMediaItems = [
     size: 3145728, // 3MB
     uploadDate: new Date("2024-08-05T09:30:00"),
     format: "jpg",
+    isIntro: false,
   },
 ];
 
@@ -202,6 +210,8 @@ const validationRules = {
   highlights: [], // no required fields
 };
 
+const countryOptions = getAllCountries();
+
 export {
   tabs,
   daysOfWeek,
@@ -211,4 +221,5 @@ export {
   timezoneOptions,
   mockMediaItems,
   validationRules,
+  countryOptions,
 };

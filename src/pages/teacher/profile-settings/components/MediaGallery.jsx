@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
 import MediaModal from "./MediaModal";
+import DeleteModal from "components/ui/DeleteModal";
+import { successToast } from "../../../../utils/utils";
 
 const MediaGallery = ({
   mediaItems,
@@ -13,6 +15,13 @@ const MediaGallery = ({
   showBulkActions,
 }) => {
   const [modalItem, setModalItem] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteItemId, setDeleteItemId] = useState(null);
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    setItems(mediaItems);
+  }, [mediaItems]);
 
   const formatFileSize = (bytes) => {
     if (bytes === 0) return "0 Bytes";
@@ -42,7 +51,23 @@ const MediaGallery = ({
     setModalItem(null);
   };
 
-  if (mediaItems?.length === 0) {
+  const handleDeleteModalVisibility = () => {
+    setShowDeleteModal(!showDeleteModal);
+  };
+
+  const handleIntroChange = (item) => {
+    const updatedItems = items.map((mediaItems) => {
+      if (mediaItems.id === item.id) {
+        mediaItems.isIntro = !mediaItems.isIntro;
+      } else {
+        mediaItems.isIntro = false;
+      }
+      return mediaItems;
+    });
+    setItems(updatedItems);
+  };
+
+  if (items?.length === 0) {
     return (
       <div className="bg-card rounded-xl p-12 text-center">
         <div className="w-20 h-20 mx-auto bg-muted rounded-full flex items-center justify-center mb-4">
@@ -72,8 +97,8 @@ const MediaGallery = ({
 
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {mediaItems?.map((item) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {items?.map((item) => (
           <div
             key={item?.id}
             className="relative bg-card rounded-lg border border-border overflow-hidden shadow-card hover:shadow-modal transition-all duration-200 hover-scale"
@@ -148,18 +173,22 @@ const MediaGallery = ({
                   </div>
                 </div>
 
+                <input
+                  type="checkbox"
+                  checked={item?.isIntro}
+                  onChange={() => handleIntroChange(item)}
+                  title="Select to set the intro video"
+                  className="absolute bottom-1 right-3.5 h-5 w-5 rounded-full bg-[#E8E8E8] border-none cursor-pointer appearance-none  checked:bg-primary checked:border-primary checked:before:text-white checked:before:flex checked:before:items-center checked:before:justify-center outline-none focus:outline-none focus:ring-0"
+                />
+
                 {/* Action Menu */}
                 <div className="relative group">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
+                  <Button variant="ghost" size="icon" className="w-6 h-6">
                     <Icon name="MoreVertical" size={14} />
                   </Button>
 
                   {/* Dropdown Menu */}
-                  <div className="absolute right-0 top-full mt-1 w-32 bg-popover border border-border rounded-lg shadow-modal opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20">
+                  <div className="absolute right-0 bottom-full mt-1 w-32 bg-popover border border-border rounded-lg shadow-modal opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20">
                     <div className="py-1">
                       <button
                         onClick={() => handleItemClick(item)}
@@ -176,7 +205,10 @@ const MediaGallery = ({
                         <span>Replace</span>
                       </button>
                       <button
-                        onClick={() => onItemDelete(item?.id)}
+                        onClick={() => {
+                          setDeleteItemId(item?.id);
+                          handleDeleteModalVisibility();
+                        }}
                         className="w-full px-3 py-2 text-left text-sm text-error hover:bg-error/10 transition-colors flex items-center space-x-2"
                       >
                         <Icon name="Trash2" size={14} />
@@ -202,6 +234,20 @@ const MediaGallery = ({
           onReplace={() => {
             onItemReplace(modalItem?.id);
             handleModalClose();
+          }}
+        />
+      )}
+
+      {showDeleteModal && (
+        <DeleteModal
+          type="highlight"
+          onConfirm={() => {
+            onItemDelete(deleteItemId);
+            handleDeleteModalVisibility();
+          }}
+          onClose={() => {
+            setDeleteItemId(null);
+            handleDeleteModalVisibility();
           }}
         />
       )}

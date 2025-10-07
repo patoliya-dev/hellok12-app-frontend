@@ -30,14 +30,11 @@ const RoleBasedHeader = () => {
     "independent";
 
   useEffect(() => {
-    // Determine user role based on current route
-    const path = location.pathname;
-
-    if (path.includes("/student")) setUserRole("student");
-    else if (path.includes("/parent")) setUserRole("parent");
-    else if (path.includes("/teacher")) setUserRole("teacher");
-    else if (path.includes("/school")) setUserRole("admin");
-    else setUserRole("guest");
+    if (authUser) {
+      setUserRole(authUser?.role);
+    } else {
+      setUserRole("guest");
+    }
   }, [location.pathname]);
 
   const getNavigationItems = () => {
@@ -47,6 +44,12 @@ const RoleBasedHeader = () => {
           label: "Dashboard",
           path: "/student-parent/dashboard",
           icon: "House",
+          children: [
+            "/student-parent/lesson-calendar",
+            "/student-parent/progress-analytics",
+            "/student-parent/profile-settings",
+            "/student-parent/payment-billing",
+          ],
         },
         { label: "Find Teacher", path: "/teachers", icon: "Search" },
         // { label: "Schedule", path: "/booking-system", icon: "Calendar" },
@@ -74,7 +77,16 @@ const RoleBasedHeader = () => {
         },
       ],
       teacherBase: [
-        { label: "Dashboard", path: "/teacher/dashboard", icon: "Home" },
+        {
+          label: "Dashboard",
+          path: "/teacher/dashboard",
+          icon: "Home",
+          children: [
+            "/teacher/students-feedback",
+            "/teacher/scheduled-lessons",
+            "/teacher/profile-settings",
+          ],
+        },
         {
           label: "Manage Lessons",
           path: "/teacher/manage-lessons",

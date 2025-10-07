@@ -54,12 +54,6 @@ const Minicalendar = ({ currentDate, onDateSelect }) => {
     return date?.getMonth() === miniCalendarDate?.getMonth();
   };
 
-  const isPastDate = (date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // normalize to midnight
-    return date < today;
-  };
-
   return (
     <div className="space-y-4 bg-card rounded-lg border border-border p-6">
       <h4 className="text-lg font-semibold text-foreground">Select Date</h4>
@@ -92,17 +86,16 @@ const Minicalendar = ({ currentDate, onDateSelect }) => {
           </div>
         ))}
         {calendarDays?.map((date, index) => {
-          const disabled = isPastDate(date);
+          {
+            /* const disabled = isPastDate(date); */
+          }
           return (
             <button
               key={index}
-              onClick={() => !disabled && onDateSelect(date)}
-              disabled={disabled}
+              onClick={() => onDateSelect(date)}
               className={`w-9 h-9 sm:w-12 sm:h-12 text-sm p-2 rounded-full transition-colors duration-200 
                 ${
-                  disabled
-                    ? "text-muted-foreground opacity-50 cursor-not-allowed"
-                    : isSelected(date)
+                  isSelected(date)
                     ? "bg-primary text-primary-foreground"
                     : isToday(date)
                     ? "bg-accent text-accent-foreground"
