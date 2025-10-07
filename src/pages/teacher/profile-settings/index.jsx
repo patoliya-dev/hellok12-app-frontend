@@ -24,9 +24,9 @@ const ProfileAccountSettings = () => {
     phone: "+1 (555) 123-4567",
     dateOfBirth: "1985-03-15",
     experience: "8",
-    country: "United States",
-    state: "California",
-    city: "San Francisco",
+    country: "",
+    state: "",
+    city: "",
     profileImage:
       "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face",
 
@@ -153,11 +153,7 @@ const ProfileAccountSettings = () => {
   };
 
   const handleSave = async (tabName = "") => {
-    console.log(tabName, "tabName");
-
     const newErrors = validateFields(tabName, formData);
-
-    console.log(newErrors, "handle save");
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);

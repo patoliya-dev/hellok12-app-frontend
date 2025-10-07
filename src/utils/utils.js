@@ -1,4 +1,5 @@
 import { toast } from "react-toastify";
+import { Country, State, City } from "country-state-city";
 
 export const successToast = (message) => {
   toast.success(message, {
@@ -39,4 +40,28 @@ export const copyToClipboard = (text) => {
   if (!text) return;
   navigator.clipboard.writeText(text);
   successToast("Copied to clipboard!");
+};
+
+export const getAllCountries = () => {
+  const countries = Country.getAllCountries();
+  return countries?.map((country) => ({
+    label: country.name,
+    value: country.isoCode,
+  }));
+};
+
+export const getAllStates = (country) => {
+  const states = State.getStatesOfCountry(country);
+  return states?.map((state) => ({
+    label: state.name,
+    value: state.isoCode,
+  }));
+};
+
+export const getAllCities = (country, state) => {
+  const cities = City.getCitiesOfState(country, state);
+  return cities?.map((city) => ({
+    label: city.name,
+    value: city.name,
+  }));
 };

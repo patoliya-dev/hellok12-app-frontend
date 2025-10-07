@@ -4,6 +4,7 @@ import UploadZone from "./UploadZone";
 import FilterTabs from "./FilterTabs";
 import BulkActionsBar from "./BulkActionsBar";
 import MediaGallery from "./MediaGallery";
+import DeleteModal from "components/ui/DeleteModal";
 
 const TeachingHighlightsTab = () => {
   const [mediaItems, setMediaItems] = useState([]);
@@ -13,6 +14,7 @@ const TeachingHighlightsTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItems, setSelectedItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     // Simulate loading media items
@@ -92,19 +94,15 @@ const TeachingHighlightsTab = () => {
     setSelectedItems([]);
   };
 
+  const handleDeleteModalVisibility = () => {
+    setShowDeleteModal(!showDeleteModal);
+  };
+
   const handleBulkDelete = () => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete ${selectedItems?.length} item${
-          selectedItems?.length !== 1 ? "s" : ""
-        }?`
-      )
-    ) {
-      setMediaItems((prev) =>
-        prev?.filter((item) => !selectedItems?.includes(item?.id))
-      );
-      setSelectedItems([]);
-    }
+    setMediaItems((prev) =>
+      prev?.filter((item) => !selectedItems?.includes(item?.id))
+    );
+    setSelectedItems([]);
   };
 
   const handleItemDelete = (itemId) => {
@@ -137,7 +135,7 @@ const TeachingHighlightsTab = () => {
             selectedCount={selectedItems?.length}
             onSelectAll={handleSelectAll}
             onDeselectAll={handleDeselectAll}
-            onBulkDelete={handleBulkDelete}
+            onBulkDelete={handleDeleteModalVisibility}
             totalItems={filteredItems?.length}
           />
         )}
@@ -149,6 +147,17 @@ const TeachingHighlightsTab = () => {
           onItemReplace={handleItemReplace}
         />
       </div>
+
+      {showDeleteModal && (
+        <DeleteModal
+          type={`highlight${selectedItems?.length > 1 ? "s" : ""}`}
+          onConfirm={() => {
+            handleBulkDelete();
+            handleDeleteModalVisibility();
+          }}
+          onClose={handleDeleteModalVisibility}
+        />
+      )}
     </div>
   );
 };

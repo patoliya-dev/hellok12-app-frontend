@@ -1,13 +1,16 @@
+import { useEffect, useState } from "react";
 import Button from "components/ui/Button";
 import { daysOfWeek, timeSlots } from "../data";
 
 const TimeSlots = ({
   selectedDay,
+  selectedDate,
   availability,
   setAvailability,
   toggleAllSlotsForDay,
   handleClearAll,
 }) => {
+  const [disabled, setDisabled] = useState(false);
   const currentDay = selectedDay?.toLowerCase();
   const currentDayAvailability = availability?.[currentDay] || [];
 
@@ -15,6 +18,13 @@ const TimeSlots = ({
     const dayAvailability = availability?.[currentDay] || [];
     return dayAvailability?.includes(timeSlot);
   };
+
+  useEffect(() => {
+    const selectDate = new Date(selectedDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    setDisabled(selectDate < today);
+  }, [selectedDate]);
 
   return (
     <div className="border border-border rounded-lg p-4 mb-4">
@@ -29,6 +39,7 @@ const TimeSlots = ({
           <Button
             variant="outline"
             size="sm"
+            disabled={disabled}
             onClick={() => toggleAllSlotsForDay(currentDay)}
           >
             {currentDayAvailability?.length === timeSlots?.length
@@ -45,8 +56,9 @@ const TimeSlots = ({
           return (
             <button
               key={timeSlot}
+              disabled={disabled}
               onClick={() => setAvailability(timeSlot)}
-              className={`p-2 text-xs font-medium rounded border transition-smooth ${
+              className={`p-2 text-xs font-medium rounded border transition-smooth disabled:cursor-not-allowed ${
                 isSelected
                   ? "bg-success text-success-foreground border-success"
                   : "bg-background text-foreground border-border hover:bg-muted"
@@ -64,12 +76,14 @@ const TimeSlots = ({
           size="sm"
           iconName="RotateCcw"
           onClick={handleClearAll}
+          disabled={disabled}
         >
           Clear All
         </Button>
         <Button
           size="sm"
           iconName="Save"
+          disabled={disabled}
           onClick={() => {
             alert("Schedule saved successfully!");
           }}

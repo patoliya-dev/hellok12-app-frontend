@@ -3,6 +3,9 @@ import Input from "../../../../components/ui/Input";
 import Button from "../../../../components/ui/Button";
 import Image from "../../../../components/AppImage";
 import Icon from "../../../../components/AppIcon";
+import Select from "components/ui/Select";
+import { countryOptions } from "../data";
+import { getAllCities, getAllStates } from "../../../../utils/utils";
 
 const PersonalInfoTab = ({
   formData,
@@ -26,6 +29,12 @@ const PersonalInfoTab = ({
 
   const handleInputChange = (field, value) => {
     const updatedData = { ...formData, [field]: value };
+    if (field === "country") {
+      updatedData.state = "";
+      updatedData.city = "";
+    } else if (field === "state") {
+      updatedData.city = "";
+    }
     onFormChange(updatedData);
   };
 
@@ -48,6 +57,9 @@ const PersonalInfoTab = ({
     setProfileImage("");
     handleInputChange("profileImage", "");
   };
+
+  const stateOptions = getAllStates(formData?.country) || [];
+  const cityOptions = getAllCities(formData?.country, formData?.state) || [];
 
   return (
     <div className="space-y-6">
@@ -176,35 +188,38 @@ const PersonalInfoTab = ({
       <div className="bg-card border border-border rounded-lg p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4">Location</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
+          <Select
             label="Country"
-            type="text"
-            placeholder="United States"
+            placeholder="Select Country"
+            options={countryOptions}
             value={formData?.country || ""}
-            onChange={(e) => handleInputChange("country", e?.target?.value)}
+            onChange={(value) => handleInputChange("country", value)}
             required
             disabled={!isEdit}
             error={errors?.country}
+            searchable
           />
-          <Input
+          <Select
             label="State/Province"
-            type="text"
-            placeholder="California"
+            placeholder="Select State/Province"
+            options={stateOptions}
             value={formData?.state || ""}
-            onChange={(e) => handleInputChange("state", e?.target?.value)}
+            onChange={(value) => handleInputChange("state", value)}
             required
-            disabled={!isEdit}
+            disabled={!isEdit || !formData?.country}
             error={errors?.state}
+            searchable
           />
-          <Input
+          <Select
             label="City"
-            type="text"
-            placeholder="San Francisco"
+            placeholder="Select City"
+            options={cityOptions}
             value={formData?.city || ""}
-            onChange={(e) => handleInputChange("city", e?.target?.value)}
+            onChange={(value) => handleInputChange("city", value)}
             required
-            disabled={!isEdit}
+            disabled={!isEdit || !formData?.state}
             error={errors?.city}
+            searchable
           />
         </div>
       </div>
