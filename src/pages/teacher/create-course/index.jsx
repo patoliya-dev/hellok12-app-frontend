@@ -301,6 +301,7 @@ const CreateCourse = () => {
                 errors,
                 addLesson,
                 removeLesson,
+                mode,
               }}
             />
           </div>

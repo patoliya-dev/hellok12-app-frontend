@@ -22,6 +22,7 @@ const CourseForm = ({ formData, handleInputChange, errors }) => {
           onChange={(value) => handleInputChange("language", value)}
           error={errors?.language}
           required
+          searchable
         />
       </div>
 
