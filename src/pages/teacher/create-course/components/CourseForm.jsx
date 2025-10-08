@@ -54,18 +54,20 @@ const CourseForm = ({ formData, handleInputChange, errors }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Input
-          label="Student Capacity"
-          placeholder="e.g., 10"
-          type="number"
-          min="1"
-          max="50"
-          value={formData?.capacity}
-          onChange={(e) =>
-            handleInputChange("capacity", parseInt(e?.target?.value))
-          }
-          error={errors?.capacity}
-        />
+        {formData?.lessonType === "group" && (
+          <Input
+            label="Student Capacity"
+            placeholder="e.g., 10"
+            type="number"
+            min="1"
+            max="50"
+            value={formData?.capacity}
+            onChange={(e) =>
+              handleInputChange("capacity", parseInt(e?.target?.value))
+            }
+            error={errors?.capacity}
+          />
+        )}
 
         <Input
           label="Price per Lesson ($)"

@@ -53,7 +53,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-01",
-    lessonType: "online",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 18, max: 45 },
     lessons: [
@@ -115,7 +115,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 20,
     createdAt: "2024-08-05",
-    lessonType: "hybrid",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 16, max: 50 },
     lessons: [
@@ -162,7 +162,7 @@ const mockCourses = [
     status: "full",
     lessonCount: 24,
     createdAt: "2024-07-15",
-    lessonType: "online",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 18, max: 40 },
     lessons: [
@@ -209,7 +209,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 12,
     createdAt: "2024-08-10",
-    lessonType: "in-person",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 8, max: 12 },
     lessons: [
@@ -256,7 +256,7 @@ const mockCourses = [
     status: "archived",
     lessonCount: 28,
     createdAt: "2024-07-20",
-    lessonType: "online",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 20, max: 50 },
     lessons: [
@@ -303,7 +303,7 @@ const mockCourses = [
     status: "draft",
     lessonCount: 20,
     createdAt: "2024-08-12",
-    lessonType: "hybrid",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 22, max: 50 },
     lessons: [
@@ -350,7 +350,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-15",
-    lessonType: "online",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 15, max: 45 },
     lessons: [
@@ -397,7 +397,7 @@ const mockCourses = [
     status: "full",
     lessonCount: 20,
     createdAt: "2024-07-25",
-    lessonType: "online",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 18, max: 40 },
     lessons: [
@@ -444,7 +444,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 8,
     createdAt: "2024-09-01",
-    lessonType: "in-person",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 18, max: 55 },
     lessons: [
@@ -491,7 +491,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-18",
-    lessonType: "hybrid",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 20, max: 50 },
     lessons: [
@@ -538,7 +538,7 @@ const mockCourses = [
     status: "full",
     lessonCount: 20,
     createdAt: "2024-07-30",
-    lessonType: "online",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 25, max: 55 },
     lessons: [
@@ -585,7 +585,7 @@ const mockCourses = [
     status: "archived",
     lessonCount: 16,
     createdAt: "2024-08-08",
-    lessonType: "hybrid",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 16, max: 45 },
     lessons: [
@@ -632,7 +632,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-03",
-    lessonType: "in-person",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 18, max: 50 },
     lessons: [
@@ -679,7 +679,7 @@ const mockCourses = [
     status: "draft",
     lessonCount: 12,
     createdAt: "2024-08-22",
-    lessonType: "online",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 16, max: 40 },
     lessons: [
@@ -726,7 +726,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 12,
     createdAt: "2024-08-20",
-    lessonType: "in-person",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 15, max: 45 },
     lessons: [
@@ -773,7 +773,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-22",
-    lessonType: "online",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 20, max: 50 },
     lessons: [
@@ -820,7 +820,7 @@ const mockCourses = [
     status: "archived",
     lessonCount: 24,
     createdAt: "2024-08-14",
-    lessonType: "online",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 22, max: 55 },
     lessons: [
@@ -867,7 +867,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-28",
-    lessonType: "hybrid",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 15, max: 45 },
     lessons: [
@@ -914,7 +914,7 @@ const mockCourses = [
     status: "draft",
     lessonCount: 20,
     createdAt: "2024-08-25",
-    lessonType: "online",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 25, max: 55 },
     lessons: [
@@ -961,7 +961,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-29",
-    lessonType: "hybrid",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 21, max: 50 },
     lessons: [

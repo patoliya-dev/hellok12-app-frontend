@@ -109,7 +109,7 @@ const CreateCourse = () => {
       if (!formData?.introImage?.trim())
         newErrors.introImage = "Intro image is required";
       if (!formData?.language) newErrors.language = "Language is required";
-      if (formData?.capacity < 1)
+      if (formData?.lessonType === "group" && formData?.capacity < 1)
         newErrors.capacity = "Capacity must be at least 1";
       if (!formData?.startDate) newErrors.startDate = "Start date is required";
     }

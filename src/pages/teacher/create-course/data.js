@@ -126,9 +126,8 @@ const languageOptions = [
 ];
 
 const lessonTypeOptions = [
-  { value: "online", label: "Online" },
-  { value: "in-person", label: "In-Person" },
-  { value: "hybrid", label: "Hybrid" },
+  { value: "1-on-1", label: "1-on-1" },
+  { value: "group", label: "Group" },
 ];
 
 export { commonBreadCrumbData, steps, languageOptions, lessonTypeOptions };
