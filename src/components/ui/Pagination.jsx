@@ -3,7 +3,13 @@ import Button from "./Button";
 
 const PAGE_SIZE = 10;
 
-const Pagination = ({ currentPage, totalPages, totalItems, onPageChange }) => {
+const Pagination = ({
+  currentPage,
+  totalPages,
+  totalItems,
+  onPageChange,
+  isBorderTop = true,
+}) => {
   const startItem = (currentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(currentPage * PAGE_SIZE, totalItems);
 
@@ -45,7 +51,11 @@ const Pagination = ({ currentPage, totalPages, totalItems, onPageChange }) => {
   if (totalPages === 0) return null;
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-card border-t border-border">
+    <div
+      className={`flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-card ${
+        isBorderTop && "border-t border-border"
+      }`}
+    >
       {/* Results Info */}
       <div className="text-sm text-muted-foreground">
         Showing {startItem} to {endItem} of {totalItems} feedbacks

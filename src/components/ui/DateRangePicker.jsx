@@ -1,5 +1,5 @@
 // components/DateRangePicker.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DateRange } from "react-date-range";
 import { format } from "date-fns";
 import "react-date-range/dist/styles.css"; // main style
@@ -7,7 +7,7 @@ import "react-date-range/dist/theme/default.css"; // theme css
 import { Calendar } from "lucide-react"; // icon library (or use any)
 import Icon from "components/AppIcon";
 
-const DateRangePicker = ({ onChange }) => {
+const DateRangePicker = ({ onChange, onClear = false }) => {
   const [showPicker, setShowPicker] = useState(false);
   const [range, setRange] = useState([
     {
@@ -21,6 +21,18 @@ const DateRangePicker = ({ onChange }) => {
     setRange([ranges.selection]);
     onChange?.(ranges.selection);
   };
+
+  useEffect(() => {
+    if (onClear) {
+      setRange([
+        {
+          startDate: new Date(),
+          endDate: new Date(),
+          key: "selection",
+        },
+      ]);
+    }
+  }, [onClear]);
 
   return (
     <div className="relative inline-block">
