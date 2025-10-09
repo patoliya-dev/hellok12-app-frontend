@@ -1,6 +1,7 @@
 import Input from "components/ui/Input";
 import Select from "components/ui/Select";
-import { languageOptions, lessonTypeOptions } from "../data";
+import { lessonTypeOptions } from "../data";
+import { languageOptions } from "../../../../utils/utils";
 
 const CourseForm = ({ formData, handleInputChange, errors }) => {
   return (

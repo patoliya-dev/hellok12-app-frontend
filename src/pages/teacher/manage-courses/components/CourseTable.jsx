@@ -4,7 +4,7 @@ import Icon from "components/AppIcon";
 import Pagination from "components/ui/Pagination";
 import ActionMenu from "./ActionMenu";
 import DeleteModal from "components/ui/DeleteModal";
-import { successToast } from "../../../../utils/utils";
+import { getLanguageName, successToast } from "../../../../utils/utils";
 
 const CourseTable = ({
   data,
@@ -170,7 +170,7 @@ const CourseTable = ({
                 </td>
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
-                    {course?.language}
+                    {getLanguageName(course?.language)}
                   </span>
                 </td>
                 <td className="px-6 py-4">

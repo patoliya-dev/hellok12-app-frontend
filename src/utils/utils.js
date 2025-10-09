@@ -1,5 +1,6 @@
 import { toast } from "react-toastify";
 import { Country, State, City } from "country-state-city";
+import ISO6391 from "iso-639-1";
 
 export const successToast = (message) => {
   toast.success(message, {
@@ -64,4 +65,13 @@ export const getAllCities = (country, state) => {
     label: city.name,
     value: city.name,
   }));
+};
+
+export const languageOptions = ISO6391.getAllCodes().map((code) => ({
+  value: code,
+  label: ISO6391.getName(code),
+}));
+
+export const getLanguageName = (code) => {
+  return ISO6391.getName(code);
 };
