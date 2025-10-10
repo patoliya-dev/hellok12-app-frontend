@@ -11,6 +11,7 @@ import ProfileAccountSettings from "../pages/teacher/profile-settings";
 import ManageCourses from "../pages/teacher/manage-courses";
 import CreateCourse from "../pages/teacher/create-course";
 import LessonsList from "../pages/teacher/lessons-list";
+import Earnings from "../pages/teacher/earnings";
 
 const TeacherRoutes = () => {
   return (
@@ -29,6 +30,7 @@ const TeacherRoutes = () => {
       <Route path="/edit-lesson/:courseId" element={<CreateCourse />} />
       <Route path="/create-lesson/:courseId" element={<CreateCourse />} />
       <Route path="/lessons/:courseId" element={<LessonsList />} />
+      <Route path="/earnings" element={<Earnings />} />
 
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
