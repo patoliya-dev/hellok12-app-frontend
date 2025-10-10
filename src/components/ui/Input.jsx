@@ -64,10 +64,7 @@ const Input = React.forwardRef(
           {label && (
             <label
               htmlFor={inputId}
-              className={cn(
-                "text-sm font-medium leading-none",
-                "text-foreground"
-              )}
+              className="text-sm font-medium leading-none block text-foreground"
             >
               {label}
               {required && <span className="text-destructive ml-1">*</span>}

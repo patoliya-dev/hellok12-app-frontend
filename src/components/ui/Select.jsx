@@ -145,10 +145,7 @@ const Select = React.forwardRef(
         {label && (
           <label
             htmlFor={selectId}
-            className={cn(
-              "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block",
-              error ? "text-destructive" : "text-foreground"
-            )}
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block text-foreground"
           >
             {label}
             {required && <span className="text-destructive ml-1">*</span>}

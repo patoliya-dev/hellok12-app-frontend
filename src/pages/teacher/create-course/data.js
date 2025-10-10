@@ -19,4 +19,9 @@ const lessonTypeOptions = [
   { value: "group", label: "Group" },
 ];
 
-export { commonBreadCrumbData, steps, lessonTypeOptions };
+const lessonModeOptions = [
+  { value: "online", label: "Online" },
+  { value: "in-person", label: "In-Person" },
+];
+
+export { commonBreadCrumbData, steps, lessonTypeOptions, lessonModeOptions };

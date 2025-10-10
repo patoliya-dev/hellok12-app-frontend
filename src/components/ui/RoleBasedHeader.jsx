@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Icon from "../AppIcon";
@@ -8,6 +8,8 @@ import { selectAuthUser } from "reducers/auth/authSelectors";
 import { logout } from "reducers/auth/authSlice";
 import Image from "components/AppImage";
 import ManageCourseIcon from "components/icons/ManageCourseIcon";
+import NotificationModal from "./NotificationModal";
+import { getNotificationByRole } from "./data";
 
 const RoleBasedHeader = () => {
   const authUser = useSelector(selectAuthUser);
@@ -18,13 +20,13 @@ const RoleBasedHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState("student");
   const [showProfile, setShowProfile] = useState(false);
-  const [notifications, setNotifications] = useState(3);
+  const [notifications, setNotifications] = useState([]);
   const [hoveredPath, setHoveredPath] = useState(null);
-  const [currentUser, setCurrentUser] = useState({
-    name: "Alex Johnson",
-    avatar: "/assets/logo.svg",
-    // school: 'Riverside Elementary'
-  });
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  const profileMenuRef = useRef(null);
+  const notificationRef = useRef(null);
+
   const teacherType =
     (authUser?.role === "teacher" && authUser?.profile?.employmentType) ||
     "independent";
@@ -36,6 +38,11 @@ const RoleBasedHeader = () => {
       setUserRole("guest");
     }
   }, [location.pathname]);
+
+  useEffect(() => {
+    const notifications = getNotificationByRole(userRole);
+    setNotifications(notifications);
+  }, [userRole]);
 
   const getNavigationItems = () => {
     const baseItems = {
@@ -176,7 +183,33 @@ const RoleBasedHeader = () => {
     setIsMenuOpen(false);
   };
 
+  const handleNotificationClick = (notificationId) => {
+    // Mark as read logic would go here
+    console.log("Notification clicked:", notificationId);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target)
+      ) {
+        setShowProfile(false);
+      }
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
+        setIsNotificationOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const navigationItems = getNavigationItems();
+  const unreadCount = notifications.filter((n) => n.unread).length;
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-card border-b border-border z-50">
@@ -251,41 +284,31 @@ const RoleBasedHeader = () => {
           {userRole !== "guest" && (
             <>
               {/* Notifications */}
-              <div className="relative">
+              <div ref={notificationRef} className="relative">
                 <Button
                   variant="ghost"
                   size="icon"
-                  iconName="Bell"
-                  iconSize={20}
+                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                   className="relative"
-                />
-                {notifications > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-error text-error-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                    {notifications}
-                  </span>
+                >
+                  <Icon name="Bell" size={20} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-error text-error-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Button>
+
+                {isNotificationOpen && (
+                  <NotificationModal
+                    notifications={notifications}
+                    handleNotificationClick={handleNotificationClick}
+                  />
                 )}
               </div>
 
-              {/* User Menu */}
-              {/* <div className="hidden lg:flex items-center space-x-2 pl-3 border-l border-border">
-                <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                  <Icon name="User" size={16} color="var(--color-muted-foreground)" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-foreground">{currentUser.name}</span>
-                  <span className="text-xs text-muted-foreground capitalize">{userRole}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  iconName="LogOut"
-                  iconSize={16}
-                  onClick={handleLogout}
-                  className="ml-2"
-                />
-              </div> */}
               {/* Profile Dropdown */}
-              <div className="relative">
+              <div className="relative" ref={profileMenuRef}>
                 <button
                   onClick={() => setShowProfile(!showProfile)}
                   className="flex items-center space-x-2 p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-smooth"

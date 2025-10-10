@@ -169,13 +169,13 @@ const EarningsTable = ({ data }) => {
                 key={index}
                 className="border-b border-border last:border-b-0 hover:bg-muted/50 transition-smooth"
               >
-                <td className="p-4 text-sm text-foreground">
+                <td className="p-4 text-sm text-foreground w-[300px]">
                   {formatDate(item?.date)}
                 </td>
-                <td className="p-4 text-sm text-foreground">
+                <td className="p-4 text-sm text-foreground w-[1000px]">
                   {item?.description}
                 </td>
-                <td className="p-4 text-sm font-semibold text-primary text-right">
+                <td className="p-4 text-sm font-semibold text-primary">
                   {formatCurrency(item?.amount)}
                 </td>
               </tr>
