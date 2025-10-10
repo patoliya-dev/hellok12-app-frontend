@@ -53,7 +53,7 @@ const InvoiceTable = ({ data }) => {
             key={index}
             className="py-3 border-b border-border last:border-b-0"
           >
-            <div className="flex justify-between items-start mb-2">
+            <div className="flex flex-col md:flex-row md:justify-between items-start mb-2 gap-2 md:gap-0">
               <div className="flex items-center gap-4">
                 <Icon name="Receipt" size={16} className="text-success" />
                 <div>

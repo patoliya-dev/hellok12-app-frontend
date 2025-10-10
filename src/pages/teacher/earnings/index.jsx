@@ -169,7 +169,7 @@ const Earnings = () => {
         </section>
         <section className="bg-card rounded-lg shadow-card border border-border">
           <div className="px-6">
-            <div className="flex justify-between items-center pt-8 pb-2">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center pt-8 pb-2 gap-2 md:gap-0">
               <h2 className="text-lg font-semibold text-brand-gray-800">
                 Earnings After Commission
               </h2>

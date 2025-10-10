@@ -23,6 +23,7 @@ const CreateCourse = () => {
     language: "",
     description: "",
     lessonType: "",
+    lessonMode: "",
     introImage: "",
     capacity: "",
     ageRange: { min: "", max: "" },
@@ -76,6 +77,7 @@ const CreateCourse = () => {
         description: courseData?.description,
         capacity: courseData?.capacity,
         lessonType: courseData?.lessonType,
+        lessonMode: courseData?.lessonMode,
         introImage: courseData?.introImage,
         ageRange: courseData?.ageRange,
         price: courseData?.price,
@@ -112,6 +114,8 @@ const CreateCourse = () => {
       if (formData?.lessonType === "group" && formData?.capacity < 1)
         newErrors.capacity = "Capacity must be at least 1";
       if (!formData?.startDate) newErrors.startDate = "Start date is required";
+      if (!formData?.lessonMode)
+        newErrors.lessonMode = "Lesson mode is required";
     }
 
     if (step === 2) {

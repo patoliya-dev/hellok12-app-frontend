@@ -1,6 +1,6 @@
 import Input from "components/ui/Input";
 import Select from "components/ui/Select";
-import { lessonTypeOptions } from "../data";
+import { lessonModeOptions, lessonTypeOptions } from "../data";
 import { languageOptions } from "../../../../utils/utils";
 
 const CourseForm = ({ formData, handleInputChange, errors }) => {
@@ -35,26 +35,17 @@ const CourseForm = ({ formData, handleInputChange, errors }) => {
         onChange={(e) => handleInputChange("description", e?.target?.value)}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div
+        className={`grid grid-cols-1 gap-6 ${
+          formData?.lessonType === "group" ? "md:grid-cols-3" : "md:grid-cols-2"
+        }`}
+      >
         <Select
           label="Lesson Type"
           options={lessonTypeOptions}
           value={formData?.lessonType}
           onChange={(value) => handleInputChange("lessonType", value)}
         />
-        <Input
-          type="file"
-          label="Intro Image"
-          placeholder="Upload intro image"
-          required
-          error={errors?.introImage}
-          onChange={(e) => handleInputChange("introImage", e.target.files[0])}
-          accept="image/*"
-          filename={formData?.introImage}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {formData?.lessonType === "group" && (
           <Input
             label="Student Capacity"
@@ -69,6 +60,27 @@ const CourseForm = ({ formData, handleInputChange, errors }) => {
             error={errors?.capacity}
           />
         )}
+        <Input
+          type="file"
+          label="Intro Image"
+          placeholder="Upload intro image"
+          required
+          error={errors?.introImage}
+          onChange={(e) => handleInputChange("introImage", e.target.files[0])}
+          accept="image/*"
+          filename={formData?.introImage}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Select
+          label="Mode"
+          options={lessonModeOptions}
+          value={formData?.lessonMode}
+          onChange={(value) => handleInputChange("lessonMode", value)}
+          required
+          error={errors?.lessonMode}
+        />
 
         <Input
           label="Price per Lesson ($)"
