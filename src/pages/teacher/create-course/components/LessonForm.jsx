@@ -3,6 +3,8 @@ import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
 import { Checkbox } from "components/ui/Checkbox";
 import Input from "components/ui/Input";
+import DeleteModal from "components/ui/DeleteModal";
+import { successToast } from "../../../../utils/utils";
 
 const LessonFormInstance = ({
   index,
@@ -12,7 +14,9 @@ const LessonFormInstance = ({
   showAddButton,
   onAddLesson,
   onDeleteLesson,
+  mode,
 }) => {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   return (
     <div className="flex flex-col gap-y-3">
       <div className="flex justify-between">
@@ -24,7 +28,17 @@ const LessonFormInstance = ({
             name="Trash2"
             size={24}
             className="text-error cursor-pointer"
-            onClick={onDeleteLesson}
+            onClick={() => {
+              const hasContent =
+                formData?.lessonTitle?.trim() &&
+                formData?.lessonDescription?.trim();
+
+              if (mode === "edit" && hasContent) {
+                setShowDeleteModal(true);
+              } else {
+                onDeleteLesson();
+              }
+            }}
           />
         )}
       </div>
@@ -94,6 +108,18 @@ const LessonFormInstance = ({
           </Button>
         </div>
       )}
+
+      {showDeleteModal && (
+        <DeleteModal
+          type="lesson"
+          onConfirm={() => {
+            onDeleteLesson();
+            setShowDeleteModal(false);
+            successToast("Lesson removed successfully!");
+          }}
+          onClose={() => setShowDeleteModal(false)}
+        />
+      )}
     </div>
   );
 };
@@ -104,6 +130,7 @@ export default function LessonForm({
   handleInputChange,
   addLesson,
   removeLesson,
+  mode,
 }) {
   return (
     <>
@@ -120,6 +147,7 @@ export default function LessonForm({
             onAddLesson={() => addLesson(index)}
             onDeleteLesson={() => removeLesson(index)}
             showAddButton={index === formData.lessons.length - 1}
+            mode={mode}
           />
           {index !== formData?.lessons.length - 1 && <hr className="!my-8" />}
         </>

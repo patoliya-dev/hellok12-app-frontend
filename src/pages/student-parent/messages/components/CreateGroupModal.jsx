@@ -3,29 +3,7 @@ import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Image from "../../../../components/AppImage";
 import Icon from "../../../../components/AppIcon";
-
-const mockData = [
-  {
-    name: "Emma Johnson",
-    image:
-      "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80",
-  },
-  {
-    name: "John Doe",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80",
-  },
-  {
-    name: "Jane Smith",
-    image:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80",
-  },
-  {
-    name: "Michael Johnson",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=200&q=80",
-  },
-];
+import { mockUserData } from "../data";
 
 const CreateGroupModal = ({ isOpen, onClose }) => {
   const [groupName, setGroupName] = useState("");
@@ -101,8 +79,8 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
       case 2:
         return (
           <div className="flex flex-col gap-4 h-[350px] overflow-y-scroll">
-            {mockData.map((data, index) => {
-              const isChecked = tempSelected.some((m) => m.name === data.name);
+            {mockUserData.map((user, index) => {
+              const isChecked = tempSelected.some((m) => m.name === user.name);
 
               return (
                 <div
@@ -111,14 +89,14 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
                 >
                   <div className="flex items-center gap-10">
                     <Image
-                      src={data?.image}
-                      alt={data?.name}
+                      src={user?.image}
+                      alt={user?.name}
                       width={56} // for Next.js Image, must provide width & height
                       height={56}
                       className="w-14 h-14 rounded-full object-cover"
                     />
                     <h4 className="text-body1 font-medium text-brand-gray-800">
-                      {data?.name}
+                      {user?.name}
                     </h4>
                   </div>
 
@@ -127,7 +105,7 @@ const CreateGroupModal = ({ isOpen, onClose }) => {
                     type="checkbox"
                     checked={isChecked}
                     onChange={() =>
-                      toggleTempMember({ name: data.name, image: data.image })
+                      toggleTempMember({ name: user.name, image: user.image })
                     }
                     className="h-6 w-6 rounded-full bg-[#E8E8E8] border-none cursor-pointer appearance-none  checked:bg-primary checked:border-primary checked:before:text-white checked:before:flex checked:before:items-center checked:before:justify-center outline-none focus:outline-none focus:ring-0"
                   />

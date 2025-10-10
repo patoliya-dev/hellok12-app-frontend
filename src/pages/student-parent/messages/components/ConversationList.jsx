@@ -8,11 +8,11 @@ import Button from "../../../../components/ui/Button";
 const ConversationList = ({
   conversations,
   activeConversation,
-
   onConversationSelect,
   searchQuery,
   onSearchChange,
   onGroupCreate,
+  onNewMessage,
 }) => {
   const [buttonType, setButtonType] = useState("all");
 
@@ -73,20 +73,22 @@ const ConversationList = ({
           <Button
             size="sm"
             onClick={() => setButtonType("all")}
-            className={`font-normal ${buttonType === "all"
+            className={`font-normal ${
+              buttonType === "all"
                 ? "bg-primary text-white"
                 : "!bg-inherit text-black"
-              }`}
+            }`}
           >
             All Messages
           </Button>
           <Button
             size="sm"
             onClick={() => setButtonType("group")}
-            className={`font-normal ${buttonType === "group"
+            className={`font-normal ${
+              buttonType === "group"
                 ? "bg-primary text-white"
                 : "!bg-inherit text-black"
-              }`}
+            }`}
           >
             Group
           </Button>
@@ -109,10 +111,11 @@ const ConversationList = ({
               <div
                 key={conversation?.id}
                 onClick={() => onConversationSelect(conversation)}
-                className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors duration-200 ${activeConversation?.id === conversation?.id
+                className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
+                  activeConversation?.id === conversation?.id
                     ? "bg-primary/10 border border-primary/20"
                     : "hover:bg-muted"
-                  }`}
+                }`}
               >
                 {/* Avatar/Icon */}
                 <div className="relative flex-shrink-0 mr-3">
@@ -154,10 +157,11 @@ const ConversationList = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <h3
-                      className={`font-medium truncate ${conversation?.unreadCount > 0
+                      className={`font-medium truncate ${
+                        conversation?.unreadCount > 0
                           ? "text-foreground"
                           : "text-foreground"
-                        }`}
+                      }`}
                     >
                       {conversation?.name}
                     </h3>
@@ -168,10 +172,11 @@ const ConversationList = ({
 
                   <div className="flex items-center justify-between">
                     <p
-                      className={`text-sm truncate ${conversation?.unreadCount > 0
+                      className={`text-sm truncate ${
+                        conversation?.unreadCount > 0
                           ? "text-foreground font-medium"
                           : "text-muted-foreground"
-                        }`}
+                      }`}
                     >
                       {conversation?.lastSender &&
                         conversation?.type !== "direct" && (
@@ -226,7 +231,10 @@ const ConversationList = ({
           <Icon name="Users" size={16} />
           <span className="font-medium">New Group</span>
         </button>
-        <button className="w-full bg-primary text-primary-foreground rounded-lg py-2 px-4 flex items-center justify-center space-x-2 hover:bg-primary/90 transition-colors duration-200">
+        <button
+          className="w-full bg-primary text-primary-foreground rounded-lg py-2 px-4 flex items-center justify-center space-x-2 hover:bg-primary/90 transition-colors duration-200"
+          onClick={onNewMessage}
+        >
           <Icon name="Plus" size={16} />
           <span className="font-medium">New Message</span>
         </button>

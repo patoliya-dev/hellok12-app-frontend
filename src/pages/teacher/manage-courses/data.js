@@ -1,15 +1,3 @@
-const languageOptions = [
-  { value: "", label: "All Languages" },
-  { value: "english", label: "English" },
-  { value: "spanish", label: "Spanish" },
-  { value: "french", label: "French" },
-  { value: "german", label: "German" },
-  { value: "italian", label: "Italian" },
-  { value: "portuguese", label: "Portuguese" },
-  { value: "chinese", label: "Chinese" },
-  { value: "japanese", label: "Japanese" },
-];
-
 const priceRangeOptions = [
   { value: "", label: "Any Price" },
   { value: "0-50", label: "$0 - $50" },
@@ -40,7 +28,7 @@ const mockCourses = [
     description:
       "Master essential business communication skills for professional success in English-speaking environments.",
     category: "Business English",
-    language: "english",
+    language: "en",
     targetAudience: "Intermediate",
     price: 299,
     trialAvailable: true,
@@ -53,7 +41,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-01",
-    lessonType: "online",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 18, max: 45 },
     lessons: [
@@ -102,7 +90,7 @@ const mockCourses = [
     description:
       "Learn to speak Spanish confidently in everyday situations with interactive lessons and practical exercises.",
     category: "Conversational",
-    language: "spanish",
+    language: "es",
     targetAudience: "Beginner",
     price: 199,
     trialAvailable: true,
@@ -115,7 +103,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 20,
     createdAt: "2024-08-05",
-    lessonType: "hybrid",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 16, max: 50 },
     lessons: [
@@ -149,7 +137,7 @@ const mockCourses = [
     description:
       "Comprehensive IELTS exam preparation covering all four skills: listening, reading, writing, and speaking.",
     category: "Exam Preparation",
-    language: "english",
+    language: "en",
     targetAudience: "Advanced",
     price: 449,
     trialAvailable: false,
@@ -162,7 +150,7 @@ const mockCourses = [
     status: "full",
     lessonCount: 24,
     createdAt: "2024-07-15",
-    lessonType: "online",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 18, max: 40 },
     lessons: [
@@ -196,7 +184,7 @@ const mockCourses = [
     description:
       "Fun and engaging French lessons designed specifically for children with games, songs, and interactive activities.",
     category: "Kids & Teens",
-    language: "french",
+    language: "fr",
     targetAudience: "Beginner",
     price: 149,
     trialAvailable: true,
@@ -209,7 +197,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 12,
     createdAt: "2024-08-10",
-    lessonType: "in-person",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 8, max: 12 },
     lessons: [
@@ -243,7 +231,7 @@ const mockCourses = [
     description:
       "Deep dive into German grammar structures with comprehensive exercises and real-world applications.",
     category: "Academic",
-    language: "german",
+    language: "de",
     targetAudience: "Intermediate",
     price: 0,
     trialAvailable: false,
@@ -256,7 +244,7 @@ const mockCourses = [
     status: "archived",
     lessonCount: 28,
     createdAt: "2024-07-20",
-    lessonType: "online",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 20, max: 50 },
     lessons: [
@@ -290,7 +278,7 @@ const mockCourses = [
     description:
       "Advanced Italian course focused on professional communication, presentations, and business correspondence.",
     category: "Professional",
-    language: "italian",
+    language: "it",
     targetAudience: "Advanced",
     price: 399,
     trialAvailable: true,
@@ -303,7 +291,7 @@ const mockCourses = [
     status: "draft",
     lessonCount: 20,
     createdAt: "2024-08-12",
-    lessonType: "hybrid",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 22, max: 50 },
     lessons: [
@@ -337,7 +325,7 @@ const mockCourses = [
     description:
       "Learn basic Mandarin vocabulary, tones, and conversational skills for everyday situations.",
     category: "Conversational",
-    language: "chinese",
+    language: "zh",
     targetAudience: "Beginner",
     price: 249,
     trialAvailable: true,
@@ -350,7 +338,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-15",
-    lessonType: "online",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 15, max: 45 },
     lessons: [
@@ -384,7 +372,7 @@ const mockCourses = [
     description:
       "Focused preparation for the TOEFL exam with strategies, mock tests, and practice exercises.",
     category: "Exam Preparation",
-    language: "english",
+    language: "en",
     targetAudience: "Intermediate",
     price: 399,
     trialAvailable: false,
@@ -397,7 +385,7 @@ const mockCourses = [
     status: "full",
     lessonCount: 20,
     createdAt: "2024-07-25",
-    lessonType: "online",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 18, max: 40 },
     lessons: [
@@ -431,7 +419,7 @@ const mockCourses = [
     description:
       "Essential Japanese phrases and cultural tips to navigate travel and daily life in Japan.",
     category: "Travel",
-    language: "japanese",
+    language: "ja",
     targetAudience: "Beginner",
     price: 129,
     trialAvailable: true,
@@ -444,7 +432,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 8,
     createdAt: "2024-09-01",
-    lessonType: "in-person",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 18, max: 55 },
     lessons: [
@@ -478,7 +466,7 @@ const mockCourses = [
     description:
       "Learn professional Portuguese communication skills for working with Brazilian and European partners.",
     category: "Business",
-    language: "portuguese",
+    language: "pt",
     targetAudience: "Intermediate",
     price: 299,
     trialAvailable: true,
@@ -491,7 +479,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-18",
-    lessonType: "hybrid",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 20, max: 50 },
     lessons: [
@@ -525,7 +513,7 @@ const mockCourses = [
     description:
       "In-depth grammar training designed for English teachers to improve classroom instruction.",
     category: "Academic",
-    language: "english",
+    language: "en",
     targetAudience: "Advanced",
     price: 299,
     trialAvailable: false,
@@ -538,7 +526,7 @@ const mockCourses = [
     status: "full",
     lessonCount: 20,
     createdAt: "2024-07-30",
-    lessonType: "online",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 25, max: 55 },
     lessons: [
@@ -572,7 +560,7 @@ const mockCourses = [
     description:
       "Develop storytelling, narrative, and creative writing skills in English with guided exercises.",
     category: "Creative",
-    language: "english",
+    language: "en",
     targetAudience: "Intermediate",
     price: 199,
     trialAvailable: true,
@@ -585,7 +573,7 @@ const mockCourses = [
     status: "archived",
     lessonCount: 16,
     createdAt: "2024-08-08",
-    lessonType: "hybrid",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 16, max: 45 },
     lessons: [
@@ -619,7 +607,7 @@ const mockCourses = [
     description:
       "Build confidence and skills for public speaking, presentations, and debates in English.",
     category: "Professional",
-    language: "english",
+    language: "en",
     targetAudience: "Intermediate",
     price: 249,
     trialAvailable: true,
@@ -632,7 +620,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-03",
-    lessonType: "in-person",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 18, max: 50 },
     lessons: [
@@ -666,7 +654,7 @@ const mockCourses = [
     description:
       "Learn conversational Korean through popular K-dramas, dialogues, and cultural exploration.",
     category: "Conversational",
-    language: "japanese",
+    language: "ko",
     targetAudience: "Intermediate",
     price: 179,
     trialAvailable: true,
@@ -679,7 +667,7 @@ const mockCourses = [
     status: "draft",
     lessonCount: 12,
     createdAt: "2024-08-22",
-    lessonType: "online",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 16, max: 40 },
     lessons: [
@@ -713,7 +701,7 @@ const mockCourses = [
     description:
       "Practice everyday Portuguese with dialogues, role-play, and cultural notes.",
     category: "Conversational",
-    language: "portuguese",
+    language: "pt",
     targetAudience: "Beginner",
     price: 159,
     trialAvailable: true,
@@ -726,7 +714,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 12,
     createdAt: "2024-08-20",
-    lessonType: "in-person",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 15, max: 45 },
     lessons: [
@@ -760,7 +748,7 @@ const mockCourses = [
     description:
       "Professional German for business meetings, negotiations, and workplace communication.",
     category: "Business",
-    language: "german",
+    language: "de",
     targetAudience: "Intermediate",
     price: 349,
     trialAvailable: true,
@@ -773,7 +761,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-22",
-    lessonType: "online",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 20, max: 50 },
     lessons: [
@@ -807,7 +795,7 @@ const mockCourses = [
     description:
       "Study Italian literature with advanced reading and analysis exercises.",
     category: "Academic",
-    language: "italian",
+    language: "it",
     targetAudience: "Advanced",
     price: 399,
     trialAvailable: false,
@@ -820,7 +808,7 @@ const mockCourses = [
     status: "archived",
     lessonCount: 24,
     createdAt: "2024-08-14",
-    lessonType: "online",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 22, max: 55 },
     lessons: [
@@ -854,7 +842,7 @@ const mockCourses = [
     description:
       "Learn essential kanji characters for reading and writing Japanese.",
     category: "Academic",
-    language: "japanese",
+    language: "ja",
     targetAudience: "Beginner",
     price: 199,
     trialAvailable: true,
@@ -867,7 +855,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-28",
-    lessonType: "hybrid",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 15, max: 45 },
     lessons: [
@@ -901,7 +889,7 @@ const mockCourses = [
     description:
       "Business Mandarin course covering negotiation, email, and presentation language.",
     category: "Business",
-    language: "chinese",
+    language: "zh",
     targetAudience: "Advanced",
     price: 499,
     trialAvailable: false,
@@ -914,7 +902,7 @@ const mockCourses = [
     status: "draft",
     lessonCount: 20,
     createdAt: "2024-08-25",
-    lessonType: "online",
+    lessonType: "1-on-1",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 25, max: 55 },
     lessons: [
@@ -948,7 +936,7 @@ const mockCourses = [
     description:
       "Essential Spanish for nurses, doctors, and healthcare professionals.",
     category: "Professional",
-    language: "spanish",
+    language: "ja",
     targetAudience: "Intermediate",
     price: 299,
     trialAvailable: true,
@@ -961,7 +949,7 @@ const mockCourses = [
     status: "active",
     lessonCount: 16,
     createdAt: "2024-08-29",
-    lessonType: "hybrid",
+    lessonType: "group",
     introImage: "Screenshot from 2025-09-03 15-53-08.png",
     ageRange: { min: 21, max: 50 },
     lessons: [
@@ -991,10 +979,4 @@ const mockCourses = [
   },
 ];
 
-export {
-  languageOptions,
-  priceRangeOptions,
-  statusOptions,
-  trialOptions,
-  mockCourses,
-};
+export { priceRangeOptions, statusOptions, trialOptions, mockCourses };

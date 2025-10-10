@@ -170,10 +170,10 @@ const ParticipantPanel = ({
                     {participant?.status === "online"
                       ? "Online"
                       : participant?.status === "away"
-                        ? "Away"
-                        : participant?.status === "busy"
-                          ? "Busy"
-                          : "Offline"}
+                      ? "Away"
+                      : participant?.status === "busy"
+                      ? "Busy"
+                      : "Offline"}
                   </span>
                 </div>
               </div>
@@ -183,26 +183,6 @@ const ParticipantPanel = ({
       </div>
       {/* Group Actions */}
       <div className="p-4 border-t border-border space-y-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          iconName="Settings"
-          iconPosition="left"
-        >
-          Group Settings
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          iconName="Archive"
-          iconPosition="left"
-        >
-          Archive Chat
-        </Button>
-
         {conversation?.type === "group" && (
           <Button
             variant="destructive"

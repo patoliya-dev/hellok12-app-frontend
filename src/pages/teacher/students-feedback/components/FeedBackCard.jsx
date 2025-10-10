@@ -16,7 +16,7 @@ const FeedBackCard = ({ feedback }) => {
   };
 
   return (
-    <div className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-micro h-64 sm:h-52">
+    <div className="p-4 rounded-lg border border-border hover:bg-muted/50 transition-micro h-56 sm:h-44">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-3">
           <Image
@@ -46,19 +46,6 @@ const FeedBackCard = ({ feedback }) => {
           {feedback.comment}
         </p>
       </div>
-
-      {feedback.tags && feedback.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 md:gap-6 mb-2">
-          {feedback.tags.map((tag, index) => (
-            <span
-              key={index}
-              className="py-1 bg-primary/10 text-primary text-xs rounded-full"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
 
       <div className="flex flex-col md:flex-row gap-3 md:gap-3 md:items-center md:justify-between text-xs mb-2">
         <div className="flex items-center space-x-2">
