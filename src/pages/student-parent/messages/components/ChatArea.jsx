@@ -184,18 +184,13 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
               </p>
             </div>
           </div>
-
-          <div className="">
-            <Button variant="ghost" size="icon">
-              <Icon name="MoreVertical" size={18} />
-            </Button>
-          </div>
         </div>
       </div>
       {/* Messages Area */}
       <div
-        className={`flex-1 overflow-y-auto p-4 space-y-4 ${dragOver ? "bg-primary/5 border-2 border-dashed border-primary" : ""
-          }`}
+        className={`flex-1 overflow-y-auto p-4 space-y-4 ${
+          dragOver ? "bg-primary/5 border-2 border-dashed border-primary" : ""
+        }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -225,12 +220,14 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
           return (
             <div
               key={message?.id}
-              className={`flex ${isCurrentUser ? "justify-end" : "justify-start"
-                }`}
+              className={`flex ${
+                isCurrentUser ? "justify-end" : "justify-start"
+              }`}
             >
               <div
-                className={`flex max-w-[70%] ${isCurrentUser ? "flex-row-reverse" : "flex-row"
-                  }`}
+                className={`flex max-w-[70%] ${
+                  isCurrentUser ? "flex-row-reverse" : "flex-row"
+                }`}
               >
                 {/* Avatar */}
                 {showAvatar && !isCurrentUser && (
@@ -246,8 +243,9 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
 
                 {/* Message Content */}
                 <div
-                  className={`group relative ${isCurrentUser ? "ml-2" : "mr-2"
-                    }`}
+                  className={`group relative ${
+                    isCurrentUser ? "ml-2" : "mr-2"
+                  }`}
                 >
                   {/* Sender Name */}
                   {!isCurrentUser && showAvatar && (
@@ -258,10 +256,11 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
 
                   {/* Message Bubble */}
                   <div
-                    className={`relative px-4 py-2 rounded-2xl ${isCurrentUser
+                    className={`relative px-4 py-2 rounded-2xl ${
+                      isCurrentUser
                         ? "bg-primary text-primary-foreground"
                         : "bg-card border border-border text-foreground"
-                      }`}
+                    }`}
                   >
                     {message?.type === "text" && (
                       <p className="whitespace-pre-wrap break-words">
@@ -272,10 +271,11 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
                     {message?.type === "file" && (
                       <div className="flex items-center space-x-3">
                         <div
-                          className={`p-2 rounded-lg ${isCurrentUser
+                          className={`p-2 rounded-lg ${
+                            isCurrentUser
                               ? "bg-primary-foreground/20"
                               : "bg-muted"
-                            }`}
+                          }`}
                         >
                           <Icon
                             name={getFileIcon(message?.fileName)}
@@ -308,10 +308,11 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
 
                     {/* Message Time */}
                     <div
-                      className={`text-xs mt-1 ${isCurrentUser
+                      className={`text-xs mt-1 ${
+                        isCurrentUser
                           ? "text-primary-foreground/70"
                           : "text-muted-foreground"
-                        }`}
+                      }`}
                     >
                       {formatTime(message?.timestamp)}
                       {isCurrentUser && (
@@ -320,8 +321,9 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
                             message?.status === "read" ? "CheckCheck" : "Check"
                           }
                           size={12}
-                          className={`inline ml-1 ${message?.status === "read" ? "text-success" : ""
-                            }`}
+                          className={`inline ml-1 ${
+                            message?.status === "read" ? "text-success" : ""
+                          }`}
                         />
                       )}
                     </div>
@@ -346,24 +348,6 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
                       ))}
                     </div>
                   )}
-
-                  {/* Quick Reactions (on hover) */}
-                  <div
-                    className={`absolute top-0 ${isCurrentUser
-                        ? "left-0 -translate-x-full"
-                        : "right-0 translate-x-full"
-                      } opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-card border border-border rounded-lg p-1 shadow-lg flex space-x-1`}
-                  >
-                    {emojis?.slice(0, 5)?.map((emoji) => (
-                      <button
-                        key={emoji}
-                        onClick={() => handleReaction(message?.id, emoji)}
-                        className="hover:bg-muted rounded p-1 text-sm transition-colors duration-200"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
                 </div>
               </div>
             </div>

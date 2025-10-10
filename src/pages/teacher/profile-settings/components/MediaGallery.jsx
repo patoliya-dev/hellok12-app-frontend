@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Tooltip as ReactTooltip } from "react-tooltip";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
@@ -65,6 +66,8 @@ const MediaGallery = ({
       return mediaItems;
     });
     setItems(updatedItems);
+
+    return successToast("Intro highlight updated successfully.");
   };
 
   if (items?.length === 0) {
@@ -175,10 +178,17 @@ const MediaGallery = ({
 
                 <input
                   type="checkbox"
+                  data-tooltip-id={`intro-tooltip-${item.id}`}
+                  disabled={item?.isIntro}
                   checked={item?.isIntro}
                   onChange={() => handleIntroChange(item)}
-                  title="Select to set the intro video"
-                  className="absolute bottom-1 right-3.5 h-5 w-5 rounded-full bg-[#E8E8E8] border-none cursor-pointer appearance-none  checked:bg-primary checked:border-primary checked:before:text-white checked:before:flex checked:before:items-center checked:before:justify-center outline-none focus:outline-none focus:ring-0"
+                  className="absolute bottom-1 right-3.5 h-5 w-5 rounded-full bg-[#E8E8E8] border-none cursor-pointer appearance-none checked:bg-primary checked:border-primary checked:before:text-white checked:before:flex checked:before:items-center checked:before:justify-center outline-none focus:outline-none focus:ring-0"
+                />
+
+                <ReactTooltip
+                  id={`intro-tooltip-${item.id}`}
+                  place="top"
+                  content="Select to set the intro video"
                 />
 
                 {/* Action Menu */}

@@ -1,12 +1,8 @@
 import { useState } from "react";
 import Select from "components/ui/Select";
 import Input from "components/ui/Input";
-import {
-  languageOptions,
-  priceRangeOptions,
-  statusOptions,
-  trialOptions,
-} from "../data";
+import { priceRangeOptions, statusOptions, trialOptions } from "../data";
+import { languageOptions } from "../../../../utils/utils";
 
 const CourseFilter = ({ filters, onFiltersChange }) => {
   const [localFilters, setLocalFilters] = useState(filters);
@@ -36,9 +32,10 @@ const CourseFilter = ({ filters, onFiltersChange }) => {
           label="Language"
           placeholder="Select an option"
           value={localFilters?.language}
-          options={languageOptions}
+          options={[{ value: "", label: "All Languages" }, ...languageOptions]}
           onChange={(value) => handleFilterChange("language", value)}
           className="w-full"
+          searchable
         />
         <Select
           label="Status"
