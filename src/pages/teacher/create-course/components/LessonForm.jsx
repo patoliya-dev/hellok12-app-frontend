@@ -94,9 +94,9 @@ const LessonFormInstance = ({
         {/* <Checkbox
           label="Curriculum-Aligned Games"
           description="Allow curriculum-aligned games for this lesson"
-          checked={!!formData.curriculumGames}
+          checked={!!formData.isCurriculumGames}
           onChange={(e) =>
-            handleInputChange("curriculumGames", e.target.checked)
+            handleInputChange("isCurriculumGames", e.target.checked)
           }
         /> */}
       </div>

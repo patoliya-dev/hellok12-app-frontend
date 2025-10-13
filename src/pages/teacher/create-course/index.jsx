@@ -38,7 +38,7 @@ const CreateCourse = () => {
         lessonDescription: "",
         trialAvailable: false,
         trialCapacity: 1,
-        curriculumGames: false,
+        isCurriculumGames: false,
       },
     ],
   });

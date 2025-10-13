@@ -9,9 +9,7 @@ const PageHeader = ({ title, description }) => {
           <h1 className="text-2xl font-semibold text-foreground mb-2">
             {title}
           </h1>
-          {description && (
-            <p className="text-muted-foreground">{description}</p>
-          )}
+          {description && <p className="text-brand-gray-500">{description}</p>}
         </div>
       </div>
     </section>
