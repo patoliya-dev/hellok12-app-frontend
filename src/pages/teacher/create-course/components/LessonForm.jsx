@@ -5,6 +5,8 @@ import { Checkbox } from "components/ui/Checkbox";
 import Input from "components/ui/Input";
 import DeleteModal from "components/ui/DeleteModal";
 import { successToast } from "../../../../utils/utils";
+import WeeklySchedule from "../../../../components/ui/WeeklySchedule";
+import DurationRange from "components/ui/DurationRange";
 
 const LessonFormInstance = ({
   index,
@@ -43,28 +45,34 @@ const LessonFormInstance = ({
         )}
       </div>
       <div className="px-10">
-        <Input
-          label="Lesson Title"
-          type="text"
-          placeholder="Enter lesson title"
-          value={formData?.lessonTitle}
-          required
-          error={errors?.lessonTitle}
-          onChange={(e) => handleInputChange("lessonTitle", e?.target?.value)}
-          className="!mb-4"
-        />
-        <Input
-          label="Description"
-          type="text"
-          placeholder="Describe what students will learn in this lesson"
-          value={formData?.lessonDescription}
-          required
-          error={errors?.lessonDescription}
-          onChange={(e) =>
-            handleInputChange("lessonDescription", e?.target?.value)
-          }
-          className="!mb-4"
-        />
+        <div className="mb-4">
+          <Input
+            label="Lesson Title"
+            type="text"
+            placeholder="Enter lesson title"
+            value={formData?.lessonTitle}
+            required
+            error={errors?.lessonTitle}
+            onChange={(e) => handleInputChange("lessonTitle", e?.target?.value)}
+          />
+        </div>
+        <div className="mb-4">
+          <Input
+            label="Description"
+            type="text"
+            placeholder="Describe what students will learn in this lesson"
+            value={formData?.lessonDescription}
+            required
+            error={errors?.lessonDescription}
+            onChange={(e) =>
+              handleInputChange("lessonDescription", e?.target?.value)
+            }
+          />
+        </div>
+
+        <WeeklySchedule />
+        <DurationRange />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
           <Checkbox
             label="Trial Available"
