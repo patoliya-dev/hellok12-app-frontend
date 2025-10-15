@@ -2,6 +2,7 @@ import Input from "components/ui/Input";
 import Select from "components/ui/Select";
 import { lessonModeOptions, lessonTypeOptions } from "../data";
 import { languageOptions } from "../../../../utils/utils";
+import FileUploader from "components/ui/FileUploader";
 
 const CourseForm = ({ formData, handleInputChange, errors }) => {
   return (
@@ -60,7 +61,7 @@ const CourseForm = ({ formData, handleInputChange, errors }) => {
             error={errors?.capacity}
           />
         )}
-        <Input
+        {/* <Input
           type="file"
           label="Intro Image"
           placeholder="Upload intro image"
@@ -69,6 +70,16 @@ const CourseForm = ({ formData, handleInputChange, errors }) => {
           onChange={(e) => handleInputChange("introImage", e.target.files[0])}
           accept="image/*"
           filename={formData?.introImage}
+        /> */}
+        <FileUploader
+          label="Intro Image"
+          placeholder="Upload intro image"
+          required
+          error={errors?.introImage}
+          onChange={(e) => handleInputChange("introImage", e.target.files[0])}
+          accept="image/*"
+          filename={formData?.introImage}
+          onRemoveImage={() => handleInputChange("introImage", null)}
         />
       </div>
 
