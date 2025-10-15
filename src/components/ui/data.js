@@ -125,6 +125,46 @@ export const mockNotifications = [
     time: "1 day ago",
     unread: false,
   },
+  {
+    id: 16,
+    role: "school",
+    title: "System Maintenance Notice",
+    message: "The school portal will be under maintenance from 10 PM to 12 AM.",
+    time: "1 hour ago",
+    unread: true,
+  },
+  {
+    id: 17,
+    role: "school",
+    title: "New Teacher Joined",
+    message: "Mr. Raj Mehta has joined as a Physics teacher for Class 10.",
+    time: "6 hours ago",
+    unread: true,
+  },
+  {
+    id: 18,
+    role: "school",
+    title: "Monthly Report Uploaded",
+    message: "The monthly attendance and performance reports are available.",
+    time: "2 days ago",
+    unread: false,
+  },
+  {
+    id: 19,
+    role: "school",
+    title: "Event Scheduled",
+    message: "The Annual Sports Day will be held on November 10.",
+    time: "3 days ago",
+    unread: false,
+  },
+  {
+    id: 20,
+    role: "school",
+    title: "Teacher Evaluation Pending",
+    message: "Reminder: Please complete teacher evaluations by October 20.",
+    time: "4 days ago",
+    unread: true,
+  },
 ];
 
 const getNotificationByRole = (role) => {
