@@ -70,17 +70,24 @@ const RoleBasedHeader = () => {
         },
       ],
       parent: [
-        { label: "Dashboard", path: "/parent/dashboard", icon: "Home" },
-        { label: "Book Sessions", path: "/booking-system", icon: "Calendar" },
         {
-          label: "Children",
-          path: "/parent/children",
-          icon: "Users",
+          label: "Dashboard",
+          path: "/student-parent/dashboard",
+          icon: "Home",
+          children: [
+            "/student-parent/profile-settings",
+            "/student-parent/payment-billing",
+          ],
         },
+        { label: "Find Teacher", path: "/teachers", icon: "Search" },
+        // { label: "Schedule", path: "/booking-system", icon: "Calendar" },
+        { label: "Lessons", path: "/student-parent/lessons", icon: "Book" },
+        // { label: "Progress",  path: "/student-parent/progress", icon: "TrendingUp" },
+        { label: "Practice", path: "/student-parent/games", icon: "Gamepad2" },
         {
-          label: "Payments",
-          path: "/parent/payments",
-          icon: "CreditCard",
+          label: "Messages",
+          path: "/student-parent/messages",
+          icon: "MessageCircle",
         },
       ],
       teacherBase: [
