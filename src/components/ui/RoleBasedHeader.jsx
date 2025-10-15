@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, use } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Icon from "../AppIcon";
@@ -110,26 +110,37 @@ const RoleBasedHeader = () => {
           icon: "MessageCircle",
         },
       ],
-      admin: [
+      school: [
         {
-          label: "Overview",
+          label: "Dashboard",
           path: "/school/dashboard",
-          icon: "BarChart3",
+          icon: "Home",
+          children: [
+            "/school/upcoming-lessons",
+            "/school/scheduled-lessons",
+            "/school/profile-settings",
+          ],
         },
         {
-          label: "Teachers",
-          path: "/school/teachers",
+          label: "Manage Teachers",
+          path: "/school/manage-teachers",
           icon: "Users",
         },
         {
-          label: "Students",
-          path: "/school/students",
+          label: "Manage Students",
+          path: "/school/manage-students",
           icon: "GraduationCap",
         },
         {
-          label: "Reports",
-          path: "/school/reports",
-          icon: "FileText",
+          label: "Manage Courses",
+          path: "/teacher/manage-courses",
+          iconComponent: ManageCourseIcon,
+          children: [],
+        },
+        {
+          label: "Earnings",
+          path: "/teacher/earnings",
+          icon: "DollarSign",
         },
       ],
       guest: [{ label: "Login", path: "/login", icon: "LogIn" }],

@@ -2,7 +2,7 @@ import Button from "./Button";
 
 const NotificationModal = ({ notifications, handleNotificationClick }) => {
   return (
-    <div className="absolute right-0 top-full mt-2 w-80 bg-popover border border-border rounded-lg shadow-elevation-3 animate-slide-down">
+    <div className="absolute -right-12 sm:right-0 top-full mt-2 w-60 sm:w-80 bg-popover border border-border rounded-lg shadow-elevation-3 animate-slide-down">
       <div className="p-4 border-b border-border">
         <h3 className="font-semibold text-foreground">Notifications</h3>
       </div>

@@ -7,6 +7,7 @@ export const lessonsData = [
     time: "09:00 AM",
     color: "purple",
     status: "completed",
+    teacherId: "1",
   },
   {
     id: 2,
@@ -15,6 +16,7 @@ export const lessonsData = [
     time: "11:00 AM",
     color: "green",
     status: "completed",
+    teacherId: "2",
   },
   {
     id: 3,
@@ -23,6 +25,7 @@ export const lessonsData = [
     time: "02:00 PM",
     color: "green",
     status: "completed",
+    teacherId: "1",
   },
   {
     id: 4,
@@ -31,6 +34,7 @@ export const lessonsData = [
     time: "10:30 AM",
     color: "blue",
     status: "completed",
+    teacherId: "2",
   },
   {
     id: 5,
@@ -39,6 +43,7 @@ export const lessonsData = [
     time: "04:00 PM",
     color: "blue",
     status: "completed",
+    teacherId: "2",
   },
   {
     id: 6,
@@ -47,6 +52,7 @@ export const lessonsData = [
     time: "09:30 AM",
     color: "purple",
     status: "completed",
+    teacherId: "1",
   },
   {
     id: 7,
@@ -55,6 +61,7 @@ export const lessonsData = [
     time: "01:00 PM",
     color: "green",
     status: "completed",
+    teacherId: "2",
   },
   {
     id: 8,
@@ -63,6 +70,7 @@ export const lessonsData = [
     time: "03:30 PM",
     color: "blue",
     status: "completed",
+    teacherId: "2",
   },
   {
     id: 9,
@@ -71,6 +79,7 @@ export const lessonsData = [
     time: "05:00 PM",
     color: "green",
     status: "completed",
+    teacherId: "1",
   },
   {
     id: 10,
@@ -79,6 +88,7 @@ export const lessonsData = [
     time: "11:30 AM",
     color: "blue",
     status: "completed",
+    teacherId: "2",
   },
   {
     id: 11,
@@ -87,6 +97,7 @@ export const lessonsData = [
     time: "09:00 AM",
     color: "blue",
     status: "completed",
+    teacherId: "1",
   },
   {
     id: 12,
@@ -95,6 +106,7 @@ export const lessonsData = [
     time: "02:30 PM",
     color: "green",
     status: "completed",
+    teacherId: "2",
   },
   {
     id: 13,
@@ -103,6 +115,7 @@ export const lessonsData = [
     time: "04:00 PM",
     color: "purple",
     status: "completed",
+    teacherId: "1",
   },
   {
     id: 14,
@@ -111,6 +124,7 @@ export const lessonsData = [
     time: "10:00 AM",
     color: "blue",
     status: "completed",
+    teacherId: "2",
   },
   {
     id: 15,
@@ -119,6 +133,7 @@ export const lessonsData = [
     time: "01:30 PM",
     color: "blue",
     status: "completed",
+    teacherId: "1",
   },
   {
     id: 16,
@@ -127,6 +142,7 @@ export const lessonsData = [
     time: "03:00 PM",
     color: "green",
     status: "completed",
+    teacherId: "2",
   },
   {
     id: 17,
@@ -135,6 +151,7 @@ export const lessonsData = [
     time: "05:30 PM",
     color: "blue",
     status: "completed",
+    teacherId: "1",
   },
   {
     id: 18,
@@ -143,6 +160,7 @@ export const lessonsData = [
     time: "11:00 AM",
     color: "blue",
     status: "completed",
+    teacherId: "2",
   },
   {
     id: 19,
@@ -151,6 +169,7 @@ export const lessonsData = [
     time: "02:00 PM",
     color: "blue",
     status: "completed",
+    teacherId: "1",
   },
 
   // Pending Lessons (Future Dates)
@@ -161,6 +180,7 @@ export const lessonsData = [
     time: "09:00 AM",
     color: "green",
     status: "pending",
+    teacherId: "2",
   },
   {
     id: 21,
@@ -169,6 +189,7 @@ export const lessonsData = [
     time: "11:00 AM",
     color: "blue",
     status: "pending",
+    teacherId: "1",
   },
   {
     id: 22,
@@ -177,6 +198,7 @@ export const lessonsData = [
     time: "01:30 PM",
     color: "green",
     status: "pending",
+    teacherId: "2",
   },
   {
     id: 23,
@@ -185,6 +207,7 @@ export const lessonsData = [
     time: "03:00 PM",
     color: "blue",
     status: "pending",
+    teacherId: "1",
   },
   {
     id: 24,
@@ -193,6 +216,7 @@ export const lessonsData = [
     time: "10:00 AM",
     color: "purple",
     status: "pending",
+    teacherId: "1",
   },
   {
     id: 25,
@@ -201,6 +225,7 @@ export const lessonsData = [
     time: "02:00 PM",
     color: "blue",
     status: "pending",
+    teacherId: "2",
   },
   {
     id: 26,
@@ -209,6 +234,7 @@ export const lessonsData = [
     time: "02:00 PM",
     color: "purple",
     status: "pending",
+    teacherId: "1",
   },
   {
     id: 27,
@@ -217,6 +243,7 @@ export const lessonsData = [
     time: "04:00 PM",
     color: "green",
     status: "pending",
+    teacherId: "2",
   },
   {
     id: 28,
@@ -225,6 +252,7 @@ export const lessonsData = [
     time: "04:00 PM",
     color: "blue",
     status: "pending",
+    teacherId: "2",
   },
   {
     id: 29,
@@ -233,6 +261,7 @@ export const lessonsData = [
     time: "11:30 AM",
     color: "green",
     status: "pending",
+    teacherId: "1",
   },
   {
     id: 30,
@@ -241,5 +270,107 @@ export const lessonsData = [
     time: "01:00 PM",
     color: "blue",
     status: "pending",
+    teacherId: "2",
+  },
+
+  // 🗓️ Current Month (October 2025)
+  {
+    id: 31,
+    title: "Spanish Conversation",
+    date: "2025-10-03",
+    time: "09:30 AM",
+    color: "green",
+    status: "completed",
+    teacherId: "1",
+  },
+  {
+    id: 32,
+    title: "English Literature",
+    date: "2025-10-06",
+    time: "11:00 AM",
+    color: "blue",
+    status: "completed",
+    teacherId: "2",
+  },
+  {
+    id: 33,
+    title: "Japanese Writing",
+    date: "2025-10-08",
+    time: "03:00 PM",
+    color: "purple",
+    status: "completed",
+    teacherId: "1",
+  },
+  {
+    id: 34,
+    title: "Spanish Reading",
+    date: "2025-10-10",
+    time: "10:00 AM",
+    color: "green",
+    status: "completed",
+    teacherId: "2",
+  },
+  {
+    id: 35,
+    title: "English Literature",
+    date: "2025-10-12",
+    time: "02:30 PM",
+    color: "blue",
+    status: "pending",
+    teacherId: "1",
+  },
+  {
+    id: 36,
+    title: "Japanese Writing",
+    date: "2025-10-14",
+    time: "05:00 PM",
+    color: "purple",
+    status: "pending",
+    teacherId: "2",
+  },
+  {
+    id: 37,
+    title: "Spanish Conversation",
+    date: "2025-10-17",
+    time: "11:00 AM",
+    color: "green",
+    status: "pending",
+    teacherId: "1",
+  },
+  {
+    id: 38,
+    title: "English Grammar Workshop",
+    date: "2025-10-18",
+    time: "03:30 PM",
+    color: "blue",
+    status: "pending",
+    teacherId: "2",
+  },
+  {
+    id: 39,
+    title: "Japanese Writing",
+    date: "2025-10-22",
+    time: "09:00 AM",
+    color: "purple",
+    status: "pending",
+    teacherId: "1",
+  },
+  {
+    id: 40,
+    title: "Spanish Reading",
+    date: "2025-10-22",
+    time: "01:00 PM",
+    color: "green",
+    status: "pending",
+    teacherId: "2",
+  },
+  {
+    id: 41,
+    title: "English Conversation",
+    date: "2025-10-22",
+    time: "04:30 PM",
+    color: "blue",
+    status: "pending",
+    teacherId: "1",
   },
 ];
