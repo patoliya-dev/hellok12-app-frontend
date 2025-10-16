@@ -24,7 +24,7 @@ const trialOptions = [
 const mockCourses = [
   {
     id: "1",
-    courseName: "Business English Fundamentals",
+    title: "Business English Fundamentals",
     description:
       "Master essential business communication skills for professional success in English-speaking environments.",
     category: "Business English",
@@ -32,7 +32,7 @@ const mockCourses = [
     targetAudience: "Intermediate",
     price: 299,
     trialAvailable: true,
-    capacity: 20,
+    studentCapacity: 20,
     studentCount: 15,
     duration: "8 weeks",
     startDate: "2024-09-01",
@@ -47,38 +47,38 @@ const mockCourses = [
     ageRange: { min: 18, max: 45 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Interactive Practice Session",
-        lessonDescription:
+        title: "Interactive Practice Session",
+        description:
           "Detailed description for Interactive Practice Session.",
         trialAvailable: true,
         trialCapacity: 5,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Midterm Review",
-        lessonDescription: "Detailed description for Midterm Review.",
+        title: "Midterm Review",
+        description: "Detailed description for Midterm Review.",
         trialAvailable: false,
         trialCapacity: 3,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -87,7 +87,7 @@ const mockCourses = [
   },
   {
     id: "2",
-    courseName: "Conversational Spanish for Beginners",
+    title: "Conversational Spanish for Beginners",
     description:
       "Learn to speak Spanish confidently in everyday situations with interactive lessons and practical exercises.",
     category: "Conversational",
@@ -95,7 +95,7 @@ const mockCourses = [
     targetAudience: "Beginner",
     price: 199,
     trialAvailable: true,
-    capacity: 15,
+    studentCapacity: 15,
     studentCount: 12,
     duration: "10 weeks",
     startDate: "2024-09-15",
@@ -110,23 +110,23 @@ const mockCourses = [
     ageRange: { min: 16, max: 50 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -135,7 +135,7 @@ const mockCourses = [
   },
   {
     id: "3",
-    courseName: "IELTS Preparation Intensive",
+    title: "IELTS Preparation Intensive",
     description:
       "Comprehensive IELTS exam preparation covering all four skills: listening, reading, writing, and speaking.",
     category: "Exam Preparation",
@@ -143,7 +143,7 @@ const mockCourses = [
     targetAudience: "Advanced",
     price: 449,
     trialAvailable: false,
-    capacity: 12,
+    studentCapacity: 12,
     studentCount: 12,
     duration: "12 weeks",
     startDate: "2024-08-20",
@@ -158,23 +158,23 @@ const mockCourses = [
     ageRange: { min: 18, max: 40 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -183,7 +183,7 @@ const mockCourses = [
   },
   {
     id: "4",
-    courseName: "French for Kids (Ages 8-12)",
+    title: "French for Kids (Ages 8-12)",
     description:
       "Fun and engaging French lessons designed specifically for children with games, songs, and interactive activities.",
     category: "Kids & Teens",
@@ -191,7 +191,7 @@ const mockCourses = [
     targetAudience: "Beginner",
     price: 149,
     trialAvailable: true,
-    capacity: 10,
+    studentCapacity: 10,
     studentCount: 8,
     duration: "6 weeks",
     startDate: "2024-09-10",
@@ -206,23 +206,23 @@ const mockCourses = [
     ageRange: { min: 8, max: 12 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -231,7 +231,7 @@ const mockCourses = [
   },
   {
     id: "5",
-    courseName: "German Grammar Mastery",
+    title: "German Grammar Mastery",
     description:
       "Deep dive into German grammar structures with comprehensive exercises and real-world applications.",
     category: "Academic",
@@ -239,7 +239,7 @@ const mockCourses = [
     targetAudience: "Intermediate",
     price: 0,
     trialAvailable: false,
-    capacity: 25,
+    studentCapacity: 25,
     studentCount: 18,
     duration: "14 weeks",
     startDate: "2024-08-15",
@@ -254,23 +254,23 @@ const mockCourses = [
     ageRange: { min: 20, max: 50 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -279,7 +279,7 @@ const mockCourses = [
   },
   {
     id: "6",
-    courseName: "Professional Italian Communication",
+    title: "Professional Italian Communication",
     description:
       "Advanced Italian course focused on professional communication, presentations, and business correspondence.",
     category: "Professional",
@@ -287,7 +287,7 @@ const mockCourses = [
     targetAudience: "Advanced",
     price: 399,
     trialAvailable: true,
-    capacity: 15,
+    studentCapacity: 15,
     studentCount: 5,
     duration: "10 weeks",
     startDate: "2024-10-01",
@@ -302,23 +302,23 @@ const mockCourses = [
     ageRange: { min: 22, max: 50 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -327,7 +327,7 @@ const mockCourses = [
   },
   {
     id: "7",
-    courseName: "Mandarin Chinese Basics",
+    title: "Mandarin Chinese Basics",
     description:
       "Learn basic Mandarin vocabulary, tones, and conversational skills for everyday situations.",
     category: "Conversational",
@@ -335,7 +335,7 @@ const mockCourses = [
     targetAudience: "Beginner",
     price: 249,
     trialAvailable: true,
-    capacity: 18,
+    studentCapacity: 18,
     studentCount: 10,
     duration: "8 weeks",
     startDate: "2024-09-20",
@@ -350,23 +350,23 @@ const mockCourses = [
     ageRange: { min: 15, max: 45 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -375,7 +375,7 @@ const mockCourses = [
   },
   {
     id: "8",
-    courseName: "TOEFL Success Program",
+    title: "TOEFL Success Program",
     description:
       "Focused preparation for the TOEFL exam with strategies, mock tests, and practice exercises.",
     category: "Exam Preparation",
@@ -383,7 +383,7 @@ const mockCourses = [
     targetAudience: "Intermediate",
     price: 399,
     trialAvailable: false,
-    capacity: 20,
+    studentCapacity: 20,
     studentCount: 19,
     duration: "10 weeks",
     startDate: "2024-08-25",
@@ -398,23 +398,23 @@ const mockCourses = [
     ageRange: { min: 18, max: 40 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -423,7 +423,7 @@ const mockCourses = [
   },
   {
     id: "9",
-    courseName: "Japanese Conversation for Travelers",
+    title: "Japanese Conversation for Travelers",
     description:
       "Essential Japanese phrases and cultural tips to navigate travel and daily life in Japan.",
     category: "Travel",
@@ -431,7 +431,7 @@ const mockCourses = [
     targetAudience: "Beginner",
     price: 129,
     trialAvailable: true,
-    capacity: 12,
+    studentCapacity: 12,
     studentCount: 7,
     duration: "4 weeks",
     startDate: "2024-10-05",
@@ -446,23 +446,23 @@ const mockCourses = [
     ageRange: { min: 18, max: 55 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -471,7 +471,7 @@ const mockCourses = [
   },
   {
     id: "10",
-    courseName: "Portuguese for Business",
+    title: "Portuguese for Business",
     description:
       "Learn professional Portuguese communication skills for working with Brazilian and European partners.",
     category: "Business",
@@ -479,7 +479,7 @@ const mockCourses = [
     targetAudience: "Intermediate",
     price: 299,
     trialAvailable: true,
-    capacity: 20,
+    studentCapacity: 20,
     studentCount: 14,
     duration: "8 weeks",
     startDate: "2024-09-28",
@@ -494,23 +494,23 @@ const mockCourses = [
     ageRange: { min: 20, max: 50 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -519,7 +519,7 @@ const mockCourses = [
   },
   {
     id: "11",
-    courseName: "Advanced Grammar for English Teachers",
+    title: "Advanced Grammar for English Teachers",
     description:
       "In-depth grammar training designed for English teachers to improve classroom instruction.",
     category: "Academic",
@@ -527,7 +527,7 @@ const mockCourses = [
     targetAudience: "Advanced",
     price: 299,
     trialAvailable: false,
-    capacity: 20,
+    studentCapacity: 20,
     studentCount: 20,
     duration: "10 weeks",
     startDate: "2024-08-18",
@@ -542,23 +542,23 @@ const mockCourses = [
     ageRange: { min: 25, max: 55 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -567,7 +567,7 @@ const mockCourses = [
   },
   {
     id: "12",
-    courseName: "Creative Writing in English",
+    title: "Creative Writing in English",
     description:
       "Develop storytelling, narrative, and creative writing skills in English with guided exercises.",
     category: "Creative",
@@ -575,7 +575,7 @@ const mockCourses = [
     targetAudience: "Intermediate",
     price: 199,
     trialAvailable: true,
-    capacity: 15,
+    studentCapacity: 15,
     studentCount: 11,
     duration: "8 weeks",
     startDate: "2024-09-12",
@@ -590,23 +590,23 @@ const mockCourses = [
     ageRange: { min: 16, max: 45 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -615,7 +615,7 @@ const mockCourses = [
   },
   {
     id: "13",
-    courseName: "Public Speaking in English",
+    title: "Public Speaking in English",
     description:
       "Build confidence and skills for public speaking, presentations, and debates in English.",
     category: "Professional",
@@ -623,7 +623,7 @@ const mockCourses = [
     targetAudience: "Intermediate",
     price: 249,
     trialAvailable: true,
-    capacity: 15,
+    studentCapacity: 15,
     studentCount: 13,
     duration: "8 weeks",
     startDate: "2024-09-02",
@@ -638,23 +638,23 @@ const mockCourses = [
     ageRange: { min: 18, max: 50 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -663,7 +663,7 @@ const mockCourses = [
   },
   {
     id: "14",
-    courseName: "Korean Drama Language Lab",
+    title: "Korean Drama Language Lab",
     description:
       "Learn conversational Korean through popular K-dramas, dialogues, and cultural exploration.",
     category: "Conversational",
@@ -671,7 +671,7 @@ const mockCourses = [
     targetAudience: "Intermediate",
     price: 179,
     trialAvailable: true,
-    capacity: 18,
+    studentCapacity: 18,
     studentCount: 9,
     duration: "6 weeks",
     startDate: "2024-09-25",
@@ -686,23 +686,23 @@ const mockCourses = [
     ageRange: { min: 16, max: 40 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -711,7 +711,7 @@ const mockCourses = [
   },
   {
     id: "15",
-    courseName: "Portuguese Conversation Basics",
+    title: "Portuguese Conversation Basics",
     description:
       "Practice everyday Portuguese with dialogues, role-play, and cultural notes.",
     category: "Conversational",
@@ -719,7 +719,7 @@ const mockCourses = [
     targetAudience: "Beginner",
     price: 159,
     trialAvailable: true,
-    capacity: 15,
+    studentCapacity: 15,
     studentCount: 12,
     duration: "6 weeks",
     startDate: "2024-09-29",
@@ -734,23 +734,23 @@ const mockCourses = [
     ageRange: { min: 15, max: 45 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -759,7 +759,7 @@ const mockCourses = [
   },
   {
     id: "16",
-    courseName: "Business German Essentials",
+    title: "Business German Essentials",
     description:
       "Professional German for business meetings, negotiations, and workplace communication.",
     category: "Business",
@@ -767,7 +767,7 @@ const mockCourses = [
     targetAudience: "Intermediate",
     price: 349,
     trialAvailable: true,
-    capacity: 12,
+    studentCapacity: 12,
     studentCount: 6,
     duration: "8 weeks",
     startDate: "2024-10-05",
@@ -782,23 +782,23 @@ const mockCourses = [
     ageRange: { min: 20, max: 50 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -807,7 +807,7 @@ const mockCourses = [
   },
   {
     id: "17",
-    courseName: "Advanced Italian Literature",
+    title: "Advanced Italian Literature",
     description:
       "Study Italian literature with advanced reading and analysis exercises.",
     category: "Academic",
@@ -815,7 +815,7 @@ const mockCourses = [
     targetAudience: "Advanced",
     price: 399,
     trialAvailable: false,
-    capacity: 10,
+    studentCapacity: 10,
     studentCount: 9,
     duration: "12 weeks",
     startDate: "2024-09-17",
@@ -830,23 +830,23 @@ const mockCourses = [
     ageRange: { min: 22, max: 55 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -855,7 +855,7 @@ const mockCourses = [
   },
   {
     id: "18",
-    courseName: "Beginner Japanese Kanji",
+    title: "Beginner Japanese Kanji",
     description:
       "Learn essential kanji characters for reading and writing Japanese.",
     category: "Academic",
@@ -863,7 +863,7 @@ const mockCourses = [
     targetAudience: "Beginner",
     price: 199,
     trialAvailable: true,
-    capacity: 20,
+    studentCapacity: 20,
     studentCount: 16,
     duration: "8 weeks",
     startDate: "2024-10-02",
@@ -878,23 +878,23 @@ const mockCourses = [
     ageRange: { min: 15, max: 45 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -903,7 +903,7 @@ const mockCourses = [
   },
   {
     id: "19",
-    courseName: "Chinese for Professionals",
+    title: "Chinese for Professionals",
     description:
       "Business Mandarin course covering negotiation, email, and presentation language.",
     category: "Business",
@@ -911,7 +911,7 @@ const mockCourses = [
     targetAudience: "Advanced",
     price: 499,
     trialAvailable: false,
-    capacity: 15,
+    studentCapacity: 15,
     studentCount: 14,
     duration: "10 weeks",
     startDate: "2024-09-21",
@@ -926,23 +926,23 @@ const mockCourses = [
     ageRange: { min: 25, max: 55 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,
@@ -951,7 +951,7 @@ const mockCourses = [
   },
   {
     id: "20",
-    courseName: "Spanish for Healthcare Workers",
+    title: "Spanish for Healthcare Workers",
     description:
       "Essential Spanish for nurses, doctors, and healthcare professionals.",
     category: "Professional",
@@ -959,7 +959,7 @@ const mockCourses = [
     targetAudience: "Intermediate",
     price: 299,
     trialAvailable: true,
-    capacity: 15,
+    studentCapacity: 15,
     studentCount: 13,
     duration: "8 weeks",
     startDate: "2024-10-01",
@@ -974,23 +974,23 @@ const mockCourses = [
     ageRange: { min: 21, max: 50 },
     lessons: [
       {
-        lessonTitle: "Introduction to the Course",
-        lessonDescription:
+        title: "Introduction to the Course",
+        description:
           "Detailed description for Introduction to the Course.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: true,
       },
       {
-        lessonTitle: "Key Concepts Overview",
-        lessonDescription: "Detailed description for Key Concepts Overview.",
+        title: "Key Concepts Overview",
+        description: "Detailed description for Key Concepts Overview.",
         trialAvailable: true,
         trialCapacity: 4,
         curriculumGames: false,
       },
       {
-        lessonTitle: "Final Assessment",
-        lessonDescription: "Detailed description for Final Assessment.",
+        title: "Final Assessment",
+        description: "Detailed description for Final Assessment.",
         trialAvailable: false,
         trialCapacity: 2,
         curriculumGames: true,

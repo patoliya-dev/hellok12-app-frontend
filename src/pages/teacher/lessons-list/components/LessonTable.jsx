@@ -136,7 +136,7 @@ const LessonsTable = ({
           <tbody>
             {data?.map((lesson) => (
               <tr
-                key={lesson?.id}
+                key={lesson?._id}
                 className="border-t border-border hover:bg-muted/30 transition-smooth"
               >
                 <td className="px-6 py-4">
@@ -177,16 +177,16 @@ const LessonsTable = ({
                     name="MoreVertical"
                     size={20}
                     className="text-muted-foreground cursor-pointer"
-                    onClick={() => toggleMenu(lesson?.id)}
+                    onClick={() => toggleMenu(lesson?._id)}
                   />
-                  {openMenuId === lesson?.id && (
+                  {openMenuId === lesson?._id && (
                     <ActionMenu
                       data={lesson}
                       setOpenMenuId={toggleMenu}
                       onEdit={onEdit}
                       onDuplicate={onDuplicate}
                       onDelete={() => {
-                        setDeleteLessonId(lesson?.id);
+                        setDeleteLessonId(lesson?._id);
                         handleDeleteModal();
                       }}
                     />
@@ -203,7 +203,7 @@ const LessonsTable = ({
         {data?.map((lesson) => {
           const { date, time } = formatDateTime(lesson?.createdAt);
           return (
-            <div key={lesson?.id} className="p-4">
+            <div key={lesson?._id} className="p-4">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
                   <Icon
@@ -222,7 +222,7 @@ const LessonsTable = ({
                   name="MoreVertical"
                   size={18}
                   className="text-muted-foreground cursor-pointer flex-shrink-0"
-                  onClick={() => toggleMenu(lesson?.id)}
+                  onClick={() => toggleMenu(lesson?._id)}
                 />
               </div>
 
@@ -240,7 +240,7 @@ const LessonsTable = ({
                 <div className="mt-4">{isTrailAvailable()}</div>
               )}
 
-              {openMenuId === lesson?.id && (
+              {openMenuId === lesson?._id && (
                 <div className="">
                   <ActionMenu
                     className={`!right-10 ${
@@ -251,7 +251,7 @@ const LessonsTable = ({
                     onEdit={onEdit}
                     onDuplicate={onDuplicate}
                     onDelete={() => {
-                      setDeleteLessonId(lesson?.id);
+                      setDeleteLessonId(lesson?._id);
                       handleDeleteModal();
                     }}
                   />

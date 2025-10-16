@@ -14,7 +14,7 @@ const Progress = () => {
   });
   const [filters, setFilters] = useState({
     studentName: "",
-    courseName: "all",
+    title: "all",
     dateRange: { start: "", end: "" },
     lessonName: "",
   });
@@ -26,7 +26,7 @@ const Progress = () => {
   const handleFilterClick = () => {
     setFilters({
       studentName: "",
-      courseName: "all",
+      title: "all",
       dateRange: { start: "", end: "" },
       lessonName: "",
     });
@@ -56,8 +56,8 @@ const Progress = () => {
 
       // Course name filter
       if (
-        filters?.courseName !== "all" &&
-        session?.courseName !== filters?.courseName
+        filters?.title !== "all" &&
+        session?.title !== filters?.title
       ) {
         return false;
       }

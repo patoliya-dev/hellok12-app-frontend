@@ -87,7 +87,7 @@ const LessonDetailsModal = ({ lesson, onClose }) => {
                 </div>
                 <span className="ml-2 text-sm text-brand-gray-600">(5.0)</span>
               </div>
-              <p className="text-sm text-brand-gray-500">{lesson.courseName}</p>
+              <p className="text-sm text-brand-gray-500">{lesson.title}</p>
             </div>
             <button className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-brand-gray-600 hover:bg-gray-200">
               <MessageSquare size={18} />

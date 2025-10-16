@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import Input from "./Input";
 
-export default function WeeklySchedule() {
-  const [selectedDate, setSelectedDate] = useState("2025-08-22");
-  const [selectedTime, setSelectedTime] = useState("10:00 AM");
+export default function WeeklySchedule(formData, handleInputChange) {
+  const [selectedDate, setSelectedDate] = useState(formData?.schedule?.date || "2025-08-22");
+  const [selectedTime, setSelectedTime] = useState(formData?.schedule?.time || "10:00 AM");
 
   const times = [
     { label: "09:00 AM", disabled: true },
@@ -15,7 +15,7 @@ export default function WeeklySchedule() {
   return (
     <div className="w-full my-6">
       <h3 className="text-sm font-medium text-brand-gray-800 mb-2">
-        Weekly Schedule
+        Schedule
       </h3>
 
       <div className="flex flex-col sm:flex-row sm:items-center border border-border rounded-lg px-4 py-3 shadow-sm bg-white gap-y-4 sm:gap-y-0">
@@ -24,7 +24,10 @@ export default function WeeklySchedule() {
           <Input
             type="date"
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={(e) => {
+              setSelectedDate(e.target.value);
+              handleInputChange(e?.target?.value)
+            }}
             className=""
           />
         </div>
@@ -35,7 +38,12 @@ export default function WeeklySchedule() {
             <button
               key={time.label}
               disabled={time.disabled}
-              onClick={() => !time.disabled && setSelectedTime(time.label)}
+              onClick={() => {
+                if (!time.disabled) {
+                  handleInputChange(time.label)
+                  setSelectedTime(time.label)
+                }
+              }}
               className={`px-4 py-1.5 text-sm rounded-md border transition 
                 ${
                   time.disabled

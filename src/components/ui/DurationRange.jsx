@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 
-export default function DurationRange() {
+export default function DurationRange(formData, handleInputChange) {
   // Duration in minutes
-  const [duration, setDuration] = useState(60);
+  const [duration, setDuration] = useState(formData?.schedule?.duration | 60);
 
   const handleChange = (e) => {
     setDuration(Number(e.target.value));
+    handleInputChange(Number(e.target.value))
   };
 
   return (

@@ -32,8 +32,8 @@ const LessonFormInstance = ({
             className="text-error cursor-pointer"
             onClick={() => {
               const hasContent =
-                formData?.lessonTitle?.trim() &&
-                formData?.lessonDescription?.trim();
+                formData?.title?.trim() &&
+                formData?.description?.trim();
 
               if (mode === "edit" && hasContent) {
                 setShowDeleteModal(true);
@@ -50,10 +50,10 @@ const LessonFormInstance = ({
             label="Lesson Title"
             type="text"
             placeholder="Enter lesson title"
-            value={formData?.lessonTitle}
+            value={formData?.title}
             required
-            error={errors?.lessonTitle}
-            onChange={(e) => handleInputChange("lessonTitle", e?.target?.value)}
+            error={errors?.title}
+            onChange={(e) => handleInputChange("title", e?.target?.value)}
           />
         </div>
         <div className="mb-4">
@@ -61,17 +61,17 @@ const LessonFormInstance = ({
             label="Description"
             type="text"
             placeholder="Describe what students will learn in this lesson"
-            value={formData?.lessonDescription}
+            value={formData?.description}
             required
-            error={errors?.lessonDescription}
+            error={errors?.description}
             onChange={(e) =>
-              handleInputChange("lessonDescription", e?.target?.value)
+              handleInputChange("description", e?.target?.value)
             }
           />
         </div>
 
-        <WeeklySchedule />
-        <DurationRange />
+        <WeeklySchedule formData={formData} handleInputChange={(value) => handleInputChange("schedule.date", value)} />
+        <DurationRange formData={formData} handleInputChange={(value) => handleInputChange("schedule.time", value)} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
           <Checkbox

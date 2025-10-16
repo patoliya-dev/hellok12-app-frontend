@@ -87,7 +87,7 @@ const mockLessons = [
         "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=150&h=150&fit=crop&crop=face",
     },
     courseId: "1",
-    courseName: "English Literature",
+    title: "English Literature",
     createdAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   },
   {
@@ -114,7 +114,7 @@ const mockLessons = [
         "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
     },
     courseId: "1",
-    courseName: "English Literature",
+    title: "English Literature",
     createdAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   },
   {
@@ -142,7 +142,7 @@ const mockLessons = [
         "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&h=150&fit=crop&crop=face",
     },
     courseId: "2",
-    courseName: "Spanish Conversation",
+    title: "Spanish Conversation",
     createdAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   },
   {
@@ -170,7 +170,7 @@ const mockLessons = [
         "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
     },
     courseId: "2",
-    courseName: "Spanish Conversation",
+    title: "Spanish Conversation",
     createdAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   },
   {
@@ -197,7 +197,7 @@ const mockLessons = [
         "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=150&h=150&fit=crop&crop=face",
     },
     courseId: "3",
-    courseName: "Japanese Writing",
+    title: "Japanese Writing",
     createdAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   },
   {
@@ -224,7 +224,7 @@ const mockLessons = [
         "https://images.unsplash.com/photo-1552058544-f2b08422138a?w=150&h=150&fit=crop&crop=face",
     },
     courseId: "3",
-    courseName: "Japanese Writing",
+    title: "Japanese Writing",
     createdAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   },
 ];

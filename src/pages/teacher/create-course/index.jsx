@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import Breadcrumb from "components/ui/Breadcrumb";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import { commonBreadCrumbData, steps } from "./data";
@@ -9,24 +10,44 @@ import Button from "components/ui/Button";
 import LessonForm from "./components/LessonForm";
 import { successToast } from "../../../utils/utils";
 import Icon from "components/AppIcon";
-import { mockCourses } from "../manage-courses/data";
+
+// THUNKS (make sure these paths match your project)
+import {
+  createCourse as createCourseThunk,
+  updateCourse as updateCourseThunk,
+  fetchCourse as fetchCourseThunk,
+  fetchCourseWithLessons as fetchCourseWithLessonsThunk
+} from "../../../reducers/courses/courseThunks";
+import { createLessons as createLessonThunk } from "../../../reducers/lessons/lessonThunks";
+import {
+  presignAttachment,
+  uploadToS3,
+  completeAttachment,
+  claimAttachment,
+} from "../../../reducers/attachments/attachmentThunks";
+import { formatDateForDateInput } from "../../../utils/formatters";
 
 const CreateCourse = () => {
   const { courseId } = useParams();
+  console.log('courseId', courseId);
+
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [mode, setMode] = useState("add");
   const [formData, setFormData] = useState({
     // Step 1
-    courseName: "",
+    title: "",
     language: "",
     description: "",
     lessonType: "",
-    lessonMode: "",
-    introImage: "",
-    capacity: "",
-    ageRange: { min: "", max: "" },
+    mode: "",
+    introImage: "",            // display-only filename
+    introImageRef: null,       // { attachmentId, url } set after upload
+    studentCapacity: "",
+    ageGroups: [],
     price: "",
     startDate: "",
     endDate: "",
@@ -34,26 +55,30 @@ const CreateCourse = () => {
     // Step 2
     lessons: [
       {
-        lessonTitle: "",
-        lessonDescription: "",
+        title: "",
+        description: "",
         trialAvailable: false,
         trialCapacity: 1,
-        isCurriculumGames: false,
+        schedule: {
+          date: "",
+          time: "",
+          duration: "",
+        }
       },
     ],
   });
   const [errors, setErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
-  const [breadCrumbData, setBreadCrumbData] = useState(
-    commonBreadCrumbData?.add
-  );
+  const [breadCrumbData, setBreadCrumbData] = useState(commonBreadCrumbData?.add);
+  const [introUpload, setIntroUpload] = useState({ loading: false, progress: 0, error: null });
+
   const defaultLesson = {
-    lessonTitle: "",
-    lessonDescription: "",
+    title: "",
+    description: "",
     trialAvailable: false,
     trialCapacity: 1,
-    curriculumGames: false,
   };
+
   const isEdit = mode === "edit";
   const isLesson = location.pathname.includes("lesson");
   const isCreateLesson = location.pathname.includes("create-lesson");
@@ -63,89 +88,73 @@ const CreateCourse = () => {
       setMode("edit");
       setBreadCrumbData(commonBreadCrumbData?.edit);
       isLesson && setCurrentStep(2);
+      // NOTE: you can fetch the existing course here if needed and hydrate formData
+      // using your course detail thunk (kept lightweight to respect your current screen).
     } else {
       setMode("add");
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId]);
 
+  // If you were previously reading from mock, this keeps the “add extra lesson” UX intact in edit/lesson route.
   useEffect(() => {
     if (courseId) {
-      const courseData = mockCourses.find((course) => course?.id === courseId);
-      const formData = {
-        courseName: courseData?.courseName,
-        language: courseData?.language,
-        description: courseData?.description,
-        capacity: courseData?.capacity,
-        lessonType: courseData?.lessonType,
-        lessonMode: courseData?.lessonMode,
-        introImage: courseData?.introImage,
-        ageRange: courseData?.ageRange,
-        price: courseData?.price,
-        startDate: courseData?.startDate,
-        endDate: courseData?.endDate,
-        lessons: courseData?.lessons || [],
-      };
-      setFormData(formData);
+      (async () => {
+        const courseData = await dispatch(
+          fetchCourseThunk(courseId)).unwrap();
+        // const { data } = courseData;
+        console.log('courseData', courseData);
+        const lessonList = await dispatch(
+          fetchCourseWithLessonsThunk(courseId)).unwrap();
+        setFormData({ ...courseData, startDate: formatDateForDateInput(courseData.startDate), endDate: formatDateForDateInput(courseData.endDate), lessons: lessonList?.length ? lessonList : formData.lessons });
 
-      if (isCreateLesson) {
-        setFormData((prev) => ({
-          ...prev,
-          lessons: [...(prev.lessons || []), { ...defaultLesson }],
-        }));
-      }
+      })();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
   const handleStepClick = (stepId) => {
-    if (stepId < currentStep) {
-      setCurrentStep(stepId);
-    }
+    if (stepId < currentStep) setCurrentStep(stepId);
   };
 
   const validateStep = (step) => {
     let newErrors = {};
 
     if (step === 1) {
-      if (!formData?.courseName?.trim())
-        newErrors.courseName = "Course name is required";
-      if (!formData?.introImage?.trim())
+      if (!formData?.title?.trim())
+        newErrors.title = "Course name is required";
+      if (!formData?.introImageRef?.attachmentId)
         newErrors.introImage = "Intro image is required";
       if (!formData?.language) newErrors.language = "Language is required";
-      if (formData?.lessonType === "group" && formData?.capacity < 1)
-        newErrors.capacity = "Capacity must be at least 1";
+      if (formData?.lessonType === "group" && Number(formData?.studentCapacity) < 1)
+        newErrors.studentCapacity = "Capacity must be at least 1";
       if (!formData?.startDate) newErrors.startDate = "Start date is required";
-      if (!formData?.lessonMode)
-        newErrors.lessonMode = "Lesson mode is required";
+      if (!formData?.mode)
+        newErrors.mode = "Lesson mode is required";
     }
 
     if (step === 2) {
       const lessonErrors = formData.lessons.map((lesson) => {
         let errs = {};
-
-        if (!lesson.lessonTitle?.trim()) {
-          errs.lessonTitle = "Lesson title is required";
-        }
-        if (!lesson.lessonDescription?.trim()) {
-          errs.lessonDescription = "Lesson description is required";
-        }
+        if (!lesson.title?.trim()) errs.title = "Lesson title is required";
+        if (!lesson.description?.trim())
+          errs.description = "Lesson description is required";
         if (lesson.trialAvailable) {
-          if (!lesson.trialCapacity) {
-            errs.trialCapacity = "Trial capacity is required";
-          } else if (lesson.trialCapacity < 1) {
-            errs.trialCapacity = "Trial capacity must be at least 1";
-          } else if (lesson.trialCapacity > formData?.capacity) {
-            errs.trialCapacity =
-              "Trial capacity must be less than or equal to student capacity";
+          const cap = Number(lesson.trialCapacity || 0);
+          if (!cap) errs.trialCapacity = "Trial capacity is required";
+          else if (cap < 1) errs.trialCapacity = "Trial capacity must be at least 1";
+          else if (formData?.studentCapacity && cap > Number(formData.studentCapacity)) {
+            errs.trialCapacity = "Trial capacity must be ≤ student capacity";
           }
         }
-
         return errs;
       });
-
       newErrors.lessons = lessonErrors;
     }
 
     setErrors(newErrors);
+    console.log('newErrors', newErrors);
+
     return (
       Object.keys(newErrors).length === 0 ||
       (step === 2 &&
@@ -154,45 +163,91 @@ const CreateCourse = () => {
   };
 
   const handleNext = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep((prev) => prev + 1);
-    }
+    if (validateStep(currentStep)) setCurrentStep((p) => p + 1);
   };
 
-  const handlePrevious = () => {
-    setCurrentStep((prev) => prev - 1);
-  };
+  const handlePrevious = () => setCurrentStep((p) => p - 1);
 
-  const handleInputChange = (field, value, lessonIndex = null) => {
+  /**
+   * Centralized course-level + lesson-level change handler
+   * Also wires Intro Image upload via Attachment API (presign → S3 → complete)
+   */
+  const handleInputChange = async (field, value, lessonIndex = null) => {
     let error = null;
 
-    // FILE input only handled at course-level (introImage)
-    if (
-      lessonIndex === null &&
-      field === "introImage" &&
-      value instanceof File
-    ) {
+    // Special case: intro image file -> upload now
+    if (lessonIndex === null && field === "introImage" && value instanceof File) {
+      const file = value;
       const validTypes = ["image/png", "image/jpeg"];
       const maxSize = 2 * 1024 * 1024; // 2MB
 
-      if (!validTypes.includes(value.type)) {
+      if (!validTypes.includes(file.type)) {
         error = "Only JPG or PNG images are allowed.";
-        // store empty string if invalid
-        setFormData((prev) => ({ ...prev, [field]: "" }));
-      } else if (value.size > maxSize) {
+        setFormData((prev) => ({ ...prev, introImage: "", introImageRef: null }));
+        setErrors((prev) => ({ ...prev, introImage: error }));
+        return;
+      }
+      if (file.size > maxSize) {
         error = "File size must be less than 2MB.";
-        setFormData((prev) => ({ ...prev, [field]: "" }));
-      } else {
-        // store only filename
-        setFormData((prev) => ({ ...prev, [field]: value.name }));
+        setFormData((prev) => ({ ...prev, introImage: "", introImageRef: null }));
+        setErrors((prev) => ({ ...prev, introImage: error }));
+        return;
       }
 
-      // update course-level error
-      setErrors((prev) => ({ ...prev, [field]: error }));
+      try {
+        setIntroUpload({ loading: true, progress: 1, error: null });
+        // 1) Presign
+        const presignRes = await dispatch(
+          presignAttachment({
+            filename: file.name,
+            mime: file.type,
+            size: file.size,
+            entityType: "Course",
+            entityId: "",
+            scope: "intro",
+          })
+        ).unwrap();
+
+        const { key, upload } = presignRes;
+
+        // 2) Upload to S3
+        await dispatch(uploadToS3({
+          upload,
+          file,
+          onProgress: (pct) => setIntroUpload((s) => ({ ...s, progress: pct }))
+        })).unwrap();
+
+        // 3) Complete
+        const finalized = await dispatch(
+          completeAttachment({
+            "key": key,
+            "entityType": "Course",
+            // "entityId": entityId
+          })
+        ).unwrap();
+
+        setFormData((prev) => ({
+          ...prev,
+          introImage: file.name,
+          introImageRef: {
+            attachmentId: finalized?._id,
+            url: finalized?.url || presignRes?.url || null,
+          },
+        }));
+        setErrors((prev) => ({ ...prev, introImage: null }));
+        setIntroUpload({ loading: false, progress: 100, error: null });
+      } catch (e) {
+        setFormData((prev) => ({ ...prev, introImage: "", introImageRef: null }));
+        setErrors((prev) => ({
+          ...prev,
+          introImage: e?.message || "Image upload failed",
+        }));
+        setIntroUpload({ loading: false, progress: 0, error: e?.message || "Upload failed" });
+      }
       return;
     }
 
-    // If updating a lesson's field
+    // Lesson-level field
     if (lessonIndex !== null) {
       setFormData((prev) => {
         const lessons = [...(prev.lessons || [])];
@@ -203,23 +258,17 @@ const CreateCourse = () => {
         return { ...prev, lessons };
       });
 
+      // manage lesson-level error container shape
       setErrors((prev) => {
-        const lessonsErr = Array.from(prev.lessons || [], (e) => ({
-          ...(e || {}),
-        }));
-        // ensure array long enough
-        while (lessonsErr.length <= lessonIndex) lessonsErr.push({});
-        lessonsErr[lessonIndex] = {
-          ...(lessonsErr[lessonIndex] || {}),
-          [field]: error,
-        };
-        return { ...prev, lessons: lessonsErr };
+        const lessonErrs = Array.from(prev.lessons || [], (e) => ({ ...(e || {}) }));
+        while (lessonErrs.length <= lessonIndex) lessonErrs.push({});
+        lessonErrs[lessonIndex] = { ...(lessonErrs[lessonIndex] || {}), [field]: error };
+        return { ...prev, lessons: lessonErrs };
       });
-
       return;
     }
 
-    // Course-level non-file fields
+    // Course-level non-file field
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: error }));
   };
@@ -229,7 +278,6 @@ const CreateCourse = () => {
       ...prev,
       lessons: [...(prev.lessons || []), { ...defaultLesson }],
     }));
-
     setErrors((prev) => ({
       ...prev,
       lessons: [...(prev.lessons || []), {}],
@@ -241,26 +289,120 @@ const CreateCourse = () => {
       const lessons = (prev.lessons || []).filter((_, i) => i !== index);
       return { ...prev, lessons };
     });
-
     setErrors((prev) => {
       const lessonErrs = (prev.lessons || []).filter((_, i) => i !== index);
       return { ...prev, lessons: lessonErrs };
     });
   };
 
-  const handleSubmit = () => {
+  /**
+   * Submit:
+   *  - create/update course
+   *  - create lessons (sequential)
+   */
+  const handleSubmit = async () => {
     if (!validateStep(currentStep)) return;
 
-    const entity = isLesson ? "Lesson" : "Course";
-    const action = isEdit ? "updated" : "created";
-    successToast(`${entity} ${action} successfully!`);
+    // Build course payload (align to BE contracts)
+    const coursePayload = {
+      title: formData.title,
+      language: formData.language,
+      description: formData.description || undefined,
+      lessonType: formData.lessonType,
+      studentCapacity:
+        formData.lessonType === "group" ? Number(formData.studentCapacity || 0) : 1,
+      mode: formData.mode,
+      pricePerLesson: Number(formData.price || 0),
+      ageGroups: formData.ageGroups,
+      // ageRange: {
+      //   min: formData?.ageRange?.min ? Number(formData.ageRange.min) : undefined,
+      //   max: formData?.ageRange?.max ? Number(formData.ageRange.max) : undefined,
+      // },
+      startDate: formData.startDate,
+      endDate: formData.endDate || null,
+      introImage: formData.introImageRef
+        ? { attachmentId: formData.introImageRef.attachmentId }
+        : undefined,
+      introImageRef: formData.introImageRef.attachmentId
+    };
 
-    if (isLesson || isCreateLesson) {
-      navigate(`/teacher/lessons/${courseId}`);
-    } else if (isEdit) {
-      navigate("/teacher/manage-courses");
-    } else {
-      setShowModal(true);
+    try {
+      let savedCourse;
+      if (isEdit && courseId) {
+        const r = await dispatch(
+          updateCourseThunk({ id: courseId, patch: coursePayload })
+        ).unwrap();
+        savedCourse = r;
+        successToast("Course updated successfully!");
+      } else {
+        const r = await dispatch(createCourseThunk(coursePayload)).unwrap();
+        savedCourse = r;
+        successToast("Course created successfully!");
+      }
+
+      // Claim the intro image to the created/updated course (if present)
+      if (savedCourse?._id && formData?.introImageRef?.attachmentId) {
+        try {
+          const claimed = await dispatch(
+            claimAttachment({
+              attachmentId: formData.introImageRef.attachmentId,
+              entityType: "Course",
+              entityId: savedCourse._id,
+              moveToEntityPrefix: true, // moves S3 object under courses/<courseId>/intro/
+              scope: "intro",
+            })
+          ).unwrap();
+          // Optionally update local state with final URL after move:
+          if (claimed?.url) {
+            setFormData((prev) => ({
+              ...prev,
+              introImageRef: { ...prev.introImageRef, url: claimed.url },
+            }));
+          }
+        } catch (e) {
+          // Non-blocking: the course is created; attachment can be claimed later
+          console.warn("Attachment claim failed:", e);
+        }
+      }
+
+      // If we are on the lesson route or creating a new course (step 2 present),
+      // create lessons sequentially so we surface any error clearly.
+      if (savedCourse?._id && formData?.lessons?.length) {
+        const payload = formData.lessons.map((l) => ({
+          title: l.title,
+          description: l.description || undefined,
+          isTrial: !!l.trialAvailable,
+          trialCapacity: l.trialAvailable ? Number(l.trialCapacity || 0) : undefined,
+          order: typeof l.order === 'number' ? l.order : undefined,
+          schedule: {
+            date: l.schedule?.date,          // "YYYY-MM-DD"
+            time: l.schedule?.time,          // "HH:MM AM/PM"
+            duration: Number(l.schedule?.duration || 60)
+          }
+        }));
+
+        // If staying with thunks, add a thunk or call your fetcher directly:
+        await dispatch(
+          createLessonThunk({ courseId: savedCourse._id, payload: { lessons: payload } })
+        ).unwrap();
+      }
+
+      successToast(`${isEdit ? "Course updated" : "Course created"} successfully!`);
+      if (isLesson || isCreateLesson) {
+        navigate(`/teacher/lessons/${savedCourse?._id || courseId}`);
+      } else if (isEdit) {
+        navigate("/teacher/manage-courses");
+      } else {
+        setShowModal(true);
+      }
+    } catch (err) {
+      // Friendly handling for 409/422 style errors
+      const msg =
+        err?.message ||
+        err?.error ||
+        err?.details?.message ||
+        "Unable to save course. Please review your inputs.";
+      alert(msg);
     }
   };
 
@@ -283,7 +425,7 @@ const CreateCourse = () => {
                 course
               </p>
             </div>
-            <CourseForm {...{ formData, handleInputChange, errors }} />
+            <CourseForm {...{ formData, handleInputChange, errors, introUpload }} />
           </div>
         );
       case 2:
@@ -344,9 +486,8 @@ const CreateCourse = () => {
           </div>
           {getCurrentStepComponent()}
           <div
-            className={`flex mt-8 pt-6 border-t border-border ${
-              currentStep < steps.length ? "justify-end" : "justify-between"
-            }`}
+            className={`flex mt-8 pt-6 border-t border-border ${currentStep < steps.length ? "justify-end" : "justify-between"
+              }`}
           >
             {currentStep === steps.length && (
               <Button
@@ -365,6 +506,7 @@ const CreateCourse = () => {
                 onClick={handleNext}
                 iconName="ChevronRight"
                 iconPosition="right"
+                disabled={introUpload.loading}
               >
                 Next
               </Button>
