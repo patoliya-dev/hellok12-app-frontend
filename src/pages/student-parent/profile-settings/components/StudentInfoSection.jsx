@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { GraduationCap, ChevronDown } from "lucide-react";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
@@ -12,23 +12,83 @@ import {
 } from "reducers/profile/profileSlice";
 import api from "../../../../utils/axiosInstance";
 
-const StudentInfoSection = ({ isExpanded, onToggle, studentData }) => {
+const StudentInfoSection = ({
+  isExpanded,
+  onToggle,
+  studentData,
+  onChildAdded,
+  onChildUpdated,
+  onChildDeleted,
+}) => {
   const dispatch = useDispatch();
-  const students = studentData;
+  const [students, setStudents] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
 
+  useEffect(() => {
+    setStudents(studentData);
+  }, [studentData]);
+
   const handleUpdate = async (id, data) => {
-    const updatedData = await api.patch(
-      `/auth/updateProfile/${data._id}`,
-      data,
-      {
+    try {
+      const res = await api.patch(`/auth/updateProfile/${id}`, data, {
         headers: { "Content-Type": "application/json" },
-      }
-    );
-    toast.success("Student updated successfully!");
+      });
+      const updated = res?.data?.data || res?.data;
+
+      setStudents((prev) =>
+        Array.isArray(prev)
+          ? prev.map((s) => (s?._id === id ? { ...s, ...updated } : s))
+          : prev
+      );
+
+      dispatch(updateStudent({ id, data: updated }));
+      if (onChildUpdated) onChildUpdated(updated);
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to update student profile"
+      );
+    }
   };
-  const handleDelete = (id) => dispatch(deleteStudent(id));
-  const handleAdd = (data) => dispatch(addStudent(data));
+  const handleDelete = async (id) => {
+    try {
+      await api.delete(`/auth/deleteChildren/${id}`);
+      dispatch(deleteStudent(id));
+      if (onChildDeleted) onChildDeleted(id);
+      toast.success("Student deleted successfully!");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to delete student");
+    }
+  };
+  const handleAdd = async (data) => {
+    try {
+      // Shape payload to expected server format
+      const payload = {
+        name: data.fullName,
+        email: data.email,
+        role: "student",
+        phone: data.phone,
+        profile: {
+          address: data.address,
+          age: data.age,
+          gender: data.gender,
+          languages: Array.isArray(data.language)
+            ? data.language
+            : [data.language],
+        },
+      };
+      const res = await api.post(`/auth/addStudentToParent`, payload, {
+        headers: { "Content-Type": "application/json" },
+      });
+      const created = res?.data?.data || res?.data;
+      if (created?._id) {
+        dispatch(addStudent(created));
+        if (onChildAdded) onChildAdded(created);
+      }
+      toast.success("Student added successfully!");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to add student");
+    }
+  };
 
   return (
     <section className="w-full mb-5 bg-card border border-border rounded-lg shadow-sm">
@@ -67,7 +127,10 @@ const StudentInfoSection = ({ isExpanded, onToggle, studentData }) => {
           </div>
           {isAdding && (
             <AddChildForm
-              onAdd={handleAdd}
+              onAdd={async (data) => {
+                await handleAdd(data);
+                setIsAdding(false);
+              }}
               onCancel={() => setIsAdding(false)}
             />
           )}

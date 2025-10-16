@@ -5,6 +5,8 @@ import Button from "components/ui/Button";
 import ProfileImageSection from "./ProfileImageSection";
 import api from "../../../../utils/axiosInstance";
 import set from "lodash/set";
+import { upsertAttachmentAndUpdateEntity } from "../../../../utils/s3";
+import { errorToast, successToast } from "../../../../utils/utils";
 
 const ParentInfoSection = ({
   isExpanded,
@@ -14,6 +16,8 @@ const ParentInfoSection = ({
   onChangePasswordClick,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [formData, setFormData] = useState(profileData);
 
   useEffect(() => {
@@ -35,9 +39,39 @@ const ParentInfoSection = ({
     setFormData(profileData);
     setIsEditing(false);
   };
-  const handleSaveEdit = () => {
-    onSave(formData);
-    setIsEditing(false);
+  const handleSaveEdit = async () => {
+    try {
+      setIsSaving(true);
+
+      if (!selectedImageFile) {
+        await onSave(formData);
+        successToast("Profile updated successfully");
+        setIsEditing(false);
+        return;
+      }
+
+      const existingAttachmentId =
+        formData?.profileImage?._id ||
+        formData?.profile?.profileImageAttachmentId;
+
+      await upsertAttachmentAndUpdateEntity({
+        file: selectedImageFile,
+        entityType: "User",
+        entityId: formData.id,
+        existingAttachmentId,
+        apiClient: api,
+        onUpdateEntity: async () => onSave({ ...formData }),
+      });
+
+      successToast("Profile updated successfully");
+      setSelectedImageFile(null);
+      setIsEditing(false);
+    } catch (err) {
+      console.error(err);
+      errorToast(err?.message || "Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -80,7 +114,8 @@ const ParentInfoSection = ({
 
           <ProfileImageSection
             isEditing={isEditing}
-            profileImage={formData?.profileImage}
+            profileImage={formData?.profileImage?.url || formData?.profileImage}
+            onFileSelected={setSelectedImageFile}
           />
 
           {isEditing ? (
@@ -169,7 +204,12 @@ const ParentInfoSection = ({
               <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
                 Cancel
               </Button>
-              <Button variant="default" size="sm" onClick={handleSaveEdit}>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleSaveEdit}
+                loading={isSaving}
+              >
                 Save Changes
               </Button>
             </div>

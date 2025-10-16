@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import set from "lodash/set";
 import Icon from "components/AppIcon";
 import Input from "components/ui/Input";
 import Select from "components/ui/Select";
@@ -6,6 +7,7 @@ import Button from "components/ui/Button";
 import ProfileImageSection from "./ProfileImageSection";
 import api from "../../../../utils/axiosInstance";
 import { errorToast, successToast } from "../../../../utils/utils";
+import { upsertAttachmentAndUpdateEntity } from "../../../../utils/s3";
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },
@@ -52,28 +54,59 @@ const StudentProfileSection = ({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev };
+      set(updated, name, value);
+      return updated;
+    });
   };
 
   const handleGenderChange = (value) =>
     setFormData((prev) => ({ ...prev, gender: value }));
   const handleLanguagesChange = (values) =>
-    setFormData((prev) => ({ ...prev, languages: values.join(", ") }));
+    setFormData((prev) => ({
+      ...prev,
+      profile: { ...prev.profile, languages: values.join(", ") },
+    }));
 
   const handleSave = async () => {
-    setIsSaving(true);
-    console.log(selectedImageFile, "selectedImageFile");
-    onSave(formData);
-    successToast("Profile updated successfully");
-    setIsEditing(false);
+    try {
+      setIsSaving(true);
+
+      if (!selectedImageFile) {
+        await onSave(formData);
+        successToast("Profile updated successfully");
+        setIsEditing(false);
+        return;
+      }
+
+      const existingAttachmentId =
+        formData?.profileImage?._id ||
+        formData?.profile?.profileImageAttachmentId;
+
+      const { key } = await upsertAttachmentAndUpdateEntity({
+        file: selectedImageFile,
+        entityType: "User",
+        entityId: formData.id,
+        existingAttachmentId,
+        apiClient: api,
+        onUpdateEntity: async (uploadedKey) => onSave({ ...formData }),
+      });
+      successToast("Profile updated successfully");
+      setSelectedImageFile(null);
+      setIsEditing(false);
+    } catch (err) {
+      console.error(err);
+      errorToast(err?.message || "Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
     setFormData(profileData || {});
     setIsEditing(false);
   };
-
-  console.log(formData, "formdata");
 
   return (
     <section className="w-full mb-5 bg-card border border-border rounded-sm shadow-sm">

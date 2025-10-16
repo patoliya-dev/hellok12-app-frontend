@@ -24,61 +24,68 @@ export const uploadToS3 = async (file, presign) => {
   return { key: presign?.key };
 };
 
-const handleSave = async () => {
-  try {
-    setIsSaving(true);
+/**
+ * Generic helper to upload an attachment for any entity and update that entity concurrently.
+ *
+ * Params:
+ * - file: File to upload
+ * - entityType: e.g., "User" | "Student" | "Parent" | "Teacher" | "School"
+ * - entityId: string | number
+ * - existingAttachmentId: optional string if updating existing attachment
+ * - apiClient: axios-like instance (configured with auth)
+ * - onUpdateEntity: () => Promise (update call for the entity, receives key)
+ * - presignExtra: optional object to include extra payload on presign
+ *
+ * Returns: { key }
+ */
+export const upsertAttachmentAndUpdateEntity = async ({
+  file,
+  entityType,
+  entityId,
+  existingAttachmentId,
+  apiClient,
+  onUpdateEntity,
+  presignExtra = {},
+}) => {
+  if (!file) throw new Error("No file provided");
+  if (!entityType || !entityId) throw new Error("Missing entityType/entityId");
+  if (!apiClient) throw new Error("Missing api client");
+  if (!onUpdateEntity) throw new Error("Missing onUpdateEntity callback");
 
-    if (!selectedImageFile) {
-      await onSave(formData);
-      successToast("Profile updated successfully");
-      setIsEditing(false);
-      return;
-    }
+  // 1) Presign
+  const presignResp = await apiClient.post(
+    "/attachments/presign",
+    {
+      filename: file.name,
+      mime: file.type,
+      size: file.size,
+      entityType,
+      entityId,
+      ...presignExtra,
+    },
+    { headers: { "Content-Type": "application/json" } }
+  );
+  const presign = presignResp?.data?.data || presignResp?.data;
+  if (!presign?.upload?.url) throw new Error("No presign url returned");
 
-    // Request presign URL
-    const presignResp = await api.post(
-      "/attachments/presign",
-      {
-        filename: selectedImageFile.name,
-        mime: selectedImageFile.type,
-        size: selectedImageFile.size,
-        entityType: "User",
-        entityId: formData.id,
-      },
-      { headers: { "Content-Type": "application/json" } }
-    );
-    const presign = presignResp?.data?.data || presignResp?.data;
-    if (!presign?.upload?.url) throw new Error("No presign url returned");
+  // 2) Upload
+  const { key } = await uploadToS3(file, presign);
+  if (!key) throw new Error("No S3 object key after upload");
 
-    // Upload to S3
-    const { key } = await uploadToS3(selectedImageFile, presign);
-    if (!key) throw new Error("No S3 object key after upload");
+  // 3) Attachment upsert and entity update concurrently
+  const attachmentPromise = existingAttachmentId
+    ? apiClient.patch(`/attachments/update`, {
+        key,
+        attachmentId: existingAttachmentId,
+      })
+    : apiClient.post("/attachments/complete", {
+        key,
+        entityType,
+        entityId,
+      });
 
-    // Check if already exists or not
-    const existingAttachmentId =
-      formData?.profileImage || formData?.profile?.profileImageAttachmentId;
+  const updatePromise = onUpdateEntity(key);
+  await Promise.all([attachmentPromise, updatePromise]);
 
-    // Update attachment or create new
-    const attachmentPromise = existingAttachmentId
-      ? api.patch(`/attachments/${existingAttachmentId}`, { key })
-      : api.post("/attachments/complete", {
-          key,
-          entityType: "User",
-          entityId: formData.id,
-        });
-
-    // Update user
-    const userPromise = onSave({ ...formData, profileImageKey: key });
-
-    // Save changes
-    await Promise.all([attachmentPromise, userPromise]);
-    successToast("Profile updated successfully");
-    setSelectedImageFile(null);
-    setIsEditing(false);
-  } catch (err) {
-    console.error(err);
-    errorToast(err?.message || "Failed to update profile");
-  } finally {
-    setIsSaving(false);
-  }
+  return { key };
 };

@@ -4,6 +4,9 @@ import Input from "components/ui/Input";
 import Select from "components/ui/Select";
 import ProfileImageSection from "./ProfileImageSection";
 import set from "lodash/set";
+import api from "../../../../utils/axiosInstance";
+import { upsertAttachmentAndUpdateEntity } from "../../../../utils/s3";
+import { errorToast, successToast } from "../../../../utils/utils";
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },
@@ -22,10 +25,12 @@ const LANGUAGE_OPTIONS = [
 
 const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [formData, setFormData] = useState(child);
   useEffect(() => setFormData(child), [child]);
 
-  const languagesArray = formData.studentProfile.languages
+  const languagesArray = formData.studentProfile?.languages
     ? formData.studentProfile.languages
     : [];
 
@@ -41,13 +46,47 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
   const handleGenderChange = (value) =>
     setFormData((prev) => ({ ...prev, gender: value }));
   const handleLanguagesChange = (values) =>
-    setFormData((prev) => ({ ...prev, language: values.join(", ") }));
+    setFormData((prev) => ({
+      ...prev,
+      studentProfile: { ...prev.studentProfile, languages: [...values] },
+    }));
 
-  const handleSave = () => {
-    const data = { ...formData, profile: formData.studentProfile };
-    delete data.studentProfile;
-    onUpdate(child._id, data);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const payload = { ...formData, profile: formData.studentProfile };
+      delete payload.studentProfile;
+
+      if (!selectedImageFile) {
+        await onUpdate(child._id, payload);
+        successToast("Profile updated successfully");
+        setIsEditing(false);
+        return;
+      }
+
+      const existingAttachmentId =
+        formData?.profileImage?._id ||
+        formData?.studentProfile?.profileImage?._id ||
+        formData?.studentProfile?.profileImageAttachmentId;
+
+      await upsertAttachmentAndUpdateEntity({
+        file: selectedImageFile,
+        entityType: "User",
+        entityId: formData?._id || child._id,
+        existingAttachmentId,
+        apiClient: api,
+        onUpdateEntity: async () => onUpdate(child._id, payload),
+      });
+
+      successToast("Profile updated successfully");
+      setSelectedImageFile(null);
+      setIsEditing(false);
+    } catch (err) {
+      console.error(err);
+      errorToast(err?.message || "Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -69,7 +108,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
               iconName="Trash2"
               className="text-error"
               onClick={() => {
-                if (window.confirm("Delete this student?")) onDelete(child.id);
+                if (window.confirm("Delete this student?")) onDelete(child._id);
               }}
             >
               Delete Profile
@@ -89,7 +128,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
         </div>
         <ProfileImageSection
           isEditing={isEditing}
-          profileImage={child?.profileImage}
+          profileImage={child?.profileImage?.url || child?.profileImage}
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
           {/* Display fields */}
@@ -150,14 +189,15 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
           <Button variant="ghost" size="sm" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button variant="default" size="sm" onClick={handleSave}>
+          <Button variant="default" size="sm" onClick={handleSave} loading={isSaving}>
             Save Changes
           </Button>
         </div>
       </div>
       <ProfileImageSection
         isEditing={isEditing}
-        profileImage={formData?.profileImage}
+        profileImage={formData?.profileImage?.url || formData?.profileImage}
+        onFileSelected={setSelectedImageFile}
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
         <Input
@@ -186,7 +226,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
           onChange={handleChange}
         />
         <Select
-          label="studentProfile.Gender"
+          label="Gender"
           value={formData.studentProfile.gender}
           options={GENDER_OPTIONS}
           onChange={handleGenderChange}

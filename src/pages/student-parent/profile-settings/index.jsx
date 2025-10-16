@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import ParentInfoSection from "./components/ParentInfoSection";
 import StudentInfoSection from "./components/StudentInfoSection";
 import StudentProfileSection from "./components/StudentProfileSection";
@@ -10,8 +10,10 @@ import { selectAuthUser } from "reducers/auth/authSelectors";
 import { capitalize } from "../../../utils/utils";
 import api from "../../../utils/axiosInstance";
 import { toast } from "react-toastify";
+import { updateProfile as updateProfileThunk } from "reducers/profile/profileThunks";
 
 const ProfileAccountSettings = () => {
+  const dispatch = useDispatch();
   const authUser = useSelector(selectAuthUser);
   const isParent = authUser?.role === "parent";
   const isStudent = authUser?.role === "student";
@@ -29,7 +31,6 @@ const ProfileAccountSettings = () => {
     async function getData() {
       const { data } = await api.get("/auth/me");
       if (data) {
-        console.log(data, "data");
         setParentData(data.data);
       }
     }
@@ -46,8 +47,13 @@ const ProfileAccountSettings = () => {
   };
 
   const handleProfileSave = async (updatedData) => {
-    // Update user
-    console.log(updatedData, "updatedData");
+    const result = await dispatch(updateProfileThunk(updatedData));
+    if (updateProfileThunk.fulfilled.match(result)) {
+      const refreshed = result.payload;
+      if (refreshed) setParentData(refreshed);
+      return refreshed;
+    }
+    throw new Error(result.payload || "Failed to update profile");
   };
 
   const studentProfile = isStudent
@@ -97,6 +103,44 @@ const ProfileAccountSettings = () => {
                   studentData={parentData?.profile?.children}
                   isExpanded={expandedSections.student}
                   onToggle={() => handleSectionToggle("student")}
+                  onChildAdded={(child) =>
+                    setParentData((prev) => {
+                      if (!prev) return prev;
+                      const children = Array.isArray(prev?.profile?.children)
+                        ? [...prev.profile.children, child]
+                        : [child];
+                      return {
+                        ...prev,
+                        profile: { ...prev.profile, children },
+                      };
+                    })
+                  }
+                  onChildUpdated={(updated) =>
+                    setParentData((prev) => {
+                      if (!prev) return prev;
+                      const children = Array.isArray(prev?.profile?.children)
+                        ? prev.profile.children.map((c) =>
+                            c?._id === updated?._id ? updated : c
+                          )
+                        : [];
+                      return {
+                        ...prev,
+                        profile: { ...prev.profile, children },
+                      };
+                    })
+                  }
+                  onChildDeleted={(id) =>
+                    setParentData((prev) => {
+                      if (!prev) return prev;
+                      const children = Array.isArray(prev?.profile?.children)
+                        ? prev.profile.children.filter((c) => c?._id !== id)
+                        : [];
+                      return {
+                        ...prev,
+                        profile: { ...prev.profile, children },
+                      };
+                    })
+                  }
                 />
               </>
             )}
