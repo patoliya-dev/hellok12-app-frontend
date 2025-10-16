@@ -3,10 +3,10 @@ import Icon from "components/AppIcon";
 import Image from "components/AppImage";
 import Button from "components/ui/Button";
 
-const ProfileImageSection = ({ isEditing, profileImage }) => {
+const ProfileImageSection = ({ isEditing, profileImage, onFileSelected }) => {
   const [imagePreview, setImagePreview] = useState(profileImage || "");
   const fileInputRef = useRef(null);
-
+  
   const handleButtonClick = () => {
     fileInputRef.current.click();
   };
@@ -18,6 +18,7 @@ const ProfileImageSection = ({ isEditing, profileImage }) => {
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // ✅ reset input value
     }
+    if (onFileSelected) onFileSelected(null);
   };
 
   const handleImageUpload = (event) => {
@@ -28,6 +29,7 @@ const ProfileImageSection = ({ isEditing, profileImage }) => {
     reader.onload = (e) => {
       const imageUrl = e.target?.result;
       setImagePreview(imageUrl);
+      if (onFileSelected) onFileSelected(file);
 
       // ✅ after processing, reset file input value (optional)
       if (fileInputRef.current) {

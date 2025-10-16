@@ -8,21 +8,33 @@ import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import ChangePasswordModal from "./components/ChangePasswordModal";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { capitalize } from "../../../utils/utils";
+import api from "../../../utils/axiosInstance";
+import { toast } from "react-toastify";
 
 const ProfileAccountSettings = () => {
   const authUser = useSelector(selectAuthUser);
   const isParent = authUser?.role === "parent";
   const isStudent = authUser?.role === "student";
-
-  const parentData = useSelector((state) => state.profile.parent);
+  const [parentData, setParentData] = useState(null);
+  // const parentData = useSelector((state) => state.profile.parent);
   const students = useSelector((state) => state.profile.students);
-
   const [currentLanguage, setCurrentLanguage] = useState("en");
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     personal: true,
     student: isParent,
   });
+
+  useEffect(() => {
+    async function getData() {
+      const { data } = await api.get("/auth/me");
+      if (data) {
+        console.log(data, "data");
+        setParentData(data.data);
+      }
+    }
+    getData();
+  }, []);
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem("selectedLanguage") || "en";
@@ -33,9 +45,9 @@ const ProfileAccountSettings = () => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const handleProfileSave = (updatedData) => {
-    // Dispatch your action or API call here to save profile updates
-    console.log("Profile saved:", updatedData);
+  const handleProfileSave = async (updatedData) => {
+    // Update user
+    console.log(updatedData, "updatedData");
   };
 
   const studentProfile = isStudent
@@ -82,6 +94,7 @@ const ProfileAccountSettings = () => {
                   onChangePasswordClick={() => setShowChangePassword(true)}
                 />
                 <StudentInfoSection
+                  studentData={parentData?.profile?.children}
                   isExpanded={expandedSections.student}
                   onToggle={() => handleSectionToggle("student")}
                 />

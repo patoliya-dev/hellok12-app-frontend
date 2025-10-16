@@ -3,13 +3,14 @@ import Icon from "components/AppIcon";
 import Input from "components/ui/Input";
 import Select from "components/ui/Select";
 import Button from "components/ui/Button";
-import Image from "components/AppImage";
 import ProfileImageSection from "./ProfileImageSection";
+import api from "../../../../utils/axiosInstance";
+import { errorToast, successToast } from "../../../../utils/utils";
 
 const GENDER_OPTIONS = [
-  { label: "Male", value: "Male" },
-  { label: "Female", value: "Female" },
-  { label: "Other", value: "Other" },
+  { label: "Male", value: "male" },
+  { label: "Female", value: "female" },
+  { label: "Other", value: "other" },
 ];
 
 const LANGUAGE_OPTIONS = [
@@ -29,15 +30,24 @@ const StudentProfileSection = ({
   onChangePasswordClick,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [formData, setFormData] = useState(profileData || {});
 
   useEffect(() => {
-    setFormData(profileData || {});
+    async function getData() {
+      const { data } = await api.get("/auth/me");
+      if (data) {
+        setFormData(data.data);
+      }
+    }
+    getData();
+    // setFormData(profileData || {});
     setIsEditing(false);
   }, [profileData]);
 
-  const languagesArray = formData.languages
-    ? formData.languages.split(",").map((l) => l.trim())
+  const languagesArray = formData?.profile?.languages
+    ? formData.profile.languages
     : [];
 
   const handleChange = (e) => {
@@ -50,8 +60,11 @@ const StudentProfileSection = ({
   const handleLanguagesChange = (values) =>
     setFormData((prev) => ({ ...prev, languages: values.join(", ") }));
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setIsSaving(true);
+    console.log(selectedImageFile, "selectedImageFile");
     onSave(formData);
+    successToast("Profile updated successfully");
     setIsEditing(false);
   };
 
@@ -59,6 +72,8 @@ const StudentProfileSection = ({
     setFormData(profileData || {});
     setIsEditing(false);
   };
+
+  console.log(formData, "formdata");
 
   return (
     <section className="w-full mb-5 bg-card border border-border rounded-sm shadow-sm">
@@ -98,7 +113,8 @@ const StudentProfileSection = ({
 
           <ProfileImageSection
             isEditing={isEditing}
-            profileImage={formData?.profileImage}
+            profileImage={formData?.profileImage?.url}
+            onFileSelected={setSelectedImageFile}
           />
 
           {isEditing ? (
@@ -111,8 +127,8 @@ const StudentProfileSection = ({
             >
               <Input
                 label="Full Name"
-                name="fullName"
-                value={formData.fullName || ""}
+                name="name"
+                value={formData.name || ""}
                 onChange={handleChange}
               />
               <Input
@@ -130,22 +146,22 @@ const StudentProfileSection = ({
               />
               <Input
                 label="Address"
-                name="address"
-                value={formData.address || ""}
+                name="profile.address"
+                value={formData.profile.address || ""}
                 onChange={handleChange}
                 className="md:col-span-2"
               />
               <Input
                 label="Age"
-                name="age"
+                name="profile.age"
                 type="number"
-                value={formData.age || ""}
+                value={formData.profile.age || ""}
                 onChange={handleChange}
               />
               <Select
                 label="Gender"
                 options={GENDER_OPTIONS}
-                value={formData.gender || ""}
+                value={formData.profile.gender || ""}
                 onChange={handleGenderChange}
               />
               <Select
@@ -159,7 +175,12 @@ const StudentProfileSection = ({
                 <Button variant="ghost" onClick={handleCancel} size="sm">
                   Cancel
                 </Button>
-                <Button type="submit" variant="default" size="sm">
+                <Button
+                  type="submit"
+                  variant="default"
+                  size="sm"
+                  loading={isSaving}
+                >
                   Save Changes
                 </Button>
               </div>
@@ -170,9 +191,7 @@ const StudentProfileSection = ({
                 <label className="block text-sm font-medium text-muted-foreground">
                   Full Name
                 </label>
-                <p className="mt-1 text-sm text-foreground">
-                  {formData.fullName}
-                </p>
+                <p className="mt-1 text-sm text-foreground">{formData.name}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-muted-foreground">
@@ -191,21 +210,23 @@ const StudentProfileSection = ({
                   Address
                 </label>
                 <p className="mt-1 text-sm text-foreground">
-                  {formData.address}
+                  {formData?.profile?.address}
                 </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-muted-foreground">
                   Age
                 </label>
-                <p className="mt-1 text-sm text-foreground">{formData.age}</p>
+                <p className="mt-1 text-sm text-foreground">
+                  {formData?.profile?.age}
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-muted-foreground">
                   Gender
                 </label>
                 <p className="mt-1 text-sm text-foreground">
-                  {formData.gender}
+                  {formData?.profile?.gender}
                 </p>
               </div>
               <div>
@@ -213,7 +234,7 @@ const StudentProfileSection = ({
                   Languages
                 </label>
                 <p className="mt-1 text-sm text-foreground">
-                  {formData.languages}
+                  {formData?.profile?.languages.join(", ")}
                 </p>
               </div>
             </div>

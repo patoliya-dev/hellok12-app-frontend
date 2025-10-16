@@ -3,11 +3,12 @@ import Button from "components/ui/Button";
 import Input from "components/ui/Input";
 import Select from "components/ui/Select";
 import ProfileImageSection from "./ProfileImageSection";
+import set from "lodash/set";
 
 const GENDER_OPTIONS = [
-  { label: "Male", value: "Male" },
-  { label: "Female", value: "Female" },
-  { label: "Other", value: "Other" },
+  { label: "Male", value: "male" },
+  { label: "Female", value: "female" },
+  { label: "Other", value: "other" },
 ];
 
 const LANGUAGE_OPTIONS = [
@@ -22,16 +23,19 @@ const LANGUAGE_OPTIONS = [
 const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(child);
-
   useEffect(() => setFormData(child), [child]);
 
-  const languagesArray = formData.language
-    ? formData.language.split(",").map((l) => l.trim())
+  const languagesArray = formData.studentProfile.languages
+    ? formData.studentProfile.languages
     : [];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev };
+      set(updated, name, value);
+      return updated;
+    });
   };
 
   const handleGenderChange = (value) =>
@@ -40,7 +44,9 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
     setFormData((prev) => ({ ...prev, language: values.join(", ") }));
 
   const handleSave = () => {
-    onUpdate(child.id, formData);
+    const data = { ...formData, profile: formData.studentProfile };
+    delete data.studentProfile;
+    onUpdate(child._id, data);
     setIsEditing(false);
   };
 
@@ -91,7 +97,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
             <label className="text-sm font-medium text-muted-foreground">
               Full Name
             </label>
-            <p className="text-foreground mt-1 text-sm">{child.fullName}</p>
+            <p className="text-foreground mt-1 text-sm">{child.name}</p>
           </div>
           <div>
             <label className="text-sm font-medium text-muted-foreground">
@@ -103,25 +109,33 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
             <label className="text-sm font-medium text-muted-foreground">
               Address
             </label>
-            <p className="text-foreground mt-1 text-sm">{child.address}</p>
+            <p className="text-foreground mt-1 text-sm">
+              {child.studentProfile.address}
+            </p>
           </div>
           <div>
             <label className="text-sm font-medium text-muted-foreground">
               Age
             </label>
-            <p className="text-foreground mt-1 text-sm">{child.age}</p>
+            <p className="text-foreground mt-1 text-sm">
+              {child.studentProfile.age}
+            </p>
           </div>
           <div>
             <label className="text-sm font-medium text-muted-foreground">
               Gender
             </label>
-            <p className="text-foreground mt-1 text-sm">{child.gender}</p>
+            <p className="text-foreground mt-1 text-sm">
+              {child.studentProfile.gender}
+            </p>
           </div>
           <div>
             <label className="text-sm font-medium text-muted-foreground">
               Languages
             </label>
-            <p className="text-foreground mt-1 text-sm">{child.language}</p>
+            <p className="text-foreground mt-1 text-sm">
+              {child.studentProfile.languages.join(", ")}
+            </p>
           </div>
         </div>
       </div>
@@ -148,8 +162,8 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
         <Input
           placeholder="Full Name"
-          name="fullName"
-          value={formData.fullName}
+          name="name"
+          value={formData.name}
           onChange={handleChange}
         />
         <Input
@@ -160,20 +174,20 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
         />
         <Input
           placeholder="Address"
-          name="address"
-          value={formData.address}
+          name="studentProfile.address"
+          value={formData.studentProfile.address}
           onChange={handleChange}
           className="md:col-span-2"
         />
         <Input
           placeholder="Age"
-          name="age"
-          value={formData.age}
+          name="studentProfile.age"
+          value={formData.studentProfile.age}
           onChange={handleChange}
         />
         <Select
-          label="Gender"
-          value={formData.gender}
+          label="studentProfile.Gender"
+          value={formData.studentProfile.gender}
           options={GENDER_OPTIONS}
           onChange={handleGenderChange}
         />

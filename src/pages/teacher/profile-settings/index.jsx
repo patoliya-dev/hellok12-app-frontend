@@ -174,6 +174,8 @@ const ProfileAccountSettings = () => {
       const tabLabel = tabName
         ? tabs?.find((t) => t?.id === tabName)?.name || "section"
         : "profile";
+      
+      console.log(tabLabel)
       successToast(`${tabLabel} saved successfully!`);
 
       // Clear status after 3 seconds
