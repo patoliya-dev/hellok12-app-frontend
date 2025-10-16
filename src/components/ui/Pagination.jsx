@@ -9,9 +9,10 @@ const Pagination = ({
   totalItems,
   onPageChange,
   isBorderTop = true,
+  pageSize = PAGE_SIZE,
 }) => {
-  const startItem = (currentPage - 1) * PAGE_SIZE + 1;
-  const endItem = Math.min(currentPage * PAGE_SIZE, totalItems);
+  const startItem = (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
 
   const getVisiblePages = () => {
     const pages = [];

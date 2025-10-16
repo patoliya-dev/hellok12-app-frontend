@@ -1,7 +1,7 @@
 import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
 
-const QuickAction = () => {
+const QuickAction = ({ onInviteTeacher }) => {
   const quickActions = [
     {
       id: 1,
@@ -10,7 +10,7 @@ const QuickAction = () => {
       icon: "UserPlus",
       color: "text-primary",
       bgColor: "bg-primary/10",
-      action: () => console.log("Invite teacher"),
+      action: () => onInviteTeacher(),
     },
     {
       id: 2,

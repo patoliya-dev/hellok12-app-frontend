@@ -39,6 +39,7 @@ const CreateCourse = () => {
         trialAvailable: false,
         trialCapacity: 1,
         isCurriculumGames: false,
+        duration: "",
       },
     ],
   });
@@ -53,6 +54,7 @@ const CreateCourse = () => {
     trialAvailable: false,
     trialCapacity: 1,
     curriculumGames: false,
+    duration: "",
   };
   const isEdit = mode === "edit";
   const isLesson = location.pathname.includes("lesson");
