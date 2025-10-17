@@ -74,6 +74,8 @@ const ParentInfoSection = ({
     }
   };
 
+  console.log(profileData?.profileImage?.url || profileData?.profileImage)
+
   return (
     <section className="w-full mb-5 bg-card border border-border rounded-lg shadow-sm">
       <button
@@ -114,7 +116,7 @@ const ParentInfoSection = ({
 
           <ProfileImageSection
             isEditing={isEditing}
-            profileImage={formData?.profileImage?.url || formData?.profileImage}
+            profileImage={profileData?.profileImage?.url || profileData?.profileImage} 
             onFileSelected={setSelectedImageFile}
           />
 
@@ -169,7 +171,7 @@ const ParentInfoSection = ({
                   Address
                 </label>
                 <p className="text-foreground mt-1 text-sm">
-                  {formData?.profile.address}
+                  {formData?.profile?.address}
                 </p>
               </div>
               <div>

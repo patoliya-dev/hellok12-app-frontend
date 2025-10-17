@@ -60,6 +60,7 @@ const StudentInfoSection = ({
     }
   };
   const handleAdd = async (data) => {
+    console.log(data, "data");
     try {
       // Shape payload to expected server format
       const payload = {
@@ -71,8 +72,8 @@ const StudentInfoSection = ({
           address: data.address,
           age: data.age,
           gender: data.gender,
-          languages: Array.isArray(data.language)
-            ? data.language
+          languages: Array.isArray(data.languages)
+            ? data.languages
             : [data.language],
         },
       };

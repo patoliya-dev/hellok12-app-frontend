@@ -18,7 +18,7 @@ const ProfileAccountSettings = () => {
   const isParent = authUser?.role === "parent";
   const isStudent = authUser?.role === "student";
   const [parentData, setParentData] = useState(null);
-  // const parentData = useSelector((state) => state.profile.parent);
+  const [studentData, setStudentData] = useState(null);
   const students = useSelector((state) => state.profile.students);
   const [currentLanguage, setCurrentLanguage] = useState("en");
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -26,12 +26,19 @@ const ProfileAccountSettings = () => {
     personal: true,
     student: isParent,
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     async function getData() {
+      setIsLoading(true);
       const { data } = await api.get("/auth/me");
       if (data) {
-        setParentData(data.data);
+        if (data.data.role === "parent") {
+          setParentData(data.data);
+        } else if (data.data.role === "student") {
+          setStudentData(data.data);
+        }
+        setIsLoading(false);
       }
     }
     getData();
@@ -60,7 +67,16 @@ const ProfileAccountSettings = () => {
     ? students.find((s) => s.email === authUser.email) || authUser
     : authUser;
 
-  return (
+  return isLoading ? (
+    <div className="min-h-screen bg-background">
+      <RoleBasedHeader />
+      <main className="pt-16 pb-20 lg:pb-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center">Loading.....</div>
+        </div>
+      </main>
+    </div>
+  ) : (
     <div className="min-h-screen bg-background">
       <RoleBasedHeader />
       <main className="pt-16 pb-20 lg:pb-8">
@@ -106,9 +122,12 @@ const ProfileAccountSettings = () => {
                   onChildAdded={(child) =>
                     setParentData((prev) => {
                       if (!prev) return prev;
-                      const children = Array.isArray(prev?.profile?.children)
-                        ? [...prev.profile.children, child]
+                      const children = Array.isArray(
+                        child?.parentProfile?.children
+                      )
+                        ? [...child.parentProfile.children]
                         : [child];
+                      console.log(children);
                       return {
                         ...prev,
                         profile: { ...prev.profile, children },
@@ -148,7 +167,7 @@ const ProfileAccountSettings = () => {
               <StudentProfileSection
                 isExpanded={expandedSections.personal}
                 onToggle={() => handleSectionToggle("personal")}
-                profileData={studentProfile}
+                profileData={studentData}
                 onSave={handleProfileSave}
                 onChangePasswordClick={() => setShowChangePassword(true)}
               />

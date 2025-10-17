@@ -29,7 +29,6 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [formData, setFormData] = useState(child);
   useEffect(() => setFormData(child), [child]);
-
   const languagesArray = formData.studentProfile?.languages
     ? formData.studentProfile.languages
     : [];
@@ -44,7 +43,10 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
   };
 
   const handleGenderChange = (value) =>
-    setFormData((prev) => ({ ...prev, gender: value }));
+    setFormData((prev) => ({
+      ...prev,
+      studentProfile: { ...prev.studentProfile, gender: value },
+    }));
   const handleLanguagesChange = (values) =>
     setFormData((prev) => ({
       ...prev,
@@ -136,20 +138,20 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
             <label className="text-sm font-medium text-muted-foreground">
               Full Name
             </label>
-            <p className="text-foreground mt-1 text-sm">{child.name}</p>
+            <p className="text-foreground mt-1 text-sm">{child?.name}</p>
           </div>
           <div>
             <label className="text-sm font-medium text-muted-foreground">
               Email Address
             </label>
-            <p className="text-foreground mt-1 text-sm">{child.email}</p>
+            <p className="text-foreground mt-1 text-sm">{child?.email}</p>
           </div>
           <div className="md:col-span-2">
             <label className="text-sm font-medium text-muted-foreground">
               Address
             </label>
             <p className="text-foreground mt-1 text-sm">
-              {child.studentProfile.address}
+              {child?.studentProfile?.address}
             </p>
           </div>
           <div>
@@ -157,7 +159,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
               Age
             </label>
             <p className="text-foreground mt-1 text-sm">
-              {child.studentProfile.age}
+              {child?.studentProfile?.age}
             </p>
           </div>
           <div>
@@ -165,7 +167,8 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
               Gender
             </label>
             <p className="text-foreground mt-1 text-sm">
-              {child.studentProfile.gender}
+              {child?.studentProfile?.gender?.charAt(0).toUpperCase() +
+                child?.studentProfile?.gender?.slice(1).toLowerCase()}
             </p>
           </div>
           <div>
@@ -173,7 +176,9 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
               Languages
             </label>
             <p className="text-foreground mt-1 text-sm">
-              {child.studentProfile.languages.join(", ")}
+              {Array.isArray(child?.studentProfile?.languages)
+                ? child?.studentProfile?.languages.join(", ")
+                : child?.studentProfile?.languages}
             </p>
           </div>
         </div>
@@ -189,7 +194,12 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
           <Button variant="ghost" size="sm" onClick={handleCancel}>
             Cancel
           </Button>
-          <Button variant="default" size="sm" onClick={handleSave} loading={isSaving}>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleSave}
+            loading={isSaving}
+          >
             Save Changes
           </Button>
         </div>

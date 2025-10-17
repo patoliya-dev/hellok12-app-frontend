@@ -14,6 +14,7 @@ const PersonalInfoTab = ({
   isSaving,
   isEdit,
   errors,
+  onImageFileChange,
 }) => {
   const fileInputRef = useRef(null);
   const handleButtonClick = () => {
@@ -28,13 +29,45 @@ const PersonalInfoTab = ({
   );
 
   const handleInputChange = (field, value) => {
-    const updatedData = { ...formData, [field]: value };
+    let updatedData = { ...formData, [field]: value };
+
     if (field === "country") {
-      updatedData.state = "";
-      updatedData.city = "";
+      const prevLocation = formData?.profile?.location || {};
+      updatedData = {
+        ...updatedData,
+        profile: {
+          ...(formData?.profile || {}),
+          location: { ...prevLocation, country: value, state: "", city: "" },
+        },
+      };
     } else if (field === "state") {
-      updatedData.city = "";
+      const prevLocation = formData?.profile?.location || {};
+      updatedData = {
+        ...updatedData,
+        profile: {
+          ...(formData?.profile || {}),
+          location: { ...prevLocation, state: value, city: "" },
+        },
+      };
+    } else if (field === "city") {
+      const prevLocation = formData?.profile?.location || {};
+      updatedData = {
+        ...updatedData,
+        profile: {
+          ...(formData?.profile || {}),
+          location: { ...prevLocation, city: value },
+        },
+      };
+    } else if (field === "experience") {
+      updatedData = {
+        ...updatedData,
+        profile: {
+          ...(formData?.profile || {}),
+          experience: value,
+        },
+      };
     }
+
     onFormChange(updatedData);
   };
 
@@ -46,7 +79,7 @@ const PersonalInfoTab = ({
         const imageUrl = e?.target?.result;
         setImagePreview(imageUrl);
         setProfileImage(imageUrl);
-        handleInputChange("profileImage", imageUrl);
+        if (onImageFileChange) onImageFileChange(file);
       };
       reader?.readAsDataURL(file);
     }
@@ -55,11 +88,15 @@ const PersonalInfoTab = ({
   const removeImage = () => {
     setImagePreview("");
     setProfileImage("");
-    handleInputChange("profileImage", "");
+    if (onImageFileChange) onImageFileChange(null);
   };
 
-  const stateOptions = getAllStates(formData?.country) || [];
-  const cityOptions = getAllCities(formData?.country, formData?.state) || [];
+  const stateOptions = getAllStates(formData?.profile?.location?.country) || [];
+  const cityOptions =
+    getAllCities(
+      formData?.profile?.location?.country,
+      formData?.profile?.location?.state
+    ) || [];
 
   return (
     <div className="space-y-6">
@@ -135,8 +172,8 @@ const PersonalInfoTab = ({
             label="Full Name"
             type="text"
             placeholder="Enter your full name"
-            value={formData?.fullName || ""}
-            onChange={(e) => handleInputChange("fullName", e?.target?.value)}
+            value={formData?.name}
+            onChange={(e) => handleInputChange("name", e?.target?.value)}
             required
             disabled={!isEdit}
             error={errors?.fullName}
@@ -147,7 +184,7 @@ const PersonalInfoTab = ({
             label="Email Address"
             type="email"
             placeholder="your.email@example.com"
-            value={formData?.email || ""}
+            value={formData?.email}
             onChange={(e) => handleInputChange("email", e?.target?.value)}
             required
             disabled={!isEdit}
@@ -157,7 +194,7 @@ const PersonalInfoTab = ({
             label="Phone Number"
             type="tel"
             placeholder="+1 (555) 123-4567"
-            value={formData?.phone || ""}
+            value={formData?.phone}
             onChange={(e) => handleInputChange("phone", e?.target?.value)}
             required
             disabled={!isEdit}
@@ -166,7 +203,7 @@ const PersonalInfoTab = ({
           <Input
             label="Date of Birth"
             type="date"
-            value={formData?.dateOfBirth || ""}
+            value={formData?.dateOfBirth}
             onChange={(e) => handleInputChange("dateOfBirth", e?.target?.value)}
             disabled={!isEdit}
           />
@@ -176,7 +213,7 @@ const PersonalInfoTab = ({
             placeholder="5"
             min="0"
             max="50"
-            value={formData?.experience || ""}
+            value={formData?.profile?.experience || 0}
             onChange={(e) => handleInputChange("experience", e?.target?.value)}
             required
             disabled={!isEdit}
@@ -192,7 +229,7 @@ const PersonalInfoTab = ({
             label="Country"
             placeholder="Select Country"
             options={countryOptions}
-            value={formData?.country || ""}
+            value={formData?.profile?.location?.country || ""}
             onChange={(value) => handleInputChange("country", value)}
             required
             disabled={!isEdit}
@@ -203,10 +240,10 @@ const PersonalInfoTab = ({
             label="State/Province"
             placeholder="Select State/Province"
             options={stateOptions}
-            value={formData?.state || ""}
+            value={formData?.profile?.location?.state || ""}
             onChange={(value) => handleInputChange("state", value)}
             required
-            disabled={!isEdit || !formData?.country}
+            disabled={!isEdit || !formData?.profile?.location?.country}
             error={errors?.state}
             searchable
           />
@@ -214,10 +251,10 @@ const PersonalInfoTab = ({
             label="City"
             placeholder="Select City"
             options={cityOptions}
-            value={formData?.city || ""}
+            value={formData?.profile?.location?.city || ""}
             onChange={(value) => handleInputChange("city", value)}
             required
-            disabled={!isEdit || !formData?.state}
+            disabled={!isEdit || !formData?.profile?.location?.state}
             error={errors?.city}
             searchable
           />

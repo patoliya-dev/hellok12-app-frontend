@@ -35,17 +35,26 @@ const StudentProfileSection = ({
   const [isSaving, setIsSaving] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [formData, setFormData] = useState(profileData || {});
+  const latestProfileData = useRef(profileData || {});
 
   useEffect(() => {
     async function getData() {
       const { data } = await api.get("/auth/me");
       if (data) {
         setFormData(data.data);
+        latestProfileData.current = data.data;
       }
     }
     getData();
     // setFormData(profileData || {});
     setIsEditing(false);
+  }, [profileData]);
+
+  // Update ref when profileData prop changes
+  useEffect(() => {
+    if (profileData) {
+      latestProfileData.current = profileData;
+    }
   }, [profileData]);
 
   const languagesArray = formData?.profile?.languages
@@ -62,11 +71,14 @@ const StudentProfileSection = ({
   };
 
   const handleGenderChange = (value) =>
-    setFormData((prev) => ({ ...prev, gender: value }));
+    setFormData((prev) => ({
+      ...prev,
+      profile: { ...prev.profile, gender: value },
+    }));
   const handleLanguagesChange = (values) =>
     setFormData((prev) => ({
       ...prev,
-      profile: { ...prev.profile, languages: values.join(", ") },
+      profile: { ...prev.profile, languages: values },
     }));
 
   const handleSave = async () => {
@@ -104,7 +116,7 @@ const StudentProfileSection = ({
   };
 
   const handleCancel = () => {
-    setFormData(profileData || {});
+    setFormData(latestProfileData.current);
     setIsEditing(false);
   };
 
@@ -267,7 +279,9 @@ const StudentProfileSection = ({
                   Languages
                 </label>
                 <p className="mt-1 text-sm text-foreground">
-                  {formData?.profile?.languages.join(", ")}
+                  {Array.isArray(formData?.profile?.languages)
+                    ? formData?.profile?.languages.join(", ")
+                    : formData?.profile?.languages}
                 </p>
               </div>
             </div>

@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useDispatch } from "react-redux";
+import _ from "lodash";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import Button from "components/ui/Button";
 import Icon from "components/AppIcon";
@@ -11,78 +13,39 @@ import CertificationsTab from "./components/CertificationsTab";
 import AvailabilityTab from "./components/AvailabilityTab";
 import TeachingPreferencesTab from "./components/TeachingPreferencesTab";
 import TeachingHighlightsTab from "./components/TeachingHighlightsTab";
+import api from "../../../utils/axiosInstance";
+import { upsertAttachmentAndUpdateEntity } from "../../../utils/s3";
+import { updateProfile as updateProfileThunk } from "reducers/profile/profileThunks";
 
 const ProfileAccountSettings = () => {
+  const dispatch = useDispatch();
   const [saveStatus, setSaveStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
   const [isEdit, setIsEdit] = useState(false);
-  const [formData, setFormData] = useState({
-    // Personal Info
-    fullName: "Sarah Johnson",
-    email: "sarah.johnson@email.com",
-    phone: "+1 (555) 123-4567",
-    dateOfBirth: "1985-03-15",
-    experience: "8",
-    country: "",
-    state: "",
-    city: "",
-    profileImage:
-      "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face",
-
-    // Bio & Specializations
-    bio: `Passionate language educator with 8 years of experience teaching English and Spanish to students of all ages. I believe in creating an engaging, supportive environment where students feel confident to practice and make mistakes. My teaching approach combines conversational practice with structured grammar lessons, tailored to each student's learning style and goals.`,
-    teachingStyle:
-      "Their teaching style is engaging, adaptable, and student-focused, blending clear instruction with interactive activities. They strive to create a supportive environment that encourages curiosity, critical thinking, and lifelong learning.",
-    whyLoveTeaching:
-      "They love teaching because it shapes minds and opens doors to new possibilities. Guiding students towards growth and success brings them true fulfillment.",
-    languagesTaught: ["english", "spanish"],
-    nativeLanguage: "english",
-    ageGroups: ["high-school", "adults"],
-    specialties: "Business English, Conversational Spanish, IELTS Preparation",
-
-    // Certifications
-    education: "Master's in Applied Linguistics",
-    teachingLicense: "TESOL, DELE Certified",
-    institution: "University of California, Berkeley",
-    graduationYear: "2015",
-    awards: "Excellence in Online Teaching Award 2023",
-    additionalNotes:
-      "Specialized training in teaching students with learning disabilities",
-    certificates: [
-      {
-        id: 1,
-        name: "TESOL_Certificate.pdf",
-        url: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop",
-        uploadDate: "2025-01-15T10:30:00Z",
-        size: 2048576,
-      },
-      {
-        id: 2,
-        name: "Masters_Diploma.jpg",
-        url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
-        uploadDate: "2025-01-15T10:35:00Z",
-        size: 1536000,
-      },
-    ],
-
-    // Availability
-    timeZone: "Asia/Kolkata",
-
-    // Teaching Preferences
-    onlineTeaching: true,
-    inPersonTeaching: true,
-    travelRadius: "15",
-    travelFee: "10",
-    trialRate: "25",
-    regularRate: "45",
-    groupRate: "30",
-    packageDiscount: "15",
-    maxGroupSize: "4",
-    specialRequirements:
-      "Reliable internet connection required for online lessons. For in-person lessons, I can provide materials or use student's preferred textbooks.",
-  });
+  const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
+
+  useEffect(() => {
+    async function getData() {
+      const { data } = await api.get("/auth/me");
+      if (data) {
+        setFormData(data.data);
+      }
+    }
+    getData();
+  }, []);
+  const getFieldValue = (data, field) => {
+    if (["country", "state", "city"].includes(field)) {
+      return data?.[field] ?? data?.profile?.location?.[field] ?? "";
+    }
+    if (field === "fullName") {
+      return data?.fullName ?? data?.name ?? "";
+    }
+    // Try top-level, then nested under profile
+    return data?.[field] ?? _.get(data, `profile.${field}`, "");
+  };
 
   const validateFields = (tabName, data) => {
     let newErrors = {};
@@ -91,7 +54,8 @@ const ProfileAccountSettings = () => {
       // ✅ validate only the selected tab
       const requiredFields = validationRules[tabName] || [];
       requiredFields.forEach((field) => {
-        if (!data[field] || data[field].toString().trim() === "") {
+        const value = getFieldValue(data, field);
+        if (!value || value.toString().trim() === "") {
           newErrors[field] = "This field is required";
         }
       });
@@ -100,7 +64,8 @@ const ProfileAccountSettings = () => {
       Object.keys(validationRules).forEach((tab) => {
         const requiredFields = validationRules[tab] || [];
         requiredFields.forEach((field) => {
-          if (!data[field] || data[field].toString().trim() === "") {
+          const value = getFieldValue(data, field);
+          if (!value || value.toString().trim() === "") {
             newErrors[field] = "This field is required";
           }
         });
@@ -158,31 +123,54 @@ const ProfileAccountSettings = () => {
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       errorToast("Please fill all required fields before saving.");
-      return; // stop execution
+      return;
     }
     setIsSaving(true);
     setSaveStatus("saving");
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const performUpdate = async () => {
+        const result = await dispatch(updateProfileThunk(formData));
+        if (!updateProfileThunk.fulfilled.match(result)) {
+          throw new Error(result.payload || "Failed to update profile");
+        }
+        // refresh form data with latest from server
+        const refreshed = result.payload;
+        if (refreshed) setFormData(refreshed);
+      };
 
-      // Mock save success
+      if (!tabName || tabName === "personal") {
+        const existingAttachmentId =
+          formData?.profileImage?._id ||
+          formData?.profile?.profileImageAttachmentId;
+
+        if (selectedImageFile) {
+          await upsertAttachmentAndUpdateEntity({
+            file: selectedImageFile,
+            entityType: "User",
+            entityId: formData.id,
+            existingAttachmentId,
+            apiClient: api,
+            onUpdateEntity: async () => performUpdate(),
+          });
+          setSelectedImageFile(null);
+        } else {
+          await performUpdate();
+        }
+      } else {
+        await performUpdate();
+      }
+
       setSaveStatus("saved");
-
-      // Show success message
       const tabLabel = tabName
         ? tabs?.find((t) => t?.id === tabName)?.name || "section"
         : "profile";
-      
-      console.log(tabLabel)
       successToast(`${tabLabel} saved successfully!`);
-
-      // Clear status after 3 seconds
       setTimeout(() => setSaveStatus(""), 3000);
     } catch (error) {
       setSaveStatus("error");
       console.error("Failed to save profile:", error);
+      errorToast(error?.message || "Failed to save profile");
       setTimeout(() => setSaveStatus(""), 3000);
     } finally {
       setIsSaving(false);
@@ -210,16 +198,41 @@ const ProfileAccountSettings = () => {
     }
   };
 
-  const handleFormChange = (updatedData) => {
-    setFormData(updatedData);
+  const handleFormChange = (field, value) => {
+    // const handleChange = (e) => {
+    //   const { name, value } = e.target;
+    //   setFormData((prev) => {
+    //     const updated = { ...prev };
+    //     set(updated, name, value);
+    //     return updated;
+    //   });
+    // };
+    let updatedData;
+    console.log(Array.isArray(value) && [...value], "value");
+    setFormData((prev) => {
+      const updated = { ...prev };
+      _.set(updated, field, value); 
+      updatedData = updated;
+      return updated;
+    });
     setSaveStatus("unsaved");
 
     // Clear errors for fields that are now valid
     setErrors((prevErrors) => {
       const newErrors = { ...prevErrors };
-
+      let value;
       Object.keys(newErrors).forEach((field) => {
-        if (updatedData[field] && updatedData[field].toString().trim() !== "") {
+        if (["country", "state", "city"].includes(field)) {
+          value =
+            updatedData?.[field] ?? updatedData?.profile?.location?.[field];
+        } else if (field === "fullName") {
+          value = updatedData?.name;
+        } else {
+          // Try top-level first, then nested path
+          value =
+            updatedData?.[field] ?? _.get(updatedData, `profile.${field}`);
+        }
+        if (value && value.toString().trim() !== "") {
           delete newErrors[field];
         }
       });
@@ -228,6 +241,8 @@ const ProfileAccountSettings = () => {
     });
   };
 
+  console.log(formData);
+  console.log(errors, "errors");
   const renderTabContent = () => {
     const commonProps = {
       formData,
@@ -240,7 +255,12 @@ const ProfileAccountSettings = () => {
 
     switch (activeTab) {
       case "personal":
-        return <PersonalInfoTab {...commonProps} />;
+        return (
+          <PersonalInfoTab
+            {...commonProps}
+            onImageFileChange={setSelectedImageFile}
+          />
+        );
       case "bio":
         return <BioSpecializationsTab {...commonProps} />;
       case "certifications":
