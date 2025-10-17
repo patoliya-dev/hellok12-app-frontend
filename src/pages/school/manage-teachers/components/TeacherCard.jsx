@@ -222,6 +222,14 @@ const TeacherCard = ({
                 </Button>
               </div>
             )}
+            {teacher?.status !== "pending" && (
+              <div className="flex items-center space-x-2">
+                <Image src="/assets/images/yellow_star.svg" alt="Star" />
+                <span className="ml-1 text-sm text-brand-gray-800">
+                  {teacher?.stats?.rating}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

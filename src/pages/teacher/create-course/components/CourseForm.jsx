@@ -7,7 +7,7 @@ import FileUploader from "components/ui/FileUploader";
 const CourseForm = ({ formData, handleInputChange, errors }) => {
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 !mb-4">
         <Input
           label="Course Name"
           placeholder="e.g., Beginner Spanish Conversation"
@@ -28,12 +28,15 @@ const CourseForm = ({ formData, handleInputChange, errors }) => {
         />
       </div>
 
-      <Input
-        label="Description"
-        type="text"
+      <h5 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground">
+        Description
+      </h5>
+      <textarea
+        rows={4}
         placeholder="Brief description of the course content and objectives"
         value={formData?.description}
         onChange={(e) => handleInputChange("description", e?.target?.value)}
+        className="border border-border rounded-lg p-4 resize-none text-foreground w-full focus:outline-none focus:border-primary !mt-1"
       />
 
       <div

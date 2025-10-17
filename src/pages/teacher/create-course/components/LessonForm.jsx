@@ -57,17 +57,27 @@ const LessonFormInstance = ({
           />
         </div>
         <div className="mb-4">
-          <Input
-            label="Description"
-            type="text"
+          <h5 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground">
+            Description
+            <span className="text-destructive ml-1">*</span>
+          </h5>
+          <textarea
+            rows={4}
             placeholder="Describe what students will learn in this lesson"
             value={formData?.lessonDescription}
-            required
-            error={errors?.lessonDescription}
             onChange={(e) =>
               handleInputChange("lessonDescription", e?.target?.value)
             }
+            className={`border rounded-lg p-4 resize-none text-foreground w-full focus:outline-none focus:border-primary !mt-1 ${
+              errors?.lessonDescription ? "border-destructive" : "border-border"
+            }`}
           />
+
+          {errors?.lessonDescription && (
+            <p className="text-destructive text-sm">
+              {errors?.lessonDescription}
+            </p>
+          )}
         </div>
 
         <WeeklySchedule />
