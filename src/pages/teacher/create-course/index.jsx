@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import Breadcrumb from "components/ui/Breadcrumb";
@@ -8,7 +8,7 @@ import Stepper from "./components/Stepper";
 import CourseForm from "./components/CourseForm";
 import Button from "components/ui/Button";
 import LessonForm from "./components/LessonForm";
-import { successToast } from "../../../utils/utils";
+import { setIn, successToast } from "../../../utils/utils";
 import Icon from "components/AppIcon";
 
 // THUNKS (make sure these paths match your project)
@@ -16,9 +16,8 @@ import {
   createCourse as createCourseThunk,
   updateCourse as updateCourseThunk,
   fetchCourse as fetchCourseThunk,
-  fetchCourseWithLessons as fetchCourseWithLessonsThunk
 } from "../../../reducers/courses/courseThunks";
-import { createLessons as createLessonThunk } from "../../../reducers/lessons/lessonThunks";
+import { createLessons as createLessonsThunk, updateLessons as updateLessonsThunk } from "../../../reducers/lessons/lessonThunks";
 import {
   presignAttachment,
   uploadToS3,
@@ -26,10 +25,12 @@ import {
   claimAttachment,
 } from "../../../reducers/attachments/attachmentThunks";
 import { formatDateForDateInput } from "../../../utils/formatters";
+import { buildPartialUpdate, mapLessonFromApi, mapLessonToCreatePayload } from "../../teacher/create-course/mappers/lessons";
+import { buildLessonMutations } from "../../teacher/create-course/mappers/diff";
 
 const CreateCourse = () => {
+  const originalLessonsRef = useRef([]);
   const { courseId } = useParams();
-  console.log('courseId', courseId);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ const CreateCourse = () => {
       {
         title: "",
         description: "",
-        trialAvailable: false,
+        isTrialAvailable: false,
         trialCapacity: 1,
         schedule: {
           date: "",
@@ -75,7 +76,7 @@ const CreateCourse = () => {
   const defaultLesson = {
     title: "",
     description: "",
-    trialAvailable: false,
+    isTrialAvailable: false,
     trialCapacity: 1,
   };
 
@@ -83,32 +84,29 @@ const CreateCourse = () => {
   const isLesson = location.pathname.includes("lesson");
   const isCreateLesson = location.pathname.includes("create-lesson");
 
-  useEffect(() => {
-    if (courseId) {
-      setMode("edit");
-      setBreadCrumbData(commonBreadCrumbData?.edit);
-      isLesson && setCurrentStep(2);
-      // NOTE: you can fetch the existing course here if needed and hydrate formData
-      // using your course detail thunk (kept lightweight to respect your current screen).
-    } else {
-      setMode("add");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courseId]);
-
   // If you were previously reading from mock, this keeps the “add extra lesson” UX intact in edit/lesson route.
   useEffect(() => {
     if (courseId) {
       (async () => {
-        const courseData = await dispatch(
+        setMode("edit");
+        setBreadCrumbData(commonBreadCrumbData?.edit);
+        isLesson && setCurrentStep(2);
+        const course = await dispatch(
           fetchCourseThunk(courseId)).unwrap();
-        // const { data } = courseData;
-        console.log('courseData', courseData);
-        const lessonList = await dispatch(
-          fetchCourseWithLessonsThunk(courseId)).unwrap();
-        setFormData({ ...courseData, startDate: formatDateForDateInput(courseData.startDate), endDate: formatDateForDateInput(courseData.endDate), lessons: lessonList?.length ? lessonList : formData.lessons });
+        const lessons = (course?.lessons || []).map(mapLessonFromApi);
 
+        originalLessonsRef.current = course.lessons;
+
+        setFormData(prev => ({
+          ...prev,
+          ...course,
+          startDate: formatDateForDateInput(course.startDate),
+          endDate: formatDateForDateInput(course.endDate),
+          lessons: lessons?.length ? lessons : prev.lessons, // keep at least one row
+        }));
       })();
+    } else {
+      setMode("add");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
@@ -123,7 +121,7 @@ const CreateCourse = () => {
     if (step === 1) {
       if (!formData?.title?.trim())
         newErrors.title = "Course name is required";
-      if (!formData?.introImageRef?.attachmentId)
+      if (!formData?.introImageRef?.attachmentId && !formData?.introImageRef?.url)
         newErrors.introImage = "Intro image is required";
       if (!formData?.language) newErrors.language = "Language is required";
       if (formData?.lessonType === "group" && Number(formData?.studentCapacity) < 1)
@@ -139,7 +137,7 @@ const CreateCourse = () => {
         if (!lesson.title?.trim()) errs.title = "Lesson title is required";
         if (!lesson.description?.trim())
           errs.description = "Lesson description is required";
-        if (lesson.trialAvailable) {
+        if (lesson.isTrialAvailable) {
           const cap = Number(lesson.trialCapacity || 0);
           if (!cap) errs.trialCapacity = "Trial capacity is required";
           else if (cap < 1) errs.trialCapacity = "Trial capacity must be at least 1";
@@ -153,7 +151,6 @@ const CreateCourse = () => {
     }
 
     setErrors(newErrors);
-    console.log('newErrors', newErrors);
 
     return (
       Object.keys(newErrors).length === 0 ||
@@ -247,30 +244,14 @@ const CreateCourse = () => {
       return;
     }
 
-    // Lesson-level field
-    if (lessonIndex !== null) {
-      setFormData((prev) => {
-        const lessons = [...(prev.lessons || [])];
-        lessons[lessonIndex] = {
-          ...(lessons[lessonIndex] || {}),
-          [field]: value,
-        };
-        return { ...prev, lessons };
-      });
+    // Compose the correct path
+    const targetPath = lessonIndex !== null ? `lessons[${lessonIndex}].${field}` : field;
 
-      // manage lesson-level error container shape
-      setErrors((prev) => {
-        const lessonErrs = Array.from(prev.lessons || [], (e) => ({ ...(e || {}) }));
-        while (lessonErrs.length <= lessonIndex) lessonErrs.push({});
-        lessonErrs[lessonIndex] = { ...(lessonErrs[lessonIndex] || {}), [field]: error };
-        return { ...prev, lessons: lessonErrs };
-      });
-      return;
-    }
+    // Write value immutably
+    setFormData(prev => setIn(prev || {}, targetPath, value));
 
-    // Course-level non-file field
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: error }));
+    // Mirror errors shape
+    setErrors(prev => setIn(prev || {}, targetPath, error));
   };
 
   const addLesson = () => {
@@ -295,11 +276,6 @@ const CreateCourse = () => {
     });
   };
 
-  /**
-   * Submit:
-   *  - create/update course
-   *  - create lessons (sequential)
-   */
   const handleSubmit = async () => {
     if (!validateStep(currentStep)) return;
 
@@ -312,12 +288,8 @@ const CreateCourse = () => {
       studentCapacity:
         formData.lessonType === "group" ? Number(formData.studentCapacity || 0) : 1,
       mode: formData.mode,
-      pricePerLesson: Number(formData.price || 0),
+      pricePerLesson: Number(formData.pricePerLesson || 0),
       ageGroups: formData.ageGroups,
-      // ageRange: {
-      //   min: formData?.ageRange?.min ? Number(formData.ageRange.min) : undefined,
-      //   max: formData?.ageRange?.max ? Number(formData.ageRange.max) : undefined,
-      // },
       startDate: formData.startDate,
       endDate: formData.endDate || null,
       introImage: formData.introImageRef
@@ -333,11 +305,9 @@ const CreateCourse = () => {
           updateCourseThunk({ id: courseId, patch: coursePayload })
         ).unwrap();
         savedCourse = r;
-        successToast("Course updated successfully!");
       } else {
         const r = await dispatch(createCourseThunk(coursePayload)).unwrap();
         savedCourse = r;
-        successToast("Course created successfully!");
       }
 
       // Claim the intro image to the created/updated course (if present)
@@ -364,30 +334,52 @@ const CreateCourse = () => {
           console.warn("Attachment claim failed:", e);
         }
       }
+      if (savedCourse?._id) {
+        const currentLessons = formData.lessons || [];
 
-      // If we are on the lesson route or creating a new course (step 2 present),
-      // create lessons sequentially so we surface any error clearly.
-      if (savedCourse?._id && formData?.lessons?.length) {
-        const payload = formData.lessons.map((l) => ({
-          title: l.title,
-          description: l.description || undefined,
-          isTrial: !!l.trialAvailable,
-          trialCapacity: l.trialAvailable ? Number(l.trialCapacity || 0) : undefined,
-          order: typeof l.order === 'number' ? l.order : undefined,
-          schedule: {
-            date: l.schedule?.date,          // "YYYY-MM-DD"
-            time: l.schedule?.time,          // "HH:MM AM/PM"
-            duration: Number(l.schedule?.duration || 60)
+        if (!isEdit) {
+          // CREATE FLOW: send all as creates
+          const createPayload = currentLessons.map(mapLessonToCreatePayload);
+          if (createPayload.length) {
+            await dispatch(
+              createLessonsThunk({ courseId: savedCourse._id, payload: { lessons: createPayload } })
+            ).unwrap();
           }
-        }));
+        } else {
+          // EDIT FLOW: diff original vs current
+          const { creates, updates: _updates, deletes } =
+            buildLessonMutations(originalLessonsRef.current, currentLessons);
 
-        // If staying with thunks, add a thunk or call your fetcher directly:
-        await dispatch(
-          createLessonThunk({ courseId: savedCourse._id, payload: { lessons: payload } })
-        ).unwrap();
+          const createPayload = creates.map(mapLessonToCreatePayload);
+
+          // Build partial updates
+          const updates = [];
+          const byId = new Map(originalLessonsRef.current.map(x => [x._id, x]));
+          for (const n of currentLessons) {
+            if (n._id && byId.has(n._id)) {
+              const patch = buildPartialUpdate(byId.get(n._id), n);
+              if (patch) updates.push(patch);
+            }
+          }
+
+          if (createPayload.length) {
+            await dispatch(
+              createLessonsThunk({ courseId: savedCourse._id, payload: { lessons: createPayload } })
+            ).unwrap();
+          }
+
+          if (updates.length || deletes.length) {
+            await dispatch(
+              updateLessonsThunk({ courseId: savedCourse._id, payload: { updates, deletes } })
+            ).unwrap();
+          }
+
+          // refresh snapshot after successful save
+          originalLessonsRef.current = currentLessons.map(l => ({ ...l }));
+        }
       }
-
       successToast(`${isEdit ? "Course updated" : "Course created"} successfully!`);
+
       if (isLesson || isCreateLesson) {
         navigate(`/teacher/lessons/${savedCourse?._id || courseId}`);
       } else if (isEdit) {

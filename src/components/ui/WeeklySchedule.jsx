@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import Input from "./Input";
+import { formatDateForDateInput } from "../../utils/formatters";
 
-export default function WeeklySchedule(formData, handleInputChange) {
-  const [selectedDate, setSelectedDate] = useState(formData?.schedule?.date || "2025-08-22");
-  const [selectedTime, setSelectedTime] = useState(formData?.schedule?.time || "10:00 AM");
+export default function WeeklySchedule({ formData, handleInputChange }) {
+  const [selectedTime, setSelectedTime] = useState(formData?.schedule?.time || "");
 
   const times = [
     { label: "09:00 AM", disabled: true },
     { label: "10:00 AM" },
-    { label: "14:00 PM" },
-    { label: "15:00 PM" },
+    { label: "02:00 PM" },
+    { label: "03:00 PM" },
   ];
 
   return (
@@ -23,10 +23,9 @@ export default function WeeklySchedule(formData, handleInputChange) {
         <div className="flex items-center border-r pr-4">
           <Input
             type="date"
-            value={selectedDate}
+            value={formData?.schedule?.date ? formatDateForDateInput(formData?.schedule?.date) : null}
             onChange={(e) => {
-              setSelectedDate(e.target.value);
-              handleInputChange(e?.target?.value)
+              handleInputChange("schedule.date", e.target.value)
             }}
             className=""
           />
@@ -40,15 +39,14 @@ export default function WeeklySchedule(formData, handleInputChange) {
               disabled={time.disabled}
               onClick={() => {
                 if (!time.disabled) {
-                  handleInputChange(time.label)
+                  handleInputChange("schedule.time", time.label)
                   setSelectedTime(time.label)
                 }
               }}
               className={`px-4 py-1.5 text-sm rounded-md border transition 
-                ${
-                  time.disabled
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : selectedTime === time.label
+                ${time.disabled
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : (selectedTime === time.label || formData?.schedule?.time == time.label)
                     ? "bg-blue-600 text-white border-blue-600"
                     : "bg-white text-gray-700 hover:bg-gray-50 border-gray-300"
                 }`}

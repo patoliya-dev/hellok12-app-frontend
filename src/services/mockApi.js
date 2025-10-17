@@ -13,8 +13,6 @@ export const mockFetchCourses = async () => {
 };
 
 export const mockFetchProgress = async (courseId) => {
-  console.log('courseId', courseId);
-
   return new Promise((resolve) => {
     setTimeout(() => {
       const courseData = {

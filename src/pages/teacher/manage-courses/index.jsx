@@ -27,7 +27,7 @@ const ManageCourses = () => {
     language: "",
     status: "",
     priceRange: "",
-    trialAvailable: "",
+    isTrialAvailable: "",
     dateRange: { start: "", end: "" },
   });
   const [sortConfig, setSortConfig] = useState({
@@ -48,10 +48,10 @@ const ManageCourses = () => {
       q: searchTerm || undefined,
       language: filters.language || undefined,
       status: filters.status || undefined,
-      trialAvailable:
-        filters.trialAvailable === "yes"
+      isTrialAvailable:
+        filters.isTrialAvailable === "yes"
           ? true
-          : filters.trialAvailable === "no"
+          : filters.isTrialAvailable === "no"
             ? false
             : undefined,
       priceMin:

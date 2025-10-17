@@ -70,20 +70,28 @@ const LessonFormInstance = ({
           />
         </div>
 
-        <WeeklySchedule formData={formData} handleInputChange={(value) => handleInputChange("schedule.date", value)} />
-        <DurationRange formData={formData} handleInputChange={(value) => handleInputChange("schedule.time", value)} />
+        <WeeklySchedule formData={formData}
+          handleInputChange={(field, value) =>
+            handleInputChange(field, value)
+          }
+        />
+        <DurationRange formData={formData}
+          handleInputChange={(field, value) =>
+            handleInputChange(field, value)
+          }
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
           <Checkbox
             label="Trial Available"
             description="Allow students to book trial lessons for this lesson"
-            checked={!!formData.trialAvailable}
+            checked={!!formData.isTrialAvailable}
             onChange={(e) =>
-              handleInputChange("trialAvailable", e.target.checked)
+              handleInputChange("isTrialAvailable", e.target.checked)
             }
           />
 
-          {formData?.trialAvailable && (
+          {formData?.isTrialAvailable && (
             <Input
               label="Trial Capacity"
               placeholder="Enter number of trial lesson spots"
@@ -93,7 +101,7 @@ const LessonFormInstance = ({
               onChange={(e) =>
                 handleInputChange("trialCapacity", e?.target?.value)
               }
-              required={formData?.trialAvailable}
+              required={formData?.isTrialAvailable}
               error={errors?.trialCapacity}
             />
           )}

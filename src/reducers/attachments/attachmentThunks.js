@@ -26,8 +26,7 @@ export const uploadToS3 = createAsyncThunk(
   'attachments/uploadToS3',
   async ({ upload, file, onProgress }, { rejectWithValue }) => {
     try {
-        console.log('upload', upload);
-        
+
       if (upload?.fields && upload?.url) {
         await new Promise((resolve, reject) => {
           const form = new FormData();
@@ -84,8 +83,6 @@ export const uploadToS3 = createAsyncThunk(
 export const completeAttachment = createAsyncThunk(
   'attachments/complete',
   async (payload, { rejectWithValue }) => {
-    console.log('payload', payload);
-    
     try {
       const { data } = await api.completeUpload(payload || {});
       if (!data?.success) return rejectWithValue(data);
