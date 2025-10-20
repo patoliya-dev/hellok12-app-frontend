@@ -27,3 +27,20 @@ export const getCountdown = (dateStr) => {
   
   return formatDistanceToNowStrict(date, { unit: 'minute' });
 };
+
+// FE utils (put anywhere you keep helpers)
+export const formatDateForDateInput = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  // Use UTC parts to avoid TZ shifting the day
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`; // <-- "YYYY-MM-DD"
+};
+
+export const isoAtStartOfDayUTC = (yyyy_mm_dd) => {
+  if (!yyyy_mm_dd) return null;
+  // Store as 00:00:00Z so it round-trips cleanly
+  return new Date(`${yyyy_mm_dd}T00:00:00.000Z`).toISOString();
+};

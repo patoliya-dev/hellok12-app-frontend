@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 
-export default function DurationRange() {
+export default function DurationRange({ formData, handleInputChange }) {
   // Duration in minutes
   const [duration, setDuration] = useState(60);
 
   const handleChange = (e) => {
     setDuration(Number(e.target.value));
+    handleInputChange("schedule.duration", Number(e.target.value))
   };
 
   return (
@@ -22,9 +23,9 @@ export default function DurationRange() {
       <input
         type="range"
         min="30"
-        max="90"
+        max="60"
         step="15"
-        value={duration}
+        value={formData?.schedule?.duration || duration}
         onChange={handleChange}
         className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-blue-600"
       />
@@ -34,8 +35,8 @@ export default function DurationRange() {
         <span>30 min</span>
         <span>45 min</span>
         <span>60 min</span>
-        <span>75 min</span>
-        <span>90 min</span>
+        {/* <span>75 min</span>
+        <span>90 min</span> */}
       </div>
     </div>
   );
