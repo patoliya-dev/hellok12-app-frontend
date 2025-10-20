@@ -30,9 +30,9 @@ const StudentFilter = ({ filters, onFiltersChange }) => {
         <Select
           label="Course"
           placeholder="Select a course"
-          value={localFilters?.title}
+          value={localFilters?.courseName}
           options={courseOptions}
-          onChange={(value) => handleFilterChange("title", value)}
+          onChange={(value) => handleFilterChange("courseName", value)}
           className="w-full"
         />
         <Select
@@ -40,15 +40,15 @@ const StudentFilter = ({ filters, onFiltersChange }) => {
           placeholder="Select a lesson"
           value={localFilters?.lessonName}
           options={
-            localFilters?.title === "all"
+            localFilters?.courseName === "all"
               ? []
-              : courses.find((c) => c.title === localFilters?.title)
+              : courses.find((c) => c.courseName === localFilters?.courseName)
                   ?.lessons
           }
           onChange={(value) => handleFilterChange("lessonName", value)}
           className="w-full"
           searchable={true}
-          disabled={localFilters?.title === "all"}
+          disabled={localFilters?.courseName === "all"}
         />
         <Select
           label="Time"

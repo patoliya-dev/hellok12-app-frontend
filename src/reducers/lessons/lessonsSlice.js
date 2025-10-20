@@ -1,35 +1,41 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { fetchLessonsByCourse, fetchLesson, createLessons, updateLesson, removeLesson } from './lessonThunks';
+// src/redux/slices/lessonsSlice.js
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { mockFetchUpcomingLessons } from '../../services/mockApi';
 
-const initByCourse = {};
-const initDetail = { byId: {}, loading: false, error: null };
+export const fetchUpcomingLessons = createAsyncThunk(
+  'lessons/fetchUpcoming',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await mockFetchUpcomingLessons();
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 const lessonsSlice = createSlice({
   name: 'lessons',
-  initialState: { byCourse: initByCourse, detail: initDetail },
+  initialState: {
+    upcomingLessons: [],
+    status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+    error: null,
+  },
   reducers: {},
-  extraReducers: (b) => {
-    b.addCase(fetchLessonsByCourse.pending, (s, a) => {
-       const id = a.meta.arg.courseId;
-       s.byCourse[id] ??= { items: [], pagination: { page:1, limit:50, total:0, pages:0 }, loading:false, error:null, filters:{ page:1, limit:50 } };
-       s.byCourse[id].loading = true; s.byCourse[id].error = null;
-     })
-     .addCase(fetchLessonsByCourse.fulfilled, (s, { payload }) => {
-       const { courseId, payload: data, filters } = payload;
-       s.byCourse[courseId] = { items: data.items, pagination: data.pagination, loading:false, error:null, filters };
-     })
-     .addCase(fetchLessonsByCourse.rejected, (s, { meta, payload }) => {
-       const id = meta.arg.courseId;
-       s.byCourse[id].loading = false;
-       s.byCourse[id].error = payload?.message || 'Failed to load lessons';
-     })
-     .addCase(fetchLesson.pending, (s)=>{ s.detail.loading = true; s.detail.error = null; })
-     .addCase(fetchLesson.fulfilled, (s,{payload})=>{ s.detail.loading=false; s.detail.byId[payload._id]=payload; })
-     .addCase(fetchLesson.rejected, (s,{payload})=>{ s.detail.loading=false; s.detail.error = payload?.message || 'Failed to load lesson'; })
-     .addCase(updateLesson.fulfilled, (s,{payload})=>{ s.detail.byId[payload._id]=payload; })
-     .addCase(createLessons.fulfilled, ()=>{})
-     .addCase(removeLesson.fulfilled, ()=>{});
-  }
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchUpcomingLessons.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchUpcomingLessons.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.upcomingLessons = action.payload;
+      })
+      .addCase(fetchUpcomingLessons.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      });
+  },
 });
 
 export default lessonsSlice.reducer;

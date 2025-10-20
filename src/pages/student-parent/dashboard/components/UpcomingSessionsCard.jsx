@@ -37,7 +37,7 @@ const UpcomingSessionsCard = () => {
         type: "video-call",
         meetingLink: "https://meet.google.com/abc-defg-hij",
         status: "starting-soon",
-        title: "English 101",
+        courseName: "English 101",
         tags: ["1-on-1", "Online Course"],
         description: "A deep dive into Shakespeare's sonnets and their impact on modern literature.",
         address: "19 Washington Square N, New York, NY 10011, USA"
@@ -55,7 +55,7 @@ const UpcomingSessionsCard = () => {
         type: "video-call",
         meetingLink: "https://meet.google.com/xyz-uvwx-yz",
         status: "scheduled",
-        title: "Spanish Basics",
+        courseName: "Spanish Basics",
         tags: ["Trial Lessons", "1-on-1"],
         description: "Practice conversational Spanish with a native speaker. Focus on pronunciation and common phrases.",
       },
@@ -72,7 +72,7 @@ const UpcomingSessionsCard = () => {
         type: "video-call",
         meetingLink: "https://meet.google.com/def-ghij-klm",
         status: "scheduled",
-        title: "Japanese Advanced",
+        courseName: "Japanese Advanced",
         tags: ["Curriculum-Aligned Games", "Online Course"],
         description: "Learn advanced Kanji and writing techniques through interactive exercises.",
       }
@@ -207,7 +207,7 @@ const UpcomingSessionsCard = () => {
                   </div>
                   <div className="flex items-center space-x-1">
                     <CourseIcon selected={false} />
-                    <span className="text-muted-foreground">{session.title}</span>
+                    <span className="text-muted-foreground">{session.courseName}</span>
                   </div>
                 </div>
 

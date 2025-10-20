@@ -83,7 +83,7 @@ const LessonCard = ({ lesson }) => {
           />
           <div className="flex-grow">
             <h3 className="text-lg font-semibold text-brand-gray-800">
-              {lesson.title}
+              {lesson.courseName}
             </h3>
             <p className="text-sm text-brand-gray-600">{lesson.teacherName}</p>
           </div>
@@ -95,7 +95,7 @@ const LessonCard = ({ lesson }) => {
           </span>
           <div className="flex items-center space-x-1">
             <CourseIcon selected={false} />
-            <span className="text-muted-foreground">{lesson.title}</span>
+            <span className="text-muted-foreground">{lesson.courseName}</span>
           </div>
         </div>
 

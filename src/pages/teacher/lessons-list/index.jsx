@@ -7,6 +7,7 @@ import { mockCourses } from "../manage-courses/data";
 import CourseDetails from "./components/CourseDetails";
 import Icon from "components/AppIcon";
 import DateRangePicker from "components/ui/DateRangePicker";
+import { successToast } from "../../../utils/utils";
 import { itemsPerPage, mockLessons } from "./data";
 import LessonsTable from "./components/LessonTable";
 
@@ -47,7 +48,7 @@ const LessonsList = () => {
           path: "/teacher/manage-courses",
         },
         {
-          label: course.title,
+          label: course.courseName,
           path: "#",
           current: true,
         },
@@ -150,7 +151,7 @@ const LessonsList = () => {
   };
 
   const handleDeleteLesson = (lessonId) => {
-    setLessons(lessons?.filter((lesson) => lesson?._id !== lessonId));
+    setLessons(lessons?.filter((lesson) => lesson?.id !== lessonId));
   };
 
   const handleCreateLesson = () => {

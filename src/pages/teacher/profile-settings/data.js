@@ -71,11 +71,12 @@ const languageOptions = [
 ];
 
 const ageGroupOptions = [
-  { value: "3-5", label: "3-5" },
-  { value: "6-8", label: "6-8" },
-  { value: "9-12", label: "9-12" },
-  { value: "13-15", label: "13-15" },
-  { value: "16-18", label: "16-18" },
+  { value: "babies", label: "0 - 3 years old" },
+  { value: "preschool", label: "4 - 5 years old" },
+  { value: "elementary", label: "6 - 10 years old" },
+  { value: "middle-school", label: "11 - 14 years old" },
+  { value: "high-school", label: "15 -18 years old" },
+  { value: "adults", label: "18+ years old" },
 ];
 
 const timezoneOptions = [

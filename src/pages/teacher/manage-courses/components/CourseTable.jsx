@@ -96,11 +96,11 @@ const CourseTable = ({
             <tr>
               <th className="px-6 py-4 text-left">
                 <button
-                  onClick={() => onSort("title")}
+                  onClick={() => onSort("courseName")}
                   className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
                 >
                   Course Title
-                  {getSortIcon("title")}
+                  {getSortIcon("courseName")}
                 </button>
               </th>
               <th className="px-6 py-4 text-left">
@@ -145,7 +145,7 @@ const CourseTable = ({
           <tbody>
             {data?.map((course) => (
               <tr
-                key={course?._id}
+                key={course?.id}
                 className="border-t border-border hover:bg-muted/30 transition-smooth"
               >
                 <td className="px-6 py-4">
@@ -158,9 +158,9 @@ const CourseTable = ({
                     <div>
                       <div
                         className="font-medium text-foreground hover:cursor-pointer line-clamp-1 hover:text-primary transition-smooth w-[300px]"
-                        onClick={() => handleNavigate(course?._id)}
+                        onClick={() => handleNavigate(course?.id)}
                       >
-                        {course?.title}
+                        {course?.courseName}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {course?.lessonCount} lessons
@@ -175,12 +175,12 @@ const CourseTable = ({
                 </td>
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
-                    {`${course?.enrolledCount}/${course?.studentCapacity}`}
+                    {`${course?.studentCount}/${course?.capacity}`}
                   </span>
                 </td>
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
-                    ${course?.pricePerLesson}
+                    ${course?.price}
                   </span>
                 </td>
                 <td className="px-6 py-4">{getStatusBadge(course?.status)}</td>
@@ -189,16 +189,16 @@ const CourseTable = ({
                     name="MoreVertical"
                     size={20}
                     className="text-muted-foreground cursor-pointer"
-                    onClick={() => toggleMenu(course?._id)}
+                    onClick={() => toggleMenu(course?.id)}
                   />
-                  {openMenuId === course?._id && (
+                  {openMenuId === course?.id && (
                     <ActionMenu
                       data={course}
                       setOpenMenuId={toggleMenu}
                       onEdit={onEdit}
                       onDuplicate={onDuplicate}
                       onDelete={() => {
-                        setDeleteCourseId(course?._id);
+                        setDeleteCourseId(course?.id);
                         handleDeleteModal();
                       }}
                     />

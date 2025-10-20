@@ -3,8 +3,6 @@ import authReducer from '../reducers/auth/authSlice';
 import progressReducer from '../reducers/progress/progressSlice';
 import lessonsReducer from '../reducers/lessons/lessonsSlice';
 import profileReducer from '../reducers/profile/profileSlice';
-import attachmentReducer from '../reducers/attachments/attachmentSlice';
-import courseReducers from '../reducers/courses/courseSlice';
 
 // In reducer:
 
@@ -14,9 +12,6 @@ const store = configureStore({
     progress: progressReducer,
     lessons: lessonsReducer,
     profile: profileReducer,
-    attachments: attachmentReducer,
-    courseList: courseReducers.courseList,
-    courseDetail: courseReducers.courseDetail
   },
 });
 
