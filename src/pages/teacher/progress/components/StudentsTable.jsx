@@ -118,7 +118,7 @@ const StudentTable = ({
                 </td>
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
-                    {stud?.title}
+                    {stud?.courseName}
                   </span>
                 </td>
                 <td className="px-6 py-4">
