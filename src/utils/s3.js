@@ -45,6 +45,7 @@ export const upsertAttachmentAndUpdateEntity = async ({
   existingAttachmentId,
   apiClient,
   onUpdateEntity,
+  scope = "",
   presignExtra = {},
 }) => {
   if (!file) throw new Error("No file provided");
@@ -61,6 +62,7 @@ export const upsertAttachmentAndUpdateEntity = async ({
       size: file.size,
       entityType,
       entityId,
+      scope,
       ...presignExtra,
     },
     { headers: { "Content-Type": "application/json" } }
@@ -85,7 +87,14 @@ export const upsertAttachmentAndUpdateEntity = async ({
       });
 
   const updatePromise = onUpdateEntity(key);
-  await Promise.all([attachmentPromise, updatePromise]);
+  let id;
+  await Promise.all([attachmentPromise, updatePromise]).then(
+    ([attachment, entity]) => {
+      if (attachment) {
+        id = attachment?.data?.data?._id;
+      }
+    }
+  );
 
-  return { key };
+  return { key, id };
 };

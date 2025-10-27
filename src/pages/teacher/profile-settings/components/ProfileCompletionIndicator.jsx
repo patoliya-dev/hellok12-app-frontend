@@ -11,50 +11,57 @@ const ProfileCompletionIndicator = ({ formData, activeTab }) => {
     switch (tabName) {
       case "personal":
         const personalFields = [
-          "fullName",
+          "name",
           "email",
           "phone",
-          "country",
-          "city",
-          "experience",
+          "profile.location.country",
+          "profile.location.state",
+          "profile.location.city",
+          "profile.yearsOfExperience",
         ];
-        const personalCompleted = personalFields?.filter((field) =>
-          formData?.[field]?.trim()
-        )?.length;
+        const personalCompleted = personalFields?.filter((field) => {
+          if (field.startsWith("profile.")) {
+            const fieldKey = field.split(".")[1];
+            return formData?.profile?.[fieldKey];
+          } else {
+            return formData?.[field]?.trim();
+          }
+        })?.length;
         return Math.round((personalCompleted / personalFields?.length) * 100);
 
       case "bio":
         const bioFields = [
-          "bio",
+          "aboutYou",
           "teachingStyle",
-          "whyLoveTeaching",
-          "languagesTaught",
+          "whyTeaching",
+          "teachingLanguages",
           "nativeLanguage",
-          "ageGroups",
+          "ageGroupTeach",
         ];
         const bioCompleted = bioFields?.filter((field) => {
-          const value = formData?.[field];
+          const value = formData?.profile?.[field];
           return Array.isArray(value) ? value?.length > 0 : value?.trim();
         })?.length;
         return Math.round((bioCompleted / bioFields?.length) * 100);
 
       case "certifications":
-        const certFields = ["education", "teachingLicense"];
+        const certFields = ["highestEducation", "certification"];
         const certCompleted = certFields?.filter((field) =>
-          formData?.[field]?.trim()
+          formData?.profile?.[field]?.trim()
         )?.length;
-        const hasCertificates = formData?.certificates?.length > 0;
+        const hasCertificates = formData?.profile?.certificates?.length > 0;
         return Math.round(
           ((certCompleted + (hasCertificates ? 1 : 0)) / 3) * 100
         );
 
       case "availability":
-        const hasAvailability = formData?.timeZone;
+        const hasAvailability = formData?.profile?.timezone;
         return hasAvailability ? 100 : 0;
 
       case "preferences":
         const hasTeachingMode =
-          formData?.onlineTeaching || formData?.inPersonTeaching;
+          formData?.profile?.teachingMode === "ONLINE" ||
+          formData?.profile?.teachingMode === "IN_PERSON";
         const hasRates =
           user?.type === "independent"
             ? formData?.trialRate && formData?.regularRate

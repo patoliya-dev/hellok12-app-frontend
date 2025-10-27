@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import { Checkbox } from "../../../../components/ui/Checkbox";
@@ -15,22 +15,33 @@ const TeachingPreferencesTab = ({
 }) => {
   const user = useSelector(selectAuthUser);
   const [showTravelRadius, setShowTravelRadius] = useState(
-    formData?.inPersonTeaching || false
+    formData?.profile?.teachingMode?.includes("IN_PERSON") || false
   );
 
+  // Sync travel radius visibility with data
+  useEffect(() => {
+    const hasInPerson =
+      formData?.profile?.teachingMode?.includes("IN_PERSON") || false;
+    setShowTravelRadius(hasInPerson);
+  }, [formData?.profile?.teachingMode]);
+
   const handleInputChange = (field, value) => {
-    const updatedData = { ...formData, [field]: value };
-    onFormChange(updatedData);
+    // Pass field path and value to parent's onFormChange
+    onFormChange(field, value);
   };
 
   const handleTeachingModeChange = (mode, isEnabled) => {
-    if (mode === "inPersonTeaching") {
-      setShowTravelRadius(isEnabled);
-      if (!isEnabled) {
-        handleInputChange("travelRadius", "");
-      }
+    let newTeachingModes = [];
+    if (isEnabled) {
+      newTeachingModes = mode;
+      if (mode === "IN_PERSON") setShowTravelRadius(true);
+      else setShowTravelRadius(false);
+    } else {
+      // Unchecking the checked box means no mode is active
+      newTeachingModes = [];
+      if (mode === "IN_PERSON") setShowTravelRadius(false);
     }
-    handleInputChange(mode, isEnabled);
+    onFormChange("profile.teachingMode", newTeachingModes);
   };
 
   const formatCurrency = (value) => {
@@ -64,9 +75,9 @@ const TeachingPreferencesTab = ({
         <div className="space-y-4">
           <div className="flex items-start space-x-4 p-4 border border-border rounded-lg">
             <Checkbox
-              checked={formData?.onlineTeaching || false}
+              checked={formData?.profile?.teachingMode === "ONLINE"}
               onChange={(e) =>
-                handleTeachingModeChange("onlineTeaching", e?.target?.checked)
+                handleTeachingModeChange("ONLINE", e?.target?.checked)
               }
               disabled={!isEdit}
             />
@@ -86,9 +97,9 @@ const TeachingPreferencesTab = ({
 
           <div className="flex items-start space-x-4 p-4 border border-border rounded-lg">
             <Checkbox
-              checked={formData?.inPersonTeaching || false}
+              checked={formData?.profile?.teachingMode === "IN_PERSON"}
               onChange={(e) =>
-                handleTeachingModeChange("inPersonTeaching", e?.target?.checked)
+                handleTeachingModeChange("IN_PERSON", e?.target?.checked)
               }
               disabled={!isEdit}
             />
@@ -122,9 +133,9 @@ const TeachingPreferencesTab = ({
                   type="range"
                   min="1"
                   max="50"
-                  value={formData?.travelRadius || 10}
+                  value={formData?.profile?.travelRadius || 10}
                   onChange={(e) =>
-                    handleInputChange("travelRadius", e?.target?.value)
+                    handleInputChange("profile.travelRadius", e?.target?.value)
                   }
                   disabled={!isEdit}
                   className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
@@ -132,7 +143,7 @@ const TeachingPreferencesTab = ({
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
                   <span>1 mile</span>
                   <span className="font-medium text-foreground">
-                    {formData?.travelRadius || 10} miles
+                    {formData?.profile?.travelRadius || 10} miles
                   </span>
                   <span>50 miles</span>
                 </div>
@@ -143,10 +154,10 @@ const TeachingPreferencesTab = ({
                 placeholder="$0"
                 description="Extra fee for traveling to student's location"
                 value={
-                  formData?.travelFee ? formatCurrency(formData?.travelFee) : ""
+                  formData?.profile?.travelFee ? formatCurrency(formData?.profile?.travelFee) : ""
                 }
                 onChange={(e) =>
-                  handleRateChange("travelFee", e?.target?.value)
+                  handleRateChange("profile.travelFee", e?.target?.value)
                 }
                 disabled={!isEdit}
               />
@@ -250,9 +261,9 @@ const TeachingPreferencesTab = ({
             min="2"
             max="20"
             description="Maximum number of students in group lessons"
-            value={formData?.maxGroupSize || ""}
+            value={formData?.profile?.maxStudentsPerGroup || ""}
             onChange={(e) =>
-              handleInputChange("maxGroupSize", e?.target?.value)
+              handleInputChange("profile.maxStudentsPerGroup", e?.target?.value)
             }
             disabled={!isEdit}
           />
@@ -264,9 +275,9 @@ const TeachingPreferencesTab = ({
             <textarea
               className="w-full min-h-[80px] px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Any special requirements, equipment needed, or additional notes for students..."
-              value={formData?.specialRequirements || ""}
+              value={formData?.profile?.specialNotes || ""}
               onChange={(e) =>
-                handleInputChange("specialRequirements", e?.target?.value)
+                handleInputChange("profile.specialNotes", e?.target?.value)
               }
               disabled={!isEdit}
             />

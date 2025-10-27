@@ -191,10 +191,10 @@ const validationRules = {
     "fullName",
     "email",
     "phone",
-    "experience",
     "country",
     "state",
     "city",
+    "yearsOfExperience",
   ],
   bio: [
     "aboutYou",
@@ -204,7 +204,7 @@ const validationRules = {
     "nativeLanguage",
     "ageGroupTeach",
   ],
-  certifications: ["education"],
+  certifications: ["highestEducation"],
   availability: [],
   preferences: [],
   highlights: [], // no required fields

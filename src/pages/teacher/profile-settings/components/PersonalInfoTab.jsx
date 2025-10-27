@@ -25,50 +25,23 @@ const PersonalInfoTab = ({
     formData?.profileImage || ""
   );
   const [imagePreview, setImagePreview] = useState(
-    formData?.profileImage || ""
+    formData?.profileImage?.url || ""
   );
 
   const handleInputChange = (field, value) => {
-    let updatedData = { ...formData, [field]: value };
-
-    if (field === "country") {
-      const prevLocation = formData?.profile?.location || {};
-      updatedData = {
-        ...updatedData,
-        profile: {
-          ...(formData?.profile || {}),
-          location: { ...prevLocation, country: value, state: "", city: "" },
-        },
-      };
+    // Use nested paths for profile fields
+    if (field === "dateOfBirth" || field === "yearsOfExperience") {
+      onFormChange(`profile.${field}`, value);
+    } else if (field === "country") {
+      onFormChange("profile.location.country", value);
     } else if (field === "state") {
-      const prevLocation = formData?.profile?.location || {};
-      updatedData = {
-        ...updatedData,
-        profile: {
-          ...(formData?.profile || {}),
-          location: { ...prevLocation, state: value, city: "" },
-        },
-      };
+      onFormChange("profile.location.state", value);
     } else if (field === "city") {
-      const prevLocation = formData?.profile?.location || {};
-      updatedData = {
-        ...updatedData,
-        profile: {
-          ...(formData?.profile || {}),
-          location: { ...prevLocation, city: value },
-        },
-      };
-    } else if (field === "experience") {
-      updatedData = {
-        ...updatedData,
-        profile: {
-          ...(formData?.profile || {}),
-          experience: value,
-        },
-      };
+      onFormChange("profile.location.city", value);
+    } else {
+      // For top-level fields like name, email, phone
+      onFormChange(field, value);
     }
-
-    onFormChange(updatedData);
   };
 
   const handleImageUpload = (event) => {
@@ -97,6 +70,26 @@ const PersonalInfoTab = ({
       formData?.profile?.location?.country,
       formData?.profile?.location?.state
     ) || [];
+
+  // Helper function to format date for date input (YYYY-MM-DD)
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    try {
+      // If it's already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        return dateString;
+      }
+      // Otherwise, parse and format
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "";
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -203,7 +196,7 @@ const PersonalInfoTab = ({
           <Input
             label="Date of Birth"
             type="date"
-            value={formData?.dateOfBirth}
+            value={formatDateForInput(formData?.profile?.dateOfBirth)}
             onChange={(e) => handleInputChange("dateOfBirth", e?.target?.value)}
             disabled={!isEdit}
           />
@@ -213,11 +206,13 @@ const PersonalInfoTab = ({
             placeholder="5"
             min="0"
             max="50"
-            value={formData?.profile?.experience || 0}
-            onChange={(e) => handleInputChange("experience", e?.target?.value)}
+            value={formData?.profile?.yearsOfExperience || 0}
+            onChange={(e) =>
+              handleInputChange("yearsOfExperience", e?.target?.value)
+            }
             required
             disabled={!isEdit}
-            error={errors?.experience}
+            error={errors?.yearsOfExperience}
           />
         </div>
       </div>

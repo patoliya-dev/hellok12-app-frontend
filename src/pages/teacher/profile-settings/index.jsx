@@ -26,6 +26,7 @@ const ProfileAccountSettings = () => {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
   const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [selectedCertificateFiles, setSelectedCertificateFiles] = useState([]);
 
   useEffect(() => {
     async function getData() {
@@ -129,8 +130,15 @@ const ProfileAccountSettings = () => {
     setSaveStatus("saving");
 
     try {
-      const performUpdate = async () => {
-        const result = await dispatch(updateProfileThunk(formData));
+      const performUpdate = async (updatedCertificates) => {
+        let updatedFormData = formData;
+        if (updatedCertificates) {
+          updatedFormData = {
+            ...formData,
+            profile: { ...formData.profile, certificates: updatedCertificates },
+          };
+        }
+        const result = await dispatch(updateProfileThunk(updatedFormData));
         if (!updateProfileThunk.fulfilled.match(result)) {
           throw new Error(result.payload || "Failed to update profile");
         }
@@ -157,6 +165,26 @@ const ProfileAccountSettings = () => {
         } else {
           await performUpdate();
         }
+      } else if (
+        tabName === "certifications" &&
+        selectedCertificateFiles.length > 0
+      ) {
+        const uploadedCertificates = [
+          ...(formData?.profile?.certificates || []),
+        ];
+        for (const file of selectedCertificateFiles) {
+          const uploaded = await upsertAttachmentAndUpdateEntity({
+            file,
+            entityType: "TeacherProfile",
+            entityId: formData?.profile?._id,
+            apiClient: api,
+            scope: "certificates",
+            onUpdateEntity: async () => {},
+          });
+          uploadedCertificates.push(uploaded?.id || Date.now() + Math.random());
+        }
+        setSelectedCertificateFiles([]);
+        await performUpdate(uploadedCertificates);
       } else {
         await performUpdate();
       }
@@ -208,10 +236,9 @@ const ProfileAccountSettings = () => {
     //   });
     // };
     let updatedData;
-    console.log(Array.isArray(value) && [...value], "value");
     setFormData((prev) => {
       const updated = { ...prev };
-      _.set(updated, field, value); 
+      _.set(updated, field, value);
       updatedData = updated;
       return updated;
     });
@@ -240,9 +267,6 @@ const ProfileAccountSettings = () => {
       return newErrors;
     });
   };
-
-  console.log(formData);
-  console.log(errors, "errors");
   const renderTabContent = () => {
     const commonProps = {
       formData,
@@ -264,7 +288,12 @@ const ProfileAccountSettings = () => {
       case "bio":
         return <BioSpecializationsTab {...commonProps} />;
       case "certifications":
-        return <CertificationsTab {...commonProps} />;
+        return (
+          <CertificationsTab
+            {...commonProps}
+            onCertificateFilesChange={setSelectedCertificateFiles}
+          />
+        );
       case "availability":
         return <AvailabilityTab {...commonProps} />;
       case "preferences":

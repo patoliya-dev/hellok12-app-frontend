@@ -12,6 +12,7 @@ const CertificationsTab = ({
   isSaving,
   isEdit,
   errors,
+  onCertificateFilesChange,
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -23,12 +24,14 @@ const CertificationsTab = ({
   };
 
   const handleInputChange = (field, value) => {
-    const updatedData = { ...formData, [field]: value };
-    onFormChange(updatedData);
+    onFormChange(field, value);
   };
 
   const handleFileUpload = (files) => {
     const fileArray = Array.from(files);
+    if (onCertificateFilesChange) {
+      onCertificateFilesChange(fileArray);
+    }
     const currentCertificates = formData?.certificates || [];
 
     fileArray?.forEach((file) => {
@@ -95,7 +98,7 @@ const CertificationsTab = ({
     return parseFloat((bytes / Math.pow(k, i))?.toFixed(2)) + " " + sizes?.[i];
   };
 
-  const certificates = formData?.certificates || [];
+  const certificates = formData?.profile?.certificates || [];
 
   const handleDeleteModalVisibility = () => {
     setShowDeleteModal(!showDeleteModal);
@@ -113,19 +116,21 @@ const CertificationsTab = ({
             label="Highest Education Level"
             type="text"
             placeholder="e.g., Master's in Education, Bachelor's in Linguistics"
-            value={formData?.education || ""}
-            onChange={(e) => handleInputChange("education", e?.target?.value)}
+            value={formData?.profile?.highestEducation || ""}
+            onChange={(e) =>
+              handleInputChange("profile.highestEducation", e?.target?.value)
+            }
             required
             disabled={!isEdit}
-            error={errors?.education}
+            error={errors?.highestEducation}
           />
           <Input
             label="Teaching License/Certification"
             type="text"
             placeholder="e.g., TESOL, TEFL, CELTA"
-            value={formData?.teachingLicense || ""}
+            value={formData?.profile?.certification || ""}
             onChange={(e) =>
-              handleInputChange("teachingLicense", e?.target?.value)
+              handleInputChange("profile.certification", e?.target?.value)
             }
             disabled={!isEdit}
           />
@@ -133,8 +138,10 @@ const CertificationsTab = ({
             label="University/Institution"
             type="text"
             placeholder="Name of your alma mater"
-            value={formData?.institution || ""}
-            onChange={(e) => handleInputChange("institution", e?.target?.value)}
+            value={formData?.profile?.institution || ""}
+            onChange={(e) =>
+              handleInputChange("profile.institution", e?.target?.value)
+            }
             disabled={!isEdit}
           />
           <Input
@@ -143,9 +150,9 @@ const CertificationsTab = ({
             placeholder="2020"
             min="1970"
             max={new Date()?.getFullYear()}
-            value={formData?.graduationYear || ""}
+            value={formData?.profile?.graduationYear || ""}
             onChange={(e) =>
-              handleInputChange("graduationYear", e?.target?.value)
+              handleInputChange("profile.graduationYear", e?.target?.value)
             }
             disabled={!isEdit}
           />
@@ -284,8 +291,10 @@ const CertificationsTab = ({
             type="text"
             placeholder="e.g., Teacher of the Year 2023, Excellence in Online Teaching"
             description="Any awards or recognition you've received"
-            value={formData?.awards || ""}
-            onChange={(e) => handleInputChange("awards", e?.target?.value)}
+            value={formData?.profile?.awards || ""}
+            onChange={(e) =>
+              handleInputChange("profile.awards", e?.target?.value)
+            }
             disabled={!isEdit}
           />
 
@@ -296,9 +305,9 @@ const CertificationsTab = ({
             <textarea
               className="w-full min-h-[80px] px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Any additional information about your qualifications or experience..."
-              value={formData?.additionalNotes || ""}
+              value={formData?.profile?.additionalNotes || ""}
               onChange={(e) =>
-                handleInputChange("additionalNotes", e?.target?.value)
+                handleInputChange("profile.additionalNotes", e?.target?.value)
               }
               disabled={!isEdit}
             />

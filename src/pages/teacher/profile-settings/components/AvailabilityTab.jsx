@@ -13,8 +13,7 @@ const AvailabilityTab = ({
   isEdit,
 }) => {
   const handleInputChange = (field, value) => {
-    const updatedData = { ...formData, [field]: value };
-    onFormChange(updatedData);
+    onFormChange(field, value);
   };
 
   const getCurrentTime = (timeZone = "Asia/Kolkata") => {
@@ -41,8 +40,8 @@ const AvailabilityTab = ({
             label="Select Timezone"
             description="Choose your local timezone for accurate scheduling"
             options={timezoneOptions}
-            value={formData.timeZone}
-            onChange={(value) => handleInputChange("timeZone", value)}
+            value={formData.profile.timezone || ""}
+            onChange={(value) => handleInputChange("profile.timezone", value)}
             searchable
             disabled={!isEdit}
           />
@@ -53,7 +52,7 @@ const AvailabilityTab = ({
               <span className="text-sm text-foreground">Current Time</span>
             </div>
             <span className="text-sm font-medium text-foreground">
-              {getCurrentTime(formData.timeZone)}
+              {getCurrentTime(formData?.profile?.timezone || "Asia/Kolkata")}
             </span>
           </div>
 
