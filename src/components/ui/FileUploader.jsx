@@ -10,10 +10,18 @@ const FileUploader = ({
   inputId,
   onChange,
   onRemoveImage,
+  isLoading = false,
+  progress = 0,
+  previewUrl = null,
   ...props
 }) => {
   const ref = useRef(null);
   const [preview, setPreview] = useState(null);
+
+  // if BE returns a public url after complete, show it
+  useEffect(() => {
+    if (previewUrl) setPreview(previewUrl);
+  }, [previewUrl]);
 
   const handleFileChange = (e) => {
     const file = e.target?.files?.[0];
@@ -99,6 +107,17 @@ const FileUploader = ({
           />
         </label>
       </div>
+      {isLoading && (
+        <div className="px-4 pb-2">
+          <div className="h-2 w-full bg-muted rounded">
+            <div
+              className="h-2 bg-primary rounded transition-all"
+              style={{ width: `${progress || 1}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground mt-1 text-right">{progress || 0}%</p>
+        </div>
+      )}
 
       {description && !error && (
         <p className="text-sm text-muted-foreground">{description}</p>

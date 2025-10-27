@@ -32,8 +32,8 @@ const LessonFormInstance = ({
             className="text-error cursor-pointer"
             onClick={() => {
               const hasContent =
-                formData?.lessonTitle?.trim() &&
-                formData?.lessonDescription?.trim();
+                formData?.title?.trim() &&
+                formData?.description?.trim();
 
               if (mode === "edit" && hasContent) {
                 setShowDeleteModal(true);
@@ -50,10 +50,10 @@ const LessonFormInstance = ({
             label="Lesson Title"
             type="text"
             placeholder="Enter lesson title"
-            value={formData?.lessonTitle}
+            value={formData?.title}
             required
-            error={errors?.lessonTitle}
-            onChange={(e) => handleInputChange("lessonTitle", e?.target?.value)}
+            error={errors?.title}
+            onChange={(e) => handleInputChange("title", e?.target?.value)}
           />
         </div>
         <div className="mb-4">
@@ -61,29 +61,37 @@ const LessonFormInstance = ({
             label="Description"
             type="text"
             placeholder="Describe what students will learn in this lesson"
-            value={formData?.lessonDescription}
+            value={formData?.description}
             required
-            error={errors?.lessonDescription}
+            error={errors?.description}
             onChange={(e) =>
-              handleInputChange("lessonDescription", e?.target?.value)
+              handleInputChange("description", e?.target?.value)
             }
           />
         </div>
 
-        <WeeklySchedule />
-        <DurationRange />
+        <WeeklySchedule formData={formData}
+          handleInputChange={(field, value) =>
+            handleInputChange(field, value)
+          }
+        />
+        <DurationRange formData={formData}
+          handleInputChange={(field, value) =>
+            handleInputChange(field, value)
+          }
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
           <Checkbox
             label="Trial Available"
             description="Allow students to book trial lessons for this lesson"
-            checked={!!formData.trialAvailable}
+            checked={!!formData.isTrialAvailable}
             onChange={(e) =>
-              handleInputChange("trialAvailable", e.target.checked)
+              handleInputChange("isTrialAvailable", e.target.checked)
             }
           />
 
-          {formData?.trialAvailable && (
+          {formData?.isTrialAvailable && (
             <Input
               label="Trial Capacity"
               placeholder="Enter number of trial lesson spots"
@@ -93,7 +101,7 @@ const LessonFormInstance = ({
               onChange={(e) =>
                 handleInputChange("trialCapacity", e?.target?.value)
               }
-              required={formData?.trialAvailable}
+              required={formData?.isTrialAvailable}
               error={errors?.trialCapacity}
             />
           )}

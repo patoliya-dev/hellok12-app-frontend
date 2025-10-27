@@ -38,7 +38,7 @@ const CourseDetails = ({ course }) => {
   );
 
   const handleEditCourse = () => {
-    navigate(`/teacher/edit-course/${course?.id}`);
+    navigate(`/teacher/edit-course/${course?._id}`);
   };
 
   return (
