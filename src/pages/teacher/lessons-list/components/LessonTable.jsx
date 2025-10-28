@@ -68,9 +68,8 @@ const LessonsTable = ({
           <Icon name="Clock" size={16} className="text-warning" />
         )}
         <span
-          className={`text-xs font-medium ${
-            isPublished ? "text-green-600" : "text-warning"
-          }`}
+          className={`text-xs font-medium ${isPublished ? "text-green-600" : "text-warning"
+            }`}
         >
           {capitalize(status)}
         </span>
@@ -82,7 +81,7 @@ const LessonsTable = ({
     setOpenMenuId(openMenuId === lessonId ? null : lessonId);
   };
 
-  const isTrailAvailable = () => (
+  const isTrialAvailable = () => (
     <div className="space-y-1 w-[150px]">
       <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium bg-[#DDF2FF] text-[#009DFF]">
         <Icon name={"Gift"} size={16} className="mr-1" />
@@ -134,9 +133,9 @@ const LessonsTable = ({
             </tr>
           </thead>
           <tbody>
-            {data?.map((lesson) => (
+            {data?.map((lesson, index) => (
               <tr
-                key={lesson?._id}
+                key={lesson?._id + index}
                 className="border-t border-border hover:bg-muted/30 transition-smooth"
               >
                 <td className="px-6 py-4">
@@ -154,7 +153,7 @@ const LessonsTable = ({
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  {lesson?.isTrailAvailable && isTrailAvailable()}
+                  {lesson?.isTrialAvailable && isTrialAvailable()}
                 </td>
                 <td className="px-6 py-4">
                   {(() => {
@@ -236,16 +235,15 @@ const LessonsTable = ({
                 <div>{getStatus(lesson?.status)}</div>
               </div>
 
-              {lesson?.isTrailAvailable && (
-                <div className="mt-4">{isTrailAvailable()}</div>
+              {lesson?.isTrialAvailable && (
+                <div className="mt-4">{isTrialAvailable()}</div>
               )}
 
               {openMenuId === lesson?._id && (
                 <div className="">
                   <ActionMenu
-                    className={`!right-10 ${
-                      lesson?.isTrailAvailable ? "!mt-[-95px]" : "!mt-[-50px]"
-                    }`}
+                    className={`!right-10 ${lesson?.isTrialAvailable ? "!mt-[-95px]" : "!mt-[-50px]"
+                      }`}
                     data={lesson}
                     setOpenMenuId={toggleMenu}
                     onEdit={onEdit}
@@ -284,6 +282,7 @@ const LessonsTable = ({
         totalPages={totalPages}
         totalItems={totalItems}
         onPageChange={onPageChange}
+        listType="lessons"
       />
 
       {showDeleteModal && (

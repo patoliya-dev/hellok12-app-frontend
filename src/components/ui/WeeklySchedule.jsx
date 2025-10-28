@@ -23,7 +23,7 @@ export default function WeeklySchedule({ formData, handleInputChange }) {
         <div className="flex items-center border-r pr-4">
           <Input
             type="date"
-            value={formData?.schedule?.date ? formatDateForDateInput(formData?.schedule?.date) : null}
+            value={formData?.schedule?.date}
             onChange={(e) => {
               handleInputChange("schedule.date", e.target.value)
             }}

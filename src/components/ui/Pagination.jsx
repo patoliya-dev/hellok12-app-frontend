@@ -9,6 +9,7 @@ const Pagination = ({
   totalItems,
   onPageChange,
   isBorderTop = true,
+  listType = "items",
 }) => {
   const startItem = (currentPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(currentPage * PAGE_SIZE, totalItems);
@@ -58,7 +59,7 @@ const Pagination = ({
     >
       {/* Results Info */}
       <div className="text-sm text-muted-foreground">
-        Showing {startItem} to {endItem} of {totalItems} feedbacks
+        Showing {startItem} to {endItem} of {totalItems} {listType}
       </div>
       {/* Pagination Controls */}
       <div className="flex items-center gap-2">

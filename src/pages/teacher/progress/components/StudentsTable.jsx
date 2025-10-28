@@ -176,6 +176,7 @@ const StudentTable = ({
         totalPages={totalPages}
         totalItems={totalItems}
         onPageChange={onPageChange}
+        listType="students"
       />
     </section>
   );

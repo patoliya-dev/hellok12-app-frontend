@@ -1,21 +1,25 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import Breadcrumb from "components/ui/Breadcrumb";
 import Button from "components/ui/Button";
-import { mockCourses } from "../manage-courses/data";
 import CourseDetails from "./components/CourseDetails";
 import Icon from "components/AppIcon";
 import DateRangePicker from "components/ui/DateRangePicker";
-import { itemsPerPage, mockLessons } from "./data";
+import { itemsPerPage } from "./data";
 import LessonsTable from "./components/LessonTable";
+import {
+  fetchCourseWithLessons as fetchCourseWithLessonsThunk,
+} from "../../../reducers/courses/courseThunks";
 
 const LessonsList = () => {
+  const dispatch = useDispatch();
   const { courseId } = useParams();
   const navigate = useNavigate();
   const [course, setCourse] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
-  const [lessons, setLessons] = useState(mockLessons);
+  const [lessons, setLessons] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     startDate: "",
@@ -38,22 +42,29 @@ const LessonsList = () => {
   });
 
   useEffect(() => {
-    const course = mockCourses?.find((c) => c?.id === courseId);
-    if (course) {
-      setCourse(course);
-      setBreadCrumbData([
-        {
-          label: "Manage Courses",
-          path: "/teacher/manage-courses",
-        },
-        {
-          label: course.title,
-          path: "#",
-          current: true,
-        },
-      ]);
-    }
-  }, [courseId, mockCourses]);
+    (async () => {
+      const courseDetailsWithLessons = await dispatch(
+        fetchCourseWithLessonsThunk(courseId)).unwrap();
+
+      const { course: fetchedCourse, items: fetchedLessons, pagination: {limit, page, pages, total} } = courseDetailsWithLessons;
+      setLessons(fetchedLessons);
+      setCurrentPage(page);
+      if (fetchedCourse) {
+        setCourse(fetchedCourse);
+        setBreadCrumbData([
+          {
+            label: "Manage Courses",
+            path: "/teacher/manage-courses",
+          },
+          {
+            label: fetchedCourse.title,
+            path: "#",
+            current: true,
+          },
+        ]);
+      }
+    })();
+  }, [courseId]);
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -168,7 +179,7 @@ const LessonsList = () => {
             Create New Lesson
           </Button>
         </section>
-        <CourseDetails course={course} />
+        <CourseDetails course={course} lessonCount={lessons?.length} />
 
         <section className="my-8">
           <div className="flex flex-col sm:flex-row sm:justify-between gap-3">

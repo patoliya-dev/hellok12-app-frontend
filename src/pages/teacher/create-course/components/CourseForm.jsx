@@ -21,7 +21,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
         <Select
           label="Language"
           options={languageOptions}
-          value={formData?.language}
+          value={formData?.language || ""}
           onChange={(value) => handleInputChange("language", value)}
           error={errors?.language}
           required
@@ -33,7 +33,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
         label="Description"
         type="text"
         placeholder="Brief description of the course content and objectives"
-        value={formData?.description}
+        value={formData?.description || ""}
         onChange={(e) => handleInputChange("description", e?.target?.value)}
       />
 
@@ -44,7 +44,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
         <Select
           label="Lesson Type"
           options={lessonTypeOptions}
-          value={formData?.lessonType}
+          value={formData?.lessonType || ""}
           onChange={(value) => handleInputChange("lessonType", value)}
         />
         {formData?.lessonType === "group" && (
@@ -54,23 +54,13 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
             type="number"
             min="1"
             max="50"
-            value={formData?.studentCapacity}
+            value={formData?.studentCapacity || ""}
             onChange={(e) =>
               handleInputChange("studentCapacity", parseInt(e?.target?.value))
             }
             error={errors?.studentCapacity}
           />
         )}
-        {/* <Input
-          type="file"
-          label="Intro Image"
-          placeholder="Upload intro image"
-          required
-          error={errors?.introImage}
-          onChange={(e) => handleInputChange("introImage", e.target.files[0])}
-          accept="image/*"
-          filename={formData?.introImage}
-        /> */}
         <FileUploader
           label="Intro Image"
           placeholder="Upload intro image"
@@ -90,7 +80,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
         <Select
           label="Mode"
           options={lessonModeOptions}
-          value={formData?.mode}
+          value={formData?.mode || ""}
           onChange={(value) => handleInputChange("mode", value)}
           required
           error={errors?.mode}
@@ -102,27 +92,21 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           type="number"
           min="0"
           step="0.01"
-          value={formData?.pricePerLesson}
+          value={formData?.pricePerLesson || ""}
           onChange={(e) =>
             handleInputChange("pricePerLesson", parseFloat(e?.target?.value))
           }
         />
 
         <div className="space-y-2">
-          {/* <label className="text-sm font-medium text-foreground">
-            Age Range
-          </label> */}
           <Select
             label="Age Range"
-            // description="Select all age groups you're comfortable teaching"
             multiple
             options={ageGroupOptions}
             value={formData?.ageGroups || []}
             onChange={(value) => handleInputChange("ageGroups", value)}
             placeholder="Select age groups..."
             required
-          // disabled={!isEdit}
-          // error={errors?.ageGroups}
           />
         </div>
       </div>

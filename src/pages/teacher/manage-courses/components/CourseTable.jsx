@@ -163,7 +163,8 @@ const CourseTable = ({
                         {course?.title}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {course?.lessonCount} lessons
+                        {/* {course?.lessonCount} lessons */}
+                        {course?.description}
                       </div>
                     </div>
                   </div>
@@ -229,6 +230,7 @@ const CourseTable = ({
         totalPages={totalPages}
         totalItems={totalItems}
         onPageChange={onPageChange}
+        listType="courses"
       />
 
       {showDeleteModal && (
