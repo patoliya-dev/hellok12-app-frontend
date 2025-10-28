@@ -3,19 +3,20 @@ import Image from "components/AppImage";
 import Button from "components/ui/Button";
 import { capitalize, successToast } from "../../../../utils/utils";
 import { useNavigate } from "react-router-dom";
+import { formatDateForDateInput } from "../../../../utils/formatters";
+import { MapPin } from "lucide-react";
 
-const CourseDetails = ({ course }) => {
+const CourseDetails = ({ course, lessonCount }) => {
   const navigate = useNavigate();
   const getCourseModeBadge = (mode) => {
     const isInPerson = mode === "in-person";
     const isOnline = mode === "online";
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-          isInPerson
+        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${isInPerson
             ? "bg-blue-100 text-blue-800"
             : "bg-green-100 text-green-800"
-        }`}
+          }`}
       >
         {isOnline ? (
           <Image
@@ -23,9 +24,9 @@ const CourseDetails = ({ course }) => {
             className="mr-1 w-4 h-4"
           />
         ) : (
-          <Icon name={"User"} size={12} className="mr-1" />
+          <MapPin size={12} className="mr-1" />
         )}
-        {isInPerson ? "In-Person Course" : "Online Course"}
+        {isInPerson ? "In-Person" : "Online Course"}
       </span>
     );
   };
@@ -62,18 +63,19 @@ const CourseDetails = ({ course }) => {
         </Button>
       </div>
       <div className="flex flex-wrap items-center gap-6 mb-6">
-        {getCourseModeBadge("online")}
+        {getCourseModeBadge(course?.mode)}
         <span className="text-[12px] text-[#7C3AED] font-medium">
           {capitalize(course?.language)}
         </span>
-        {getTrailBadge()}
+
+        {course?.isTrialAvailable && getTrailBadge()}
       </div>
       <div className="flex flex-col md:flex-row md:justify-between gap-4 md:gap-0">
         <div className="flex items-center gap-14">
           {["Lessons", "Price"].map((item, index) => (
             <div key={index}>
               <h4 className="text-h4 font-bold text-brand-gray-800">
-                {index === 0 ? course?.lessonCount : "$" + course?.price}
+                {index === 0 ? lessonCount : "$" + course?.pricePerLesson}
               </h4>
               <p className="text-xs text-brand-gray-500">{item}</p>
             </div>
@@ -83,19 +85,18 @@ const CourseDetails = ({ course }) => {
           {["Max Capacity", "Start Date", "End Date"].map((item, index) => (
             <div
               key={index}
-              className={`${
-                index === 0 ? "pr-6 xl:pr-10 border-r border-[#CECECE]" : ""
-              }`}
+              className={`${index === 0 ? "pr-6 xl:pr-10 border-r border-[#CECECE]" : ""
+                }`}
             >
               <h4 className="text-sm font-medium text-brand-gray-800">
                 {item}
               </h4>
               <p className="text-[16px] text-brand-gray-500">
                 {index === 0
-                  ? course?.maxStudents + " students"
+                  ? course?.studentCapacity + " students"
                   : index === 1
-                  ? course?.startDate
-                  : course?.endDate}
+                    ? formatDateForDateInput(course?.startDate)
+                    : formatDateForDateInput(course?.endDate)}
               </p>
             </div>
           ))}

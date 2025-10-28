@@ -32,7 +32,7 @@ const ManageCourses = () => {
   });
   const [sortConfig, setSortConfig] = useState({
     key: "title",
-    direction: "asc",
+    direction: "Asc",
   });
   const [courseCount, setCourseCount] = useState([
     { label: "Total Courses", count: 0 },
@@ -45,7 +45,7 @@ const ManageCourses = () => {
   // Fetch courses from backend
   useEffect(() => {
     const params = {
-      q: searchTerm || undefined,
+      search: searchTerm || undefined,
       language: filters.language || undefined,
       status: filters.status || undefined,
       isTrialAvailable:
@@ -62,15 +62,13 @@ const ManageCourses = () => {
         filters.priceRange && filters.priceRange.includes("-")
           ? Number(filters.priceRange.split("-")[1])
           : undefined,
-      from: filters.dateRange?.start || undefined,
-      to: filters.dateRange?.end || undefined,
+      dateFrom: filters.dateRange?.start || undefined,
+      dateTo: filters.dateRange?.end || undefined,
       page: currentPage,
       limit: itemsPerPage,
-      sort:
-        sortConfig.key === "title"
-          ? sortConfig.direction === "asc"
-            ? "titleAsc"
-            : "titleDesc"
+      sortBy:
+        sortConfig.key && sortConfig.direction
+          ? sortConfig.key + sortConfig.direction
           : "newest",
     };
 
@@ -102,9 +100,9 @@ const ManageCourses = () => {
     setSortConfig((prevConfig) => ({
       key,
       direction:
-        prevConfig.key === key && prevConfig.direction === "asc"
-          ? "desc"
-          : "asc",
+        prevConfig.key === key && prevConfig.direction === "Asc"
+          ? "Desc"
+          : "Asc",
     }));
   };
 
@@ -154,8 +152,8 @@ const ManageCourses = () => {
               <div
                 key={index}
                 className={`${index !== courseCount.length - 1
-                    ? "pr-6 xl:pr-16 border-r border-[#CECECE]"
-                    : ""
+                  ? "pr-6 xl:pr-16 border-r border-[#CECECE]"
+                  : ""
                   }`}
               >
                 <h3 className="text-2xl font-bold text-brand-gray-800">

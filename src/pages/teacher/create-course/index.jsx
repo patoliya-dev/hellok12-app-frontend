@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Breadcrumb from "components/ui/Breadcrumb";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import { commonBreadCrumbData, steps } from "./data";
@@ -27,6 +27,8 @@ import {
 import { formatDateForDateInput } from "../../../utils/formatters";
 import { buildPartialUpdate, mapLessonFromApi, mapLessonToCreatePayload } from "../../teacher/create-course/mappers/lessons";
 import { buildLessonMutations } from "../../teacher/create-course/mappers/diff";
+import { applyLessonApiErrorsToForm } from "../manage-courses/utils/mapApiFieldErrors";
+import { clearCreateError } from "reducers/lessons/lessonsSlice";
 
 const CreateCourse = () => {
   const originalLessonsRef = useRef([]);
@@ -83,6 +85,22 @@ const CreateCourse = () => {
   const isEdit = mode === "edit";
   const isLesson = location.pathname.includes("lesson");
   const isCreateLesson = location.pathname.includes("create-lesson");
+
+  const { loading: lessonsSaving, error: lessonsError, fieldErrors } =
+    useSelector((s) => s.lessons.create);
+
+  // Whenever fieldErrors appear, push them into local `errors` state
+  useEffect(() => {
+    if (fieldErrors && currentStep === 2) {
+      applyLessonApiErrorsToForm(fieldErrors, setErrors);
+    }
+  }, [fieldErrors, currentStep]);
+
+  useEffect(() => {
+    if (currentStep !== 2 && (lessonsError || fieldErrors)) {
+      dispatch(clearCreateError());
+    }
+  }, [currentStep]);
 
   // If you were previously reading from mock, this keeps the “add extra lesson” UX intact in edit/lesson route.
   useEffect(() => {
@@ -389,6 +407,26 @@ const CreateCourse = () => {
       }
     } catch (err) {
       // Friendly handling for 409/422 style errors
+      if ((err?.code === 'Validation failed' || err?.http === 400) && err?.message) {
+        try {
+          const fields = JSON.parse(err.message);
+          if (fields.length) {
+            for (const f of fields) {
+              setErrors(prev => setIn(prev || {}, f.path, f.message));
+            }
+            setCurrentStep(2);
+            return;
+          }
+        } catch (_) { }
+      }
+
+      // 409 overlap → banner/toast
+      if (err?.message === '409_CONFLICT_OVERLAP') {
+        alert('Lesson schedule overlaps an existing lesson for this teacher/course.');
+        setCurrentStep(2);
+        return;
+      }
+
       const msg =
         err?.message ||
         err?.error ||
@@ -476,7 +514,16 @@ const CreateCourse = () => {
               onStepClick={handleStepClick}
             />
           </div>
+          {/* STEP CONTENT */}
           {getCurrentStepComponent()}
+
+          {/* Step-2 inline banner for server errors */}
+          {currentStep === 2 && lessonsError && (
+            <div className="mt-4 p-3 rounded-md bg-destructive/10 border border-destructive text-destructive">
+              {lessonsError}
+            </div>
+          )}
+
           <div
             className={`flex mt-8 pt-6 border-t border-border ${currentStep < steps.length ? "justify-end" : "justify-between"
               }`}
@@ -507,6 +554,7 @@ const CreateCourse = () => {
                 onClick={handleSubmit}
                 iconName="Check"
                 iconPosition="left"
+                disabled={lessonsSaving}
               >
                 {isEdit ? "Update" : "Create"}
               </Button>

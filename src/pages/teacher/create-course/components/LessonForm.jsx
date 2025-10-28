@@ -75,11 +75,23 @@ const LessonFormInstance = ({
             handleInputChange(field, value)
           }
         />
+
+        {/* show schedule.errors under the widget if present */}
+        {(errors?.schedule?.date || errors?.schedule?.time) && (
+          <div className="text-sm text-destructive mt-1">
+            {errors?.schedule?.date && <div>{errors.schedule.date}</div>}
+            {errors?.schedule?.time && <div>{errors.schedule.time}</div>}
+          </div>
+        )}
         <DurationRange formData={formData}
           handleInputChange={(field, value) =>
             handleInputChange(field, value)
           }
         />
+
+        {errors?.schedule?.duration && (
+          <div className="text-sm text-destructive mt-1">{errors.schedule.duration}</div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
           <Checkbox
@@ -148,26 +160,22 @@ export default function LessonForm({
   removeLesson,
   mode,
 }) {
-  return (
-    <>
-      {formData?.lessons.map((lesson, index) => (
-        <>
-          <LessonFormInstance
-            key={index}
-            index={index + 1}
-            formData={lesson}
-            errors={errors.lessons?.[index] || {}}
-            handleInputChange={(field, value) =>
-              handleInputChange(field, value, index)
-            }
-            onAddLesson={() => addLesson(index)}
-            onDeleteLesson={() => removeLesson(index)}
-            showAddButton={index === formData.lessons.length - 1}
-            mode={mode}
-          />
-          {index !== formData?.lessons.length - 1 && <hr className="!my-8" />}
-        </>
-      ))}
-    </>
+  return (formData?.lessons.map((lesson, index) => (
+    <div key={index}>
+      <LessonFormInstance
+        index={index + 1}
+        formData={lesson}
+        errors={errors.lessons?.[index] || {}}
+        handleInputChange={(field, value) =>
+          handleInputChange(field, value, index)
+        }
+        onAddLesson={() => addLesson(index)}
+        onDeleteLesson={() => removeLesson(index)}
+        showAddButton={index === formData.lessons.length - 1}
+        mode={mode}
+      />
+      {index !== formData?.lessons.length - 1 && <hr className="!my-8" />}
+    </div>
+  ))
   );
 }

@@ -27,9 +27,9 @@ export function mapLessonToCreatePayload(l) {
     trialCapacity: l.isTrialAvailable ? Number(l.trialCapacity || 0) : undefined,
     order: typeof l.order === 'number' ? l.order : undefined,
     schedule: {
-      date: l.schedule?.date ? new Date(l.schedule.date) : new Date(),
-      time: normalizeTime12h(l.schedule?.time),
-      duration: Number(l.schedule?.duration || 60),
+      date: l.schedule?.date ? new Date(l.schedule.date) : '',
+      time: l.schedule?.time ? normalizeTime12h(l.schedule?.time) : '',
+      duration: l.schedule?.duration ? Number(l.schedule?.duration) : 60,
     },
   };
 }
