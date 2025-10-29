@@ -75,7 +75,7 @@ const CourseDetails = ({ course, lessonCount }) => {
           {["Lessons", "Price"].map((item, index) => (
             <div key={index}>
               <h4 className="text-h4 font-bold text-brand-gray-800">
-                {index === 0 ? lessonCount : "$" + course?.pricePerLesson}
+                {index === 0 ? lessonCount : "$" + course?.price}
               </h4>
               <p className="text-xs text-brand-gray-500">{item}</p>
             </div>

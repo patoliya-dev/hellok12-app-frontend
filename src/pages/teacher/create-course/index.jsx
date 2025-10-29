@@ -306,7 +306,7 @@ const CreateCourse = () => {
       studentCapacity:
         formData.lessonType === "group" ? Number(formData.studentCapacity || 0) : 1,
       mode: formData.mode,
-      pricePerLesson: Number(formData.pricePerLesson || 0),
+      price: Number(formData.price || 0),
       ageGroups: formData.ageGroups,
       startDate: formData.startDate,
       endDate: formData.endDate || null,

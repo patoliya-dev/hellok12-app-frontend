@@ -87,14 +87,14 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
         />
 
         <Input
-          label="Price per Lesson ($)"
-          placeholder="Enter the price per lesson"
+          label="Price ($)"
+          placeholder="Enter the price"
           type="number"
           min="0"
           step="0.01"
-          value={formData?.pricePerLesson || ""}
+          value={formData?.price || ""}
           onChange={(e) =>
-            handleInputChange("pricePerLesson", parseFloat(e?.target?.value))
+            handleInputChange("price", parseFloat(e?.target?.value))
           }
         />
 
