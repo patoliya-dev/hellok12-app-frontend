@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 
-export default function DurationRange({ formData, handleInputChange }) {
+const FieldError = ({ children }) =>
+  children ? <p className="mt-1 text-sm text-destructive">{children}</p> : null;
+
+export default function DurationRange({ formData, handleInputChange, error = "" }) {
   // Duration in minutes
   const [duration, setDuration] = useState(60);
 
@@ -13,7 +16,7 @@ export default function DurationRange({ formData, handleInputChange }) {
     <div className="w-full max-w-md mb-4">
       {/* Label + Current Value */}
       <label className="block text-sm font-medium text-brand-gray-800 mb-2">
-        Duration{" "}
+        Duration <span className="text-error">*</span>{" "}
         <span className="text-sm text-brand-gray-500 ml-1">
           ({duration} min)
         </span>
@@ -25,7 +28,8 @@ export default function DurationRange({ formData, handleInputChange }) {
         min="30"
         max="60"
         step="15"
-        value={formData?.schedule?.duration || duration}
+        required
+        value={formData?.schedule?.duration || duration || 60}
         onChange={handleChange}
         className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-blue-600"
       />
@@ -35,9 +39,8 @@ export default function DurationRange({ formData, handleInputChange }) {
         <span>30 min</span>
         <span>45 min</span>
         <span>60 min</span>
-        {/* <span>75 min</span>
-        <span>90 min</span> */}
       </div>
+      <FieldError>{error}</FieldError>
     </div>
   );
 }

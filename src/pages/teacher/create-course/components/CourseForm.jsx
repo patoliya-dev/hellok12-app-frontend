@@ -29,18 +29,28 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
         />
       </div>
 
-      <Input
-        label="Description"
-        type="text"
-        placeholder="Brief description of the course content and objectives"
-        value={formData?.description || ""}
-        onChange={(e) => handleInputChange("description", e?.target?.value)}
-      />
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-2">
+          Description <span className="text-error">*</span>
+        </label>
+        <textarea
+          className={`w-full px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50 ${errors?.description &&
+            "border-destructive focus-visible:ring-destructive"
+            }`}
+          placeholder="Brief description of the course content and objectives"
+          value={formData?.description || ""}
+          onChange={(e) =>
+            handleInputChange("description", e.target.value)
+          }
+          required
+        />
 
-      <div
-        className={`grid grid-cols-1 gap-6 ${formData?.lessonType === "group" ? "md:grid-cols-3" : "md:grid-cols-2"
-          }`}
-      >
+        {errors?.description && (
+          <p className="text-sm text-destructive">{errors?.description}</p>
+        )}
+      </div>
+
+      <div className={`grid grid-cols-1 gap-6 ${formData?.lessonType === "group" ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
         <Select
           label="Lesson Type"
           options={lessonTypeOptions}
@@ -87,14 +97,14 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
         />
 
         <Input
-          label="Price per Lesson ($)"
-          placeholder="Enter the price per lesson"
+          label="Price ($)"
+          placeholder="Enter the price"
           type="number"
           min="0"
           step="0.01"
-          value={formData?.pricePerLesson || ""}
+          value={formData?.price || ""}
           onChange={(e) =>
-            handleInputChange("pricePerLesson", parseFloat(e?.target?.value))
+            handleInputChange("price", parseFloat(e?.target?.value))
           }
         />
 
