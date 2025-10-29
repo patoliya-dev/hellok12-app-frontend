@@ -16,6 +16,7 @@ import TeachingHighlightsTab from "./components/TeachingHighlightsTab";
 import api from "../../../utils/axiosInstance";
 import { upsertAttachmentAndUpdateEntity } from "../../../utils/s3";
 import { updateProfile as updateProfileThunk } from "reducers/profile/profileThunks";
+import Loader from "components/ui/Loader";
 
 const ProfileAccountSettings = () => {
   const dispatch = useDispatch();
@@ -27,16 +28,20 @@ const ProfileAccountSettings = () => {
   const [errors, setErrors] = useState({});
   const [selectedImageFile, setSelectedImageFile] = useState(null);
   const [selectedCertificateFiles, setSelectedCertificateFiles] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     async function getData() {
+      setIsLoading(true);
       const { data } = await api.get("/auth/me");
       if (data) {
         setFormData(data.data);
       }
+      setIsLoading(false);
     }
     getData();
   }, []);
+
   const getFieldValue = (data, field) => {
     if (["country", "state", "city"].includes(field)) {
       return data?.[field] ?? data?.profile?.location?.[field] ?? "";
@@ -52,7 +57,6 @@ const ProfileAccountSettings = () => {
     let newErrors = {};
 
     if (tabName) {
-      // ✅ validate only the selected tab
       const requiredFields = validationRules[tabName] || [];
       requiredFields.forEach((field) => {
         const value = getFieldValue(data, field);
@@ -61,7 +65,6 @@ const ProfileAccountSettings = () => {
         }
       });
     } else {
-      // ✅ global save → validate all tabs
       Object.keys(validationRules).forEach((tab) => {
         const requiredFields = validationRules[tab] || [];
         requiredFields.forEach((field) => {
@@ -152,9 +155,18 @@ const ProfileAccountSettings = () => {
           formData?.profileImage?._id ||
           formData?.profile?.profileImageAttachmentId;
 
-        if (selectedImageFile) {
+        if (selectedImageFile?.type === "delete") {
+          await api.delete(`/attachments/${formData?.profileImage?._id}`);
+          await performUpdate();
+          successToast("Profile updated successfully");
+          setSelectedImageFile(null);
+          setIsEdit(false);
+          return;
+        }
+
+        if (selectedImageFile?.type === "upload" && selectedImageFile?.file) {
           await upsertAttachmentAndUpdateEntity({
-            file: selectedImageFile,
+            file: selectedImageFile.file,
             entityType: "User",
             entityId: formData.id,
             existingAttachmentId,
@@ -299,9 +311,19 @@ const ProfileAccountSettings = () => {
       case "preferences":
         return <TeachingPreferencesTab {...commonProps} />;
       case "highlights":
-        return <TeachingHighlightsTab />;
+        return (
+          <TeachingHighlightsTab
+            formData={formData}
+            setFormData={setFormData}
+          />
+        );
       default:
-        return <PersonalInfoTab {...commonProps} />;
+        return (
+          <PersonalInfoTab
+            {...commonProps}
+            onImageFileChange={setSelectedImageFile}
+          />
+        );
     }
   };
 
@@ -326,7 +348,9 @@ const ProfileAccountSettings = () => {
     setIsEdit(!isEdit);
   };
 
-  return (
+  return isLoading ? (
+    <Loader />
+  ) : (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <RoleBasedHeader />

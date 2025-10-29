@@ -6,21 +6,17 @@ import ProfileImageSection from "./ProfileImageSection";
 import set from "lodash/set";
 import api from "../../../../utils/axiosInstance";
 import { upsertAttachmentAndUpdateEntity } from "../../../../utils/s3";
-import { errorToast, successToast } from "../../../../utils/utils";
+import {
+  errorToast,
+  getLanguageName,
+  languageOptions,
+  successToast,
+} from "../../../../utils/utils";
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },
   { label: "Female", value: "female" },
   { label: "Other", value: "other" },
-];
-
-const LANGUAGE_OPTIONS = [
-  { label: "English", value: "English" },
-  { label: "Spanish", value: "Spanish" },
-  { label: "French", value: "French" },
-  { label: "German", value: "German" },
-  { label: "Chinese", value: "Chinese" },
-  { label: "Japanese", value: "Japanese" },
 ];
 
 const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
@@ -59,7 +55,10 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
       const payload = { ...formData, profile: formData.studentProfile };
       delete payload.studentProfile;
 
-      if (!selectedImageFile) {
+      if (
+        (selectedImageFile?.type !== "delete" && !selectedImageFile?.file) ||
+        !selectedImageFile
+      ) {
         await onUpdate(child._id, payload);
         successToast("Profile updated successfully");
         setIsEditing(false);
@@ -71,8 +70,18 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
         formData?.studentProfile?.profileImage?._id ||
         formData?.studentProfile?.profileImageAttachmentId;
 
+      if (selectedImageFile?.type === "delete") {
+        console.log("delete");
+        await api.delete(`/attachments/${formData?.profileImage?._id}`);
+        await onUpdate(child._id, payload);
+        successToast("Profile updated successfully");
+        setSelectedImageFile(null);
+        setIsEditing(false);
+        return;
+      }
+
       await upsertAttachmentAndUpdateEntity({
-        file: selectedImageFile,
+        file: selectedImageFile?.file,
         entityType: "User",
         entityId: formData?._id || child._id,
         existingAttachmentId,
@@ -130,7 +139,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
         </div>
         <ProfileImageSection
           isEditing={isEditing}
-          profileImage={child?.profileImage?.url || child?.profileImage}
+          profileImage={child?.profileImage}
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
           {/* Display fields */}
@@ -177,7 +186,9 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
             </label>
             <p className="text-foreground mt-1 text-sm">
               {Array.isArray(child?.studentProfile?.languages)
-                ? child?.studentProfile?.languages.join(", ")
+                ? child?.studentProfile?.languages
+                    .map((l) => getLanguageName(l))
+                    .join(", ")
                 : child?.studentProfile?.languages}
             </p>
           </div>
@@ -206,7 +217,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
       </div>
       <ProfileImageSection
         isEditing={isEditing}
-        profileImage={formData?.profileImage?.url || formData?.profileImage}
+        profileImage={formData?.profileImage}
         onFileSelected={setSelectedImageFile}
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
@@ -245,7 +256,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
           label="Languages"
           multiple
           value={languagesArray}
-          options={LANGUAGE_OPTIONS}
+          options={languageOptions}
           onChange={handleLanguagesChange}
         />
       </div>

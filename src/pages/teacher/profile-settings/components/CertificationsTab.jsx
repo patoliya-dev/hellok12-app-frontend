@@ -1,9 +1,10 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Image from "../../../../components/AppImage";
 import Icon from "../../../../components/AppIcon";
 import DeleteModal from "components/ui/DeleteModal";
+import api from "../../../../utils/axiosInstance";
 
 const CertificationsTab = ({
   formData,
@@ -18,6 +19,11 @@ const CertificationsTab = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [certificateId, setCertificateId] = useState(null);
   const fileInputRef = useRef(null);
+  const [currentCertificates, setCurrentCertificates] = useState([]);
+
+  useEffect(() => {
+    setCurrentCertificates(formData?.profile?.certificates || []);
+  }, [formData?.profile?.certificates]);
 
   const handleFileButtonClick = () => {
     fileInputRef.current.click();
@@ -32,23 +38,25 @@ const CertificationsTab = ({
     if (onCertificateFilesChange) {
       onCertificateFilesChange(fileArray);
     }
-    const currentCertificates = formData?.certificates || [];
 
-    fileArray?.forEach((file) => {
+    fileArray.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const newCertificate = {
           id: Date.now() + Math.random(),
-          name: file?.name,
-          url: e?.target?.result,
-          uploadDate: new Date()?.toISOString(),
-          size: file?.size,
+          name: file.name,
+          url: e.target?.result,
+          uploadDate: new Date().toISOString(),
+          size: file.size,
         };
 
-        const updatedCertificates = [...currentCertificates, newCertificate];
-        handleInputChange("certificates", updatedCertificates);
+        setCurrentCertificates((prevCertificates) => {
+          const updated = [...prevCertificates, newCertificate];
+          return updated;
+        });
       };
-      reader?.readAsDataURL(file);
+
+      reader.readAsDataURL(file);
     });
   };
 
@@ -82,12 +90,13 @@ const CertificationsTab = ({
     }
   };
 
-  const removeCertificate = (certificateId) => {
-    const currentCertificates = formData?.certificates || [];
+  const removeCertificate = async (certificateId) => {
     const updatedCertificates = currentCertificates?.filter(
-      (cert) => cert?.id !== certificateId
+      (cert) => cert?._id !== certificateId
     );
-    handleInputChange("certificates", updatedCertificates);
+    await api.delete(`/attachments/${certificateId}`);
+    setCurrentCertificates(updatedCertificates);
+    handleInputChange("profile.certificates", updatedCertificates);
   };
 
   const formatFileSize = (bytes) => {
@@ -97,8 +106,6 @@ const CertificationsTab = ({
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i))?.toFixed(2)) + " " + sizes?.[i];
   };
-
-  const certificates = formData?.profile?.certificates || [];
 
   const handleDeleteModalVisibility = () => {
     setShowDeleteModal(!showDeleteModal);
@@ -216,21 +223,23 @@ const CertificationsTab = ({
         </div>
 
         {/* Uploaded Certificates */}
-        {certificates?.length > 0 && (
+        {currentCertificates?.length > 0 && (
           <div className="mt-6">
             <h4 className="text-md font-medium text-foreground mb-4">
-              Uploaded Certificates ({certificates?.length})
+              Uploaded Certificates ({currentCertificates?.length})
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {certificates?.map((certificate) => (
+              {currentCertificates?.map((certificate) => (
                 <div
-                  key={certificate?.id}
+                  key={certificate?._id}
                   className="border border-border rounded-lg p-4 bg-muted/30"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">
-                        {certificate?.name}
+                        {certificate?.name.substring(
+                          certificate?.name.indexOf("_") + 1
+                        )}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {formatFileSize(certificate?.size)}
@@ -238,7 +247,7 @@ const CertificationsTab = ({
                     </div>
                     <button
                       onClick={() => {
-                        setCertificateId(certificate?.id);
+                        setCertificateId(certificate?._id);
                         handleDeleteModalVisibility();
                       }}
                       className="ml-2 p-1 text-muted-foreground hover:text-error transition-smooth disabled:cursor-not-allowed"

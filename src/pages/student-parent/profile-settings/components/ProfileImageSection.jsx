@@ -2,23 +2,25 @@ import { useRef, useState } from "react";
 import Icon from "components/AppIcon";
 import Image from "components/AppImage";
 import Button from "components/ui/Button";
+import api from "../../../../utils/axiosInstance";
 
 const ProfileImageSection = ({ isEditing, profileImage, onFileSelected }) => {
-  const [imagePreview, setImagePreview] = useState(profileImage || "");
+  const [imagePreview, setImagePreview] = useState(profileImage?.url || "");
   const fileInputRef = useRef(null);
-  
+
   const handleButtonClick = () => {
     fileInputRef.current.click();
   };
 
-  const removeImage = () => {
+  const removeImage = async () => {
     setImagePreview("");
     // setProfileImage("");
     // handleInputChange("profileImage", "");
+    if (profileImage) profileImage = null;
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // ✅ reset input value
     }
-    if (onFileSelected) onFileSelected(null);
+    if (onFileSelected) onFileSelected({ type: "delete", file: null });
   };
 
   const handleImageUpload = (event) => {
@@ -29,7 +31,7 @@ const ProfileImageSection = ({ isEditing, profileImage, onFileSelected }) => {
     reader.onload = (e) => {
       const imageUrl = e.target?.result;
       setImagePreview(imageUrl);
-      if (onFileSelected) onFileSelected(file);
+      if (onFileSelected) onFileSelected({ type: "upload", file });
 
       // ✅ after processing, reset file input value (optional)
       if (fileInputRef.current) {

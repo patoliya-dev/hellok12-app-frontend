@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import Input from "../../../../components/ui/Input";
 import Select from "../../../../components/ui/Select";
 import Button from "../../../../components/ui/Button";
-import { ageGroupOptions, languageOptions } from "../data";
+import { ageGroupOptions } from "../data";
+import { languageOptions } from "../../../../utils/utils";
 
 const BioSpecializationsTab = ({
   formData,

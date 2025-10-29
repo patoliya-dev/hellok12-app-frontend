@@ -52,7 +52,7 @@ const PersonalInfoTab = ({
         const imageUrl = e?.target?.result;
         setImagePreview(imageUrl);
         setProfileImage(imageUrl);
-        if (onImageFileChange) onImageFileChange(file);
+        if (onImageFileChange) onImageFileChange({ type: 'upload', file });
       };
       reader?.readAsDataURL(file);
     }
@@ -61,7 +61,7 @@ const PersonalInfoTab = ({
   const removeImage = () => {
     setImagePreview("");
     setProfileImage("");
-    if (onImageFileChange) onImageFileChange(null);
+    if (onImageFileChange) onImageFileChange({type: 'delete', file: null});
   };
 
   const stateOptions = getAllStates(formData?.profile?.location?.country) || [];
@@ -165,7 +165,7 @@ const PersonalInfoTab = ({
             label="Full Name"
             type="text"
             placeholder="Enter your full name"
-            value={formData?.name}
+            value={formData?.name || ""}
             onChange={(e) => handleInputChange("name", e?.target?.value)}
             required
             disabled={!isEdit}
@@ -177,7 +177,7 @@ const PersonalInfoTab = ({
             label="Email Address"
             type="email"
             placeholder="your.email@example.com"
-            value={formData?.email}
+            value={formData?.email || ""}
             onChange={(e) => handleInputChange("email", e?.target?.value)}
             required
             disabled={!isEdit}
@@ -187,7 +187,7 @@ const PersonalInfoTab = ({
             label="Phone Number"
             type="tel"
             placeholder="+1 (555) 123-4567"
-            value={formData?.phone}
+            value={formData?.phone || ""}
             onChange={(e) => handleInputChange("phone", e?.target?.value)}
             required
             disabled={!isEdit}

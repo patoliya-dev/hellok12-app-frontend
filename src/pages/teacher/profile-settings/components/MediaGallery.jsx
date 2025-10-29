@@ -58,7 +58,7 @@ const MediaGallery = ({
 
   const handleIntroChange = (item) => {
     const updatedItems = items.map((mediaItems) => {
-      if (mediaItems.id === item.id) {
+      if (mediaItems.id === item?.id) {
         mediaItems.isIntro = !mediaItems.isIntro;
       } else {
         mediaItems.isIntro = false;
@@ -146,7 +146,7 @@ const MediaGallery = ({
                   className={`
                   px-2 py-1 rounded-full text-xs font-medium
                   ${
-                    item?.type === "video"
+                    item?.mime.startsWith("video")
                       ? "bg-primary/90 text-primary-foreground"
                       : "bg-secondary/90 text-secondary-foreground"
                   }
@@ -167,18 +167,18 @@ const MediaGallery = ({
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-medium text-foreground truncate">
-                    {item?.name}
+                    {item?.name?.substring(item?.name?.indexOf("_") + 1)}
                   </h4>
                   <div className="flex items-center space-x-2 mt-1 text-xs text-muted-foreground">
                     <span>{formatFileSize(item?.size)}</span>
                     <span>•</span>
-                    <span>{formatDate(item?.uploadDate)}</span>
+                    <span>{formatDate(item?.createdAt)}</span>
                   </div>
                 </div>
 
                 <input
                   type="checkbox"
-                  data-tooltip-id={`intro-tooltip-${item.id}`}
+                  data-tooltip-id={`intro-tooltip-${item?.id}`}
                   disabled={item?.isIntro}
                   checked={item?.isIntro}
                   onChange={() => handleIntroChange(item)}
@@ -186,7 +186,7 @@ const MediaGallery = ({
                 />
 
                 <ReactTooltip
-                  id={`intro-tooltip-${item.id}`}
+                  id={`intro-tooltip-${item?.id}`}
                   place="top"
                   content="Select to set the intro video"
                 />

@@ -42,20 +42,28 @@ const ParentInfoSection = ({
   const handleSaveEdit = async () => {
     try {
       setIsSaving(true);
-
-      if (!selectedImageFile) {
+      if (selectedImageFile?.type !== "delete" && !selectedImageFile?.file) {
         await onSave(formData);
         successToast("Profile updated successfully");
         setIsEditing(false);
         return;
       }
-
+      console.log("formData", formData);
       const existingAttachmentId =
         formData?.profileImage?._id ||
         formData?.profile?.profileImageAttachmentId;
 
+      if (selectedImageFile?.type === "delete") {
+        await api.delete(`/attachments/${formData?.profileImage?._id}`);
+        await onSave(formData);
+        successToast("Profile updated successfully");
+        setSelectedImageFile(null);
+        setIsEditing(false);
+        return;
+      }
+
       await upsertAttachmentAndUpdateEntity({
-        file: selectedImageFile,
+        file: selectedImageFile?.file,
         entityType: "User",
         entityId: formData.id,
         existingAttachmentId,
@@ -73,8 +81,6 @@ const ParentInfoSection = ({
       setIsSaving(false);
     }
   };
-
-  console.log(profileData?.profileImage?.url || profileData?.profileImage)
 
   return (
     <section className="w-full mb-5 bg-card border border-border rounded-lg shadow-sm">
@@ -116,7 +122,7 @@ const ParentInfoSection = ({
 
           <ProfileImageSection
             isEditing={isEditing}
-            profileImage={profileData?.profileImage?.url || profileData?.profileImage} 
+            profileImage={profileData?.profileImage}
             onFileSelected={setSelectedImageFile}
           />
 

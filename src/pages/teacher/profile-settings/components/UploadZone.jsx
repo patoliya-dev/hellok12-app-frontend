@@ -40,7 +40,7 @@ const UploadZone = ({ onFileUpload, isUploading, uploadProgress }) => {
         extension
       );
     });
-
+    console.log(validFiles, "validFiles");
     if (validFiles?.length > 0) {
       onFileUpload(validFiles);
     }

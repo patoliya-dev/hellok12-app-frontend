@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
-import { mockMediaItems } from "../data";
+import { useDispatch } from "react-redux";
 import UploadZone from "./UploadZone";
 import FilterTabs from "./FilterTabs";
 import BulkActionsBar from "./BulkActionsBar";
 import MediaGallery from "./MediaGallery";
 import DeleteModal from "components/ui/DeleteModal";
 import { errorToast, successToast } from "../../../../utils/utils";
+import { upsertAttachmentAndUpdateEntity } from "../../../../utils/s3";
+import { updateProfile as updateProfileThunk } from "reducers/profile/profileThunks";
+import api from "../../../../utils/axiosInstance";
 
-const TeachingHighlightsTab = () => {
+const TeachingHighlightsTab = ({ formData, setFormData }) => {
+  const dispatch = useDispatch();
   const [mediaItems, setMediaItems] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -19,18 +23,19 @@ const TeachingHighlightsTab = () => {
 
   useEffect(() => {
     // Simulate loading media items
-    setMediaItems(mockMediaItems);
+    setMediaItems(formData?.profile?.highlights || []);
+    console.log(formData?.profile?.highlights, "formData?.profile?.highlights");
   }, []);
 
   useEffect(() => {
     // Filter and search logic
     let filtered = mediaItems;
-
+    console.log(filtered, "filtered");
     // Apply filter
     if (activeFilter === "videos") {
-      filtered = filtered?.filter((item) => item?.type === "video");
+      filtered = filtered?.filter((item) => item?.mime.startsWith("video"));
     } else if (activeFilter === "images") {
-      filtered = filtered?.filter((item) => item?.type === "image");
+      filtered = filtered?.filter((item) => item?.mime.startsWith("image"));
     }
 
     // Apply search
@@ -44,39 +49,77 @@ const TeachingHighlightsTab = () => {
   }, [mediaItems, activeFilter, searchQuery]);
 
   const handleFileUpload = async (files) => {
+    for (const file of files) {
+      if (file.size > 100000000) {
+        errorToast("File size exceeds 100MB");
+        return;
+      }
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
 
-    // Simulate upload progress
-    const uploadInterval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(uploadInterval);
-          setIsUploading(false);
+    let intervalId;
+    const startSmoothProgress = () => {
+      let progress = 0;
+      intervalId = setInterval(() => {
+        progress += Math.floor(Math.random() * 10);
+        if (progress >= 90) progress = 90;
+        setUploadProgress(progress);
+      }, 200);
+    };
 
-          // Add new files to media items
-          const newItems = files?.map((file, index) => ({
-            id: Date.now() + index,
-            name: file?.name?.replace(/\.[^/.]+$/, ""),
-            type: file?.type?.startsWith("video/") ? "video" : "image",
-            url: URL.createObjectURL(file),
-            size: file?.size,
-            uploadDate: new Date(),
-            format: file?.name?.split(".")?.pop()?.toLowerCase(),
-          }));
+    try {
+      startSmoothProgress();
 
-          setMediaItems((prev) => [...newItems, ...prev]);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 200);
+      let keys = [...(formData?.profile?.highlights || [])];
+      for (const file of files) {
+        const key = await upsertAttachmentAndUpdateEntity({
+          file,
+          entityType: "TeacherProfile",
+          entityId: formData?.profile?._id,
+          apiClient: api,
+          scope: "highlights",
+          onUpdateEntity: () => {},
+        });
+        keys.push(key?.id);
+      }
+
+      let updatedFormData = {
+        ...formData,
+        profile: { ...formData.profile, highlights: keys },
+      };
+
+      const result = await dispatch(updateProfileThunk(updatedFormData));
+      if (!updateProfileThunk.fulfilled.match(result)) {
+        throw new Error(result.payload || "Failed to update profile");
+      }
+
+      const refreshed = result.payload;
+      if (refreshed) {
+        clearInterval(intervalId);
+        setUploadProgress(100);
+
+        setFormData(refreshed);
+        setMediaItems(refreshed?.profile?.highlights || []);
+        successToast("Highlights updated successfully");
+      }
+    } catch (error) {
+      clearInterval(intervalId);
+      setUploadProgress(0);
+      errorToast(error?.message || "Failed to update highlights");
+    } finally {
+      setIsUploading(false);
+      setTimeout(() => setUploadProgress(0), 1000);
+    }
   };
 
   const mediaCounts = {
     all: mediaItems?.length,
-    videos: mediaItems?.filter((item) => item?.type === "video")?.length,
-    images: mediaItems?.filter((item) => item?.type === "image")?.length,
+    videos: mediaItems?.filter((item) => item?.mime.startsWith("video"))
+      ?.length,
+    images: mediaItems?.filter((item) => item?.mime.startsWith("image"))
+      ?.length,
   };
 
   const handleItemSelect = (itemId) => {

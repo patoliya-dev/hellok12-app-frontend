@@ -6,22 +6,19 @@ import Select from "components/ui/Select";
 import Button from "components/ui/Button";
 import ProfileImageSection from "./ProfileImageSection";
 import api from "../../../../utils/axiosInstance";
-import { errorToast, successToast } from "../../../../utils/utils";
+import {
+  capitalize,
+  errorToast,
+  getLanguageName,
+  languageOptions,
+  successToast,
+} from "../../../../utils/utils";
 import { upsertAttachmentAndUpdateEntity } from "../../../../utils/s3";
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },
   { label: "Female", value: "female" },
   { label: "Other", value: "other" },
-];
-
-const LANGUAGE_OPTIONS = [
-  { label: "English", value: "English" },
-  { label: "Spanish", value: "Spanish" },
-  { label: "French", value: "French" },
-  { label: "German", value: "German" },
-  { label: "Chinese", value: "Chinese" },
-  { label: "Japanese", value: "Japanese" },
 ];
 
 const StudentProfileSection = ({
@@ -85,7 +82,10 @@ const StudentProfileSection = ({
     try {
       setIsSaving(true);
 
-      if (!selectedImageFile) {
+      if (
+        (selectedImageFile?.type !== "delete" && !selectedImageFile?.file) ||
+        !selectedImageFile
+      ) {
         await onSave(formData);
         successToast("Profile updated successfully");
         setIsEditing(false);
@@ -96,8 +96,17 @@ const StudentProfileSection = ({
         formData?.profileImage?._id ||
         formData?.profile?.profileImageAttachmentId;
 
+      if (selectedImageFile?.type === "delete") {
+        console.log("id", formData?.profileImage?._id);
+        await api.delete(`/attachments/${formData?.profileImage?._id}`);
+        await onSave(formData);
+        successToast("Profile updated successfully");
+        setSelectedImageFile(null);
+        setIsEditing(false);
+        return;
+      }
       const { key } = await upsertAttachmentAndUpdateEntity({
-        file: selectedImageFile,
+        file: selectedImageFile?.file,
         entityType: "User",
         entityId: formData.id,
         existingAttachmentId,
@@ -158,7 +167,7 @@ const StudentProfileSection = ({
 
           <ProfileImageSection
             isEditing={isEditing}
-            profileImage={formData?.profileImage?.url}
+            profileImage={formData?.profileImage}
             onFileSelected={setSelectedImageFile}
           />
 
@@ -211,7 +220,7 @@ const StudentProfileSection = ({
               />
               <Select
                 label="Languages"
-                options={LANGUAGE_OPTIONS}
+                options={languageOptions}
                 multiple
                 value={languagesArray}
                 onChange={handleLanguagesChange}
@@ -271,7 +280,7 @@ const StudentProfileSection = ({
                   Gender
                 </label>
                 <p className="mt-1 text-sm text-foreground">
-                  {formData?.profile?.gender}
+                  {capitalize(formData?.profile?.gender)}
                 </p>
               </div>
               <div>
@@ -280,7 +289,9 @@ const StudentProfileSection = ({
                 </label>
                 <p className="mt-1 text-sm text-foreground">
                   {Array.isArray(formData?.profile?.languages)
-                    ? formData?.profile?.languages.join(", ")
+                    ? formData?.profile?.languages
+                        .map((l) => getLanguageName(l))
+                        .join(", ")
                     : formData?.profile?.languages}
                 </p>
               </div>

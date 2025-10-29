@@ -48,6 +48,7 @@ export const upsertAttachmentAndUpdateEntity = async ({
   scope = "",
   presignExtra = {},
 }) => {
+  console.log(file, "file im s3");
   if (!file) throw new Error("No file provided");
   if (!entityType || !entityId) throw new Error("Missing entityType/entityId");
   if (!apiClient) throw new Error("Missing api client");

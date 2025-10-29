@@ -11,6 +11,7 @@ import { capitalize } from "../../../utils/utils";
 import api from "../../../utils/axiosInstance";
 import { toast } from "react-toastify";
 import { updateProfile as updateProfileThunk } from "reducers/profile/profileThunks";
+import Loader from "components/ui/Loader";
 
 const ProfileAccountSettings = () => {
   const dispatch = useDispatch();
@@ -67,16 +68,7 @@ const ProfileAccountSettings = () => {
     ? students.find((s) => s.email === authUser.email) || authUser
     : authUser;
 
-  return isLoading ? (
-    <div className="min-h-screen bg-background">
-      <RoleBasedHeader />
-      <main className="pt-16 pb-20 lg:pb-8">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center">Loading.....</div>
-        </div>
-      </main>
-    </div>
-  ) : (
+  return isLoading ? <Loader /> : (
     <div className="min-h-screen bg-background">
       <RoleBasedHeader />
       <main className="pt-16 pb-20 lg:pb-8">
