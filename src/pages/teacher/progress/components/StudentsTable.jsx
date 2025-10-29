@@ -118,7 +118,7 @@ const StudentTable = ({
                 </td>
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
-                    {stud?.courseName}
+                    {stud?.title}
                   </span>
                 </td>
                 <td className="px-6 py-4">
@@ -176,6 +176,7 @@ const StudentTable = ({
         totalPages={totalPages}
         totalItems={totalItems}
         onPageChange={onPageChange}
+        listType="students"
       />
     </section>
   );

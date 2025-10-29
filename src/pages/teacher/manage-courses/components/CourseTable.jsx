@@ -96,11 +96,11 @@ const CourseTable = ({
             <tr>
               <th className="px-6 py-4 text-left">
                 <button
-                  onClick={() => onSort("courseName")}
+                  onClick={() => onSort("title")}
                   className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
                 >
                   Course Title
-                  {getSortIcon("courseName")}
+                  {getSortIcon("title")}
                 </button>
               </th>
               <th className="px-6 py-4 text-left">
@@ -145,7 +145,7 @@ const CourseTable = ({
           <tbody>
             {data?.map((course) => (
               <tr
-                key={course?.id}
+                key={course?._id}
                 className="border-t border-border hover:bg-muted/30 transition-smooth"
               >
                 <td className="px-6 py-4">
@@ -158,12 +158,13 @@ const CourseTable = ({
                     <div>
                       <div
                         className="font-medium text-foreground hover:cursor-pointer line-clamp-1 hover:text-primary transition-smooth w-[300px]"
-                        onClick={() => handleNavigate(course?.id)}
+                        onClick={() => handleNavigate(course?._id)}
                       >
-                        {course?.courseName}
+                        {course?.title}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {course?.lessonCount} lessons
+                        {/* {course?.lessonCount} lessons */}
+                        {course?.description}
                       </div>
                     </div>
                   </div>
@@ -175,12 +176,12 @@ const CourseTable = ({
                 </td>
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
-                    {`${course?.studentCount}/${course?.capacity}`}
+                    {`${course?.enrolledCount}/${course?.studentCapacity}`}
                   </span>
                 </td>
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
-                    ${course?.price}
+                    ${course?.pricePerLesson}
                   </span>
                 </td>
                 <td className="px-6 py-4">{getStatusBadge(course?.status)}</td>
@@ -189,16 +190,16 @@ const CourseTable = ({
                     name="MoreVertical"
                     size={20}
                     className="text-muted-foreground cursor-pointer"
-                    onClick={() => toggleMenu(course?.id)}
+                    onClick={() => toggleMenu(course?._id)}
                   />
-                  {openMenuId === course?.id && (
+                  {openMenuId === course?._id && (
                     <ActionMenu
                       data={course}
                       setOpenMenuId={toggleMenu}
                       onEdit={onEdit}
                       onDuplicate={onDuplicate}
                       onDelete={() => {
-                        setDeleteCourseId(course?.id);
+                        setDeleteCourseId(course?._id);
                         handleDeleteModal();
                       }}
                     />
@@ -229,6 +230,7 @@ const CourseTable = ({
         totalPages={totalPages}
         totalItems={totalItems}
         onPageChange={onPageChange}
+        listType="courses"
       />
 
       {showDeleteModal && (

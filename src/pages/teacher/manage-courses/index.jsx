@@ -1,28 +1,38 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import Button from "components/ui/Button";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import Icon from "components/AppIcon";
 import CourseFilter from "./components/CourseFilter";
 import CourseTable from "./components/CourseTable";
-import { mockCourses } from "./data";
-import { useNavigate } from "react-router-dom";
+import {
+  fetchCourses,
+  removeCourse,
+  duplicateCourse,
+} from "../../../reducers/courses/courseThunks";
 
 const ManageCourses = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // Redux course list state
+  const { items: courses, pagination, loading, error } = useSelector(
+    (state) => state.courseList
+  );
+
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
-  const [courses, setCourses] = useState(mockCourses);
-  const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     language: "",
     status: "",
     priceRange: "",
-    trialAvailable: "",
+    isTrialAvailable: "",
     dateRange: { start: "", end: "" },
   });
   const [sortConfig, setSortConfig] = useState({
-    key: "courseName",
-    direction: "desc",
+    key: "title",
+    direction: "Asc",
   });
   const [courseCount, setCourseCount] = useState([
     { label: "Total Courses", count: 0 },
@@ -30,147 +40,69 @@ const ManageCourses = () => {
   ]);
 
   const itemsPerPage = 10;
+  const [currentPage, setCurrentPage] = useState(1);
 
+  // Fetch courses from backend
   useEffect(() => {
-    const totalCourseCount = courses.length;
-    const activeCourseCount = courses.filter(
-      (course) => course.status === "active"
-    ).length;
+    const params = {
+      search: searchTerm || undefined,
+      language: filters.language || undefined,
+      status: filters.status || undefined,
+      isTrialAvailable:
+        filters.isTrialAvailable === "yes"
+          ? true
+          : filters.isTrialAvailable === "no"
+            ? false
+            : undefined,
+      priceMin:
+        filters.priceRange && filters.priceRange.includes("-")
+          ? Number(filters.priceRange.split("-")[0])
+          : undefined,
+      priceMax:
+        filters.priceRange && filters.priceRange.includes("-")
+          ? Number(filters.priceRange.split("-")[1])
+          : undefined,
+      dateFrom: filters.dateRange?.start || undefined,
+      dateTo: filters.dateRange?.end || undefined,
+      page: currentPage,
+      limit: itemsPerPage,
+      sortBy:
+        sortConfig.key && sortConfig.direction
+          ? sortConfig.key + sortConfig.direction
+          : "newest",
+    };
 
+    dispatch(fetchCourses(params));
+  }, [dispatch, searchTerm, filters, sortConfig, currentPage]);
+
+  // Course statistics
+  useEffect(() => {
+    const totalCourseCount = courses?.length || 0;
+    const activeCourseCount = courses?.filter(
+      (course) => course?.status?.toLowerCase() === "active"
+    )?.length;
     setCourseCount([
       { label: "Total Courses", count: totalCourseCount },
       { label: "Active Courses", count: activeCourseCount },
     ]);
-  }, []);
-
-  // Reset to first page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filters]);
+  }, [courses]);
 
   const handleFilterClick = () => {
-    setFilters({
-      language: "",
-      status: "",
-      priceRange: "",
-      trialAvailable: "",
-      dateRange: { start: "", end: "" },
-    });
     setShowFilter(!showFilter);
   };
 
   const handleFiltersChange = (newFilters) => {
     setFilters(newFilters);
+    setCurrentPage(1);
   };
-
-  // Filter and sort courses
-  const processedCourses = useMemo(() => {
-    let filtered = [...courses];
-
-    // Apply filters
-    if (searchTerm && searchTerm.length > 0) {
-      filtered = filtered?.filter(
-        (course) =>
-          course?.courseName
-            ?.toLowerCase()
-            ?.includes(searchTerm?.toLowerCase()) ||
-          course?.description
-            ?.toLowerCase()
-            ?.includes(searchTerm?.toLowerCase()) ||
-          course?.teacher?.toLowerCase()?.includes(searchTerm?.toLowerCase())
-      );
-    }
-
-    if (filters?.language) {
-      filtered = filtered?.filter(
-        (course) => course?.language?.toLowerCase() === filters?.language
-      );
-    }
-
-    if (filters?.status) {
-      filtered = filtered?.filter(
-        (course) => course?.status === filters?.status
-      );
-    }
-
-    if (filters?.trialAvailable) {
-      filtered = filtered?.filter((course) =>
-        filters?.trialAvailable === "yes"
-          ? course?.trialAvailable
-          : !course?.trialAvailable
-      );
-    }
-
-    if (filters?.priceRange) {
-      filtered = filtered?.filter((course) => {
-        const price = course?.price;
-        switch (filters?.priceRange) {
-          case "0-50":
-            return price >= 0 && price <= 50;
-          case "51-100":
-            return price >= 51 && price <= 100;
-          case "101-200":
-            return price >= 101 && price <= 200;
-          case "201-500":
-            return price >= 201 && price <= 500;
-          case "500+":
-            return price > 500;
-          default:
-            return true;
-        }
-      });
-    }
-
-    if (filters?.dateRange?.start) {
-      filtered = filtered?.filter(
-        (course) =>
-          new Date(course.startDate) >= new Date(filters?.dateRange?.start)
-      );
-    }
-
-    if (filters?.dateRange?.end) {
-      filtered = filtered?.filter(
-        (course) =>
-          new Date(course.endDate) <= new Date(filters?.dateRange?.end)
-      );
-    }
-
-    // Apply sorting
-    filtered?.sort((a, b) => {
-      let aValue = a?.[sortConfig?.key];
-      let bValue = b?.[sortConfig?.key];
-
-      if (typeof aValue === "string") {
-        aValue = aValue?.toLowerCase();
-        bValue = bValue?.toLowerCase();
-      }
-
-      if (aValue < bValue) {
-        return sortConfig?.direction === "asc" ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return sortConfig?.direction === "asc" ? 1 : -1;
-      }
-      return 0;
-    });
-
-    return filtered;
-  }, [searchTerm, courses, filters, sortConfig]);
-
-  // Pagination
-  const totalPages = Math.ceil(processedCourses?.length / itemsPerPage);
-  const paginatedCourses = processedCourses?.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
 
   const handleSort = (key) => {
     setSortConfig((prevConfig) => ({
       key,
       direction:
-        prevConfig?.key === key && prevConfig?.direction === "asc"
-          ? "desc"
-          : "asc",
+        prevConfig.key === key && prevConfig.direction === "Asc"
+          ? "Desc"
+          : "Asc",
     }));
   };
 
@@ -179,34 +111,33 @@ const ManageCourses = () => {
   };
 
   const handleEditCourse = (course) => {
-    navigate(`/teacher/edit-course/${course?.id}`);
+    navigate(`/teacher/edit-course/${course?._id}`);
   };
 
-  const handleDuplicateCourse = (course) => {
-    const duplicatedCourse = {
-      ...course,
-      id: Date.now()?.toString(),
-      courseName: `${course?.courseName} (Copy)`,
-      status: "draft",
-      studentCount: 0,
-      createdAt: new Date()?.toISOString()?.split("T")?.[0],
-    };
-    setCourses([...courses, duplicatedCourse]);
+  const handleDuplicateCourse = async (course) => {
+    await dispatch(duplicateCourse(course?._id));
+    dispatch(fetchCourses({ page: currentPage, limit: itemsPerPage }));
   };
 
-  const handleDeleteCourse = (courseId) => {
-    setCourses(courses?.filter((course) => course?.id !== courseId));
+  const handleDeleteCourse = async (courseId) => {
+    await dispatch(removeCourse(courseId));
+    dispatch(fetchCourses({ page: currentPage, limit: itemsPerPage }));
   };
 
   const handleCreateCourseClick = () => {
     navigate("/teacher/create-course");
   };
 
+  // Sorting & filtering are now handled server-side; we only do pagination here
+  const totalPages = pagination?.pages || 1;
+  const totalItems = pagination?.total || 0;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <RoleBasedHeader />
       <main className="max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
+        {/* Top Section */}
         <section className="my-8 flex flex-col gap-y-6 lg:gap-y-0 lg:flex-row lg:justify-between lg:items-center">
           <div>
             <h1 className="text-2xl font-semibold text-foreground mb-2">
@@ -220,11 +151,10 @@ const ManageCourses = () => {
             {courseCount.map((item, index) => (
               <div
                 key={index}
-                className={`${
-                  index !== courseCount.length - 1
-                    ? "pr-6 xl:pr-16 border-r border-[#CECECE]"
-                    : ""
-                }`}
+                className={`${index !== courseCount.length - 1
+                  ? "pr-6 xl:pr-16 border-r border-[#CECECE]"
+                  : ""
+                  }`}
               >
                 <h3 className="text-2xl font-bold text-brand-gray-800">
                   {item?.count}
@@ -239,6 +169,8 @@ const ManageCourses = () => {
             </Button>
           </div>
         </section>
+
+        {/* Search */}
         <section className="my-8">
           <div className="flex flex-row gap-3">
             <div className="relative w-full">
@@ -266,23 +198,26 @@ const ManageCourses = () => {
             ></Button>
           </div>
         </section>
+
+        {/* Filters */}
         {showFilter && (
-          <CourseFilter
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-          />
+          <CourseFilter filters={filters} onFiltersChange={handleFiltersChange} />
         )}
+
+        {/* Table */}
         <CourseTable
-          data={paginatedCourses}
+          data={courses || []}
           onSort={handleSort}
           sortConfig={sortConfig}
           currentPage={currentPage}
           totalPages={totalPages}
-          totalItems={processedCourses?.length}
+          totalItems={totalItems}
           onPageChange={handlePageChange}
           onEdit={handleEditCourse}
           onDuplicate={handleDuplicateCourse}
           onDelete={handleDeleteCourse}
+          loading={loading}
+          error={error}
         />
       </main>
     </div>

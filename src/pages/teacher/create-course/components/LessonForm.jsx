@@ -32,8 +32,8 @@ const LessonFormInstance = ({
             className="text-error cursor-pointer"
             onClick={() => {
               const hasContent =
-                formData?.lessonTitle?.trim() &&
-                formData?.lessonDescription?.trim();
+                formData?.title?.trim() &&
+                formData?.description?.trim();
 
               if (mode === "edit" && hasContent) {
                 setShowDeleteModal(true);
@@ -50,10 +50,10 @@ const LessonFormInstance = ({
             label="Lesson Title"
             type="text"
             placeholder="Enter lesson title"
-            value={formData?.lessonTitle}
+            value={formData?.title}
             required
-            error={errors?.lessonTitle}
-            onChange={(e) => handleInputChange("lessonTitle", e?.target?.value)}
+            error={errors?.title}
+            onChange={(e) => handleInputChange("title", e?.target?.value)}
           />
         </div>
         <div className="mb-4">
@@ -61,29 +61,49 @@ const LessonFormInstance = ({
             label="Description"
             type="text"
             placeholder="Describe what students will learn in this lesson"
-            value={formData?.lessonDescription}
+            value={formData?.description}
             required
-            error={errors?.lessonDescription}
+            error={errors?.description}
             onChange={(e) =>
-              handleInputChange("lessonDescription", e?.target?.value)
+              handleInputChange("description", e?.target?.value)
             }
           />
         </div>
 
-        <WeeklySchedule />
-        <DurationRange />
+        <WeeklySchedule formData={formData}
+          handleInputChange={(field, value) =>
+            handleInputChange(field, value)
+          }
+        />
+
+        {/* show schedule.errors under the widget if present */}
+        {(errors?.schedule?.date || errors?.schedule?.time) && (
+          <div className="text-sm text-destructive mt-1">
+            {errors?.schedule?.date && <div>{errors.schedule.date}</div>}
+            {errors?.schedule?.time && <div>{errors.schedule.time}</div>}
+          </div>
+        )}
+        <DurationRange formData={formData}
+          handleInputChange={(field, value) =>
+            handleInputChange(field, value)
+          }
+        />
+
+        {errors?.schedule?.duration && (
+          <div className="text-sm text-destructive mt-1">{errors.schedule.duration}</div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
           <Checkbox
             label="Trial Available"
             description="Allow students to book trial lessons for this lesson"
-            checked={!!formData.trialAvailable}
+            checked={!!formData.isTrialAvailable}
             onChange={(e) =>
-              handleInputChange("trialAvailable", e.target.checked)
+              handleInputChange("isTrialAvailable", e.target.checked)
             }
           />
 
-          {formData?.trialAvailable && (
+          {formData?.isTrialAvailable && (
             <Input
               label="Trial Capacity"
               placeholder="Enter number of trial lesson spots"
@@ -93,7 +113,7 @@ const LessonFormInstance = ({
               onChange={(e) =>
                 handleInputChange("trialCapacity", e?.target?.value)
               }
-              required={formData?.trialAvailable}
+              required={formData?.isTrialAvailable}
               error={errors?.trialCapacity}
             />
           )}
@@ -140,26 +160,22 @@ export default function LessonForm({
   removeLesson,
   mode,
 }) {
-  return (
-    <>
-      {formData?.lessons.map((lesson, index) => (
-        <>
-          <LessonFormInstance
-            key={index}
-            index={index + 1}
-            formData={lesson}
-            errors={errors.lessons?.[index] || {}}
-            handleInputChange={(field, value) =>
-              handleInputChange(field, value, index)
-            }
-            onAddLesson={() => addLesson(index)}
-            onDeleteLesson={() => removeLesson(index)}
-            showAddButton={index === formData.lessons.length - 1}
-            mode={mode}
-          />
-          {index !== formData?.lessons.length - 1 && <hr className="!my-8" />}
-        </>
-      ))}
-    </>
+  return (formData?.lessons.map((lesson, index) => (
+    <div key={index}>
+      <LessonFormInstance
+        index={index + 1}
+        formData={lesson}
+        errors={errors.lessons?.[index] || {}}
+        handleInputChange={(field, value) =>
+          handleInputChange(field, value, index)
+        }
+        onAddLesson={() => addLesson(index)}
+        onDeleteLesson={() => removeLesson(index)}
+        showAddButton={index === formData.lessons.length - 1}
+        mode={mode}
+      />
+      {index !== formData?.lessons.length - 1 && <hr className="!my-8" />}
+    </div>
+  ))
   );
 }

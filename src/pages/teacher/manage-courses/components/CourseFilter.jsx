@@ -56,9 +56,9 @@ const CourseFilter = ({ filters, onFiltersChange }) => {
         <Select
           label="Trial Available"
           placeholder="Select an option"
-          value={localFilters?.trialAvailable}
+          value={localFilters?.isTrialAvailable}
           options={trialOptions}
-          onChange={(value) => handleFilterChange("trialAvailable", value)}
+          onChange={(value) => handleFilterChange("isTrialAvailable", value)}
           className="w-full"
         />
         <Input

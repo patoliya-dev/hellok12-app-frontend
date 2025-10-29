@@ -13,8 +13,6 @@ export const mockFetchCourses = async () => {
 };
 
 export const mockFetchProgress = async (courseId) => {
-  console.log('courseId', courseId);
-
   return new Promise((resolve) => {
     setTimeout(() => {
       const courseData = {
@@ -92,7 +90,7 @@ export const mockFetchUpcomingLessons = () => {
   const mockData = [
     {
       _id: '1',
-      courseName: 'Spanish Conversation',
+      title: 'Spanish Conversation',
       teacher: {
         fullName: 'Mr. Carlos Rodriguez',
         profilePicture: 'https://randomuser.me/api/portraits/men/32.jpg',
@@ -113,7 +111,7 @@ export const mockFetchUpcomingLessons = () => {
     },
     {
       _id: '2',
-      courseName: 'Japanese Writing',
+      title: 'Japanese Writing',
       teacher: {
         fullName: 'Ms. Yuki Tanaka',
         profilePicture: 'https://randomuser.me/api/portraits/women/44.jpg',
@@ -134,7 +132,7 @@ export const mockFetchUpcomingLessons = () => {
     },
     {
       _id: '3',
-      courseName: 'English Literature',
+      title: 'English Literature',
       teacher: {
         fullName: 'Ms. Sarah Johnson',
         profilePicture: 'https://randomuser.me/api/portraits/women/78.jpg',
@@ -167,7 +165,7 @@ const now = new Date();
 export const upcomingLessons = [
   {
     _id: 'upcoming1',
-    courseName: 'Spanish Conversation',
+    title: 'Spanish Conversation',
     teacherName: 'Mr. Carlos Rodriguez',
     teacherImage: 'https://randomuser.me/api/portraits/men/32.jpg',
     duration: 45,
@@ -180,7 +178,7 @@ export const upcomingLessons = [
   },
   {
     _id: 'upcoming2',
-    courseName: 'Japanese Writing',
+    title: 'Japanese Writing',
     teacherName: 'Ms. Yuki Tanaka',
     teacherImage: 'https://randomuser.me/api/portraits/women/44.jpg',
     duration: 90,
@@ -193,7 +191,7 @@ export const upcomingLessons = [
   },
   {
     _id: 'upcoming3',
-    courseName: 'English Literature',
+    title: 'English Literature',
     teacherName: 'Ms. Sarah Johnson',
     teacherImage: 'https://randomuser.me/api/portraits/women/68.jpg',
     duration: 90,
@@ -209,7 +207,7 @@ export const upcomingLessons = [
 export const historyLessons = [
   {
     _id: 'history1',
-    courseName: 'Spanish Conversation',
+    title: 'Spanish Conversation',
     teacherName: 'Mr. Carlos Rodriguez',
     teacherImage: 'https://randomuser.me/api/portraits/men/32.jpg',
     duration: 45,
@@ -222,7 +220,7 @@ export const historyLessons = [
   },
   {
     _id: 'history2',
-    courseName: 'Japanese Writing',
+    title: 'Japanese Writing',
     teacherName: 'Ms. Yuki Tanaka',
     teacherImage: 'https://randomuser.me/api/portraits/women/44.jpg',
     duration: 90,
@@ -235,7 +233,7 @@ export const historyLessons = [
   },
   {
     _id: 'history3',
-    courseName: 'English Literature',
+    title: 'English Literature',
     teacherName: 'Ms. Sarah Johnson',
     teacherImage: 'https://randomuser.me/api/portraits/women/68.jpg',
     duration: 90,
