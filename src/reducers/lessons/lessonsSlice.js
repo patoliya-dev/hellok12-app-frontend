@@ -1,6 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { fetchLessonsByCourse, fetchLesson, createLessons, updateLesson, removeLesson } from './lessonThunks';
-import { extractFieldErrorsFromPayload, extractMessage } from './utils';
+import { fetchLessonsByCourse, fetchLesson, updateLesson, createLessons, updateLessons, removeLesson } from './lessonThunks';
 
 const initByCourse = {};
 const initDetail = { byId: {}, loading: false, error: null };
@@ -40,6 +39,21 @@ const lessonsSlice = createSlice({
       // update single
       .addCase(updateLesson.fulfilled, (s, { payload }) => { s.detail.byId[payload._id] = payload; })
 
+      // bulk update
+      .addCase(updateLessons.pending, (s) => {
+        s.create.loading = true;
+        s.create.error = null;
+        s.create.fieldErrors = null;
+      })
+      .addCase(updateLessons.fulfilled, (s) => {
+        s.create = { ...initCreate };
+      })
+      .addCase(updateLessons.rejected, (s, { payload }) => {
+        s.create.loading = false;
+        s.create.error = payload?.message || 'Failed to update lessons';
+        s.create.fieldErrors = payload?.details?.fields || null;
+      })
+
       // bulk create (for Step-2 submit)
       .addCase(createLessons.pending, (s) => {
         s.create.loading = true;
@@ -51,9 +65,8 @@ const lessonsSlice = createSlice({
       })
       .addCase(createLessons.rejected, (s, { payload }) => {
         s.create.loading = false;
-        
-        s.create.error = extractMessage(payload);
-        s.create.fieldErrors = extractFieldErrorsFromPayload(payload);
+        s.create.error = payload?.message || 'Failed to create lessons';
+        s.create.fieldErrors = payload?.details?.fields || null;
       })
 
       .addCase(removeLesson.fulfilled, () => { });

@@ -57,41 +57,39 @@ const LessonFormInstance = ({
           />
         </div>
         <div className="mb-4">
-          <Input
-            label="Description"
-            type="text"
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Description <span className="text-error">*</span>
+          </label>
+          <textarea
+            className={`w-full px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50 ${errors?.description &&
+              "border-destructive focus-visible:ring-destructive"
+              }`}
             placeholder="Describe what students will learn in this lesson"
-            value={formData?.description}
+            value={formData?.description || ""}
             required
-            error={errors?.description}
             onChange={(e) =>
-              handleInputChange("description", e?.target?.value)
+              handleInputChange("description", e.target.value)
             }
           />
+
+          {errors?.description && (
+            <p className="text-sm text-destructive">{errors?.description}</p>
+          )}
         </div>
 
         <WeeklySchedule formData={formData}
           handleInputChange={(field, value) =>
             handleInputChange(field, value)
           }
+          errors={errors?.schedule || {}}
         />
 
-        {/* show schedule.errors under the widget if present */}
-        {(errors?.schedule?.date || errors?.schedule?.time) && (
-          <div className="text-sm text-destructive mt-1">
-            {errors?.schedule?.date && <div>{errors.schedule.date}</div>}
-            {errors?.schedule?.time && <div>{errors.schedule.time}</div>}
-          </div>
-        )}
         <DurationRange formData={formData}
           handleInputChange={(field, value) =>
             handleInputChange(field, value)
           }
+          error={errors?.schedule?.duration}
         />
-
-        {errors?.schedule?.duration && (
-          <div className="text-sm text-destructive mt-1">{errors.schedule.duration}</div>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
           <Checkbox

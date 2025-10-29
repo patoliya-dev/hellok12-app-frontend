@@ -138,3 +138,16 @@ export function to12hTime(input) {
     return `${hh}:${mm} ${isPM ? 'PM' : 'AM'}`;
   }
 }
+
+export const safeParseArray = (s) => {
+  try {
+    const v = JSON.parse(s);
+    return Array.isArray(v) ? v : [];
+  } catch { return []; }
+};
+
+// body.lessons.0.schedule.date -> lessons[0].schedule.date
+export const toBracketPath = (p) =>
+  String(p || '')
+    .replace(/^body\./, '')
+    .replace(/\.([0-9]+)(?=\.|$)/g, '[$1]');

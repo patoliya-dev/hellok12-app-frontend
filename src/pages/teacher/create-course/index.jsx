@@ -8,10 +8,7 @@ import Stepper from "./components/Stepper";
 import CourseForm from "./components/CourseForm";
 import Button from "components/ui/Button";
 import LessonForm from "./components/LessonForm";
-import { setIn, successToast } from "../../../utils/utils";
 import Icon from "components/AppIcon";
-
-// THUNKS (make sure these paths match your project)
 import {
   createCourse as createCourseThunk,
   updateCourse as updateCourseThunk,
@@ -24,14 +21,18 @@ import {
   completeAttachment,
   claimAttachment,
 } from "../../../reducers/attachments/attachmentThunks";
+import { safeParseArray, setIn, successToast, toBracketPath } from "../../../utils/utils";
 import { formatDateForDateInput } from "../../../utils/formatters";
+import { validateSchedule } from "./utils/validateSchedule";
 import { buildPartialUpdate, mapLessonFromApi, mapLessonToCreatePayload } from "../../teacher/create-course/mappers/lessons";
 import { buildLessonMutations } from "../../teacher/create-course/mappers/diff";
-import { applyLessonApiErrorsToForm } from "../manage-courses/utils/mapApiFieldErrors";
-import { clearCreateError } from "reducers/lessons/lessonsSlice";
+import { applyLessonApiErrorsToForm, applyUpdateApiErrorsToForm } from "../manage-courses/utils/mapApiFieldErrors";
+import { clearCreateError } from "../../../reducers/lessons/lessonsSlice";
 
 const CreateCourse = () => {
   const originalLessonsRef = useRef([]);
+  const lastSubmittedUpdatesRef = useRef(null);
+  const lastActionRef = useRef(null);
   const { courseId } = useParams();
 
   const dispatch = useDispatch();
@@ -65,7 +66,7 @@ const CreateCourse = () => {
         schedule: {
           date: "",
           time: "",
-          duration: "",
+          duration: 60,
         }
       },
     ],
@@ -79,7 +80,8 @@ const CreateCourse = () => {
     title: "",
     description: "",
     isTrialAvailable: false,
-    trialCapacity: 1,
+    trialCapacity: 0,
+    schedule: { duration: 60 }
   };
 
   const isEdit = mode === "edit";
@@ -91,16 +93,29 @@ const CreateCourse = () => {
 
   // Whenever fieldErrors appear, push them into local `errors` state
   useEffect(() => {
-    if (fieldErrors && currentStep === 2) {
+    if (!fieldErrors || currentStep !== 2) return;
+
+    if (lastActionRef.current === 'create') {
+      // create errors
       applyLessonApiErrorsToForm(fieldErrors, setErrors);
+    } else if (lastActionRef.current === 'update' && Array.isArray(lastSubmittedUpdatesRef.current)) {
+      // update errors
+      applyUpdateApiErrorsToForm(
+        fieldErrors,
+        lastSubmittedUpdatesRef.current,
+        formData.lessons || [],
+        setErrors
+      );
     }
-  }, [fieldErrors, currentStep]);
+  }, [fieldErrors, currentStep, formData.lessons, setErrors]);
 
   useEffect(() => {
     if (currentStep !== 2 && (lessonsError || fieldErrors)) {
       dispatch(clearCreateError());
+      lastActionRef.current = null;
+      lastSubmittedUpdatesRef.current = null;
     }
-  }, [currentStep]);
+  }, [currentStep, lessonsError, fieldErrors, dispatch]);
 
   // If you were previously reading from mock, this keeps the “add extra lesson” UX intact in edit/lesson route.
   useEffect(() => {
@@ -139,6 +154,8 @@ const CreateCourse = () => {
     if (step === 1) {
       if (!formData?.title?.trim())
         newErrors.title = "Course name is required";
+      if (!formData?.description?.trim())
+        newErrors.description = "Description is required";
       if (!formData?.introImageRef?.attachmentId && !formData?.introImageRef?.url)
         newErrors.introImage = "Intro image is required";
       if (!formData?.language) newErrors.language = "Language is required";
@@ -155,6 +172,10 @@ const CreateCourse = () => {
         if (!lesson.title?.trim()) errs.title = "Lesson title is required";
         if (!lesson.description?.trim())
           errs.description = "Lesson description is required";
+
+        const scheduleErrs = validateSchedule(lesson.schedule);
+        if (Object.keys(scheduleErrs).length) errs.schedule = scheduleErrs;
+
         if (lesson.isTrialAvailable) {
           const cap = Number(lesson.trialCapacity || 0);
           if (!cap) errs.trialCapacity = "Trial capacity is required";
@@ -381,12 +402,16 @@ const CreateCourse = () => {
           }
 
           if (createPayload.length) {
+            lastActionRef.current = 'create';
+            lastSubmittedUpdatesRef.current = null;
             await dispatch(
               createLessonsThunk({ courseId: savedCourse._id, payload: { lessons: createPayload } })
             ).unwrap();
           }
 
           if (updates.length || deletes.length) {
+            lastActionRef.current = 'update';
+            lastSubmittedUpdatesRef.current = updates;
             await dispatch(
               updateLessonsThunk({ courseId: savedCourse._id, payload: { updates, deletes } })
             ).unwrap();
@@ -407,17 +432,20 @@ const CreateCourse = () => {
       }
     } catch (err) {
       // Friendly handling for 409/422 style errors
-      if ((err?.code === 'Validation failed' || err?.http === 400) && err?.message) {
-        try {
-          const fields = JSON.parse(err.message);
-          if (fields.length) {
-            for (const f of fields) {
-              setErrors(prev => setIn(prev || {}, f.path, f.message));
-            }
-            setCurrentStep(2);
-            return;
+      if (err?.http === 400) {
+        const fields = err?.details?.fields
+          // Current: err.message is a JSON string array
+          || (typeof err?.message === 'string' ? safeParseArray(err.message) : null)
+          || [];
+        if (fields.length) {
+          for (const f of fields) {
+            // Accept "body.lessons.0.schedule.date" and plain "lessons[0].schedule.date"
+            const path = toBracketPath(f.path);
+            setErrors(prev => setIn(prev || {}, path, f.message));
           }
-        } catch (_) { }
+          setCurrentStep(2);
+          return;
+        }
       }
 
       // 409 overlap → banner/toast
