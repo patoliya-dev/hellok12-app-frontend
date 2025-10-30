@@ -28,6 +28,8 @@ import { buildPartialUpdate, mapLessonFromApi, mapLessonToCreatePayload } from "
 import { buildLessonMutations } from "../../teacher/create-course/mappers/diff";
 import { applyLessonApiErrorsToForm, applyUpdateApiErrorsToForm } from "../manage-courses/utils/mapApiFieldErrors";
 import { clearCreateError } from "../../../reducers/lessons/lessonsSlice";
+import PageLoaderOverlay from 'components/ui/PageLoaderOverlay';
+import { selectPageLoading } from '../../../reducers/ui/pageLoaderSlice';
 
 const CreateCourse = () => {
   const originalLessonsRef = useRef([]);
@@ -38,6 +40,8 @@ const CreateCourse = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  // Page loader state
+  const pageLoading = useSelector(selectPageLoading);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [mode, setMode] = useState("add");
@@ -517,6 +521,8 @@ const CreateCourse = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Page loader */}
+      <PageLoaderOverlay show={pageLoading} label="Loading course & lessons..." />
       {/* Header */}
       <RoleBasedHeader />
       <main className="max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">

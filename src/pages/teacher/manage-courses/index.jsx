@@ -11,10 +11,14 @@ import {
   removeCourse,
   duplicateCourse,
 } from "../../../reducers/courses/courseThunks";
+import PageLoaderOverlay from 'components/ui/PageLoaderOverlay';
+import { selectPageLoading } from '../../../reducers/ui/pageLoaderSlice';
 
 const ManageCourses = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  // Page loader state
+  const pageLoading = useSelector(selectPageLoading);
 
   // Redux course list state
   const { items: courses, pagination, loading, error } = useSelector(
@@ -134,6 +138,8 @@ const ManageCourses = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Page loader */}
+      <PageLoaderOverlay show={pageLoading} label="Loading courses…" />
       {/* Header */}
       <RoleBasedHeader />
       <main className="max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">

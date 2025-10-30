@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import Breadcrumb from "components/ui/Breadcrumb";
 import Button from "components/ui/Button";
@@ -12,9 +12,13 @@ import LessonsTable from "./components/LessonTable";
 import {
   fetchCourseWithLessons as fetchCourseWithLessonsThunk,
 } from "../../../reducers/courses/courseThunks";
+import PageLoaderOverlay from 'components/ui/PageLoaderOverlay';
+import { selectPageLoading } from '../../../reducers/ui/pageLoaderSlice';
 
 const LessonsList = () => {
   const dispatch = useDispatch();
+  // Page loader state
+  const pageLoading = useSelector(selectPageLoading);
   const { courseId } = useParams();
   const navigate = useNavigate();
   const [course, setCourse] = useState({});
@@ -46,7 +50,7 @@ const LessonsList = () => {
       const courseDetailsWithLessons = await dispatch(
         fetchCourseWithLessonsThunk(courseId)).unwrap();
 
-      const { course: fetchedCourse, items: fetchedLessons, pagination: {limit, page, pages, total} } = courseDetailsWithLessons;
+      const { course: fetchedCourse, items: fetchedLessons, pagination: { limit, page, pages, total } } = courseDetailsWithLessons;
       setLessons(fetchedLessons);
       setCurrentPage(page);
       if (fetchedCourse) {
@@ -170,6 +174,8 @@ const LessonsList = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Page loader */}
+      <PageLoaderOverlay show={pageLoading} label="Loading courses…" />
       {/* Header */}
       <RoleBasedHeader />
       <main className="max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
