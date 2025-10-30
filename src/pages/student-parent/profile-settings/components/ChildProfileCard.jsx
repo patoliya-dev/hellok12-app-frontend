@@ -12,6 +12,7 @@ import {
   languageOptions,
   successToast,
 } from "../../../../utils/utils";
+import DeleteModal from "components/ui/DeleteModal";
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },
@@ -22,8 +23,13 @@ const GENDER_OPTIONS = [
 const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [selectedImageFile, setSelectedImageFile] = useState({
+    type: "init",
+    file: null,
+  });
   const [formData, setFormData] = useState(child);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteChildId, setDeleteChildId] = useState(null);
   useEffect(() => setFormData(child), [child]);
   const languagesArray = formData.studentProfile?.languages
     ? formData.studentProfile.languages
@@ -55,10 +61,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
       const payload = { ...formData, profile: formData.studentProfile };
       delete payload.studentProfile;
 
-      if (
-        (selectedImageFile?.type !== "delete" && !selectedImageFile?.file) ||
-        !selectedImageFile
-      ) {
+      if (selectedImageFile?.type === "init" && !selectedImageFile?.file) {
         await onUpdate(child._id, payload);
         successToast("Profile updated successfully");
         setIsEditing(false);
@@ -67,11 +70,9 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
 
       const existingAttachmentId =
         formData?.profileImage?._id ||
-        formData?.studentProfile?.profileImage?._id ||
-        formData?.studentProfile?.profileImageAttachmentId;
+        formData?.studentProfile?.profileImage?._id;
 
       if (selectedImageFile?.type === "delete") {
-        console.log("delete");
         await api.delete(`/attachments/${formData?.profileImage?._id}`);
         await onUpdate(child._id, payload);
         successToast("Profile updated successfully");
@@ -94,7 +95,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
       setIsEditing(false);
     } catch (err) {
       console.error(err);
-      errorToast(err?.message || "Failed to update profile");
+      errorToast(err?.error || "Failed to update profile");
     } finally {
       setIsSaving(false);
     }
@@ -119,7 +120,8 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
               iconName="Trash2"
               className="text-error"
               onClick={() => {
-                if (window.confirm("Delete this student?")) onDelete(child._id);
+                setDeleteChildId(child._id);
+                setShowDeleteModal(true);
               }}
             >
               Delete Profile
@@ -193,6 +195,20 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
             </p>
           </div>
         </div>
+        {showDeleteModal && (
+          <DeleteModal
+            type="student"
+            onConfirm={() => {
+              if (deleteChildId) onDelete(deleteChildId);
+              setShowDeleteModal(false);
+              setDeleteChildId(null);
+            }}
+            onClose={() => {
+              setShowDeleteModal(false);
+              setDeleteChildId(null);
+            }}
+          />
+        )}
       </div>
     );
   }
@@ -258,6 +274,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
           value={languagesArray}
           options={languageOptions}
           onChange={handleLanguagesChange}
+          searchable
         />
       </div>
     </div>

@@ -24,13 +24,11 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
   useEffect(() => {
     // Simulate loading media items
     setMediaItems(formData?.profile?.highlights || []);
-    console.log(formData?.profile?.highlights, "formData?.profile?.highlights");
   }, []);
 
   useEffect(() => {
     // Filter and search logic
     let filtered = mediaItems;
-    console.log(filtered, "filtered");
     // Apply filter
     if (activeFilter === "videos") {
       filtered = filtered?.filter((item) => item?.mime.startsWith("video"));

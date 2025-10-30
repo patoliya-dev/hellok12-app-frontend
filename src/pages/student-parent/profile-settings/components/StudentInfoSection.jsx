@@ -11,6 +11,7 @@ import {
   addStudent,
 } from "reducers/profile/profileSlice";
 import api from "../../../../utils/axiosInstance";
+import { errorToast, successToast } from "../../../../utils/utils";
 
 const StudentInfoSection = ({
   isExpanded,
@@ -60,14 +61,17 @@ const StudentInfoSection = ({
     }
   };
   const handleAdd = async (data) => {
-    console.log(data, "data");
     try {
       // Shape payload to expected server format
+      if (!data?.fullName || !data?.age || !data?.gender || !data?.languages) {
+        errorToast("Please fill all required fields");
+        return;
+      }
       const payload = {
         name: data.fullName,
-        email: data.email,
+        ...(data?.email && { email: data.email }),
         role: "student",
-        phone: data.phone,
+        phone: data?.phone,
         profile: {
           address: data.address,
           age: data.age,
@@ -85,9 +89,9 @@ const StudentInfoSection = ({
         dispatch(addStudent(created));
         if (onChildAdded) onChildAdded(created);
       }
-      toast.success("Student added successfully!");
+      successToast("Student added successfully!");
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to add student");
+      errorToast(err?.response?.data?.error || "Failed to add student");
     }
   };
 

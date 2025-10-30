@@ -145,7 +145,7 @@ const ProfileAccountSettings = () => {
         if (!updateProfileThunk.fulfilled.match(result)) {
           throw new Error(result.payload || "Failed to update profile");
         }
-        // refresh form data with latest from server
+
         const refreshed = result.payload;
         if (refreshed) setFormData(refreshed);
       };
@@ -155,13 +155,13 @@ const ProfileAccountSettings = () => {
           formData?.profileImage?._id ||
           formData?.profile?.profileImageAttachmentId;
 
+        if (selectedImageFile?.type === "init" && !selectedImageFile?.file) {
+          await performUpdate();
+        }
+
         if (selectedImageFile?.type === "delete") {
           await api.delete(`/attachments/${formData?.profileImage?._id}`);
           await performUpdate();
-          successToast("Profile updated successfully");
-          setSelectedImageFile(null);
-          setIsEdit(false);
-          return;
         }
 
         if (selectedImageFile?.type === "upload" && selectedImageFile?.file) {
@@ -174,8 +174,6 @@ const ProfileAccountSettings = () => {
             onUpdateEntity: async () => performUpdate(),
           });
           setSelectedImageFile(null);
-        } else {
-          await performUpdate();
         }
       } else if (
         tabName === "certifications" &&

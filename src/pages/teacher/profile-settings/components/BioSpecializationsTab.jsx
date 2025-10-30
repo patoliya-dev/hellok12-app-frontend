@@ -17,7 +17,6 @@ const BioSpecializationsTab = ({
   const maxBioLength = 500;
 
   const handleInputChange = (field, value) => {
-    console.log(field, value);
     onFormChange(field, value);
   };
 
@@ -149,6 +148,7 @@ const BioSpecializationsTab = ({
             }
             placeholder="Select your native language"
             required
+            searchable
             disabled={!isEdit}
             error={errors?.nativeLanguage}
           />

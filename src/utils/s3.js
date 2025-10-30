@@ -52,7 +52,6 @@ export const upsertAttachmentAndUpdateEntity = async ({
   if (!entityType || !entityId) throw new Error("Missing entityType/entityId");
   if (!apiClient) throw new Error("Missing api client");
   if (!onUpdateEntity) throw new Error("Missing onUpdateEntity callback");
-
   // 1) Presign
   const presignResp = await apiClient.post(
     "/attachments/presign",

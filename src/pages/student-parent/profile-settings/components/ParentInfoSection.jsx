@@ -17,7 +17,10 @@ const ParentInfoSection = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [selectedImageFile, setSelectedImageFile] = useState({
+    type: "init",
+    file: null,
+  });
   const [formData, setFormData] = useState(profileData);
 
   useEffect(() => {
@@ -42,16 +45,13 @@ const ParentInfoSection = ({
   const handleSaveEdit = async () => {
     try {
       setIsSaving(true);
-      if (selectedImageFile?.type !== "delete" && !selectedImageFile?.file) {
+      if (selectedImageFile?.type === "init" && !selectedImageFile?.file) {
         await onSave(formData);
         successToast("Profile updated successfully");
         setIsEditing(false);
         return;
       }
-      console.log("formData", formData);
-      const existingAttachmentId =
-        formData?.profileImage?._id ||
-        formData?.profile?.profileImageAttachmentId;
+      const existingAttachmentId = formData?.profileImage?._id;
 
       if (selectedImageFile?.type === "delete") {
         await api.delete(`/attachments/${formData?.profileImage?._id}`);

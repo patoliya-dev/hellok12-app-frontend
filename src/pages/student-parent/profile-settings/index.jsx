@@ -119,7 +119,6 @@ const ProfileAccountSettings = () => {
                       )
                         ? [...child.parentProfile.children]
                         : [child];
-                      console.log(children);
                       return {
                         ...prev,
                         profile: { ...prev.profile, children },

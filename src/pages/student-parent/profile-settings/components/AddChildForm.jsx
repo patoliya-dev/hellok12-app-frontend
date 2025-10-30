@@ -2,15 +2,7 @@ import React, { useState } from "react";
 import Input from "components/ui/Input";
 import Button from "components/ui/Button";
 import Select from "components/ui/Select";
-
-const LANGUAGE_OPTIONS = [
-  { label: "English", value: "English" },
-  { label: "Spanish", value: "Spanish" },
-  { label: "French", value: "French" },
-  { label: "German", value: "German" },
-  { label: "Chinese", value: "Chinese" },
-  { label: "Japanese", value: "Japanese" },
-];
+import { languageOptions } from "../../../../utils/utils";
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },
@@ -34,7 +26,6 @@ const AddChildForm = ({ onAdd, onCancel }) => {
   const handleGenderChange = (value) =>
     setFormData((prev) => ({ ...prev, gender: value }));
   const handleLanguagesChange = (values) => {
-    console.log(values, "values");
     setFormData((prev) => ({
       ...prev,
       languages: [...values],
@@ -69,7 +60,6 @@ const AddChildForm = ({ onAdd, onCancel }) => {
           placeholder="Email Address"
           value={formData.email}
           onChange={handleChange}
-          required
           type="email"
         />
         <Input
@@ -88,19 +78,23 @@ const AddChildForm = ({ onAdd, onCancel }) => {
           onChange={handleChange}
           type="number"
           min={1}
+          required
         />
         <Select
           label="Gender"
           value={formData.gender}
           options={GENDER_OPTIONS}
           onChange={handleGenderChange}
+          required
         />
         <Select
           label="Languages"
           multiple
           value={languagesArray}
-          options={LANGUAGE_OPTIONS}
+          options={languageOptions}
           onChange={handleLanguagesChange}
+          searchable
+          required
         />
       </div>
       <div className="flex justify-end space-x-3 mt-4">

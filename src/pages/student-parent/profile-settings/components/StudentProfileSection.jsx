@@ -82,10 +82,7 @@ const StudentProfileSection = ({
     try {
       setIsSaving(true);
 
-      if (
-        (selectedImageFile?.type !== "delete" && !selectedImageFile?.file) ||
-        !selectedImageFile
-      ) {
+      if (selectedImageFile.type === "init" && !selectedImageFile?.file) {
         await onSave(formData);
         successToast("Profile updated successfully");
         setIsEditing(false);
@@ -97,7 +94,6 @@ const StudentProfileSection = ({
         formData?.profile?.profileImageAttachmentId;
 
       if (selectedImageFile?.type === "delete") {
-        console.log("id", formData?.profileImage?._id);
         await api.delete(`/attachments/${formData?.profileImage?._id}`);
         await onSave(formData);
         successToast("Profile updated successfully");
@@ -105,7 +101,8 @@ const StudentProfileSection = ({
         setIsEditing(false);
         return;
       }
-      const { key } = await upsertAttachmentAndUpdateEntity({
+
+      await upsertAttachmentAndUpdateEntity({
         file: selectedImageFile?.file,
         entityType: "User",
         entityId: formData.id,
@@ -224,6 +221,7 @@ const StudentProfileSection = ({
                 multiple
                 value={languagesArray}
                 onChange={handleLanguagesChange}
+                searchable
               />
               <div className="md:col-span-2 flex justify-end space-x-4 pt-4">
                 <Button variant="ghost" onClick={handleCancel} size="sm">

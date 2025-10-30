@@ -14,9 +14,11 @@ const ProfileImageSection = ({ isEditing, profileImage, onFileSelected }) => {
 
   const removeImage = async () => {
     setImagePreview("");
-    // setProfileImage("");
-    // handleInputChange("profileImage", "");
-    if (profileImage) profileImage = null;
+    if (!profileImage) {
+      onFileSelected({ type: "init", file: null });
+      return;
+    }
+    profileImage = null;
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // ✅ reset input value
     }

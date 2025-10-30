@@ -61,6 +61,11 @@ const PersonalInfoTab = ({
   };
 
   const removeImage = () => {
+    if (imagePreview.startsWith("data:image")) {
+      setImagePreview("");
+      if (onImageFileChange) onImageFileChange({ type: "init", file: null });
+      return;
+    }
     setImagePreview("");
     if (onImageFileChange) onImageFileChange({ type: "delete", file: null });
   };

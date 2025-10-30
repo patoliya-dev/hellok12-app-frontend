@@ -103,7 +103,7 @@ const MediaGallery = ({
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {items?.map((item) => (
           <div
-            key={item?.id}
+            key={item?._id}
             className="relative bg-card rounded-lg border border-border overflow-hidden shadow-card hover:shadow-modal transition-all duration-200 hover-scale"
           >
             {/* Selection Checkbox */}

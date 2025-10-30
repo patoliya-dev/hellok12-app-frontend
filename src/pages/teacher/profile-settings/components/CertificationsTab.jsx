@@ -5,6 +5,7 @@ import Image from "../../../../components/AppImage";
 import Icon from "../../../../components/AppIcon";
 import DeleteModal from "components/ui/DeleteModal";
 import api from "../../../../utils/axiosInstance";
+import { successToast } from "../../../../utils/utils";
 
 const CertificationsTab = ({
   formData,
@@ -43,13 +44,13 @@ const CertificationsTab = ({
       const reader = new FileReader();
       reader.onload = (e) => {
         const newCertificate = {
-          id: Date.now() + Math.random(),
+          _id: "upload-" + Date.now() + Math.random(),
           name: file.name,
+          type: file.type,
           url: e.target?.result,
           uploadDate: new Date().toISOString(),
           size: file.size,
         };
-
         setCurrentCertificates((prevCertificates) => {
           const updated = [...prevCertificates, newCertificate];
           return updated;
@@ -94,9 +95,13 @@ const CertificationsTab = ({
     const updatedCertificates = currentCertificates?.filter(
       (cert) => cert?._id !== certificateId
     );
-    await api.delete(`/attachments/${certificateId}`);
     setCurrentCertificates(updatedCertificates);
-    handleInputChange("profile.certificates", updatedCertificates);
+    if (certificateId.startsWith("upload-")) {
+      onCertificateFilesChange(updatedCertificates);
+      return;
+    }
+    await api.delete(`/attachments/${certificateId}`);
+    successToast("Certificate removed successfully");
   };
 
   const formatFileSize = (bytes) => {
