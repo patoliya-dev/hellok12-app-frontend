@@ -8,10 +8,9 @@ export const updateProfile = createAsyncThunk(
     try {
       const { id, ...rest } = payload || {};
       if (!id) throw new Error("Missing user id");
-      await api.patch(`/auth/updateProfile/${id}`, rest, {
+      const { data } = await api.patch(`/auth/updateProfile/${id}`, rest, {
         headers: { "Content-Type": "application/json" },
       });
-      const { data } = await api.get("/auth/me");
       return data?.data || null; // return refreshed user
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);

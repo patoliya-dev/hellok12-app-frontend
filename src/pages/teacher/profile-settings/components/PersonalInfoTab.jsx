@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Input from "../../../../components/ui/Input";
 import Button from "../../../../components/ui/Button";
 import Image from "../../../../components/AppImage";
@@ -21,12 +21,15 @@ const PersonalInfoTab = ({
     fileInputRef.current.click();
   };
 
-  const [profileImage, setProfileImage] = useState(
-    formData?.profileImage || ""
-  );
   const [imagePreview, setImagePreview] = useState(
     formData?.profileImage?.url || ""
   );
+
+  useEffect(() => {
+    if (formData?.profileImage) {
+      setImagePreview(formData?.profileImage?.url);
+    }
+  }, [formData?.profileImage]);
 
   const handleInputChange = (field, value) => {
     // Use nested paths for profile fields
@@ -51,8 +54,7 @@ const PersonalInfoTab = ({
       reader.onload = (e) => {
         const imageUrl = e?.target?.result;
         setImagePreview(imageUrl);
-        setProfileImage(imageUrl);
-        if (onImageFileChange) onImageFileChange({ type: 'upload', file });
+        if (onImageFileChange) onImageFileChange({ type: "upload", file });
       };
       reader?.readAsDataURL(file);
     }
@@ -60,8 +62,7 @@ const PersonalInfoTab = ({
 
   const removeImage = () => {
     setImagePreview("");
-    setProfileImage("");
-    if (onImageFileChange) onImageFileChange({type: 'delete', file: null});
+    if (onImageFileChange) onImageFileChange({ type: "delete", file: null });
   };
 
   const stateOptions = getAllStates(formData?.profile?.location?.country) || [];
