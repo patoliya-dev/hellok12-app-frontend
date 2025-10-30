@@ -8,8 +8,8 @@ export const normalizeErr = (err) => {
   if (body?.success === false) {
     return {
       http,
-      code: body.message || 'UNKNOWN',
-      message: body.error || body.message || 'Request failed',
+      code: body.error || body.message || 'UNKNOWN',
+      message: body.message || 'Request failed',
       details: body.details || null
     };
   }

@@ -181,7 +181,7 @@ const CourseTable = ({
                 </td>
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
-                    ${course?.pricePerLesson}
+                    ${course?.price}
                   </span>
                 </td>
                 <td className="px-6 py-4">{getStatusBadge(course?.status)}</td>
