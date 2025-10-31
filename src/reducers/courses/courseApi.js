@@ -16,5 +16,4 @@ export const deleteCourse = (id) => api.delete(`/courses/${id}`);
 
 export const duplicateCourse = (id) => api.post(`/courses/${id}/duplicate`);
 
-export const getCourseWithLessons = (id) => api.get(`/courses/${id}/lessons`);
-
+export const getCourseWithLessons = (id, params) => api.get(`/courses/${id}/lessons`, { params: cleanParams(params) });

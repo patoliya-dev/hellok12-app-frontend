@@ -212,7 +212,6 @@ const ManageCourses = () => {
 
         {/* Table */}
         <CourseTable
-          data={courses || []}
           onSort={handleSort}
           sortConfig={sortConfig}
           currentPage={currentPage}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
@@ -9,168 +9,111 @@ import Icon from "components/AppIcon";
 import DateRangePicker from "components/ui/DateRangePicker";
 import { itemsPerPage } from "./data";
 import LessonsTable from "./components/LessonTable";
-import {
-  fetchCourseWithLessons as fetchCourseWithLessonsThunk,
-} from "../../../reducers/courses/courseThunks";
+import { fetchCourseWithLessons as fetchCourseWithLessonsThunk } from "../../../reducers/courses/courseThunks";
+import { duplicateLesson as duplicateLessonThunk, removeLesson as removeLessonThunk } from "../../../reducers/lessons/lessonThunks";
 import PageLoaderOverlay from 'components/ui/PageLoaderOverlay';
 import { selectPageLoading } from '../../../reducers/ui/pageLoaderSlice';
+import { resetCourseDetail, updateLocalLessons } from "reducers/courses/courseSlice";
+import { successToast } from "../../../utils/utils";
 
 const LessonsList = () => {
   const dispatch = useDispatch();
-  // Page loader state
-  const pageLoading = useSelector(selectPageLoading);
-  const { courseId } = useParams();
   const navigate = useNavigate();
-  const [course, setCourse] = useState({});
+  const { courseId } = useParams();
+
+  // Redux state (centralized, used instead of local lessons list)
+  const { course = {}, items: lessons = [], pagination, loading } = useSelector(
+    (s) => s.courseDetail
+  );
+  const pageLoading = useSelector(selectPageLoading);
+
+  // local UI states
   const [searchTerm, setSearchTerm] = useState("");
-  const [lessons, setLessons] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filters, setFilters] = useState({
-    startDate: "",
-    endDate: "",
-  });
+  const [filters, setFilters] = useState({ startDate: "", endDate: "" });
+  const [sortConfig, setSortConfig] = useState({ key: "title", direction: "desc" });
   const [breadCrumbData, setBreadCrumbData] = useState([
-    {
-      label: "Manage Courses",
-      path: "/teacher/manage-courses",
-    },
-    {
-      label: "Lessons List",
-      path: "#",
-      current: true,
-    },
+    { label: "Manage Courses", path: "/teacher/manage-courses" },
+    { label: "Lessons List", path: "#", current: true },
   ]);
-  const [sortConfig, setSortConfig] = useState({
-    key: "title",
-    direction: "desc",
-  });
 
+  // Combine all params into one dependency object for API fetch
+  const fetchLessons = useCallback(
+    async (page = pagination?.page || 1, opts = {}) => {
+      const params = {
+        page,
+        limit: pagination?.limit || itemsPerPage,
+        search: searchTerm || undefined,
+        startDate: filters.startDate || undefined,
+        endDate: filters.endDate || undefined,
+        sortKey: sortConfig.key,
+        sortDirection: sortConfig.direction,
+        ...opts,
+      };
+
+      await dispatch(fetchCourseWithLessonsThunk({ id: courseId, params })).unwrap();
+    },
+    [dispatch, courseId, filters, searchTerm, sortConfig, pagination]
+  );
+
+  // Initial load
   useEffect(() => {
-    (async () => {
-      const courseDetailsWithLessons = await dispatch(
-        fetchCourseWithLessonsThunk(courseId)).unwrap();
-
-      const { course: fetchedCourse, items: fetchedLessons, pagination: { limit, page, pages, total } } = courseDetailsWithLessons;
-      setLessons(fetchedLessons);
-      setCurrentPage(page);
-      if (fetchedCourse) {
-        setCourse(fetchedCourse);
-        setBreadCrumbData([
-          {
-            label: "Manage Courses",
-            path: "/teacher/manage-courses",
-          },
-          {
-            label: fetchedCourse.title,
-            path: "#",
-            current: true,
-          },
-        ]);
-      }
-    })();
+    fetchLessons(1);
+    return () => {
+      dispatch(resetCourseDetail());
+    };
   }, [courseId]);
 
-  // Reset to first page when filters change
+  // Update breadcrumb when course changes
   useEffect(() => {
-    setCurrentPage(1);
-  }, [filters]);
+    if (course?.title) {
+      setBreadCrumbData([
+        { label: "Manage Courses", path: "/teacher/manage-courses" },
+        { label: course.title, path: "#", current: true },
+      ]);
+    }
+  }, [course]);
 
-  const handleFiltersChange = (newFilters) => {
-    setFilters(newFilters);
-  };
+  // Filters / search: refetch on change
+  useEffect(() => {
+    fetchLessons(1);
+  }, [filters, searchTerm, sortConfig])
+
+  const handleFiltersChange = (newFilters) => setFilters(newFilters);
 
   const handleSort = (key) => {
-    setSortConfig((prevConfig) => ({
+    setSortConfig((prev) => ({
       key,
-      direction:
-        prevConfig?.key === key && prevConfig?.direction === "asc"
-          ? "desc"
-          : "asc",
+      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
   };
 
-  // Filter and sort courses
-  const processedLessons = useMemo(() => {
-    let filtered = [...lessons];
-
-    // Apply filters
-    if (searchTerm && searchTerm.length > 0) {
-      filtered = filtered?.filter(
-        (lesson) =>
-          lesson?.title?.toLowerCase()?.includes(searchTerm?.toLowerCase()) ||
-          lesson?.description
-            ?.toLowerCase()
-            ?.includes(searchTerm?.toLowerCase())
-      );
-    }
-
-    if (filters?.startDate) {
-      filtered = filtered?.filter(
-        (lesson) => new Date(lesson.createdAt) >= new Date(filters?.startDate)
-      );
-    }
-
-    if (filters?.endDate) {
-      filtered = filtered?.filter(
-        (lesson) => new Date(lesson.createdAt) <= new Date(filters?.endDate)
-      );
-    }
-
-    // Apply sorting
-    filtered?.sort((a, b) => {
-      let aValue = a?.[sortConfig?.key];
-      let bValue = b?.[sortConfig?.key];
-
-      if (typeof aValue === "string") {
-        aValue = aValue?.toLowerCase();
-        bValue = bValue?.toLowerCase();
-      }
-
-      if (aValue < bValue) {
-        return sortConfig?.direction === "asc" ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return sortConfig?.direction === "asc" ? 1 : -1;
-      }
-      return 0;
-    });
-
-    return filtered;
-  }, [searchTerm, lessons, filters, sortConfig]);
-
-  // Pagination
-  const totalPages = Math.ceil(processedLessons?.length / itemsPerPage);
-  const paginatedLessons = processedLessons?.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
   const handlePageChange = (page) => {
-    setCurrentPage(page);
-  };
-
-  const handleEditLesson = () => {
-    navigate(`/teacher/edit-lesson/${courseId}`);
-  };
-
-  const handleDuplicateLesson = (lesson) => {
-    const duplicatedLesson = {
-      ...lesson,
-      id: Date.now()?.toString(),
-      title: `${lesson?.title} (Copy)`,
-      status: "draft",
-      createdAt: new Date()?.toISOString(),
-    };
-    setLessons([...lessons, duplicatedLesson]);
+    fetchLessons(page);
   };
 
   const handleDeleteLesson = (lessonId) => {
-    setLessons(lessons?.filter((lesson) => lesson?._id !== lessonId));
+    // update Redux state without API refetch
+    const updated = lessons.filter((l) => l._id !== lessonId);
+    dispatch({
+      type: "courseDetail/updateLocalLessons",
+      payload: updated,
+    });
   };
 
-  const handleCreateLesson = () => {
-    navigate(`/teacher/create-lesson/${courseId}`);
+  const handleDuplicateLesson = async (lesson) => {
+    try {
+      const duplicated = await dispatch(duplicateLessonThunk(lesson._id)).unwrap();
+      // prepend into courseDetail.items for instant UI update
+      dispatch(updateLocalLessons([duplicated, ...lessons]));
+      successToast("Lesson duplicated successfully!");
+    } catch (e) {
+      alert(e?.message || "Failed to duplicate lesson");
+    }
   };
+
+
+  const handleCreateLesson = () => navigate(`/teacher/create-lesson/${courseId}`);
+  const handleEditLesson = () => navigate(`/teacher/edit-lesson/${courseId}`);
 
   return (
     <div className="min-h-screen bg-background">
@@ -179,14 +122,18 @@ const LessonsList = () => {
       {/* Header */}
       <RoleBasedHeader />
       <main className="max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
+        {/* Breadcrumb & CTA */}
         <section className="my-8 flex flex-col gap-y-6 md:gap-y-0 md:flex-row md:justify-between md:items-center">
           <Breadcrumb customPath={breadCrumbData} />
           <Button size="sm" iconName="Plus" onClick={handleCreateLesson}>
             Create New Lesson
           </Button>
         </section>
+
+        {/* Course summary */}
         <CourseDetails course={course} lessonCount={lessons?.length} />
 
+        {/* Search + Filters */}
         <section className="my-8">
           <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
             <div className="relative md:w-[65%] lg:w-[70%] xl:w-[80%]">
@@ -207,13 +154,14 @@ const LessonsList = () => {
             <DateRangePicker onChange={handleFiltersChange} />
           </div>
         </section>
+
+        {/* Table */}
         <LessonsTable
-          data={paginatedLessons}
           onSort={handleSort}
           sortConfig={sortConfig}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={processedLessons?.length}
+          currentPage={pagination?.page}
+          totalPages={pagination?.pages}
+          totalItems={pagination?.total}
           onPageChange={handlePageChange}
           onEdit={handleEditLesson}
           onDuplicate={handleDuplicateLesson}

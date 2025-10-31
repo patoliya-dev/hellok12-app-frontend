@@ -1,12 +1,15 @@
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import Icon from "components/AppIcon";
 import Pagination from "components/ui/Pagination";
 import ActionMenu from "../../../../pages/teacher/manage-courses/components/ActionMenu";
 import { capitalize, successToast } from "../../../../utils/utils";
 import DeleteModal from "components/ui/DeleteModal";
+import { updateLesson as updateLessonThunk, removeLesson as removeLessonThunk } from "reducers/lessons/lessonThunks";
+import { updateLocalLessons } from "reducers/courses/courseSlice";
+import SmartMenuPortal from "components/ui/SmartMenuPortal";
 
 const LessonsTable = ({
-  data,
   onSort,
   sortConfig,
   currentPage,
@@ -17,7 +20,12 @@ const LessonsTable = ({
   onDuplicate,
   onDelete,
 }) => {
+  const dispatch = useDispatch();
+  const data = useSelector((s) => s.courseDetail.items || []);
+
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [menuAnchor, setMenuAnchor] = useState(null);
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteLessonId, setDeleteLessonId] = useState(null);
 
@@ -59,16 +67,16 @@ const LessonsTable = ({
   };
 
   const getStatus = (status) => {
-    const isPublished = status === "published";
+    const isActive = status === "active";
     return (
       <div className="flex items-center gap-2">
-        {isPublished ? (
+        {isActive ? (
           <Icon name="CheckCircle" size={16} className="text-green-600" />
         ) : (
           <Icon name="Clock" size={16} className="text-warning" />
         )}
         <span
-          className={`text-xs font-medium ${isPublished ? "text-green-600" : "text-warning"
+          className={`text-xs font-medium ${isActive ? "text-green-600" : "text-warning"
             }`}
         >
           {capitalize(status)}
@@ -77,8 +85,18 @@ const LessonsTable = ({
     );
   };
 
-  const toggleMenu = (lessonId) => {
-    setOpenMenuId(openMenuId === lessonId ? null : lessonId);
+  const toggleMenu = (lessonId, e) => {
+    if (openMenuId === lessonId) {
+      setOpenMenuId(null);
+      setMenuAnchor(null);
+      setMenuAnchorEl(null);
+      return;
+    }
+    const el = e?.currentTarget || null;
+    const rect = el?.getBoundingClientRect?.();
+    if (rect) setMenuAnchor(rect);
+    setMenuAnchorEl(el);
+    setOpenMenuId(lessonId);
   };
 
   const isTrialAvailable = () => (
@@ -89,6 +107,17 @@ const LessonsTable = ({
       </span>
     </div>
   );
+
+  const handleActiveLesson = async (lesson) => {
+    await dispatch(
+      updateLessonThunk({ lessonId: lesson?._id, patch: { status: lesson?.status === 'active' ? 'draft' : 'active' } })
+    ).unwrap();
+    const next = data.map((x) =>
+      x._id === lesson._id ? { ...x, status: lesson.status === 'active' ? 'draft' : 'active' } : x
+    );
+    dispatch(updateLocalLessons(next));
+    successToast(`Lesson ${lesson?.status === 'active' ? 'moved to draft' : 'activated'} successfully!`);
+  }
 
   return (
     <section className="bg-card border border-border rounded-lg overflow-hidden">
@@ -149,6 +178,9 @@ const LessonsTable = ({
                       <div className="font-medium text-brand-gray-800 w-[250px] line-clamp-1">
                         {lesson?.title}
                       </div>
+                      <p className="text-sm lg:text-[16px] text-brand-gray-500 md:max-w-md lg:max-w-xl xl:max-w-4xl line-clamp-3">
+                        {lesson?.description}
+                      </p>
                     </div>
                   </div>
                 </td>
@@ -171,30 +203,35 @@ const LessonsTable = ({
                   })()}
                 </td>
                 <td className="px-6 py-4">{getStatus(lesson?.status)}</td>
-                <td className="relative px-6 py-4">
+                <td className="px-6 py-4">
                   <Icon
                     name="MoreVertical"
                     size={20}
                     className="text-muted-foreground cursor-pointer"
-                    onClick={() => toggleMenu(lesson?._id)}
+                    onClick={(e) => toggleMenu(lesson?._id, e)}
                   />
-                  {openMenuId === lesson?._id && (
-                    <ActionMenu
-                      data={lesson}
-                      setOpenMenuId={toggleMenu}
-                      onEdit={onEdit}
-                      onDuplicate={onDuplicate}
-                      onDelete={() => {
-                        setDeleteLessonId(lesson?._id);
-                        handleDeleteModal();
-                      }}
-                    />
-                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        {openMenuId && menuAnchor && (
+          <SmartMenuPortal anchorRect={menuAnchor} anchorEl={menuAnchorEl} onClose={() => { setOpenMenuId(null); setMenuAnchor(null); setMenuAnchorEl(null); }}>
+            <ActionMenu
+              data={data.find(d => d._id === openMenuId)}
+              setOpenMenuId={() => { setOpenMenuId(null); setMenuAnchor(null); }}
+              onEdit={onEdit}
+              onDuplicate={onDuplicate}
+              onDelete={() => {
+                setDeleteLessonId(openMenuId);
+                setOpenMenuId(null);
+                setMenuAnchor(null);
+                handleDeleteModal();
+              }}
+              onActive={(lesson) => handleActiveLesson(lesson)}
+            />
+          </SmartMenuPortal>
+        )}
       </div>
 
       {/* Mobile-friendly card layout */}
@@ -214,6 +251,9 @@ const LessonsTable = ({
                     <div className="font-medium text-brand-gray-800 line-clamp-1">
                       {lesson?.title}
                     </div>
+                    <p className="text-sm lg:text-[16px] text-brand-gray-500 md:max-w-md lg:max-w-xl xl:max-w-4xl line-clamp-3">
+                      {lesson?.description}
+                    </p>
                   </div>
                 </div>
 
@@ -221,7 +261,7 @@ const LessonsTable = ({
                   name="MoreVertical"
                   size={18}
                   className="text-muted-foreground cursor-pointer flex-shrink-0"
-                  onClick={() => toggleMenu(lesson?._id)}
+                  onClick={(e) => toggleMenu(lesson?._id, e)}
                 />
               </div>
 
@@ -237,23 +277,6 @@ const LessonsTable = ({
 
               {lesson?.isTrialAvailable && (
                 <div className="mt-4">{isTrialAvailable()}</div>
-              )}
-
-              {openMenuId === lesson?._id && (
-                <div className="">
-                  <ActionMenu
-                    className={`!right-10 ${lesson?.isTrialAvailable ? "!mt-[-95px]" : "!mt-[-50px]"
-                      }`}
-                    data={lesson}
-                    setOpenMenuId={toggleMenu}
-                    onEdit={onEdit}
-                    onDuplicate={onDuplicate}
-                    onDelete={() => {
-                      setDeleteLessonId(lesson?._id);
-                      handleDeleteModal();
-                    }}
-                  />
-                </div>
               )}
             </div>
           );
@@ -288,11 +311,19 @@ const LessonsTable = ({
       {showDeleteModal && (
         <DeleteModal
           type="lesson"
-          onConfirm={() => {
-            onDelete(deleteLessonId);
-            setDeleteLessonId(null);
-            handleDeleteModal();
-            successToast("Lesson deleted successfully!");
+          onConfirm={async () => {
+            try {
+              const res = await dispatch(removeLessonThunk(deleteLessonId)).unwrap();
+              const removedId = res?.lessonId || res?.removed?._id;
+              const next = data.filter((x) => x._id !== removedId);
+              dispatch(updateLocalLessons(next));
+              successToast("Lesson deleted successfully!");
+            } catch (e) {
+              alert(e?.message || "Failed to delete lesson");
+            } finally {
+              setDeleteLessonId(null);
+              handleDeleteModal();
+            }
           }}
           onClose={() => {
             setDeleteLessonId(null);
