@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useDispatch } from "react-redux";
 import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Image from "../../../../components/AppImage";
 import Icon from "../../../../components/AppIcon";
 import DeleteModal from "components/ui/DeleteModal";
-import api from "../../../../utils/axiosInstance";
 import { successToast } from "../../../../utils/utils";
+import { deleteAttachment } from "../../../../reducers/attachments/attachmentThunks";
 
 const CertificationsTab = ({
   formData,
@@ -19,6 +20,7 @@ const CertificationsTab = ({
   setIsEdit,
 }) => {
   const [dragActive, setDragActive] = useState(false);
+  const dispatch = useDispatch();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [certificateId, setCertificateId] = useState(null);
   const fileInputRef = useRef(null);
@@ -38,9 +40,6 @@ const CertificationsTab = ({
 
   const handleFileUpload = (files) => {
     const fileArray = Array.from(files);
-    if (onCertificateFilesChange) {
-      onCertificateFilesChange(fileArray);
-    }
 
     fileArray.forEach((file) => {
       const reader = new FileReader();
@@ -57,6 +56,9 @@ const CertificationsTab = ({
           const updated = [...prevCertificates, newCertificate];
           return updated;
         });
+        if (onCertificateFilesChange) {
+          onCertificateFilesChange((prevFiles = []) => [...prevFiles, file]);
+        }
       };
 
       reader.readAsDataURL(file);
@@ -99,10 +101,27 @@ const CertificationsTab = ({
     );
     setCurrentCertificates(updatedCertificates);
     if (certificateId.startsWith("upload-")) {
-      onCertificateFilesChange(updatedCertificates);
+      const removedCert = currentCertificates.find(
+        (c) => c?._id === certificateId
+      );
+      if (onCertificateFilesChange && removedCert) {
+        onCertificateFilesChange((prevFiles = []) => {
+          const filtered = Array.isArray(prevFiles)
+            ? prevFiles.filter(
+                (f) =>
+                  !(
+                    f?.name === removedCert?.name &&
+                    f?.type === removedCert?.type &&
+                    f?.size === removedCert?.size
+                  )
+              )
+            : prevFiles;
+          return filtered;
+        });
+      }
       return;
     }
-    await api.delete(`/attachments/${certificateId}`);
+    await dispatch(deleteAttachment(certificateId)).unwrap();
     successToast("Certificate removed successfully");
     setSaveStatus("saved");
     setIsEdit(false);

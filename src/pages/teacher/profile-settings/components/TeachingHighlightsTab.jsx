@@ -6,9 +6,8 @@ import BulkActionsBar from "./BulkActionsBar";
 import MediaGallery from "./MediaGallery";
 import DeleteModal from "components/ui/DeleteModal";
 import { errorToast, successToast } from "../../../../utils/utils";
-import { upsertAttachmentAndUpdateEntity } from "../../../../utils/s3";
 import { updateProfile as updateProfileThunk } from "reducers/profile/profileThunks";
-import api from "../../../../utils/axiosInstance";
+import { uploadAttachmentFlow } from "reducers/attachments/attachmentThunks";
 
 const TeachingHighlightsTab = ({ formData, setFormData }) => {
   const dispatch = useDispatch();
@@ -72,15 +71,15 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
 
       let keys = [...(formData?.profile?.highlights || [])];
       for (const file of files) {
-        const key = await upsertAttachmentAndUpdateEntity({
-          file,
-          entityType: "TeacherProfile",
-          entityId: formData?.profile?._id,
-          apiClient: api,
-          scope: "highlights",
-          onUpdateEntity: () => {},
-        });
-        keys.push(key?.id);
+        const result = await dispatch(
+          uploadAttachmentFlow({
+            file: file,
+            entityType: "TeacherProfile",
+            entityId: formData?.profile?._id,
+            scope: "highlights",
+          })
+        ).unwrap();
+        keys.push(result?.id || result._id);
       }
 
       let updatedFormData = {

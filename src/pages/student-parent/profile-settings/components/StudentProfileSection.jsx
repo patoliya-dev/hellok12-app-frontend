@@ -5,7 +5,6 @@ import Input from "components/ui/Input";
 import Select from "components/ui/Select";
 import Button from "components/ui/Button";
 import ProfileImageSection from "./ProfileImageSection";
-import api from "../../../../utils/axiosInstance";
 import {
   capitalize,
   errorToast,
@@ -13,7 +12,12 @@ import {
   languageOptions,
   successToast,
 } from "../../../../utils/utils";
-import { upsertAttachmentAndUpdateEntity } from "../../../../utils/s3";
+import { useDispatch } from "react-redux";
+import {
+  deleteAttachment,
+  uploadAttachmentFlow,
+} from "reducers/attachments/attachmentThunks";
+import { fetchCurrentUser } from "reducers/auth/authThunks";
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },
@@ -28,6 +32,7 @@ const StudentProfileSection = ({
   onSave,
   onChangePasswordClick,
 }) => {
+  const dispatch = useDispatch();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState({
@@ -39,10 +44,13 @@ const StudentProfileSection = ({
 
   useEffect(() => {
     async function getData() {
-      const { data } = await api.get("/auth/me");
-      if (data) {
-        setFormData(data.data);
-        latestProfileData.current = data.data;
+      const result = await dispatch(fetchCurrentUser());
+      if (fetchCurrentUser.fulfilled.match(result)) {
+        const user = result.payload;
+        if (user) {
+          setFormData(user);
+          latestProfileData.current = user;
+        }
       }
     }
     getData();
@@ -97,24 +105,26 @@ const StudentProfileSection = ({
         formData?.profile?.profileImageAttachmentId;
 
       if (selectedImageFile?.type === "delete") {
-        await api.delete(`/attachments/${formData?.profileImage?._id}`);
+        await dispatch(deleteAttachment(formData?.profileImage?._id)).unwrap();
         await onSave(formData);
         successToast("Profile updated successfully");
-        setSelectedImageFile(null);
+        setSelectedImageFile({ type: "init", file: null });
         setIsEditing(false);
         return;
       }
 
-      await upsertAttachmentAndUpdateEntity({
-        file: selectedImageFile?.file,
-        entityType: "User",
-        entityId: formData.id,
-        existingAttachmentId,
-        apiClient: api,
-        onUpdateEntity: async (uploadedKey) => onSave({ ...formData }),
-      });
+      await dispatch(
+        uploadAttachmentFlow({
+          file: selectedImageFile?.file,
+          entityType: "User",
+          entityId: formData?.id,
+          existingAttachmentId,
+        })
+      ).unwrap();
+
+      await onSave(formData);
       successToast("Profile updated successfully");
-      setSelectedImageFile(null);
+      setSelectedImageFile({ type: "init", file: null });
       setIsEditing(false);
     } catch (err) {
       console.error(err);

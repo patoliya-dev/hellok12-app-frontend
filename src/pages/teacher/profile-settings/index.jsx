@@ -13,10 +13,13 @@ import CertificationsTab from "./components/CertificationsTab";
 import AvailabilityTab from "./components/AvailabilityTab";
 import TeachingPreferencesTab from "./components/TeachingPreferencesTab";
 import TeachingHighlightsTab from "./components/TeachingHighlightsTab";
-import api from "../../../utils/axiosInstance";
-import { upsertAttachmentAndUpdateEntity } from "../../../utils/s3";
 import { updateProfile as updateProfileThunk } from "reducers/profile/profileThunks";
 import Loader from "components/ui/Loader";
+import {
+  deleteAttachment,
+  uploadAttachmentFlow,
+} from "reducers/attachments/attachmentThunks";
+import { fetchCurrentUser } from "reducers/auth/authThunks";
 
 const ProfileAccountSettings = () => {
   const dispatch = useDispatch();
@@ -36,9 +39,10 @@ const ProfileAccountSettings = () => {
   useEffect(() => {
     async function getData() {
       setIsLoading(true);
-      const { data } = await api.get("/auth/me");
-      if (data) {
-        setFormData(data.data);
+      const result = await dispatch(fetchCurrentUser());
+      if (fetchCurrentUser.fulfilled.match(result)) {
+        const user = result.payload;
+        if (user) setFormData(user);
       }
       setIsLoading(false);
     }
@@ -148,7 +152,6 @@ const ProfileAccountSettings = () => {
         if (!updateProfileThunk.fulfilled.match(result)) {
           throw new Error(result.payload || "Failed to update profile");
         }
-
         const refreshed = result.payload;
         if (refreshed) setFormData(refreshed);
       };
@@ -162,21 +165,28 @@ const ProfileAccountSettings = () => {
           await performUpdate();
         }
 
+        // Handle deletion
         if (selectedImageFile?.type === "delete") {
-          await api.delete(`/attachments/${formData?.profileImage?._id}`);
+          await dispatch(
+            deleteAttachment(formData?.profileImage?._id)
+          ).unwrap();
           await performUpdate();
         }
 
+        // Handle upload with Redux thunk
         if (selectedImageFile?.type === "upload" && selectedImageFile?.file) {
-          await upsertAttachmentAndUpdateEntity({
-            file: selectedImageFile.file,
-            entityType: "User",
-            entityId: formData.id,
-            existingAttachmentId,
-            apiClient: api,
-            onUpdateEntity: async () => performUpdate(),
-          });
-          setSelectedImageFile(null);
+          await dispatch(
+            uploadAttachmentFlow({
+              file: selectedImageFile.file,
+              entityType: "User",
+              entityId: formData.id,
+              existingAttachmentId,
+            })
+          ).unwrap();
+
+          // After successful upload, update profile
+          await performUpdate();
+          setSelectedImageFile({ type: "init", file: null });
         }
       } else if (
         tabName === "certifications" &&
@@ -186,16 +196,19 @@ const ProfileAccountSettings = () => {
           ...(formData?.profile?.certificates || []),
         ];
         for (const file of selectedCertificateFiles) {
-          const uploaded = await upsertAttachmentAndUpdateEntity({
-            file,
-            entityType: "TeacherProfile",
-            entityId: formData?.profile?._id,
-            apiClient: api,
-            scope: "certificates",
-            onUpdateEntity: async () => {},
-          });
-          uploadedCertificates.push(uploaded?.id || Date.now() + Math.random());
+          const result = await dispatch(
+            uploadAttachmentFlow({
+              file: file,
+              entityType: "TeacherProfile",
+              entityId: formData?.profile?._id,
+              scope: "certificates",
+            })
+          ).unwrap();
+
+          // Add the uploaded attachment ID
+          uploadedCertificates.push(result.id || result._id);
         }
+
         setSelectedCertificateFiles([]);
         await performUpdate(uploadedCertificates);
       } else {
@@ -240,14 +253,6 @@ const ProfileAccountSettings = () => {
   };
 
   const handleFormChange = (field, value) => {
-    // const handleChange = (e) => {
-    //   const { name, value } = e.target;
-    //   setFormData((prev) => {
-    //     const updated = { ...prev };
-    //     set(updated, name, value);
-    //     return updated;
-    //   });
-    // };
     let updatedData;
     setFormData((prev) => {
       const updated = { ...prev };
@@ -305,8 +310,8 @@ const ProfileAccountSettings = () => {
           <CertificationsTab
             {...commonProps}
             onCertificateFilesChange={setSelectedCertificateFiles}
-            setSaveStatus={setSaveStatus}
             setIsEdit={setIsEdit}
+            setSaveStatus={setSaveStatus}
           />
         );
       case "availability":
@@ -384,6 +389,7 @@ const ProfileAccountSettings = () => {
                 loading={isSaving}
                 iconName="Save"
                 iconPosition="left"
+                disabled={!isEdit}
               >
                 Save All Changes
               </Button>

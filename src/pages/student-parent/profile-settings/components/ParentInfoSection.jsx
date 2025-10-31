@@ -3,10 +3,13 @@ import Icon from "components/AppIcon";
 import Input from "components/ui/Input";
 import Button from "components/ui/Button";
 import ProfileImageSection from "./ProfileImageSection";
-import api from "../../../../utils/axiosInstance";
 import set from "lodash/set";
-import { upsertAttachmentAndUpdateEntity } from "../../../../utils/s3";
 import { errorToast, successToast } from "../../../../utils/utils";
+import { useDispatch } from "react-redux";
+import {
+  deleteAttachment,
+  uploadAttachmentFlow,
+} from "reducers/attachments/attachmentThunks";
 
 const ParentInfoSection = ({
   isExpanded,
@@ -15,6 +18,7 @@ const ParentInfoSection = ({
   onSave,
   onChangePasswordClick,
 }) => {
+  const dispatch = useDispatch();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState({
@@ -54,25 +58,26 @@ const ParentInfoSection = ({
       const existingAttachmentId = formData?.profileImage?._id;
 
       if (selectedImageFile?.type === "delete") {
-        await api.delete(`/attachments/${formData?.profileImage?._id}`);
+        await dispatch(deleteAttachment(formData?.profileImage?._id)).unwrap();
         await onSave(formData);
         successToast("Profile updated successfully");
-        setSelectedImageFile(null);
+        setSelectedImageFile({ type: "init", file: null });
         setIsEditing(false);
         return;
       }
 
-      await upsertAttachmentAndUpdateEntity({
-        file: selectedImageFile?.file,
-        entityType: "User",
-        entityId: formData.id,
-        existingAttachmentId,
-        apiClient: api,
-        onUpdateEntity: async () => onSave({ ...formData }),
-      });
+      await dispatch(
+        uploadAttachmentFlow({
+          file: selectedImageFile?.file,
+          entityType: "User",
+          entityId: formData?.id,
+          existingAttachmentId,
+        })
+      ).unwrap();
 
+      await onSave(formData);
       successToast("Profile updated successfully");
-      setSelectedImageFile(null);
+      setSelectedImageFile({ type: "init", file: null });
       setIsEditing(false);
     } catch (err) {
       console.error(err);

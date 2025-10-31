@@ -14,6 +14,7 @@ import {
   verifyResetCode,
   resetPassword,
 } from "./authThunks";
+import { fetchCurrentUser } from "./authThunks";
 
 import {
   setAccessToken,
@@ -33,6 +34,7 @@ const allThunks = [
   forgotPassword,
   verifyResetCode,
   resetPassword,
+  fetchCurrentUser,
 ];
 
 const initialState = {
@@ -47,6 +49,7 @@ const initialState = {
     forgotPassword: { status: "idle", error: null },
     verifyResetCode: { status: "idle", error: null },
     resetPassword: { status: "idle", error: null },
+    fetchCurrentUser: { status: "idle", error: null },
   },
 };
 
@@ -116,6 +119,15 @@ const authSlice = createSlice({
         clearAuthStorage();
       });
 
+    // Fetch current user
+    builder.addCase(fetchCurrentUser.fulfilled, (state, action) => {
+      const user = action.payload;
+      if (user) {
+        state.user = user;
+        setCurrentUser(user);
+      }
+    });
+
     // Generic matchers for all requests
     builder
       .addMatcher(isPending(...allThunks), (state, action) => {
@@ -140,7 +152,7 @@ const authSlice = createSlice({
           state.requests[key].error =
             payload?.message ||
             payload?.error ||
-            (typeof payload === 'string' ? payload : action.error?.message) ||
+            (typeof payload === "string" ? payload : action.error?.message) ||
             "Request failed";
         }
       });

@@ -8,10 +8,9 @@ import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import ChangePasswordModal from "./components/ChangePasswordModal";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { capitalize } from "../../../utils/utils";
-import api from "../../../utils/axiosInstance";
-import { toast } from "react-toastify";
 import { updateProfile as updateProfileThunk } from "reducers/profile/profileThunks";
 import Loader from "components/ui/Loader";
+import { fetchCurrentUser } from "reducers/auth/authThunks";
 
 const ProfileAccountSettings = () => {
   const dispatch = useDispatch();
@@ -32,15 +31,16 @@ const ProfileAccountSettings = () => {
   useEffect(() => {
     async function getData() {
       setIsLoading(true);
-      const { data } = await api.get("/auth/me");
-      if (data) {
-        if (data.data.role === "parent") {
-          setParentData(data.data);
-        } else if (data.data.role === "student") {
-          setStudentData(data.data);
+      const result = await dispatch(fetchCurrentUser());
+      if (fetchCurrentUser.fulfilled.match(result)) {
+        const user = result.payload;
+        if (user?.role === "parent") {
+          setParentData(user);
+        } else if (user?.role === "student") {
+          setStudentData(user);
         }
-        setIsLoading(false);
       }
+      setIsLoading(false);
     }
     getData();
   }, []);
@@ -68,7 +68,9 @@ const ProfileAccountSettings = () => {
     ? students.find((s) => s.email === authUser.email) || authUser
     : authUser;
 
-  return isLoading ? <Loader /> : (
+  return isLoading ? (
+    <Loader />
+  ) : (
     <div className="min-h-screen bg-background">
       <RoleBasedHeader />
       <main className="pt-16 pb-20 lg:pb-8">

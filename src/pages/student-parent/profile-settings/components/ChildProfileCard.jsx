@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
 import Button from "components/ui/Button";
 import Input from "components/ui/Input";
 import Select from "components/ui/Select";
 import ProfileImageSection from "./ProfileImageSection";
 import set from "lodash/set";
-import api from "../../../../utils/axiosInstance";
-import { upsertAttachmentAndUpdateEntity } from "../../../../utils/s3";
 import {
   errorToast,
   getLanguageName,
@@ -13,6 +12,10 @@ import {
   successToast,
 } from "../../../../utils/utils";
 import DeleteModal from "components/ui/DeleteModal";
+import {
+  deleteAttachment,
+  uploadAttachmentFlow,
+} from "reducers/attachments/attachmentThunks";
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },
@@ -21,6 +24,7 @@ const GENDER_OPTIONS = [
 ];
 
 const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
+  const dispatch = useDispatch();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState({
@@ -73,25 +77,26 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
         formData?.studentProfile?.profileImage?._id;
 
       if (selectedImageFile?.type === "delete") {
-        await api.delete(`/attachments/${formData?.profileImage?._id}`);
+        await dispatch(deleteAttachment(formData?.profileImage?._id)).unwrap();
         await onUpdate(child._id, payload);
         successToast("Profile updated successfully");
-        setSelectedImageFile(null);
+        setSelectedImageFile({ type: "init", file: null });
         setIsEditing(false);
         return;
       }
+      await dispatch(
+        uploadAttachmentFlow({
+          file: selectedImageFile?.file,
+          entityType: "User",
+          entityId: formData?._id || child._id,
+          existingAttachmentId,
+        })
+      ).unwrap();
 
-      await upsertAttachmentAndUpdateEntity({
-        file: selectedImageFile?.file,
-        entityType: "User",
-        entityId: formData?._id || child._id,
-        existingAttachmentId,
-        apiClient: api,
-        onUpdateEntity: async () => onUpdate(child._id, payload),
-      });
-
+      // After successful upload, update profile
+      setSelectedImageFile({ type: "init", file: null });
+      await onUpdate(child._id, payload);
       successToast("Profile updated successfully");
-      setSelectedImageFile(null);
       setIsEditing(false);
     } catch (err) {
       console.error(err);

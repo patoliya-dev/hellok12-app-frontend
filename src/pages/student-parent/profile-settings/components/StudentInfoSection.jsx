@@ -10,8 +10,12 @@ import {
   deleteStudent,
   addStudent,
 } from "reducers/profile/profileSlice";
-import api from "../../../../utils/axiosInstance";
 import { errorToast, successToast } from "../../../../utils/utils";
+import {
+  updateProfile as updateProfileThunk,
+  addStudentToParent,
+  deleteStudentFromParent,
+} from "reducers/profile/profileThunks";
 
 const StudentInfoSection = ({
   isExpanded,
@@ -31,10 +35,11 @@ const StudentInfoSection = ({
 
   const handleUpdate = async (id, data) => {
     try {
-      const res = await api.patch(`/auth/updateProfile/${id}`, data, {
-        headers: { "Content-Type": "application/json" },
-      });
-      const updated = res?.data?.data || res?.data;
+      const result = await dispatch(updateProfileThunk({ id, ...data }));
+      if (!updateProfileThunk.fulfilled.match(result)) {
+        throw new Error(result.payload || "Failed to update student profile");
+      }
+      const updated = result.payload;
 
       setStudents((prev) =>
         Array.isArray(prev)
@@ -52,7 +57,10 @@ const StudentInfoSection = ({
   };
   const handleDelete = async (id) => {
     try {
-      await api.delete(`/auth/deleteChildren/${id}`);
+      const result = await dispatch(deleteStudentFromParent(id));
+      if (!deleteStudentFromParent.fulfilled.match(result)) {
+        throw new Error(result.payload || "Failed to delete student");
+      }
       dispatch(deleteStudent(id));
       if (onChildDeleted) onChildDeleted(id);
       toast.success("Student deleted successfully!");
@@ -60,6 +68,7 @@ const StudentInfoSection = ({
       toast.error(err?.response?.data?.message || "Failed to delete student");
     }
   };
+
   const handleAdd = async (data) => {
     try {
       // Shape payload to expected server format
@@ -81,10 +90,11 @@ const StudentInfoSection = ({
             : [data.language],
         },
       };
-      const res = await api.post(`/auth/addStudentToParent`, payload, {
-        headers: { "Content-Type": "application/json" },
-      });
-      const created = res?.data?.data || res?.data;
+      const result = await dispatch(addStudentToParent(payload));
+      if (!addStudentToParent.fulfilled.match(result)) {
+        throw new Error(result.payload || "Failed to add student");
+      }
+      const created = result.payload;
       if (created?._id) {
         dispatch(addStudent(created));
         if (onChildAdded) onChildAdded(created);
