@@ -97,7 +97,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
         />
 
         <Input
-          label="Price ($)"
+          label="Course Price ($)"
           placeholder="Enter the price"
           type="number"
           min="0"

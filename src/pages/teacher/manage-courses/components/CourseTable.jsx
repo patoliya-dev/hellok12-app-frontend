@@ -1,13 +1,16 @@
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import Icon from "components/AppIcon";
 import Pagination from "components/ui/Pagination";
 import ActionMenu from "./ActionMenu";
+import SmartMenuPortal from "components/ui/SmartMenuPortal";
 import DeleteModal from "components/ui/DeleteModal";
 import { getLanguageName, successToast } from "../../../../utils/utils";
+import { updateLocalCourse } from "reducers/courses/courseSlice";
+import { updateCourse as updateCourseThunk } from "reducers/courses/courseThunks";
 
 const CourseTable = ({
-  data,
   onSort,
   sortConfig,
   currentPage,
@@ -19,9 +22,14 @@ const CourseTable = ({
   onDelete,
 }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [menuAnchor, setMenuAnchor] = useState(null);   // DOMRect of the icon
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null); // actual icon element
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteCourseId, setDeleteCourseId] = useState(null);
+
+  const data = useSelector((s) => s.courseList.items || []);
 
   const getSortIcon = (column) => {
     if (sortConfig?.key !== column) {
@@ -29,7 +37,7 @@ const CourseTable = ({
         <Icon name="ArrowUpDown" size={14} className="text-muted-foreground" />
       );
     }
-    return sortConfig?.direction === "asc" ? (
+    return sortConfig?.direction === "Asc" ? (
       <Icon name="ArrowUp" size={14} className="text-primary" />
     ) : (
       <Icon name="ArrowDown" size={14} className="text-primary" />
@@ -75,9 +83,30 @@ const CourseTable = ({
     );
   };
 
-  const toggleMenu = (courseId) => {
-    setOpenMenuId(openMenuId === courseId ? null : courseId);
+  const toggleMenu = (courseId, e) => {
+    if (openMenuId === courseId) {
+      setOpenMenuId(null);
+      setMenuAnchor(null);
+      setMenuAnchorEl(null);
+      return;
+    }
+    const el = e?.currentTarget || null;
+    const rect = el?.getBoundingClientRect?.();
+    if (rect) setMenuAnchor(rect);
+    setMenuAnchorEl(el);
+    setOpenMenuId(courseId);
   };
+
+  const handleActiveCourse = async (course) => {
+    await dispatch(
+      updateCourseThunk({ id: course?._id, patch: { status: course?.status === 'active' ? 'draft' : 'active' } })
+    ).unwrap();
+    const next = data.map((x) =>
+      x._id === course._id ? { ...x, status: course.status === 'active' ? 'draft' : 'active' } : x
+    );
+    dispatch(updateLocalCourse(next));
+    successToast(`Course ${course?.status === 'active' ? 'moved to draft' : 'activated'} successfully!`);
+  }
 
   const handleNavigate = (id) => {
     navigate(`/teacher/lessons/${id}`);
@@ -190,19 +219,37 @@ const CourseTable = ({
                     name="MoreVertical"
                     size={20}
                     className="text-muted-foreground cursor-pointer"
-                    onClick={() => toggleMenu(course?._id)}
+                    onClick={(e) => toggleMenu(course?._id, e)}
                   />
-                  {openMenuId === course?._id && (
-                    <ActionMenu
-                      data={course}
-                      setOpenMenuId={toggleMenu}
-                      onEdit={onEdit}
-                      onDuplicate={onDuplicate}
-                      onDelete={() => {
-                        setDeleteCourseId(course?._id);
-                        handleDeleteModal();
+                  {openMenuId === course?._id && menuAnchor && (
+                    <SmartMenuPortal
+                      anchorRect={menuAnchor}
+                      anchorEl={menuAnchorEl}
+                      onClose={() => {
+                        setOpenMenuId(null);
+                        setMenuAnchor(null);
+                        setMenuAnchorEl(null);
                       }}
-                    />
+                    >
+                      <ActionMenu
+                        data={course}
+                        setOpenMenuId={() => {
+                          setOpenMenuId(null);
+                          setMenuAnchor(null);
+                          setMenuAnchorEl(null);
+                        }}
+                        onEdit={onEdit}
+                        onDuplicate={onDuplicate}
+                        onDelete={() => {
+                          setDeleteCourseId(course?._id);
+                          setOpenMenuId(null);
+                          setMenuAnchor(null);
+                          setMenuAnchorEl(null);
+                          handleDeleteModal();
+                        }}
+                        onActive={(lesson) => handleActiveCourse(lesson)}
+                      />
+                    </SmartMenuPortal>
                   )}
                 </td>
               </tr>

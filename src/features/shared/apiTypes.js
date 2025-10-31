@@ -9,7 +9,7 @@ export const normalizeErr = (err) => {
     return {
       http,
       code: body.error || body.message || 'UNKNOWN',
-      message: body.message || 'Request failed',
+      message: body.error || body.message || 'Request failed',
       details: body.details || null
     };
   }
