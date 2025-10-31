@@ -26,7 +26,10 @@ const ProfileAccountSettings = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
-  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [selectedImageFile, setSelectedImageFile] = useState({
+    type: "init",
+    file: null,
+  });
   const [selectedCertificateFiles, setSelectedCertificateFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -302,6 +305,8 @@ const ProfileAccountSettings = () => {
           <CertificationsTab
             {...commonProps}
             onCertificateFilesChange={setSelectedCertificateFiles}
+            setSaveStatus={setSaveStatus}
+            setIsEdit={setIsEdit}
           />
         );
       case "availability":

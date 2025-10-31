@@ -30,7 +30,10 @@ const StudentProfileSection = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [selectedImageFile, setSelectedImageFile] = useState({
+    type: "init",
+    file: null,
+  });
   const [formData, setFormData] = useState(profileData || {});
   const latestProfileData = useRef(profileData || {});
 

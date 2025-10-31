@@ -15,6 +15,8 @@ const CertificationsTab = ({
   isEdit,
   errors,
   onCertificateFilesChange,
+  setSaveStatus,
+  setIsEdit,
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -102,6 +104,8 @@ const CertificationsTab = ({
     }
     await api.delete(`/attachments/${certificateId}`);
     successToast("Certificate removed successfully");
+    setSaveStatus("saved");
+    setIsEdit(false);
   };
 
   const formatFileSize = (bytes) => {
