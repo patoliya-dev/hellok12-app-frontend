@@ -5,6 +5,7 @@ import Input from "../../../../components/ui/Input";
 import Image from "../../../../components/AppImage";
 import Icon from "../../../../components/AppIcon";
 import DeleteModal from "components/ui/DeleteModal";
+import MediaModal from "./MediaModal";
 import { successToast } from "../../../../utils/utils";
 import { deleteAttachment } from "../../../../reducers/attachments/attachmentThunks";
 
@@ -25,6 +26,7 @@ const CertificationsTab = ({
   const [certificateId, setCertificateId] = useState(null);
   const fileInputRef = useRef(null);
   const [currentCertificates, setCurrentCertificates] = useState([]);
+  const [modalItem, setModalItem] = useState(null);
 
   useEffect(() => {
     setCurrentCertificates(formData?.profile?.certificates || []);
@@ -137,6 +139,24 @@ const CertificationsTab = ({
 
   const handleDeleteModalVisibility = () => {
     setShowDeleteModal(!showDeleteModal);
+  };
+
+  const handleCertificateClick = (certificate) => {
+    // Transform certificate data to match MediaModal's expected format
+    const modalItem = {
+      _id: certificate._id,
+      id: certificate._id,
+      name: certificate?.name.substring(certificate?.name.indexOf("_") + 1),
+      url: certificate.url,
+      size: certificate.size,
+      uploadDate: certificate.uploadDate || certificate.createdAt,
+      type: certificate.mime, // MIME type like "application/pdf" or "image/jpeg"
+    };
+    setModalItem(modalItem);
+  };
+
+  const handleModalClose = () => {
+    setModalItem(null);
   };
 
   return (
@@ -286,7 +306,10 @@ const CertificationsTab = ({
                   </div>
 
                   {certificate?.url && (
-                    <div className="aspect-video bg-background rounded border overflow-hidden">
+                    <div
+                      className="aspect-video bg-background rounded border overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => handleCertificateClick(certificate)}
+                    >
                       {certificate?.name?.toLowerCase()?.includes(".pdf") ? (
                         <div className="w-full h-full flex items-center justify-center">
                           <Icon
@@ -306,7 +329,12 @@ const CertificationsTab = ({
                   )}
 
                   <div className="mt-3 flex space-x-2">
-                    <Button variant="outline" size="sm" fullWidth>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      fullWidth
+                      onClick={() => handleCertificateClick(certificate)}
+                    >
                       <Icon name="Eye" size={14} className="mr-1" />
                       Preview
                     </Button>
@@ -363,6 +391,20 @@ const CertificationsTab = ({
           Save Certifications
         </Button>
       </div>
+
+      {/* Certificate Preview Modal */}
+      {modalItem && (
+        <MediaModal
+          item={modalItem}
+          onClose={handleModalClose}
+          onDelete={() => {
+            removeCertificate(modalItem._id);
+            handleModalClose();
+          }}
+          type="certificate"
+          onReplace={null}
+        />
+      )}
 
       {showDeleteModal && (
         <DeleteModal

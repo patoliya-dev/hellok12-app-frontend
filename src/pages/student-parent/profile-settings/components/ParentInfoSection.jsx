@@ -3,7 +3,7 @@ import Icon from "components/AppIcon";
 import Input from "components/ui/Input";
 import Button from "components/ui/Button";
 import ProfileImageSection from "./ProfileImageSection";
-import set from "lodash/set";
+import { cloneDeep, set } from "lodash";
 import { errorToast, successToast } from "../../../../utils/utils";
 import { useDispatch } from "react-redux";
 import {
@@ -35,7 +35,7 @@ const ParentInfoSection = ({
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => {
-      const updated = { ...prev };
+      const updated = cloneDeep(prev);
       set(updated, name, value);
       return updated;
     });

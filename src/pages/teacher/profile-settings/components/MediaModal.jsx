@@ -4,7 +4,7 @@ import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
 import DeleteModal from "components/ui/DeleteModal";
 
-const MediaModal = ({ item, onClose, onDelete, onReplace }) => {
+const MediaModal = ({ item, onClose, onDelete, onReplace, type="highlight" }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleDeleteModalVisibility = () => {
@@ -51,12 +51,22 @@ const MediaModal = ({ item, onClose, onDelete, onReplace }) => {
               ${
                 item?.type === "video"
                   ? "bg-primary/20 text-primary"
+                  : item?.type?.includes("pdf") ||
+                    item?.name?.toLowerCase()?.includes(".pdf")
+                  ? "bg-accent/20 text-accent"
                   : "bg-secondary/20 text-secondary"
               }
             `}
             >
               <Icon
-                name={item?.type === "video" ? "Video" : "Image"}
+                name={
+                  item?.type === "video"
+                    ? "Video"
+                    : item?.type?.includes("pdf") ||
+                      item?.name?.toLowerCase()?.includes(".pdf")
+                    ? "FileText"
+                    : "Image"
+                }
                 size={16}
               />
             </div>
@@ -64,7 +74,7 @@ const MediaModal = ({ item, onClose, onDelete, onReplace }) => {
               <h3 className="font-semibold text-foreground">{item?.name}</h3>
               <p className="text-sm text-muted-foreground">
                 {formatFileSize(item?.size)} • Uploaded{" "}
-                {formatDate(item?.uploadDate)}
+                {formatDate(item?.uploadDate || item?.createdAt)}
               </p>
             </div>
           </div>
@@ -91,6 +101,15 @@ const MediaModal = ({ item, onClose, onDelete, onReplace }) => {
               >
                 Your browser does not support the video tag.
               </video>
+            ) : item?.type?.includes("pdf") ||
+              item?.name?.toLowerCase()?.includes(".pdf") ? (
+              <div className="flex items-center justify-center min-h-[60vh]">
+                <iframe
+                  src={item?.url}
+                  className="w-full h-[60vh] border-0"
+                  title={item?.name}
+                />
+              </div>
             ) : (
               <div className="flex items-center justify-center min-h-[300px]">
                 <Image
@@ -107,18 +126,20 @@ const MediaModal = ({ item, onClose, onDelete, onReplace }) => {
         <div className="flex items-center justify-between p-4 border-t border-border bg-muted/30">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Icon name="Calendar" size={16} />
-            <span>Uploaded on {formatDate(item?.uploadDate)}</span>
+            <span>Uploaded on {formatDate(item?.uploadDate || item?.updatedAt)}</span>
           </div>
 
           <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              onClick={onReplace}
-              iconName="RefreshCw"
-              iconPosition="left"
-            >
-              Replace
-            </Button>
+            {onReplace && (
+              <Button
+                variant="outline"
+                onClick={onReplace}
+                iconName="RefreshCw"
+                iconPosition="left"
+              >
+                Replace
+              </Button>
+            )}
             <Button
               variant="destructive"
               onClick={handleDeleteModalVisibility}
@@ -133,7 +154,7 @@ const MediaModal = ({ item, onClose, onDelete, onReplace }) => {
 
       {showDeleteModal && (
         <DeleteModal
-          type="highlight"
+          type={type}
           onConfirm={() => {
             onDelete();
             handleDeleteModalVisibility();

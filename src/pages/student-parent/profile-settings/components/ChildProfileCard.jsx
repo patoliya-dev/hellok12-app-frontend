@@ -4,7 +4,7 @@ import Button from "components/ui/Button";
 import Input from "components/ui/Input";
 import Select from "components/ui/Select";
 import ProfileImageSection from "./ProfileImageSection";
-import set from "lodash/set";
+import { cloneDeep, set } from "lodash";
 import {
   errorToast,
   getLanguageName,
@@ -34,7 +34,13 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
   const [formData, setFormData] = useState(child);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteChildId, setDeleteChildId] = useState(null);
-  useEffect(() => setFormData(child), [child]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setFormData(child), [child];
+    }
+  }, [child, isEditing]);
+
   const languagesArray = formData.studentProfile?.languages
     ? formData.studentProfile.languages
     : [];
@@ -42,7 +48,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => {
-      const updated = { ...prev };
+      const updated = cloneDeep(prev);
       set(updated, name, value);
       return updated;
     });
@@ -67,8 +73,6 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
 
       if (selectedImageFile?.type === "init" && !selectedImageFile?.file) {
         await onUpdate(child._id, payload);
-        successToast("Profile updated successfully");
-        setIsEditing(false);
         return;
       }
 
@@ -79,9 +83,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
       if (selectedImageFile?.type === "delete") {
         await dispatch(deleteAttachment(formData?.profileImage?._id)).unwrap();
         await onUpdate(child._id, payload);
-        successToast("Profile updated successfully");
         setSelectedImageFile({ type: "init", file: null });
-        setIsEditing(false);
         return;
       }
       await dispatch(
@@ -96,13 +98,11 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
       // After successful upload, update profile
       setSelectedImageFile({ type: "init", file: null });
       await onUpdate(child._id, payload);
-      successToast("Profile updated successfully");
-      setIsEditing(false);
     } catch (err) {
-      console.error(err);
       errorToast(err?.error || "Failed to update profile");
     } finally {
       setIsSaving(false);
+      setIsEditing(false);
     }
   };
 

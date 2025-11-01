@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import set from "lodash/set";
+import { cloneDeep, set } from "lodash";
 import Icon from "components/AppIcon";
 import Input from "components/ui/Input";
 import Select from "components/ui/Select";
@@ -72,7 +72,7 @@ const StudentProfileSection = ({
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => {
-      const updated = { ...prev };
+      const updated = cloneDeep(prev);
       set(updated, name, value);
       return updated;
     });
@@ -127,8 +127,7 @@ const StudentProfileSection = ({
       setSelectedImageFile({ type: "init", file: null });
       setIsEditing(false);
     } catch (err) {
-      console.error(err);
-      errorToast(err?.message || "Failed to update profile");
+      errorToast(err?.message);
     } finally {
       setIsSaving(false);
     }

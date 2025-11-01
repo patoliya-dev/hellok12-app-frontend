@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { GraduationCap, ChevronDown } from "lucide-react";
-import { toast } from "react-toastify";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import ChildProfileCard from "./ChildProfileCard";
 import AddChildForm from "./AddChildForm";
 import Button from "components/ui/Button";
@@ -37,24 +36,25 @@ const StudentInfoSection = ({
     try {
       const result = await dispatch(updateProfileThunk({ id, ...data }));
       if (!updateProfileThunk.fulfilled.match(result)) {
-        throw new Error(result.payload || "Failed to update student profile");
+        throw new Error(
+          result.payload?.error || "Failed to update student profile"
+        );
       }
       const updated = result.payload;
 
-      setStudents((prev) =>
-        Array.isArray(prev)
-          ? prev.map((s) => (s?._id === id ? { ...s, ...updated } : s))
-          : prev
-      );
+      const updatedChildren = updated?.profile?.children;
 
-      dispatch(updateStudent({ id, data: updated }));
-      if (onChildUpdated) onChildUpdated(updated);
+      if (updatedChildren && Array.isArray(updatedChildren)) {
+        setStudents(updatedChildren);
+        const updatedChild = updatedChildren.find((child) => child?._id === id);
+        if (onChildUpdated) onChildUpdated(updatedChild);
+      }
+      successToast("Student profile updated successfully!");
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Failed to update student profile"
-      );
+      errorToast(err.message);
     }
   };
+
   const handleDelete = async (id) => {
     try {
       const result = await dispatch(deleteStudentFromParent(id));
@@ -63,9 +63,9 @@ const StudentInfoSection = ({
       }
       dispatch(deleteStudent(id));
       if (onChildDeleted) onChildDeleted(id);
-      toast.success("Student deleted successfully!");
+      successToast("Student deleted successfully!");
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to delete student");
+      errorToast(err?.response?.data?.message || "Failed to delete student");
     }
   };
 

@@ -3,6 +3,7 @@ import Input from "components/ui/Input";
 import Button from "components/ui/Button";
 import Select from "components/ui/Select";
 import { languageOptions } from "../../../../utils/utils";
+import { cloneDeep, set } from "lodash";
 
 const GENDER_OPTIONS = [
   { label: "Male", value: "male" },
@@ -34,7 +35,11 @@ const AddChildForm = ({ onAdd, onCancel }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = cloneDeep(prev);
+      set(updated, name, value);
+      return updated;
+    });
   };
 
   const handleSubmit = () => {

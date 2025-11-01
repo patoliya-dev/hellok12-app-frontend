@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
-import _ from "lodash";
+import { get, set, cloneDeep } from "lodash";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import Button from "components/ui/Button";
 import Icon from "components/AppIcon";
@@ -57,7 +57,7 @@ const ProfileAccountSettings = () => {
       return data?.fullName ?? data?.name ?? "";
     }
     // Try top-level, then nested under profile
-    return data?.[field] ?? _.get(data, `profile.${field}`, "");
+    return data?.[field] ?? get(data, `profile.${field}`, "");
   };
 
   const validateFields = (tabName, data) => {
@@ -255,8 +255,8 @@ const ProfileAccountSettings = () => {
   const handleFormChange = (field, value) => {
     let updatedData;
     setFormData((prev) => {
-      const updated = { ...prev };
-      _.set(updated, field, value);
+      const updated = cloneDeep(prev);
+      set(updated, field, value);
       updatedData = updated;
       return updated;
     });
@@ -269,13 +269,14 @@ const ProfileAccountSettings = () => {
       Object.keys(newErrors).forEach((field) => {
         if (["country", "state", "city"].includes(field)) {
           value =
-            updatedData?.[field] ?? updatedData?.profile?.location?.[field];
+            get(updatedData, field) ??
+            get(updatedData, `profile.location.${field}`);
         } else if (field === "fullName") {
-          value = updatedData?.name;
+          value = get(updatedData, "name");
         } else {
           // Try top-level first, then nested path
           value =
-            updatedData?.[field] ?? _.get(updatedData, `profile.${field}`);
+            get(updatedData, field) ?? get(updatedData, `profile.${field}`);
         }
         if (value && value.toString().trim() !== "") {
           delete newErrors[field];

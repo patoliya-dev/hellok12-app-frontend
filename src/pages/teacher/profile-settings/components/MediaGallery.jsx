@@ -5,7 +5,6 @@ import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
 import MediaModal from "./MediaModal";
 import DeleteModal from "components/ui/DeleteModal";
-import { successToast } from "../../../../utils/utils";
 
 const MediaGallery = ({
   mediaItems,
@@ -14,6 +13,7 @@ const MediaGallery = ({
   onItemDelete,
   onItemReplace,
   showBulkActions,
+  onIntroChange,
 }) => {
   const [modalItem, setModalItem] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -45,7 +45,10 @@ const MediaGallery = ({
   };
 
   const handleItemClick = (item) => {
-    setModalItem(item);
+    setModalItem({
+      ...item,
+      name: item?.name.substring(item?.name.indexOf("_") + 1),
+    });
   };
 
   const handleModalClose = () => {
@@ -57,17 +60,22 @@ const MediaGallery = ({
   };
 
   const handleIntroChange = (item) => {
-    const updatedItems = items.map((mediaItems) => {
-      if (mediaItems.id === item?.id) {
-        mediaItems.isIntro = !mediaItems.isIntro;
+    const updatedItems = items.map((mediaItem) => {
+      const itemId = mediaItem.id || mediaItem._id;
+      const clickedItemId = item?.id || item?._id;
+
+      if (itemId === clickedItemId) {
+        return { ...mediaItem, isIntro: true };
       } else {
-        mediaItems.isIntro = false;
+        return { ...mediaItem, isIntro: false };
       }
-      return mediaItems;
     });
     setItems(updatedItems);
 
-    return successToast("Intro highlight updated successfully.");
+    // Notify parent component of the change (parent will handle the toast)
+    if (onIntroChange) {
+      onIntroChange(updatedItems);
+    }
   };
 
   if (items?.length === 0) {
@@ -110,8 +118,8 @@ const MediaGallery = ({
             <div className="absolute top-2 left-2 z-10">
               <input
                 type="checkbox"
-                checked={selectedItems?.includes(item?.id)}
-                onChange={() => onItemSelect(item?.id)}
+                checked={selectedItems?.includes(item?._id)}
+                onChange={() => onItemSelect(item?._id)}
                 className="w-4 h-4 text-primary bg-card border-border rounded focus:ring-primary focus:ring-2"
               />
             </div>
@@ -178,15 +186,15 @@ const MediaGallery = ({
 
                 <input
                   type="checkbox"
-                  data-tooltip-id={`intro-tooltip-${item?.id}`}
-                  disabled={item?.isIntro}
-                  checked={item?.isIntro}
+                  data-tooltip-id={`intro-tooltip-${item?._id || item?.id}`}
+                  disabled={item?.isIntro || false}
+                  checked={item?.isIntro || false}
                   onChange={() => handleIntroChange(item)}
                   className="absolute bottom-1 right-3.5 h-5 w-5 rounded-full bg-[#E8E8E8] border-none cursor-pointer appearance-none checked:bg-primary checked:border-primary checked:before:text-white checked:before:flex checked:before:items-center checked:before:justify-center outline-none focus:outline-none focus:ring-0"
                 />
 
                 <ReactTooltip
-                  id={`intro-tooltip-${item?.id}`}
+                  id={`intro-tooltip-${item?._id || item?.id}`}
                   place="top"
                   content="Select to set the intro video"
                 />
@@ -208,7 +216,7 @@ const MediaGallery = ({
                         <span>View</span>
                       </button>
                       <button
-                        onClick={() => onItemReplace(item?.id)}
+                        onClick={() => onItemReplace(item?._id)}
                         className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center space-x-2"
                       >
                         <Icon name="RefreshCw" size={14} />
@@ -216,7 +224,7 @@ const MediaGallery = ({
                       </button>
                       <button
                         onClick={() => {
-                          setDeleteItemId(item?.id);
+                          setDeleteItemId(item?._id);
                           handleDeleteModalVisibility();
                         }}
                         className="w-full px-3 py-2 text-left text-sm text-error hover:bg-error/10 transition-colors flex items-center space-x-2"
@@ -238,11 +246,11 @@ const MediaGallery = ({
           item={modalItem}
           onClose={handleModalClose}
           onDelete={() => {
-            onItemDelete(modalItem?.id);
+            onItemDelete(modalItem?._id);
             handleModalClose();
           }}
           onReplace={() => {
-            onItemReplace(modalItem?.id);
+            onItemReplace(modalItem?._id);
             handleModalClose();
           }}
         />

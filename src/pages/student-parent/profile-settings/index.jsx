@@ -61,7 +61,7 @@ const ProfileAccountSettings = () => {
       if (refreshed) setParentData(refreshed);
       return refreshed;
     }
-    throw new Error(result.payload || "Failed to update profile");
+    throw new Error(result.payload?.error);
   };
 
   const studentProfile = isStudent

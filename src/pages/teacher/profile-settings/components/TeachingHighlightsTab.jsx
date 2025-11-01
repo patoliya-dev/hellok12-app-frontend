@@ -7,7 +7,10 @@ import MediaGallery from "./MediaGallery";
 import DeleteModal from "components/ui/DeleteModal";
 import { errorToast, successToast } from "../../../../utils/utils";
 import { updateProfile as updateProfileThunk } from "reducers/profile/profileThunks";
-import { uploadAttachmentFlow } from "reducers/attachments/attachmentThunks";
+import {
+  uploadAttachmentFlow,
+  deleteAttachment,
+} from "reducers/attachments/attachmentThunks";
 
 const TeachingHighlightsTab = ({ formData, setFormData }) => {
   const dispatch = useDispatch();
@@ -21,9 +24,18 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
-    // Simulate loading media items
-    setMediaItems(formData?.profile?.highlights || []);
-  }, []);
+    // Load media items and mark intro items based on formData.profile.intro._id
+    const highlights = formData?.profile?.highlights || [];
+    const introId = formData?.profile?.intro?._id;
+    const itemsWithIntroFlag = highlights.map((item) => {
+      const itemId = item?._id || item?.id;
+      return {
+        ...item,
+        isIntro: itemId === introId,
+      };
+    });
+    setMediaItems(itemsWithIntroFlag);
+  }, [formData]);
 
   useEffect(() => {
     // Filter and search logic
@@ -98,7 +110,17 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
         setUploadProgress(100);
 
         setFormData(refreshed);
-        setMediaItems(refreshed?.profile?.highlights || []);
+        // Refresh mediaItems with updated intro flag
+        const highlights = refreshed?.profile?.highlights || [];
+        const introId = refreshed?.profile?.intro?._id;
+        const itemsWithIntroFlag = highlights.map((item) => {
+          const itemId = item?._id || item?.id;
+          return {
+            ...item,
+            isIntro: itemId === introId,
+          };
+        });
+        setMediaItems(itemsWithIntroFlag);
         successToast("Highlights updated successfully");
       }
     } catch (error) {
@@ -128,7 +150,7 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
   };
 
   const handleSelectAll = () => {
-    setSelectedItems(filteredItems?.map((item) => item?.id));
+    setSelectedItems(filteredItems?.map((item) => item?._id || item?.id));
   };
 
   const handleDeselectAll = () => {
@@ -139,44 +161,198 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
     setShowDeleteModal(!showDeleteModal);
   };
 
-  const handleBulkDelete = () => {
-    const introItems = mediaItems.filter(
-      (item) => selectedItems.includes(item.id) && item.isIntro
-    );
+  const handleBulkDelete = async () => {
+    try {
+      const introId = formData?.profile?.intro?._id;
 
-    setMediaItems((prev) =>
-      prev.filter((item) => !selectedItems.includes(item.id) || item.isIntro)
-    );
+      // Filter out intro items that cannot be deleted
+      const itemsToDelete = mediaItems.filter((item) => {
+        const itemId = item?._id || item?.id;
+        return selectedItems.includes(itemId) && itemId !== introId;
+      });
 
-    setSelectedItems([]);
+      const introItems = mediaItems.filter((item) => {
+        const itemId = item?._id || item?.id;
+        return selectedItems.includes(itemId) && itemId === introId;
+      });
 
-    if (introItems.length) {
-      errorToast("Some highlights were kept because they’re intro highlights.");
-    } else {
+      if (introItems.length > 0) {
+        errorToast(
+          "Some highlights were kept because they're intro highlights."
+        );
+      }
+
+      if (itemsToDelete.length === 0) {
+        setSelectedItems([]);
+        return;
+      }
+
+      // Delete attachments from backend
+      const deletePromises = itemsToDelete.map((item) => {
+        const itemId = item?._id || item?.id;
+        return dispatch(deleteAttachment(itemId)).unwrap();
+      });
+
+      await Promise.all(deletePromises);
+
+      // Get IDs of deleted items
+      const deletedIds = itemsToDelete.map((item) => item?._id || item?.id);
+
+      // Remove deleted IDs from highlights array
+      const updatedHighlights = (formData?.profile?.highlights || []).filter(
+        (highlightId) => !deletedIds.includes(highlightId)
+      );
+
+      // Update profile with new highlights array
+      const updatedFormData = {
+        ...formData,
+        profile: { ...formData.profile, highlights: updatedHighlights },
+      };
+
+      const result = await dispatch(updateProfileThunk(updatedFormData));
+      if (!updateProfileThunk.fulfilled.match(result)) {
+        throw new Error(result.payload || "Failed to update profile");
+      }
+
+      const refreshed = result.payload;
+      if (refreshed) {
+        setFormData(refreshed);
+        // Refresh mediaItems with updated intro flag
+        const highlights = refreshed?.profile?.highlights || [];
+        const newIntroId = refreshed?.profile?.intro?._id;
+        const itemsWithIntroFlag = highlights.map((item) => {
+          const itemId = item?._id || item?.id;
+          return {
+            ...item,
+            isIntro: itemId === newIntroId,
+          };
+        });
+        setMediaItems(itemsWithIntroFlag);
+      }
+
+      setSelectedItems([]);
       successToast("Selected highlights deleted successfully.");
+    } catch (error) {
+      errorToast(error?.message || "Failed to delete highlights");
     }
   };
 
-  const handleItemDelete = (itemId) => {
-    const item = mediaItems.find((m) => m.id === itemId);
+  const handleItemDelete = async (itemId) => {
+    try {
+      const item = mediaItems.find((m) => (m?._id || m?.id) === itemId);
+      const introId = formData?.profile?.intro?._id;
 
-    if (!item) return; // safety check
+      if (!item) {
+        errorToast("Highlight not found");
+        return;
+      }
 
-    if (item.isIntro) {
-      return errorToast(
-        "You can’t delete this highlight. It’s an intro media highlight."
+      if (itemId === introId) {
+        return errorToast(
+          "You can't delete this highlight. It's an intro media highlight."
+        );
+      }
+
+      // Delete attachment from backend
+      await dispatch(deleteAttachment(itemId)).unwrap();
+
+      // Remove ID from highlights array
+      const updatedHighlights = (formData?.profile?.highlights || []).filter(
+        (highlightId) => highlightId !== itemId
       );
+
+      // Update profile with new highlights array
+      const updatedFormData = {
+        ...formData,
+        profile: { ...formData.profile, highlights: updatedHighlights },
+      };
+
+      const result = await dispatch(updateProfileThunk(updatedFormData));
+      if (!updateProfileThunk.fulfilled.match(result)) {
+        throw new Error(result.payload || "Failed to update profile");
+      }
+
+      const refreshed = result.payload;
+      if (refreshed) {
+        setFormData(refreshed);
+        // Refresh mediaItems with updated intro flag
+        const highlights = refreshed?.profile?.highlights || [];
+        const newIntroId = refreshed?.profile?.intro?._id;
+        const itemsWithIntroFlag = highlights.map((item) => {
+          const itemId = item?._id || item?.id;
+          return {
+            ...item,
+            isIntro: itemId === newIntroId,
+          };
+        });
+        setMediaItems(itemsWithIntroFlag);
+      }
+
+      setSelectedItems((ids) => ids.filter((id) => id !== itemId));
+      successToast("Highlight removed successfully.");
+    } catch (error) {
+      errorToast(error?.message || "Failed to delete highlight");
     }
-
-    setMediaItems((items) => items.filter((m) => m.id !== itemId));
-    setSelectedItems((ids) => ids.filter((id) => id !== itemId));
-
-    return successToast("Highlight removed successfully.");
   };
 
   const handleItemReplace = (itemId) => {
     // In a real app, this would open a file dialog to replace the item
     console.log("Replace item:", itemId);
+  };
+
+  const handleIntroChange = async (updatedItems) => {
+    try {
+      // Find the item that is marked as intro
+      const introItem = updatedItems.find((item) => item.isIntro);
+      const introId = introItem ? introItem?._id || introItem?.id : null;
+
+      // Update the mediaItems state with the new intro status
+      setMediaItems((prevItems) => {
+        return prevItems.map((prevItem) => {
+          const prevItemId = prevItem?._id || prevItem?.id;
+          const updatedItem = updatedItems.find(
+            (item) => (item?._id || item?.id) === prevItemId
+          );
+          return updatedItem
+            ? { ...prevItem, isIntro: updatedItem.isIntro }
+            : prevItem;
+        });
+      });
+
+      // Update profile with new intro ID
+      const updatedFormData = {
+        ...formData,
+        profile: {
+          ...formData.profile,
+          intro: introId, // Pass just the ID as per requirement
+        },
+      };
+
+      const result = await dispatch(updateProfileThunk(updatedFormData));
+      if (!updateProfileThunk.fulfilled.match(result)) {
+        throw new Error(result.payload || "Failed to update intro");
+      }
+
+      const refreshed = result.payload;
+      if (refreshed) {
+        setFormData(refreshed);
+        // Refresh mediaItems with updated intro flag
+        const highlights = refreshed?.profile?.highlights || [];
+        const newIntroId = refreshed?.profile?.intro?._id;
+        const itemsWithIntroFlag = highlights.map((item) => {
+          const itemId = item?._id || item?.id;
+          return {
+            ...item,
+            isIntro: itemId === newIntroId,
+          };
+        });
+        setMediaItems(itemsWithIntroFlag);
+      }
+
+      successToast("Intro highlight updated successfully.");
+    } catch (error) {
+      errorToast(error?.message || "Failed to update intro");
+    }
   };
 
   return (
@@ -209,14 +385,15 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
           onItemSelect={handleItemSelect}
           onItemDelete={handleItemDelete}
           onItemReplace={handleItemReplace}
+          onIntroChange={handleIntroChange}
         />
       </div>
 
       {showDeleteModal && (
         <DeleteModal
           type={`highlight${selectedItems?.length > 1 ? "s" : ""}`}
-          onConfirm={() => {
-            handleBulkDelete();
+          onConfirm={async () => {
+            await handleBulkDelete();
             handleDeleteModalVisibility();
           }}
           onClose={handleDeleteModalVisibility}
