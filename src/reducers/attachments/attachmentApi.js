@@ -11,3 +11,9 @@ export const getAttachment = (id) => api.get(`/attachments/${id}`);
 
 export const claimAttachment = (attachmentId, body = {}) =>
   api.patch(`/attachments/${attachmentId}/claim`, body);
+
+export const updateAttachment = (attachmentId, body = {}) =>
+  api.patch(`/attachments/${attachmentId}`, body);
+
+export const deleteAttachment = (attachmentId) =>
+  api.delete(`/attachments/${attachmentId}`);

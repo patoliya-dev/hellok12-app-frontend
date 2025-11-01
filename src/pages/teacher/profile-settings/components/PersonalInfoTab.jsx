@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Input from "../../../../components/ui/Input";
 import Button from "../../../../components/ui/Button";
 import Image from "../../../../components/AppImage";
@@ -14,28 +14,37 @@ const PersonalInfoTab = ({
   isSaving,
   isEdit,
   errors,
+  onImageFileChange,
 }) => {
   const fileInputRef = useRef(null);
   const handleButtonClick = () => {
     fileInputRef.current.click();
   };
 
-  const [profileImage, setProfileImage] = useState(
-    formData?.profileImage || ""
-  );
   const [imagePreview, setImagePreview] = useState(
-    formData?.profileImage || ""
+    formData?.profileImage?.url || ""
   );
 
-  const handleInputChange = (field, value) => {
-    const updatedData = { ...formData, [field]: value };
-    if (field === "country") {
-      updatedData.state = "";
-      updatedData.city = "";
-    } else if (field === "state") {
-      updatedData.city = "";
+  useEffect(() => {
+    if (formData?.profileImage) {
+      setImagePreview(formData?.profileImage?.url);
     }
-    onFormChange(updatedData);
+  }, [formData?.profileImage]);
+
+  const handleInputChange = (field, value) => {
+    // Use nested paths for profile fields
+    if (field === "dateOfBirth" || field === "yearsOfExperience") {
+      onFormChange(`profile.${field}`, value);
+    } else if (field === "country") {
+      onFormChange("profile.location.country", value);
+    } else if (field === "state") {
+      onFormChange("profile.location.state", value);
+    } else if (field === "city") {
+      onFormChange("profile.location.city", value);
+    } else {
+      // For top-level fields like name, email, phone
+      onFormChange(field, value);
+    }
   };
 
   const handleImageUpload = (event) => {
@@ -45,21 +54,48 @@ const PersonalInfoTab = ({
       reader.onload = (e) => {
         const imageUrl = e?.target?.result;
         setImagePreview(imageUrl);
-        setProfileImage(imageUrl);
-        handleInputChange("profileImage", imageUrl);
+        if (onImageFileChange) onImageFileChange({ type: "upload", file });
       };
       reader?.readAsDataURL(file);
     }
   };
 
   const removeImage = () => {
+    if (imagePreview.startsWith("data:image")) {
+      setImagePreview("");
+      if (onImageFileChange) onImageFileChange({ type: "init", file: null });
+      return;
+    }
     setImagePreview("");
-    setProfileImage("");
-    handleInputChange("profileImage", "");
+    if (onImageFileChange) onImageFileChange({ type: "delete", file: null });
   };
 
-  const stateOptions = getAllStates(formData?.country) || [];
-  const cityOptions = getAllCities(formData?.country, formData?.state) || [];
+  const stateOptions = getAllStates(formData?.profile?.location?.country) || [];
+  const cityOptions =
+    getAllCities(
+      formData?.profile?.location?.country,
+      formData?.profile?.location?.state
+    ) || [];
+
+  // Helper function to format date for date input (YYYY-MM-DD)
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    try {
+      // If it's already in YYYY-MM-DD format, return as is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        return dateString;
+      }
+      // Otherwise, parse and format
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "";
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -135,8 +171,8 @@ const PersonalInfoTab = ({
             label="Full Name"
             type="text"
             placeholder="Enter your full name"
-            value={formData?.fullName || ""}
-            onChange={(e) => handleInputChange("fullName", e?.target?.value)}
+            value={formData?.name || ""}
+            onChange={(e) => handleInputChange("name", e?.target?.value)}
             required
             disabled={!isEdit}
             error={errors?.fullName}
@@ -166,7 +202,7 @@ const PersonalInfoTab = ({
           <Input
             label="Date of Birth"
             type="date"
-            value={formData?.dateOfBirth || ""}
+            value={formatDateForInput(formData?.profile?.dateOfBirth)}
             onChange={(e) => handleInputChange("dateOfBirth", e?.target?.value)}
             disabled={!isEdit}
           />
@@ -176,11 +212,13 @@ const PersonalInfoTab = ({
             placeholder="5"
             min="0"
             max="50"
-            value={formData?.experience || ""}
-            onChange={(e) => handleInputChange("experience", e?.target?.value)}
+            value={formData?.profile?.yearsOfExperience || 0}
+            onChange={(e) =>
+              handleInputChange("yearsOfExperience", e?.target?.value)
+            }
             required
             disabled={!isEdit}
-            error={errors?.experience}
+            error={errors?.yearsOfExperience}
           />
         </div>
       </div>
@@ -192,7 +230,7 @@ const PersonalInfoTab = ({
             label="Country"
             placeholder="Select Country"
             options={countryOptions}
-            value={formData?.country || ""}
+            value={formData?.profile?.location?.country || ""}
             onChange={(value) => handleInputChange("country", value)}
             required
             disabled={!isEdit}
@@ -203,10 +241,10 @@ const PersonalInfoTab = ({
             label="State/Province"
             placeholder="Select State/Province"
             options={stateOptions}
-            value={formData?.state || ""}
+            value={formData?.profile?.location?.state || ""}
             onChange={(value) => handleInputChange("state", value)}
             required
-            disabled={!isEdit || !formData?.country}
+            disabled={!isEdit || !formData?.profile?.location?.country}
             error={errors?.state}
             searchable
           />
@@ -214,10 +252,10 @@ const PersonalInfoTab = ({
             label="City"
             placeholder="Select City"
             options={cityOptions}
-            value={formData?.city || ""}
+            value={formData?.profile?.location?.city || ""}
             onChange={(value) => handleInputChange("city", value)}
             required
-            disabled={!isEdit || !formData?.state}
+            disabled={!isEdit || !formData?.profile?.location?.state}
             error={errors?.city}
             searchable
           />

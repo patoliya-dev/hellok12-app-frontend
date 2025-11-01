@@ -14,19 +14,32 @@ import {
   updateCourse as updateCourseThunk,
   fetchCourse as fetchCourseThunk,
 } from "../../../reducers/courses/courseThunks";
-import { createLessons as createLessonsThunk, updateLessons as updateLessonsThunk } from "../../../reducers/lessons/lessonThunks";
 import {
-  presignAttachment,
-  uploadToS3,
-  completeAttachment,
+  createLessons as createLessonsThunk,
+  updateLessons as updateLessonsThunk,
+} from "../../../reducers/lessons/lessonThunks";
+import {
+  uploadAttachmentFlow,
   claimAttachment,
 } from "../../../reducers/attachments/attachmentThunks";
-import { safeParseArray, setIn, successToast, toBracketPath } from "../../../utils/utils";
+import {
+  safeParseArray,
+  setIn,
+  successToast,
+  toBracketPath,
+} from "../../../utils/utils";
 import { formatDateForDateInput } from "../../../utils/formatters";
 import { validateSchedule } from "./utils/validateSchedule";
-import { buildPartialUpdate, mapLessonFromApi, mapLessonToCreatePayload } from "../../teacher/create-course/mappers/lessons";
+import {
+  buildPartialUpdate,
+  mapLessonFromApi,
+  mapLessonToCreatePayload,
+} from "../../teacher/create-course/mappers/lessons";
 import { buildLessonMutations } from "../../teacher/create-course/mappers/diff";
-import { applyLessonApiErrorsToForm, applyUpdateApiErrorsToForm } from "../manage-courses/utils/mapApiFieldErrors";
+import {
+  applyLessonApiErrorsToForm,
+  applyUpdateApiErrorsToForm,
+} from "../manage-courses/utils/mapApiFieldErrors";
 import { clearCreateError } from "../../../reducers/lessons/lessonsSlice";
 import PageLoaderOverlay from 'components/ui/PageLoaderOverlay';
 import { selectPageLoading } from '../../../reducers/ui/pageLoaderSlice';
@@ -52,8 +65,8 @@ const CreateCourse = () => {
     description: "",
     lessonType: "",
     mode: "",
-    introImage: "",            // display-only filename
-    introImageRef: null,       // { attachmentId, url } set after upload
+    introImage: "", // display-only filename
+    introImageRef: null, // { attachmentId, url } set after upload
     studentCapacity: "",
     ageGroups: [],
     price: "",
@@ -71,38 +84,50 @@ const CreateCourse = () => {
           date: "",
           time: "",
           duration: 60,
-        }
+        },
       },
     ],
   });
   const [errors, setErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
-  const [breadCrumbData, setBreadCrumbData] = useState(commonBreadCrumbData?.add);
-  const [introUpload, setIntroUpload] = useState({ loading: false, progress: 0, error: null });
+  const [breadCrumbData, setBreadCrumbData] = useState(
+    commonBreadCrumbData?.add
+  );
+  const [introUpload, setIntroUpload] = useState({
+    loading: false,
+    progress: 0,
+    error: null,
+  });
 
   const defaultLesson = {
     title: "",
     description: "",
     isTrialAvailable: false,
     trialCapacity: 0,
-    schedule: { duration: 60 }
+    schedule: { duration: 60 },
   };
 
   const isEdit = mode === "edit";
   const isLesson = location.pathname.includes("lesson");
   const isCreateLesson = location.pathname.includes("create-lesson");
 
-  const { loading: lessonsSaving, error: lessonsError, fieldErrors } =
-    useSelector((s) => s.lessons.create);
+  const {
+    loading: lessonsSaving,
+    error: lessonsError,
+    fieldErrors,
+  } = useSelector((s) => s.lessons.create);
 
   // Whenever fieldErrors appear, push them into local `errors` state
   useEffect(() => {
     if (!fieldErrors || currentStep !== 2) return;
 
-    if (lastActionRef.current === 'create') {
+    if (lastActionRef.current === "create") {
       // create errors
       applyLessonApiErrorsToForm(fieldErrors, setErrors);
-    } else if (lastActionRef.current === 'update' && Array.isArray(lastSubmittedUpdatesRef.current)) {
+    } else if (
+      lastActionRef.current === "update" &&
+      Array.isArray(lastSubmittedUpdatesRef.current)
+    ) {
       // update errors
       applyUpdateApiErrorsToForm(
         fieldErrors,
@@ -128,13 +153,12 @@ const CreateCourse = () => {
         setMode("edit");
         setBreadCrumbData(commonBreadCrumbData?.edit);
         isLesson && setCurrentStep(2);
-        const course = await dispatch(
-          fetchCourseThunk(courseId)).unwrap();
+        const course = await dispatch(fetchCourseThunk(courseId)).unwrap();
         const lessons = (course?.lessons || []).map(mapLessonFromApi);
 
         originalLessonsRef.current = course.lessons;
 
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           ...course,
           startDate: formatDateForDateInput(course.startDate),
@@ -156,18 +180,22 @@ const CreateCourse = () => {
     let newErrors = {};
 
     if (step === 1) {
-      if (!formData?.title?.trim())
-        newErrors.title = "Course name is required";
+      if (!formData?.title?.trim()) newErrors.title = "Course name is required";
       if (!formData?.description?.trim())
         newErrors.description = "Description is required";
-      if (!formData?.introImageRef?.attachmentId && !formData?.introImageRef?.url)
+      if (
+        !formData?.introImageRef?.attachmentId &&
+        !formData?.introImageRef?.url
+      )
         newErrors.introImage = "Intro image is required";
       if (!formData?.language) newErrors.language = "Language is required";
-      if (formData?.lessonType === "group" && Number(formData?.studentCapacity) < 1)
+      if (
+        formData?.lessonType === "group" &&
+        Number(formData?.studentCapacity) < 1
+      )
         newErrors.studentCapacity = "Capacity must be at least 1";
       if (!formData?.startDate) newErrors.startDate = "Start date is required";
-      if (!formData?.mode)
-        newErrors.mode = "Lesson mode is required";
+      if (!formData?.mode) newErrors.mode = "Lesson mode is required";
     }
 
     if (step === 2) {
@@ -183,8 +211,12 @@ const CreateCourse = () => {
         if (lesson.isTrialAvailable) {
           const cap = Number(lesson.trialCapacity || 0);
           if (!cap) errs.trialCapacity = "Trial capacity is required";
-          else if (cap < 1) errs.trialCapacity = "Trial capacity must be at least 1";
-          else if (formData?.studentCapacity && cap > Number(formData.studentCapacity)) {
+          else if (cap < 1)
+            errs.trialCapacity = "Trial capacity must be at least 1";
+          else if (
+            formData?.studentCapacity &&
+            cap > Number(formData.studentCapacity)
+          ) {
             errs.trialCapacity = "Trial capacity must be ≤ student capacity";
           }
         }
@@ -216,53 +248,46 @@ const CreateCourse = () => {
     let error = null;
 
     // Special case: intro image file -> upload now
-    if (lessonIndex === null && field === "introImage" && value instanceof File) {
+    if (
+      lessonIndex === null &&
+      field === "introImage" &&
+      value instanceof File
+    ) {
       const file = value;
       const validTypes = ["image/png", "image/jpeg"];
       const maxSize = 2 * 1024 * 1024; // 2MB
 
       if (!validTypes.includes(file.type)) {
         error = "Only JPG or PNG images are allowed.";
-        setFormData((prev) => ({ ...prev, introImage: "", introImageRef: null }));
+        setFormData((prev) => ({
+          ...prev,
+          introImage: "",
+          introImageRef: null,
+        }));
         setErrors((prev) => ({ ...prev, introImage: error }));
         return;
       }
       if (file.size > maxSize) {
         error = "File size must be less than 2MB.";
-        setFormData((prev) => ({ ...prev, introImage: "", introImageRef: null }));
+        setFormData((prev) => ({
+          ...prev,
+          introImage: "",
+          introImageRef: null,
+        }));
         setErrors((prev) => ({ ...prev, introImage: error }));
         return;
       }
 
       try {
         setIntroUpload({ loading: true, progress: 1, error: null });
-        // 1) Presign
-        const presignRes = await dispatch(
-          presignAttachment({
-            filename: file.name,
-            mime: file.type,
-            size: file.size,
+        const finalized = await dispatch(
+          uploadAttachmentFlow({
+            file,
             entityType: "Course",
             entityId: "",
             scope: "intro",
-          })
-        ).unwrap();
-
-        const { key, upload } = presignRes;
-
-        // 2) Upload to S3
-        await dispatch(uploadToS3({
-          upload,
-          file,
-          onProgress: (pct) => setIntroUpload((s) => ({ ...s, progress: pct }))
-        })).unwrap();
-
-        // 3) Complete
-        const finalized = await dispatch(
-          completeAttachment({
-            "key": key,
-            "entityType": "Course",
-            // "entityId": entityId
+            onProgress: (pct) =>
+              setIntroUpload((s) => ({ ...s, progress: pct })),
           })
         ).unwrap();
 
@@ -271,30 +296,39 @@ const CreateCourse = () => {
           introImage: file.name,
           introImageRef: {
             attachmentId: finalized?._id,
-            url: finalized?.url || presignRes?.url || null,
+            url: finalized?.url || null,
           },
         }));
         setErrors((prev) => ({ ...prev, introImage: null }));
         setIntroUpload({ loading: false, progress: 100, error: null });
       } catch (e) {
-        setFormData((prev) => ({ ...prev, introImage: "", introImageRef: null }));
+        setFormData((prev) => ({
+          ...prev,
+          introImage: "",
+          introImageRef: null,
+        }));
         setErrors((prev) => ({
           ...prev,
           introImage: e?.message || "Image upload failed",
         }));
-        setIntroUpload({ loading: false, progress: 0, error: e?.message || "Upload failed" });
+        setIntroUpload({
+          loading: false,
+          progress: 0,
+          error: e?.message || "Upload failed",
+        });
       }
       return;
     }
 
     // Compose the correct path
-    const targetPath = lessonIndex !== null ? `lessons[${lessonIndex}].${field}` : field;
+    const targetPath =
+      lessonIndex !== null ? `lessons[${lessonIndex}].${field}` : field;
 
     // Write value immutably
-    setFormData(prev => setIn(prev || {}, targetPath, value));
+    setFormData((prev) => setIn(prev || {}, targetPath, value));
 
     // Mirror errors shape
-    setErrors(prev => setIn(prev || {}, targetPath, error));
+    setErrors((prev) => setIn(prev || {}, targetPath, error));
   };
 
   const addLesson = () => {
@@ -329,7 +363,9 @@ const CreateCourse = () => {
       description: formData.description || undefined,
       lessonType: formData.lessonType,
       studentCapacity:
-        formData.lessonType === "group" ? Number(formData.studentCapacity || 0) : 1,
+        formData.lessonType === "group"
+          ? Number(formData.studentCapacity || 0)
+          : 1,
       mode: formData.mode,
       price: Number(formData.price || 0),
       ageGroups: formData.ageGroups,
@@ -338,7 +374,7 @@ const CreateCourse = () => {
       introImage: formData.introImageRef
         ? { attachmentId: formData.introImageRef.attachmentId }
         : undefined,
-      introImageRef: formData.introImageRef.attachmentId
+      introImageRef: formData.introImageRef.attachmentId,
     };
 
     try {
@@ -385,19 +421,27 @@ const CreateCourse = () => {
           const createPayload = currentLessons.map(mapLessonToCreatePayload);
           if (createPayload.length) {
             await dispatch(
-              createLessonsThunk({ courseId: savedCourse._id, payload: { lessons: createPayload } })
+              createLessonsThunk({
+                courseId: savedCourse._id,
+                payload: { lessons: createPayload },
+              })
             ).unwrap();
           }
         } else {
           // EDIT FLOW: diff original vs current
-          const { creates, updates: _updates, deletes } =
-            buildLessonMutations(originalLessonsRef.current, currentLessons);
+          const {
+            creates,
+            updates: _updates,
+            deletes,
+          } = buildLessonMutations(originalLessonsRef.current, currentLessons);
 
           const createPayload = creates.map(mapLessonToCreatePayload);
 
           // Build partial updates
           const updates = [];
-          const byId = new Map(originalLessonsRef.current.map(x => [x._id, x]));
+          const byId = new Map(
+            originalLessonsRef.current.map((x) => [x._id, x])
+          );
           for (const n of currentLessons) {
             if (n._id && byId.has(n._id)) {
               const patch = buildPartialUpdate(byId.get(n._id), n);
@@ -406,26 +450,34 @@ const CreateCourse = () => {
           }
 
           if (createPayload.length) {
-            lastActionRef.current = 'create';
+            lastActionRef.current = "create";
             lastSubmittedUpdatesRef.current = null;
             await dispatch(
-              createLessonsThunk({ courseId: savedCourse._id, payload: { lessons: createPayload } })
+              createLessonsThunk({
+                courseId: savedCourse._id,
+                payload: { lessons: createPayload },
+              })
             ).unwrap();
           }
 
           if (updates.length || deletes.length) {
-            lastActionRef.current = 'update';
+            lastActionRef.current = "update";
             lastSubmittedUpdatesRef.current = updates;
             await dispatch(
-              updateLessonsThunk({ courseId: savedCourse._id, payload: { updates, deletes } })
+              updateLessonsThunk({
+                courseId: savedCourse._id,
+                payload: { updates, deletes },
+              })
             ).unwrap();
           }
 
           // refresh snapshot after successful save
-          originalLessonsRef.current = currentLessons.map(l => ({ ...l }));
+          originalLessonsRef.current = currentLessons.map((l) => ({ ...l }));
         }
       }
-      successToast(`${isEdit ? "Course updated" : "Course created"} successfully!`);
+      successToast(
+        `${isEdit ? "Course updated" : "Course created"} successfully!`
+      );
 
       if (isLesson || isCreateLesson) {
         navigate(`/teacher/lessons/${savedCourse?._id || courseId}`);
@@ -437,15 +489,18 @@ const CreateCourse = () => {
     } catch (err) {
       // Friendly handling for 409/422 style errors
       if (err?.http === 400) {
-        const fields = err?.details?.fields
+        const fields =
+          err?.details?.fields ||
           // Current: err.message is a JSON string array
-          || (typeof err?.message === 'string' ? safeParseArray(err.message) : null)
-          || [];
+          (typeof err?.message === "string"
+            ? safeParseArray(err.message)
+            : null) ||
+          [];
         if (fields.length) {
           for (const f of fields) {
             // Accept "body.lessons.0.schedule.date" and plain "lessons[0].schedule.date"
             const path = toBracketPath(f.path);
-            setErrors(prev => setIn(prev || {}, path, f.message));
+            setErrors((prev) => setIn(prev || {}, path, f.message));
           }
           setCurrentStep(2);
           return;
@@ -453,8 +508,10 @@ const CreateCourse = () => {
       }
 
       // 409 overlap → banner/toast
-      if (err?.message === '409_CONFLICT_OVERLAP') {
-        alert('Lesson schedule overlaps an existing lesson for this teacher/course.');
+      if (err?.message === "409_CONFLICT_OVERLAP") {
+        alert(
+          "Lesson schedule overlaps an existing lesson for this teacher/course."
+        );
         setCurrentStep(2);
         return;
       }
@@ -487,7 +544,9 @@ const CreateCourse = () => {
                 course
               </p>
             </div>
-            <CourseForm {...{ formData, handleInputChange, errors, introUpload }} />
+            <CourseForm
+              {...{ formData, handleInputChange, errors, introUpload }}
+            />
           </div>
         );
       case 2:
@@ -559,8 +618,9 @@ const CreateCourse = () => {
           )}
 
           <div
-            className={`flex mt-8 pt-6 border-t border-border ${currentStep < steps.length ? "justify-end" : "justify-between"
-              }`}
+            className={`flex mt-8 pt-6 border-t border-border ${
+              currentStep < steps.length ? "justify-end" : "justify-between"
+            }`}
           >
             {currentStep === steps.length && (
               <Button

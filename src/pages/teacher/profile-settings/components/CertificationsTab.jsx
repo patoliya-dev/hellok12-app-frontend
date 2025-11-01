@@ -1,9 +1,13 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { useDispatch } from "react-redux";
 import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Image from "../../../../components/AppImage";
 import Icon from "../../../../components/AppIcon";
 import DeleteModal from "components/ui/DeleteModal";
+import MediaModal from "./MediaModal";
+import { successToast } from "../../../../utils/utils";
+import { deleteAttachment } from "../../../../reducers/attachments/attachmentThunks";
 
 const CertificationsTab = ({
   formData,
@@ -12,40 +16,54 @@ const CertificationsTab = ({
   isSaving,
   isEdit,
   errors,
+  onCertificateFilesChange,
+  setSaveStatus,
+  setIsEdit,
 }) => {
   const [dragActive, setDragActive] = useState(false);
+  const dispatch = useDispatch();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [certificateId, setCertificateId] = useState(null);
   const fileInputRef = useRef(null);
+  const [currentCertificates, setCurrentCertificates] = useState([]);
+  const [modalItem, setModalItem] = useState(null);
+
+  useEffect(() => {
+    setCurrentCertificates(formData?.profile?.certificates || []);
+  }, [formData?.profile?.certificates]);
 
   const handleFileButtonClick = () => {
     fileInputRef.current.click();
   };
 
   const handleInputChange = (field, value) => {
-    const updatedData = { ...formData, [field]: value };
-    onFormChange(updatedData);
+    onFormChange(field, value);
   };
 
   const handleFileUpload = (files) => {
     const fileArray = Array.from(files);
-    const currentCertificates = formData?.certificates || [];
 
-    fileArray?.forEach((file) => {
+    fileArray.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const newCertificate = {
-          id: Date.now() + Math.random(),
-          name: file?.name,
-          url: e?.target?.result,
-          uploadDate: new Date()?.toISOString(),
-          size: file?.size,
+          _id: "upload-" + Date.now() + Math.random(),
+          name: file.name,
+          type: file.type,
+          url: e.target?.result,
+          uploadDate: new Date().toISOString(),
+          size: file.size,
         };
-
-        const updatedCertificates = [...currentCertificates, newCertificate];
-        handleInputChange("certificates", updatedCertificates);
+        setCurrentCertificates((prevCertificates) => {
+          const updated = [...prevCertificates, newCertificate];
+          return updated;
+        });
+        if (onCertificateFilesChange) {
+          onCertificateFilesChange((prevFiles = []) => [...prevFiles, file]);
+        }
       };
-      reader?.readAsDataURL(file);
+
+      reader.readAsDataURL(file);
     });
   };
 
@@ -79,12 +97,36 @@ const CertificationsTab = ({
     }
   };
 
-  const removeCertificate = (certificateId) => {
-    const currentCertificates = formData?.certificates || [];
+  const removeCertificate = async (certificateId) => {
     const updatedCertificates = currentCertificates?.filter(
-      (cert) => cert?.id !== certificateId
+      (cert) => cert?._id !== certificateId
     );
-    handleInputChange("certificates", updatedCertificates);
+    setCurrentCertificates(updatedCertificates);
+    if (certificateId.startsWith("upload-")) {
+      const removedCert = currentCertificates.find(
+        (c) => c?._id === certificateId
+      );
+      if (onCertificateFilesChange && removedCert) {
+        onCertificateFilesChange((prevFiles = []) => {
+          const filtered = Array.isArray(prevFiles)
+            ? prevFiles.filter(
+                (f) =>
+                  !(
+                    f?.name === removedCert?.name &&
+                    f?.type === removedCert?.type &&
+                    f?.size === removedCert?.size
+                  )
+              )
+            : prevFiles;
+          return filtered;
+        });
+      }
+      return;
+    }
+    await dispatch(deleteAttachment(certificateId)).unwrap();
+    successToast("Certificate removed successfully");
+    setSaveStatus("saved");
+    setIsEdit(false);
   };
 
   const formatFileSize = (bytes) => {
@@ -95,10 +137,26 @@ const CertificationsTab = ({
     return parseFloat((bytes / Math.pow(k, i))?.toFixed(2)) + " " + sizes?.[i];
   };
 
-  const certificates = formData?.certificates || [];
-
   const handleDeleteModalVisibility = () => {
     setShowDeleteModal(!showDeleteModal);
+  };
+
+  const handleCertificateClick = (certificate) => {
+    // Transform certificate data to match MediaModal's expected format
+    const modalItem = {
+      _id: certificate._id,
+      id: certificate._id,
+      name: certificate?.name.substring(certificate?.name.indexOf("_") + 1),
+      url: certificate.url,
+      size: certificate.size,
+      uploadDate: certificate.uploadDate || certificate.createdAt,
+      type: certificate.mime, // MIME type like "application/pdf" or "image/jpeg"
+    };
+    setModalItem(modalItem);
+  };
+
+  const handleModalClose = () => {
+    setModalItem(null);
   };
 
   return (
@@ -113,19 +171,21 @@ const CertificationsTab = ({
             label="Highest Education Level"
             type="text"
             placeholder="e.g., Master's in Education, Bachelor's in Linguistics"
-            value={formData?.education || ""}
-            onChange={(e) => handleInputChange("education", e?.target?.value)}
+            value={formData?.profile?.highestEducation || ""}
+            onChange={(e) =>
+              handleInputChange("profile.highestEducation", e?.target?.value)
+            }
             required
             disabled={!isEdit}
-            error={errors?.education}
+            error={errors?.highestEducation}
           />
           <Input
             label="Teaching License/Certification"
             type="text"
             placeholder="e.g., TESOL, TEFL, CELTA"
-            value={formData?.teachingLicense || ""}
+            value={formData?.profile?.certification || ""}
             onChange={(e) =>
-              handleInputChange("teachingLicense", e?.target?.value)
+              handleInputChange("profile.certification", e?.target?.value)
             }
             disabled={!isEdit}
           />
@@ -133,8 +193,10 @@ const CertificationsTab = ({
             label="University/Institution"
             type="text"
             placeholder="Name of your alma mater"
-            value={formData?.institution || ""}
-            onChange={(e) => handleInputChange("institution", e?.target?.value)}
+            value={formData?.profile?.institution || ""}
+            onChange={(e) =>
+              handleInputChange("profile.institution", e?.target?.value)
+            }
             disabled={!isEdit}
           />
           <Input
@@ -143,9 +205,9 @@ const CertificationsTab = ({
             placeholder="2020"
             min="1970"
             max={new Date()?.getFullYear()}
-            value={formData?.graduationYear || ""}
+            value={formData?.profile?.graduationYear || ""}
             onChange={(e) =>
-              handleInputChange("graduationYear", e?.target?.value)
+              handleInputChange("profile.graduationYear", e?.target?.value)
             }
             disabled={!isEdit}
           />
@@ -209,21 +271,23 @@ const CertificationsTab = ({
         </div>
 
         {/* Uploaded Certificates */}
-        {certificates?.length > 0 && (
+        {currentCertificates?.length > 0 && (
           <div className="mt-6">
             <h4 className="text-md font-medium text-foreground mb-4">
-              Uploaded Certificates ({certificates?.length})
+              Uploaded Certificates ({currentCertificates?.length})
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {certificates?.map((certificate) => (
+              {currentCertificates?.map((certificate) => (
                 <div
-                  key={certificate?.id}
+                  key={certificate?._id}
                   className="border border-border rounded-lg p-4 bg-muted/30"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">
-                        {certificate?.name}
+                        {certificate?.name.substring(
+                          certificate?.name.indexOf("_") + 1
+                        )}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {formatFileSize(certificate?.size)}
@@ -231,7 +295,7 @@ const CertificationsTab = ({
                     </div>
                     <button
                       onClick={() => {
-                        setCertificateId(certificate?.id);
+                        setCertificateId(certificate?._id);
                         handleDeleteModalVisibility();
                       }}
                       className="ml-2 p-1 text-muted-foreground hover:text-error transition-smooth disabled:cursor-not-allowed"
@@ -242,7 +306,10 @@ const CertificationsTab = ({
                   </div>
 
                   {certificate?.url && (
-                    <div className="aspect-video bg-background rounded border overflow-hidden">
+                    <div
+                      className="aspect-video bg-background rounded border overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => handleCertificateClick(certificate)}
+                    >
                       {certificate?.name?.toLowerCase()?.includes(".pdf") ? (
                         <div className="w-full h-full flex items-center justify-center">
                           <Icon
@@ -262,7 +329,12 @@ const CertificationsTab = ({
                   )}
 
                   <div className="mt-3 flex space-x-2">
-                    <Button variant="outline" size="sm" fullWidth>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      fullWidth
+                      onClick={() => handleCertificateClick(certificate)}
+                    >
                       <Icon name="Eye" size={14} className="mr-1" />
                       Preview
                     </Button>
@@ -284,8 +356,10 @@ const CertificationsTab = ({
             type="text"
             placeholder="e.g., Teacher of the Year 2023, Excellence in Online Teaching"
             description="Any awards or recognition you've received"
-            value={formData?.awards || ""}
-            onChange={(e) => handleInputChange("awards", e?.target?.value)}
+            value={formData?.profile?.awards || ""}
+            onChange={(e) =>
+              handleInputChange("profile.awards", e?.target?.value)
+            }
             disabled={!isEdit}
           />
 
@@ -296,9 +370,9 @@ const CertificationsTab = ({
             <textarea
               className="w-full min-h-[80px] px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Any additional information about your qualifications or experience..."
-              value={formData?.additionalNotes || ""}
+              value={formData?.profile?.additionalNotes || ""}
               onChange={(e) =>
-                handleInputChange("additionalNotes", e?.target?.value)
+                handleInputChange("profile.additionalNotes", e?.target?.value)
               }
               disabled={!isEdit}
             />
@@ -317,6 +391,20 @@ const CertificationsTab = ({
           Save Certifications
         </Button>
       </div>
+
+      {/* Certificate Preview Modal */}
+      {modalItem && (
+        <MediaModal
+          item={modalItem}
+          onClose={handleModalClose}
+          onDelete={() => {
+            removeCertificate(modalItem._id);
+            handleModalClose();
+          }}
+          type="certificate"
+          onReplace={null}
+        />
+      )}
 
       {showDeleteModal && (
         <DeleteModal

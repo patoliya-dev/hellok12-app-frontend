@@ -3,6 +3,13 @@ import Icon from "components/AppIcon";
 import Input from "components/ui/Input";
 import Button from "components/ui/Button";
 import ProfileImageSection from "./ProfileImageSection";
+import { cloneDeep, set } from "lodash";
+import { errorToast, successToast } from "../../../../utils/utils";
+import { useDispatch } from "react-redux";
+import {
+  deleteAttachment,
+  uploadAttachmentFlow,
+} from "reducers/attachments/attachmentThunks";
 
 const ParentInfoSection = ({
   isExpanded,
@@ -11,7 +18,13 @@ const ParentInfoSection = ({
   onSave,
   onChangePasswordClick,
 }) => {
+  const dispatch = useDispatch();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState({
+    type: "init",
+    file: null,
+  });
   const [formData, setFormData] = useState(profileData);
 
   useEffect(() => {
@@ -21,7 +34,11 @@ const ParentInfoSection = ({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = cloneDeep(prev);
+      set(updated, name, value);
+      return updated;
+    });
   };
 
   const handleStartEdit = () => setIsEditing(true);
@@ -29,9 +46,45 @@ const ParentInfoSection = ({
     setFormData(profileData);
     setIsEditing(false);
   };
-  const handleSaveEdit = () => {
-    onSave(formData);
-    setIsEditing(false);
+  const handleSaveEdit = async () => {
+    try {
+      setIsSaving(true);
+      if (selectedImageFile?.type === "init" && !selectedImageFile?.file) {
+        await onSave(formData);
+        successToast("Profile updated successfully");
+        setIsEditing(false);
+        return;
+      }
+      const existingAttachmentId = formData?.profileImage?._id;
+
+      if (selectedImageFile?.type === "delete") {
+        await dispatch(deleteAttachment(formData?.profileImage?._id)).unwrap();
+        await onSave(formData);
+        successToast("Profile updated successfully");
+        setSelectedImageFile({ type: "init", file: null });
+        setIsEditing(false);
+        return;
+      }
+
+      await dispatch(
+        uploadAttachmentFlow({
+          file: selectedImageFile?.file,
+          entityType: "User",
+          entityId: formData?.id,
+          existingAttachmentId,
+        })
+      ).unwrap();
+
+      await onSave(formData);
+      successToast("Profile updated successfully");
+      setSelectedImageFile({ type: "init", file: null });
+      setIsEditing(false);
+    } catch (err) {
+      console.error(err);
+      errorToast(err?.message || "Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -74,28 +127,29 @@ const ParentInfoSection = ({
 
           <ProfileImageSection
             isEditing={isEditing}
-            profileImage={formData?.profileImage}
+            profileImage={profileData?.profileImage}
+            onFileSelected={setSelectedImageFile}
           />
 
           {isEditing ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               <Input
                 label="Full Name"
-                name="fullName"
-                value={formData.fullName || ""}
+                name="name"
+                value={formData?.name || ""}
                 onChange={handleChange}
               />
               <Input
                 label="Email Address"
                 name="email"
                 type="email"
-                value={formData.email || ""}
+                value={formData?.email || ""}
                 onChange={handleChange}
               />
               <Input
                 label="Address"
-                name="address"
-                value={formData.address || ""}
+                name="profile.address"
+                value={formData?.profile.address || ""}
                 onChange={handleChange}
                 className="md:col-span-2"
               />
@@ -103,7 +157,7 @@ const ParentInfoSection = ({
                 label="Phone Number"
                 name="phone"
                 type="tel"
-                value={formData.phone || ""}
+                value={formData?.phone || ""}
                 onChange={handleChange}
               />
             </div>
@@ -113,29 +167,31 @@ const ParentInfoSection = ({
                 <label className="text-sm font-medium text-muted-foreground">
                   Full Name
                 </label>
-                <p className="text-foreground mt-1 text-sm">
-                  {formData.fullName}
-                </p>
+                <p className="text-foreground mt-1 text-sm">{formData?.name}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
                   Email Address
                 </label>
-                <p className="text-foreground mt-1 text-sm">{formData.email}</p>
+                <p className="text-foreground mt-1 text-sm">
+                  {formData?.email}
+                </p>
               </div>
               <div className="md:col-span-2">
                 <label className="text-sm font-medium text-muted-foreground">
                   Address
                 </label>
                 <p className="text-foreground mt-1 text-sm">
-                  {formData.address}
+                  {formData?.profile?.address}
                 </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
                   Phone Number
                 </label>
-                <p className="text-foreground mt-1 text-sm">{formData.phone}</p>
+                <p className="text-foreground mt-1 text-sm">
+                  {formData?.phone}
+                </p>
               </div>
 
               <div className="md:col-span-2">
@@ -161,7 +217,12 @@ const ParentInfoSection = ({
               <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
                 Cancel
               </Button>
-              <Button variant="default" size="sm" onClick={handleSaveEdit}>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleSaveEdit}
+                loading={isSaving}
+              >
                 Save Changes
               </Button>
             </div>

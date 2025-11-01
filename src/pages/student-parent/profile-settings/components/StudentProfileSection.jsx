@@ -1,24 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
+import { cloneDeep, set } from "lodash";
 import Icon from "components/AppIcon";
 import Input from "components/ui/Input";
 import Select from "components/ui/Select";
 import Button from "components/ui/Button";
-import Image from "components/AppImage";
 import ProfileImageSection from "./ProfileImageSection";
+import {
+  capitalize,
+  errorToast,
+  getLanguageName,
+  languageOptions,
+  successToast,
+} from "../../../../utils/utils";
+import { useDispatch } from "react-redux";
+import {
+  deleteAttachment,
+  uploadAttachmentFlow,
+} from "reducers/attachments/attachmentThunks";
+import { fetchCurrentUser } from "reducers/auth/authThunks";
 
 const GENDER_OPTIONS = [
-  { label: "Male", value: "Male" },
-  { label: "Female", value: "Female" },
-  { label: "Other", value: "Other" },
-];
-
-const LANGUAGE_OPTIONS = [
-  { label: "English", value: "English" },
-  { label: "Spanish", value: "Spanish" },
-  { label: "French", value: "French" },
-  { label: "German", value: "German" },
-  { label: "Chinese", value: "Chinese" },
-  { label: "Japanese", value: "Japanese" },
+  { label: "Male", value: "male" },
+  { label: "Female", value: "female" },
+  { label: "Other", value: "other" },
 ];
 
 const StudentProfileSection = ({
@@ -28,35 +32,109 @@ const StudentProfileSection = ({
   onSave,
   onChangePasswordClick,
 }) => {
+  const dispatch = useDispatch();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState({
+    type: "init",
+    file: null,
+  });
   const [formData, setFormData] = useState(profileData || {});
+  const latestProfileData = useRef(profileData || {});
 
   useEffect(() => {
-    setFormData(profileData || {});
+    async function getData() {
+      const result = await dispatch(fetchCurrentUser());
+      if (fetchCurrentUser.fulfilled.match(result)) {
+        const user = result.payload;
+        if (user) {
+          setFormData(user);
+          latestProfileData.current = user;
+        }
+      }
+    }
+    getData();
+    // setFormData(profileData || {});
     setIsEditing(false);
   }, [profileData]);
 
-  const languagesArray = formData.languages
-    ? formData.languages.split(",").map((l) => l.trim())
+  // Update ref when profileData prop changes
+  useEffect(() => {
+    if (profileData) {
+      latestProfileData.current = profileData;
+    }
+  }, [profileData]);
+
+  const languagesArray = formData?.profile?.languages
+    ? formData.profile.languages
     : [];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = cloneDeep(prev);
+      set(updated, name, value);
+      return updated;
+    });
   };
 
   const handleGenderChange = (value) =>
-    setFormData((prev) => ({ ...prev, gender: value }));
+    setFormData((prev) => ({
+      ...prev,
+      profile: { ...prev.profile, gender: value },
+    }));
   const handleLanguagesChange = (values) =>
-    setFormData((prev) => ({ ...prev, languages: values.join(", ") }));
+    setFormData((prev) => ({
+      ...prev,
+      profile: { ...prev.profile, languages: values },
+    }));
 
-  const handleSave = () => {
-    onSave(formData);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+
+      if (selectedImageFile.type === "init" && !selectedImageFile?.file) {
+        await onSave(formData);
+        successToast("Profile updated successfully");
+        setIsEditing(false);
+        return;
+      }
+
+      const existingAttachmentId =
+        formData?.profileImage?._id ||
+        formData?.profile?.profileImageAttachmentId;
+
+      if (selectedImageFile?.type === "delete") {
+        await dispatch(deleteAttachment(formData?.profileImage?._id)).unwrap();
+        await onSave(formData);
+        successToast("Profile updated successfully");
+        setSelectedImageFile({ type: "init", file: null });
+        setIsEditing(false);
+        return;
+      }
+
+      await dispatch(
+        uploadAttachmentFlow({
+          file: selectedImageFile?.file,
+          entityType: "User",
+          entityId: formData?.id,
+          existingAttachmentId,
+        })
+      ).unwrap();
+
+      await onSave(formData);
+      successToast("Profile updated successfully");
+      setSelectedImageFile({ type: "init", file: null });
+      setIsEditing(false);
+    } catch (err) {
+      errorToast(err?.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
-    setFormData(profileData || {});
+    setFormData(latestProfileData.current);
     setIsEditing(false);
   };
 
@@ -99,6 +177,7 @@ const StudentProfileSection = ({
           <ProfileImageSection
             isEditing={isEditing}
             profileImage={formData?.profileImage}
+            onFileSelected={setSelectedImageFile}
           />
 
           {isEditing ? (
@@ -111,8 +190,8 @@ const StudentProfileSection = ({
             >
               <Input
                 label="Full Name"
-                name="fullName"
-                value={formData.fullName || ""}
+                name="name"
+                value={formData.name || ""}
                 onChange={handleChange}
               />
               <Input
@@ -130,36 +209,42 @@ const StudentProfileSection = ({
               />
               <Input
                 label="Address"
-                name="address"
-                value={formData.address || ""}
+                name="profile.address"
+                value={formData.profile.address || ""}
                 onChange={handleChange}
                 className="md:col-span-2"
               />
               <Input
                 label="Age"
-                name="age"
+                name="profile.age"
                 type="number"
-                value={formData.age || ""}
+                value={formData.profile.age || ""}
                 onChange={handleChange}
               />
               <Select
                 label="Gender"
                 options={GENDER_OPTIONS}
-                value={formData.gender || ""}
+                value={formData.profile.gender || ""}
                 onChange={handleGenderChange}
               />
               <Select
                 label="Languages"
-                options={LANGUAGE_OPTIONS}
+                options={languageOptions}
                 multiple
                 value={languagesArray}
                 onChange={handleLanguagesChange}
+                searchable
               />
               <div className="md:col-span-2 flex justify-end space-x-4 pt-4">
                 <Button variant="ghost" onClick={handleCancel} size="sm">
                   Cancel
                 </Button>
-                <Button type="submit" variant="default" size="sm">
+                <Button
+                  type="submit"
+                  variant="default"
+                  size="sm"
+                  loading={isSaving}
+                >
                   Save Changes
                 </Button>
               </div>
@@ -170,9 +255,7 @@ const StudentProfileSection = ({
                 <label className="block text-sm font-medium text-muted-foreground">
                   Full Name
                 </label>
-                <p className="mt-1 text-sm text-foreground">
-                  {formData.fullName}
-                </p>
+                <p className="mt-1 text-sm text-foreground">{formData.name}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-muted-foreground">
@@ -191,21 +274,23 @@ const StudentProfileSection = ({
                   Address
                 </label>
                 <p className="mt-1 text-sm text-foreground">
-                  {formData.address}
+                  {formData?.profile?.address}
                 </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-muted-foreground">
                   Age
                 </label>
-                <p className="mt-1 text-sm text-foreground">{formData.age}</p>
+                <p className="mt-1 text-sm text-foreground">
+                  {formData?.profile?.age}
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-muted-foreground">
                   Gender
                 </label>
                 <p className="mt-1 text-sm text-foreground">
-                  {formData.gender}
+                  {capitalize(formData?.profile?.gender)}
                 </p>
               </div>
               <div>
@@ -213,7 +298,11 @@ const StudentProfileSection = ({
                   Languages
                 </label>
                 <p className="mt-1 text-sm text-foreground">
-                  {formData.languages}
+                  {Array.isArray(formData?.profile?.languages)
+                    ? formData?.profile?.languages
+                        .map((l) => getLanguageName(l))
+                        .join(", ")
+                    : formData?.profile?.languages}
                 </p>
               </div>
             </div>

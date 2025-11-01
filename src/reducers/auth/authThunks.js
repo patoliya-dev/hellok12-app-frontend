@@ -1,18 +1,20 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../utils/axiosInstance';
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import api from "../../utils/axiosInstance";
 
 // login
 export const loginUser = createAsyncThunk(
-  'auth/loginUser',
+  "auth/loginUser",
   async (credentials, { rejectWithValue }) => {
     try {
-      const { data } = await api.post('/auth/login', credentials, { skipRefresh: true });
+      const { data } = await api.post("/auth/login", credentials, {
+        skipRefresh: true,
+      });
 
       if (data.success) {
         return {
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
-          user: data.user
+          user: data.user,
         };
       }
 
@@ -25,16 +27,16 @@ export const loginUser = createAsyncThunk(
 
 // signup
 export const signupUser = createAsyncThunk(
-  'auth/signupUser',
+  "auth/signupUser",
   async (formData, { rejectWithValue }) => {
     try {
-      const { data } = await api.post('/auth/signup', formData);
+      const { data } = await api.post("/auth/signup", formData);
 
       if (data.success) {
         return {
           user: data.data.user,
           userId: data.data.userId,
-          requiresEmailVerification: data.data.requiresEmailVerification
+          requiresEmailVerification: data.data.requiresEmailVerification,
         };
       }
 
@@ -43,12 +45,13 @@ export const signupUser = createAsyncThunk(
       // Enhanced error handling for validation errors
       if (err.response?.status === 400 && err.response?.data?.errors) {
         return rejectWithValue({
-          message: err.response.data.message || 'Validation failed',
-          errors: err.response.data.errors
+          message: err.response.data.message || "Validation failed",
+          errors: err.response.data.errors,
         });
       }
 
-      const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message;
+      const errorMessage =
+        err.response?.data?.message || err.response?.data?.error || err.message;
       return rejectWithValue(errorMessage);
     }
   }
@@ -65,23 +68,29 @@ export const verifyEmail = createAsyncThunk(
         return {
           user: data.user,
           accessToken: data.accessToken,
-          refreshToken: data.refreshToken
+          refreshToken: data.refreshToken,
         };
       }
 
       return data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Verification failed");
+      return rejectWithValue(
+        err.response?.data?.message || "Verification failed"
+      );
     }
   }
 );
 
 // refresh (manual refresh call if needed)
 export const refreshToken = createAsyncThunk(
-  'auth/refreshToken',
+  "auth/refreshToken",
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await api.post('/auth/refresh', {}, { withCredentials: true });
+      const { data } = await api.post(
+        "/auth/refresh",
+        {},
+        { withCredentials: true }
+      );
       return data; // { accessToken, user? }
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
@@ -91,11 +100,11 @@ export const refreshToken = createAsyncThunk(
 
 // logout (call backend to revoke refresh token if present)
 export const logoutUser = createAsyncThunk(
-  'auth/logoutUser',
+  "auth/logoutUser",
   async (_, { rejectWithValue }) => {
     try {
       // best-effort call; if no backend, remove client side state in reducer
-      await api.post('/auth/logout');
+      await api.post("/auth/logout");
       return true;
     } catch (err) {
       // still allow client to clear state
@@ -106,10 +115,10 @@ export const logoutUser = createAsyncThunk(
 
 // forgot password - send code
 export const forgotPassword = createAsyncThunk(
-  'auth/forgotPassword',
+  "auth/forgotPassword",
   async (payload, { rejectWithValue }) => {
     try {
-      const { data } = await api.post('/auth/forgot-password', payload);
+      const { data } = await api.post("/auth/forgot-password", payload);
       return data;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
@@ -119,10 +128,10 @@ export const forgotPassword = createAsyncThunk(
 
 // verify reset password code
 export const verifyResetCode = createAsyncThunk(
-  'auth/verifyResetCode',
+  "auth/verifyResetCode",
   async (payload, { rejectWithValue }) => {
     try {
-      const { data } = await api.post('/auth/verify-reset-code', payload);
+      const { data } = await api.post("/auth/verify-reset-code", payload);
       return data;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
@@ -132,11 +141,25 @@ export const verifyResetCode = createAsyncThunk(
 
 // reset password
 export const resetPassword = createAsyncThunk(
-  'auth/resetPassword',
+  "auth/resetPassword",
   async (payload, { rejectWithValue }) => {
     try {
-      const { data } = await api.post('/auth/reset-password', payload);
+      const { data } = await api.post("/auth/reset-password", payload);
       return data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+// Fetch current authenticated user (common profile fetch)
+export const fetchCurrentUser = createAsyncThunk(
+  "auth/fetchCurrentUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get("/auth/me");
+      // Normalize common shapes: { data: user } or { user }
+      return data?.data || data?.user || data || null;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
