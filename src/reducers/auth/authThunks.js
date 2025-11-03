@@ -165,3 +165,22 @@ export const fetchCurrentUser = createAsyncThunk(
     }
   }
 );
+
+// Change password thunk
+export const changePassword = createAsyncThunk(
+  "auth/changePassword",
+  async ({ oldPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      const { data } = await api.patch("/auth/changePassword", {
+        currentPassword: oldPassword,
+        newPassword,
+      });
+      return data;
+    } catch (err) {
+      console.log(err);
+      return rejectWithValue(
+        err.response?.data?.error || err.message || "Failed to change password"
+      );
+    }
+  }
+);
