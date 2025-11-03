@@ -43,7 +43,7 @@ const ProfileAccountSettings = () => {
       setIsLoading(false);
     }
     getData();
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem("selectedLanguage") || "en";

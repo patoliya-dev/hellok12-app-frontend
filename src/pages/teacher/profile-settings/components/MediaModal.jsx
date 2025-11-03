@@ -4,7 +4,13 @@ import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
 import DeleteModal from "components/ui/DeleteModal";
 
-const MediaModal = ({ item, onClose, onDelete, onReplace, type="highlight" }) => {
+const MediaModal = ({
+  item,
+  onClose,
+  onDelete,
+  onReplace,
+  type = "highlight",
+}) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleDeleteModalVisibility = () => {
@@ -60,7 +66,7 @@ const MediaModal = ({ item, onClose, onDelete, onReplace, type="highlight" }) =>
             >
               <Icon
                 name={
-                  item?.type === "video"
+                  item?.type?.startsWith("video")
                     ? "Video"
                     : item?.type?.includes("pdf") ||
                       item?.name?.toLowerCase()?.includes(".pdf")
@@ -92,7 +98,7 @@ const MediaModal = ({ item, onClose, onDelete, onReplace, type="highlight" }) =>
         {/* Media Content */}
         <div className="p-4">
           <div className="bg-muted rounded-lg overflow-hidden">
-            {item?.type === "video" ? (
+            {item?.type?.startsWith("video") ? (
               <video
                 src={item?.url}
                 controls
@@ -126,7 +132,9 @@ const MediaModal = ({ item, onClose, onDelete, onReplace, type="highlight" }) =>
         <div className="flex items-center justify-between p-4 border-t border-border bg-muted/30">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <Icon name="Calendar" size={16} />
-            <span>Uploaded on {formatDate(item?.uploadDate || item?.updatedAt)}</span>
+            <span>
+              Uploaded on {formatDate(item?.uploadDate || item?.updatedAt)}
+            </span>
           </div>
 
           <div className="flex items-center space-x-2">
