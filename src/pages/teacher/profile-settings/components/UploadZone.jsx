@@ -138,7 +138,7 @@ const UploadZone = ({ onFileUpload, isUploading, uploadProgress }) => {
           onChange={handleFileSelect}
           className="hidden"
         />
-      </div>
+      </div>  
 
       <div className="mt-4 text-center">
         <p className="text-sm text-muted-foreground">
