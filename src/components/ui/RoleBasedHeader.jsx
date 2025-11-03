@@ -58,7 +58,7 @@ const RoleBasedHeader = () => {
             "/student-parent/payment-billing",
           ],
         },
-        { label: "Find Teacher", path: "/teachers", icon: "Search" },
+        { label: "Find Teacher", path: "/student-parent/find-teacher", icon: "Search" },
         // { label: "Schedule", path: "/booking-system", icon: "Calendar" },
         { label: "Lessons", path: "/student-parent/lessons", icon: "Book" },
         // { label: "Progress",  path: "/student-parent/progress", icon: "TrendingUp" },

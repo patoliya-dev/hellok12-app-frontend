@@ -8,11 +8,13 @@ import Messages from "../pages/student-parent/messages";
 import LessonsCalendar from "../pages/student-parent/lesson-calendar";
 import ProfileAccountSettings from "../pages/student-parent/profile-settings";
 import PaymentBilling from "../pages/student-parent/payment-billing";
+import FindTeacher from "../pages/student-parent/find-teacher";
 
 const StudentParentRoutes = () => {
   return (
     <Routes>
       <Route path="/dashboard" element={<StudentDashboard />} />
+      <Route path="/find-teacher" element={<FindTeacher />} />
       <Route path="/book-lesson/:id" element={<BookLesson />} />
       <Route path="/progress-analytics" element={<ProgressAnalytics />} />
       <Route path="/lessons" element={<Lessons />} />
