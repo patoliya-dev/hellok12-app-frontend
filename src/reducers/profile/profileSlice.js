@@ -1,42 +1,17 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { updateProfile } from "./profileThunks";
+import {
+  loginUser,
+  signupUser,
+  fetchCurrentUser,
+  refreshToken,
+} from "../auth/authThunks";
 
 const initialState = {
-  parent: {
-    fullName: "Emma Johnson",
-    phone: "+1 (555) 123-4567",
-    email: "emmajohnson@email.com",
-    address: "19 Washington Square N, New York, NY 10011, USA",
-    profileImage:
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face",
+  parent: { 
   },
-  students: [
-    {
-      id: 1,
-      fullName: "Alex Johnson",
-      email: "alexjohnson@email.com",
-      address: "19 Washington Square N, New York, NY 10011, USA",
-      age: 15,
-      gender: "Male",
-      language: "English",
-      grade: "Grade 9",
-      profileImage:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-    },
-    {
-      id: 2,
-      fullName: "Mia Johnson",
-      email: "miajohnson@email.com",
-      address: "19 Washington Square N, New York, NY 10011, USA",
-      age: 12,
-      gender: "Female",
-      language: "English, Spanish",
-      grade: "Grade 6",
-      profileImage:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face",
-    },
-  ],
-  selectedChildId: 1,
+  students: [],
+  selectedChildId: "",
 };
 
 const profileSlice = createSlice({
@@ -65,16 +40,79 @@ const profileSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    // Helper function to update profile from user data
+    const updateProfileFromUser = (state, user) => {
+      if (!user) return;
+
+      // Update parent profile
+      if (user.role === "parent" || !user.role) {
+        state.parent = {
+          ...state.parent,
+          fullName: user?.name ?? user?.fullName ?? state.parent.fullName,
+          email: user?.email ?? state.parent.email,
+          phone: user?.phone ?? user?.profile?.phone ?? state.parent.phone,
+          address:
+            user?.profile?.address ?? user?.address ?? state.parent.address,
+          profileImage:
+            user?.profileImage?.url ??
+            user?.profileImage ??
+            state.parent.profileImage,
+        };
+
+        // Update students/children if they exist
+        if (user.profile?.children && Array.isArray(user.profile.children)) {
+          state.students = user.profile.children.map((child, index) => ({
+            id: child._id || child.id || index + 1,
+            fullName: child.name || child.fullName || "",
+            email: child.email || "",
+            address: child.profile?.address || child.address || "",
+            age: child.age || child.profile?.age || "",
+            gender: child.gender || child.profile?.gender || "",
+            language: child.language || child.profile?.language || "",
+            grade: child.grade || child.profile?.grade || "",
+            profileImage:
+              child.profileImage?.url ||
+              child.profileImage ||
+              state.students[index]?.profileImage ||
+              "",
+          }));
+        }
+      }
+    };
+
+    // Update profile after successful login
+    builder.addCase(loginUser.fulfilled, (state, action) => {
+      const payload = action.payload || {};
+      const user = payload.user;
+      updateProfileFromUser(state, user);
+    });
+
+    // Update profile after successful signup
+    builder.addCase(signupUser.fulfilled, (state, action) => {
+      const payload = action.payload || {};
+      const user = payload.user;
+      updateProfileFromUser(state, user);
+    });
+
+    // Update profile when fetching current user
+    builder.addCase(fetchCurrentUser.fulfilled, (state, action) => {
+      const user = action.payload;
+      updateProfileFromUser(state, user);
+    });
+
+    // Update profile after token refresh (if user data is included)
+    builder.addCase(refreshToken.fulfilled, (state, action) => {
+      const payload = action.payload || {};
+      const user = payload.user;
+      if (user) {
+        updateProfileFromUser(state, user);
+      }
+    });
+
+    // Update profile after manual update
     builder.addCase(updateProfile.fulfilled, (state, action) => {
       const user = action.payload;
-      if (!user) return;
-      state.parent = {
-        ...state.parent,
-        fullName: user?.name ?? state.parent.fullName,
-        email: user?.email ?? state.parent.email,
-        address: user?.profile?.address ?? state.parent.address,
-        profileImage: user?.profileImage?.url ?? state.parent.profileImage,
-      };
+      updateProfileFromUser(state, user);
     });
   },
 });

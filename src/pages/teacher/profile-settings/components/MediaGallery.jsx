@@ -11,8 +11,6 @@ const MediaGallery = ({
   selectedItems,
   onItemSelect,
   onItemDelete,
-  onItemReplace,
-  showBulkActions,
   onIntroChange,
 }) => {
   const [modalItem, setModalItem] = useState(null);
@@ -41,13 +39,14 @@ const MediaGallery = ({
   };
 
   const getFileIcon = (type) => {
-    return type === "video" ? "Video" : "Image";
+    return type.startsWith("video") ? "Video" : "Image";
   };
 
   const handleItemClick = (item) => {
     setModalItem({
       ...item,
       name: item?.name.substring(item?.name.indexOf("_") + 1),
+      type: item?.mime,
     });
   };
 
@@ -129,7 +128,7 @@ const MediaGallery = ({
               className="relative aspect-video bg-muted cursor-pointer"
               onClick={() => handleItemClick(item)}
             >
-              {item?.type === "video" ? (
+              {item?.mime.startsWith("video") ? (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
                     <Icon name="Play" size={24} className="text-primary ml-1" />
@@ -161,11 +160,11 @@ const MediaGallery = ({
                 `}
                 >
                   <Icon
-                    name={getFileIcon(item?.type)}
+                    name={getFileIcon(item?.mime)}
                     size={12}
                     className="inline mr-1"
                   />
-                  {item?.type?.toUpperCase()}
+                  {item?.mime?.toUpperCase()}
                 </div>
               </div>
             </div>
@@ -215,13 +214,13 @@ const MediaGallery = ({
                         <Icon name="Eye" size={14} />
                         <span>View</span>
                       </button>
-                      <button
+                      {/* <button
                         onClick={() => onItemReplace(item?._id)}
                         className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center space-x-2"
                       >
                         <Icon name="RefreshCw" size={14} />
                         <span>Replace</span>
-                      </button>
+                      </button> */}
                       <button
                         onClick={() => {
                           setDeleteItemId(item?._id);
@@ -249,10 +248,10 @@ const MediaGallery = ({
             onItemDelete(modalItem?._id);
             handleModalClose();
           }}
-          onReplace={() => {
-            onItemReplace(modalItem?._id);
-            handleModalClose();
-          }}
+          // onReplace={() => {
+          //   onItemReplace(modalItem?._id);
+          //   handleModalClose();
+          // }}
         />
       )}
 
