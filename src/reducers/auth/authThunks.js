@@ -177,7 +177,6 @@ export const changePassword = createAsyncThunk(
       });
       return data;
     } catch (err) {
-      console.log(err);
       return rejectWithValue(
         err.response?.data?.error || err.message || "Failed to change password"
       );
