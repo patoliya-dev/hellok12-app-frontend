@@ -20,6 +20,7 @@ import {
   uploadAttachmentFlow,
 } from "reducers/attachments/attachmentThunks";
 import { fetchCurrentUser } from "reducers/auth/authThunks";
+import ChangePasswordModal from "../../student-parent/profile-settings/components/ChangePasswordModal";
 
 const ProfileAccountSettings = () => {
   const dispatch = useDispatch();
@@ -35,6 +36,7 @@ const ProfileAccountSettings = () => {
   });
   const [selectedCertificateFiles, setSelectedCertificateFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   useEffect(() => {
     async function getData() {
@@ -302,6 +304,7 @@ const ProfileAccountSettings = () => {
           <PersonalInfoTab
             {...commonProps}
             onImageFileChange={setSelectedImageFile}
+            onChangePasswordClick={() => setShowChangePassword(true)}
           />
         );
       case "bio":
@@ -517,6 +520,11 @@ const ProfileAccountSettings = () => {
           </div>
         </section>
       </main>
+      {showChangePassword && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
+        </div>
+      )}
     </div>
   );
 };

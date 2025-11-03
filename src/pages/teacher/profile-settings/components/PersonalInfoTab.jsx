@@ -15,6 +15,7 @@ const PersonalInfoTab = ({
   isEdit,
   errors,
   onImageFileChange,
+  onChangePasswordClick,
 }) => {
   const fileInputRef = useRef(null);
   const handleButtonClick = () => {
@@ -259,6 +260,11 @@ const PersonalInfoTab = ({
             error={errors?.city}
             searchable
           />
+        </div>
+        <div className="mt-6 flex justify-end">
+          <Button variant="link" onClick={onChangePasswordClick}>
+            Change Password
+          </Button>
         </div>
       </div>
       {/* Save Button */}
