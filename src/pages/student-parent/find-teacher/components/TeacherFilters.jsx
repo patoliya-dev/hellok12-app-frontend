@@ -38,6 +38,22 @@ export default function TeacherFilters({
     onFiltersChange(clearedFilters);
   };
 
+  const handlePriceInputChange = (index, rawValue) => {
+    const parsed = Number(rawValue);
+    if (Number.isNaN(parsed)) return;
+    const minBound = 0;
+    const maxBound = 100;
+    let [currentMin, currentMax] = filters.priceRange || [minBound, maxBound];
+
+    if (index === 0) {
+      const nextMin = Math.max(minBound, Math.min(parsed, currentMax));
+      handleChange("priceRange", [nextMin, currentMax]);
+    } else {
+      const nextMax = Math.min(maxBound, Math.max(parsed, currentMin));
+      handleChange("priceRange", [currentMin, nextMax]);
+    }
+  };
+
   const ageRangeOptions = [
     { value: "", label: "Select age range..." },
     { value: "0-3", label: "0 - 3 years" },
@@ -98,9 +114,7 @@ export default function TeacherFilters({
           <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block text-foreground">
             Availability
           </label>
-          <DateRangePicker
-            className="w-full border rounded-lg"
-          />
+          <DateRangePicker className="w-full border rounded-lg" />
         </div>
 
         {/* Students Age Range */}
@@ -174,9 +188,35 @@ export default function TeacherFilters({
           <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block text-foreground">
             Price Range
           </label>
-          <div className="flex w-full items-center gap-4 mt-5 ">
-            <span className="text-xs text-[#2B67F6]">${filters?.priceRange[0] ?? 0}</span>
+          <div className="flex w-full items-center gap-4 ">
+            <div className="flex items-center gap-2 w-28">
+              <span className="text-xs text-foreground">Min</span>
+              <Input
+                type="number"
+                className="h-9 px-2 border-2 border-border"
+                min={0}
+                max={100}
+                value={filters?.priceRange?.[0] ?? 0}
+                onChange={(e) => handlePriceInputChange(0, e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2 w-28">
+              <span className="text-xs text-foreground">Max</span>
+              <Input
+                type="number"
+                className="h-9 px-2 border-2 border-border"
+                min={0}
+                max={100}
+                value={filters?.priceRange?.[1] ?? 100}
+                onChange={(e) => handlePriceInputChange(1, e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex w-full items-center gap-4 mt-5">
+          <span className="text-xs text-[#2B67F6]">${filters?.priceRange[0] ?? 0}</span> 
             <RangeSlider
+              min={0}
+              max={100}
               value={filters.priceRange}
               onInput={([min, max]) => {
                 handleChange("priceRange", [min, max]);
