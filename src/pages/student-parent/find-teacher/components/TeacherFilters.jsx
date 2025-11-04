@@ -1,14 +1,18 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import Button from "../../../../components/ui/Button";
+import { languageOptions } from "../../../../utils/utils";
+import Input from "components/ui/Input";
+import DateRangePicker from "components/ui/DateRangePicker";
+import Select from "components/ui/Select";
+import RangeSlider from "react-range-slider-input";
+import "react-range-slider-input/dist/style.css";
 
 export default function TeacherFilters({
   filters,
   onFiltersChange,
   schoolSlug,
 }) {
-  const [localFilters, setLocalFilters] = useState < FilterState > filters;
+  const [localFilters, setLocalFilters] = useState(filters);
 
   useEffect(() => {
     setLocalFilters(filters);
@@ -28,11 +32,35 @@ export default function TeacherFilters({
       availability: "",
       ageRange: "",
       rating: "",
-      priceRange: "",
+      priceRange: [0, 100],
     };
     setLocalFilters(clearedFilters);
     onFiltersChange(clearedFilters);
   };
+
+  const ageRangeOptions = [
+    { value: "", label: "Select age range..." },
+    { value: "0-3", label: "0 - 3 years" },
+    { value: "4-5", label: "4 - 5 years" },
+    { value: "6-10", label: "6 - 10 years" },
+    { value: "11-14", label: "11 - 14 years" },
+    { value: "15-18", label: "15 - 18 years" },
+    { value: "18+", label: "18+ years old" },
+  ];
+
+  const schoolOptions = [
+    { value: "", label: "Select school" },
+    { value: "school1", label: "School 1" },
+    { value: "school2", label: "School 2" },
+  ];
+  const experienceOptions = [
+    { value: "", label: "Select experience..." },
+    { value: "0-5", label: "0 - 5 years" },
+    { value: "5-10", label: "5 - 10 years" },
+    { value: "10-15", label: "10 - 15 years" },
+    { value: "15-20", label: "15 - 20 years" },
+    { value: "20+", label: "20 years above" },
+  ];
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
@@ -40,87 +68,124 @@ export default function TeacherFilters({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         {/* School */}
         {!schoolSlug ? (
-          <select
+          <Select
+            label="School"
             value={filters.school}
-            onChange={(e) => handleChange("school", e.target.value)}
-            className="w-full border rounded-lg px-4 py-2"
-          >
-            <option value="">Select school</option>
-            <option value="school1">School 1</option>
-            <option value="school2">School 2</option>
-          </select>
+            onChange={(val) => handleChange("school", val)}
+            options={schoolOptions}
+          />
         ) : null}
-
         {/* Languages */}
-        <select
+        <Select
+          label="Languages"
           value={filters.languages}
-          onChange={(e) => handleChange("languages", e.target.value)}
-          className="w-full border rounded-lg px-4 py-2"
-        >
-          <option value="">Select languages...</option>
-          <option value="english">English</option>
-          <option value="spanish">Spanish</option>
-          <option value="french">French</option>
-        </select>
-
+          onChange={(val) => handleChange("languages", val)}
+          options={[
+            { value: "", label: "Select languages..." },
+            ...languageOptions,
+          ]}
+        />
         {/* Experience Level */}
-        <select
+        <Select
+          label="Experience Level"
           value={filters.experience}
-          onChange={(e) => handleChange("experience", e.target.value)}
-          className="w-full border rounded-lg px-4 py-2"
-        >
-          <option value="">Select experience...</option>
-          <option value="beginner">Beginner</option>
-          <option value="intermediate">Intermediate</option>
-          <option value="expert">Expert</option>
-        </select>
+          onChange={(val) => handleChange("experience", val)}
+          options={experienceOptions}
+        />
 
         {/* Availability */}
-        <select
-          value={filters.availability}
-          onChange={(e) => handleChange("availability", e.target.value)}
-          className="w-full border rounded-lg px-4 py-2"
-        >
-          <option value="">Select availability...</option>
-          <option value="morning">Morning</option>
-          <option value="evening">Evening</option>
-          <option value="weekend">Weekend</option>
-        </select>
+        <div className="mb-2">
+          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block text-foreground">
+            Availability
+          </label>
+          <DateRangePicker
+            className="w-full border rounded-lg"
+          />
+        </div>
 
         {/* Students Age Range */}
-        <select
+        <Select
+          label="Students Age Range"
           value={filters.ageRange}
-          onChange={(e) => handleChange("ageRange", e.target.value)}
-          className="w-full border rounded-lg px-4 py-2"
-        >
-          <option value="">Select age range...</option>
-          <option value="kids">Kids (5-12)</option>
-          <option value="teens">Teens (13-19)</option>
-          <option value="adults">Adults (20+)</option>
-        </select>
+          onChange={(val) => handleChange("ageRange", val)}
+          options={ageRangeOptions}
+        />
 
         {/* Filter by Rating */}
-        <select
+        <Select
+          label="Rating"
           value={filters.rating}
-          onChange={(e) => handleChange("rating", e.target.value)}
-          className="w-full border rounded-lg px-4 py-2"
-        >
-          <option value="">All Ratings</option>
-          <option value="4plus">4 Stars & Above</option>
-          <option value="3plus">3 Stars & Above</option>
-        </select>
+          onChange={(val) => handleChange("rating", val)}
+          options={[
+            {
+              value: "",
+              label: (
+                <span className="flex items-center">
+                  {Array.from({ length: 5 }).map((_, idx) => (
+                    <svg
+                      key={idx}
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="#facc15"
+                      className="w-4 h-4 mr-0.5"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.966a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.382 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.921-.755 1.688-1.538 1.118l-3.382-2.455a1 1 0 00-1.175 0l-3.382 2.455c-.783.57-1.838-.197-1.539-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.05 9.393c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.966z" />
+                    </svg>
+                  ))}
+                  <span className="ml-1">All Ratings</span>
+                </span>
+              ),
+            },
+            ...[5, 4, 3, 2, 1].map((n) => ({
+              value: String(n),
+              label: (
+                <span className="flex items-center">
+                  {Array.from({ length: n }).map((_, i) => (
+                    <svg
+                      key={"star_filled_" + i}
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="#facc15"
+                      className="w-4 h-4 mr-0.5"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.966a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.382 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.921-.755 1.688-1.538 1.118l-3.382-2.455a1 1 0 00-1.175 0l-3.382 2.455c-.783.57-1.838-.197-1.539-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.05 9.393c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.966z" />
+                    </svg>
+                  ))}
+                  {Array.from({ length: 5 - n }).map((_, i) => (
+                    <svg
+                      key={"star_empty_" + i}
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="#e5e7eb"
+                      className="w-4 h-4 mr-0.5"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.966a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.382 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.921-.755 1.688-1.538 1.118l-3.382-2.455a1 1 0 00-1.175 0l-3.382 2.455c-.783.57-1.838-.197-1.539-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.05 9.393c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.966z" />
+                    </svg>
+                  ))}
+                  <span className="ml-1">{n} Star</span>
+                </span>
+              ),
+            })),
+          ]}
+        />
 
         {/* Price Range */}
-        <select
-          value={filters.priceRange}
-          onChange={(e) => handleChange("priceRange", e.target.value)}
-          className="w-full border rounded-lg px-4 py-2"
-        >
-          <option value="">Select price range...</option>
-          <option value="0-20">$0 - $20</option>
-          <option value="20-50">$20 - $50</option>
-          <option value="50-100">$50 - $100</option>
-        </select>
+        <div className="mb-6">
+          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block text-foreground">
+            Price Range
+          </label>
+          <div className="flex w-full items-center gap-4 mt-5 ">
+            <span className="text-xs text-[#2B67F6]">${filters?.priceRange[0] ?? 0}</span>
+            <RangeSlider
+              value={filters.priceRange}
+              onInput={([min, max]) => {
+                handleChange("priceRange", [min, max]);
+              }}
+              className="range-slider flex-1"
+            />
+            <span className="text-xs text-[#2B67F6]">${filters?.priceRange[1] ?? 100}</span>
+          </div>
+        </div>
         <div className="flex items-end">
           <Button
             variant="outline"

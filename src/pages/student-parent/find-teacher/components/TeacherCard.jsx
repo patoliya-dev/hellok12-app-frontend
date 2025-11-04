@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import Image from "../../../../components/AppImage";
@@ -71,7 +69,7 @@ const TeacherCard = ({ teacher }) => {
 
   return (
     <Link
-      to={`/teacher-profile-detail/${teacher?.id}`}
+      to={`/student-parent/teacher-profile-detail/${teacher?.id}`}
       className="block bg-card border border-border rounded-lg hover:shadow-educational-lg transition-educational group hover-lift"
     >
       <div className="relative">

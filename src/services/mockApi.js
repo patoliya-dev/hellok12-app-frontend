@@ -2029,3 +2029,171 @@ export const mockTeachers = [
     ],
   },
 ];
+
+export const mockClasses = [
+  {
+    id: "class-001",
+    teacherId: "teacher-003", // Sarah Martinez teaches this class
+    title: "Conversational English Mastery",
+    description:
+      "Improve your speaking confidence through engaging conversations about daily topics, current events, and personal interests.",
+    type: "1-on-1",
+    duration: 60,
+    price: 45,
+    schedule: { flexible: true },
+  },
+  {
+    id: "class-002",
+    teacherId: "teacher-003", // Sarah Martinez teaches this class
+    title: "Business English Essentials",
+    description:
+      "Master professional communication skills including presentations, meetings, emails, and networking.",
+    type: "1-on-1",
+    duration: 90,
+    price: 65,
+    schedule: { flexible: true },
+  },
+  {
+    id: "class-003",
+    teacherId: "teacher-001", // María García teaches this class
+    title: "Spanish for Beginners Group",
+    description:
+      "Start your Spanish journey with basic vocabulary, grammar, and pronunciation in a supportive group environment.",
+    type: "Group",
+    duration: 75,
+    price: 25,
+    maxStudents: 8,
+    enrolledStudents: 6,
+    location: "Downtown Learning Center, Room 204",
+    schedule: {
+      days: ["Monday", "Wednesday", "Friday"],
+      time: "6:00 PM - 7:15 PM",
+    },
+    nextSession: "Monday, January 8th at 6:00 PM",
+  },
+  {
+    id: "class-004",
+    teacherId: "teacher-002", // Pierre Dubois teaches this class
+    title: "French Conversation Circle",
+    description:
+      "Practice French speaking skills in a relaxed group setting with fellow learners. All levels welcome.",
+    type: "Group",
+    duration: 60,
+    price: 20,
+    maxStudents: 10,
+    enrolledStudents: 8,
+    location: "Language Lab, Building A",
+    schedule: { days: ["Tuesday", "Thursday"], time: "7:00 PM - 8:00 PM" },
+    nextSession: "Tuesday, January 9th at 7:00 PM",
+  },
+  {
+    id: "class-005",
+    teacherId: "teacher-003", // Sarah Martinez teaches this class
+    title: "Academic Writing Workshop",
+    description:
+      "Develop strong academic writing skills for essays, research papers, and thesis work. Includes feedback and revision techniques.",
+    type: "1-on-1",
+    duration: 120,
+    price: 80,
+    schedule: { flexible: true },
+  },
+];
+
+export const mockReviews = [
+  {
+    id: "review-001",
+    teacherId: "teacher-003", // Review for Sarah Martinez
+    classId: "class-001", // Review for Conversational English Mastery
+    studentName: "Michael Chen",
+    studentAvatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
+    rating: 5,
+    date: "2025-01-02",
+    comment:
+      "Sarah is an exceptional teacher! Her conversational English classes have dramatically improved my confidence.",
+    verified: true,
+    helpfulCount: 12,
+    className: "Pronunciation Bootcamp",
+    classType: "Group",
+  },
+  {
+    id: "review-002",
+    teacherId: "teacher-001", // Review for María García
+    classId: "class-003", // Review for Spanish for Beginners Group
+    studentName: "Emma Rodriguez",
+    studentAvatar:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
+    rating: 5,
+    date: "2024-12-28",
+    comment:
+      "The Spanish beginners group is fantastic! María makes learning fun and interactive.",
+    verified: true,
+    helpfulCount: 8,
+    className: "Pronunciation Bootcamp",
+    classType: "Group",
+  },
+  {
+    id: "review-003",
+    teacherId: "teacher-003", // Review for Sarah Martinez
+    classId: "class-002", // Review for Business English Essentials
+    studentName: "David Kim",
+    studentAvatar:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
+    rating: 4,
+    date: "2024-12-25",
+    comment:
+      "Great business English sessions. Practical examples and improved presentation skills.",
+    verified: true,
+    helpfulCount: 6,
+    className: "Pronunciation Bootcamp",
+    classType: "Group",
+  },
+  {
+    id: "review-004",
+    teacherId: "teacher-002", // Review for Pierre Dubois
+    classId: "class-004", // Review for French Conversation Circle
+    studentName: "Lisa Thompson",
+    studentAvatar:
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face",
+    rating: 5,
+    date: "2024-12-20",
+    comment:
+      "The French conversation circle is exactly what I needed! My speaking confidence has grown tremendously.",
+    verified: true,
+    helpfulCount: 9,
+    className: "Pronunciation Bootcamp",
+    classType: "Group",
+  },
+  {
+    id: "review-005",
+    teacherId: "teacher-003", // Review for Sarah Martinez
+    classId: "class-005", // Review for Academic Writing Workshop
+    studentName: "James Wilson",
+    studentAvatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
+    rating: 5,
+    date: "2024-12-15",
+    comment:
+      "Sarah's academic writing workshop was a game-changer for my thesis. Detailed feedback and improvement guidance.",
+    verified: true,
+    helpfulCount: 15,
+    className: "Pronunciation Bootcamp",
+    classType: "Group",
+  },
+  {
+    id: "review-006",
+    teacherId: "teacher-003", // Review for Sarah Martinez
+    classId: "class-005", // Review for Academic Writing Workshop
+    studentName: "Maria Gonzalez",
+    studentAvatar:
+      "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
+    rating: 4,
+    date: "2024-12-10",
+    comment:
+      "The pronunciation bootcamp was intensive but very effective. Sarah has a great ear for pronunciation issues and provides specific techniques to improve. Wish it was longer!",
+    className: "Pronunciation Bootcamp",
+    classType: "Group",
+    verified: true,
+    helpfulCount: 7,
+  },
+];

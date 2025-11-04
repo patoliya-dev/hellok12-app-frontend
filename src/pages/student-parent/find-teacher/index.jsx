@@ -1,4 +1,3 @@
-"use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { Funnel } from "lucide-react";
 import SearchBar from "../../../components/ui/SearchBar";
@@ -23,7 +22,7 @@ const FindTeacher = () => {
     availability: "",
     ageRange: "",
     rating: "",
-    priceRange: "",
+    priceRange: [0, 100],
     onlineStatus: "",
     lessonType: "",
   });
@@ -88,7 +87,7 @@ const FindTeacher = () => {
       const matchesPriceRange =
         !filters.priceRange ||
         (() => {
-          const [min, max] = filters.priceRange.split("-").map(Number);
+          const [min, max] = filters.priceRange;
           return teacher.hourlyRate >= min && teacher.hourlyRate <= max;
         })();
 
@@ -201,31 +200,31 @@ const FindTeacher = () => {
             </Button>
             <Button
               variant="outline"
-              className="hover:bg-primary/50 border-muted-1 bg-transparent cursor-pointer"
+              className="hover:bg-primary  border-muted-1 bg-transparent cursor-pointer"
             >
               In-Person
             </Button>
             <Button
               variant="outline"
-              className="hover:bg-primary/50 border-muted-1 bg-transparent cursor-pointer"
+              className="hover:bg-primary border-muted-1 bg-transparent cursor-pointer"
             >
               Group
             </Button>
             <Button
               variant="outline"
-              className="hover:bg-primary/50 border-muted-1 bg-transparent cursor-pointer"
+              className="hover:bg-primary border-muted-1 bg-transparent cursor-pointer"
             >
               1-on-1
             </Button>
             <Button
               variant="outline"
-              className="hover:bg-primary/50 border-muted-1 bg-transparent cursor-pointer"
+              className="hover:bg-primary border-muted-1 bg-transparent cursor-pointer"
             >
               Curriculum-Aligned Games
             </Button>
             <Button
               variant="outline"
-              className="hover:bg-primary/50 border-muted-1 bg-transparent cursor-pointer"
+              className="hover:bg-primary border-muted-1 bg-transparent cursor-pointer"
             >
               Trial Lessons
             </Button>

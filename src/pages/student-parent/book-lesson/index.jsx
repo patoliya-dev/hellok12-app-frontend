@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Navigate,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import BookingSteps from "./components/BookingSteps";
 import Breadcrumb from "../../../components/ui/Breadcrumb";
@@ -103,11 +108,15 @@ const savedCards = [
 
 const BookLesson = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams(); // enroll && trial
+  const { id } = useParams(); // path param (e.g., class-004)
+  const [searchParams] = useSearchParams();
   const action = searchParams.get("action");
 
   // ✅ Validate both path param and query param
   if (!["enroll", "trial"].includes(action)) {
+    return <Navigate to="/404" replace />;
+  }
+  if (!id) {
     return <Navigate to="/404" replace />;
   }
 

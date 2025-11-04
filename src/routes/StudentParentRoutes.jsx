@@ -9,6 +9,8 @@ import LessonsCalendar from "../pages/student-parent/lesson-calendar";
 import ProfileAccountSettings from "../pages/student-parent/profile-settings";
 import PaymentBilling from "../pages/student-parent/payment-billing";
 import FindTeacher from "../pages/student-parent/find-teacher";
+import TeacherProfileDetail from "../pages/student-parent/teacher-profile-detail";
+import PublicCourseDetails from "../pages/student-parent/course-details";
 
 const StudentParentRoutes = () => {
   return (
@@ -22,7 +24,11 @@ const StudentParentRoutes = () => {
       <Route path="/lesson-calendar" element={<LessonsCalendar />} />
       <Route path="/profile-settings" element={<ProfileAccountSettings />} />
       <Route path="/payment-billing" element={<PaymentBilling />} />
-
+      <Route
+        path="/teacher-profile-detail/:id"
+        element={<TeacherProfileDetail />}
+      />
+      <Route path="/course-details/:id" element={<PublicCourseDetails />} />
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
     </Routes>

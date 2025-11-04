@@ -223,7 +223,9 @@ const Select = React.forwardRef(
             <option value="">Select...</option>
             {options.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {typeof option.label === "string"
+                  ? option.label
+                  : String(option.value ?? "")}
               </option>
             ))}
           </select>

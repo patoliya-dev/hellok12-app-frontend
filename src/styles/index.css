@@ -10,3 +10,17 @@ body {
   font-family: inherit;
   margin: unset;
 }
+
+.range-slider .range-slider__thumb {
+  background: #2B67F6 !important; /* important if library sets inline style */
+  border-radius: 9999px;
+  border: 2px solid white;
+  width: 20px;
+  height: 20px;
+  transition: transform .3s;
+}
+.range-slider .range-slider__range {
+  background: #2B67F6;
+  height: 8px;
+  border-radius: 9999px;
+}
