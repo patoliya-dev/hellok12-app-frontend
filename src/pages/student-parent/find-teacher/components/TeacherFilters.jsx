@@ -100,6 +100,7 @@ export default function TeacherFilters({
             { value: "", label: "Select languages..." },
             ...languageOptions,
           ]}
+          searchable
         />
         {/* Experience Level */}
         <Select
