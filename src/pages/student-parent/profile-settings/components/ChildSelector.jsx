@@ -93,7 +93,6 @@ const ChildSelector = () => {
         {isDropdownOpen && (
           <div className="absolute left-0 top-full mt-2 w-full md:w-72 bg-white border border-border rounded-lg shadow-lg z-50">
             {students.map((student) => {
-              console.log(student);
               const menuInitials = (student.fullName || student.name || "")
                 .split(" ")
                 .map((n) => n[0])

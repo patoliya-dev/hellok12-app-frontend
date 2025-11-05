@@ -8,6 +8,7 @@ import { changePassword as changePasswordThunk } from "../../../../reducers/auth
 const ChangePasswordModal = ({ onClose }) => {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
@@ -15,8 +16,15 @@ const ChangePasswordModal = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+
+    // Validate that both passwords match
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
     try {
       const result = await dispatch(
         changePasswordThunk({ oldPassword, newPassword })
@@ -90,7 +98,10 @@ const ChangePasswordModal = ({ onClose }) => {
           required
           placeholder="Enter old previous password"
           value={oldPassword}
-          onChange={(e) => setOldPassword(e.target.value)}
+          onChange={(e) => {
+            setOldPassword(e.target.value);
+            setError(null);
+          }}
         />
         <Input
           type={"password"}
@@ -98,7 +109,21 @@ const ChangePasswordModal = ({ onClose }) => {
           required
           placeholder="Enter New Password"
           value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
+          onChange={(e) => {
+            setNewPassword(e.target.value);
+            setError(null);
+          }}
+        />
+        <Input
+          type={"password"}
+          label="Confirm new Password"
+          required
+          placeholder="Confirm New Password"
+          value={confirmPassword}
+          onChange={(e) => {
+            setConfirmPassword(e.target.value);
+            setError(null);
+          }}
         />
       </div>
 

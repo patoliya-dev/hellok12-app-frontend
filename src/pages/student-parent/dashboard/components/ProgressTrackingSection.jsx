@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
 import Icon from "../../../../components/AppIcon";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { selectAuthUser } from "reducers/auth/authSelectors";
+import { getRolePath } from "../../../../utils/rolePath";
 
 const ProgressTrackingSection = () => {
   const [progressData, setProgressData] = useState({});
   const [achievements, setAchievements] = useState([]);
   const navigate = useNavigate();
+  const authUser = useSelector(selectAuthUser);
 
   useEffect(() => {
     // Mock progress data
@@ -119,9 +123,14 @@ const ProgressTrackingSection = () => {
               Your Progress
             </h2>
           </div>
-          <div className="text-right cursor-pointer" onClick={() => {
-            navigate('/student-parent/progress-analytics');
-          }}>
+          <div
+            className="text-right cursor-pointer"
+            onClick={() => {
+              navigate(
+                getRolePath(authUser?.role || "student", "progress-analytics")
+              );
+            }}
+          >
             <div className="text-sm font-bold text-primary">View Details</div>
           </div>
         </div>

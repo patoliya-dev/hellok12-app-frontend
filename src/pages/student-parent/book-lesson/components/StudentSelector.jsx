@@ -2,6 +2,7 @@ import React from "react";
 import Select from "../../../../components/ui/Select";
 import Icon from "../../../../components/AppIcon";
 import Input from "../../../../components/ui/Input";
+import Image from "../../../../components/AppImage";
 
 const StudentSelector = ({
   students,
@@ -29,9 +30,9 @@ const StudentSelector = ({
     const student = option?.student;
     return (
       <div className="flex items-center space-x-3 p-2">
-        <img
+        <Image
           src={student?.profileImage}
-          alt={student?.name}
+          alt={"No Image"}
           className="w-8 h-8 rounded-full object-cover"
         />
         <div>
@@ -63,9 +64,9 @@ const StudentSelector = ({
         {selectedStudent && (
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
             <div className="flex items-center space-x-3">
-              <img
+              <Image
                 src={selectedStudent?.profileImage}
-                alt={selectedStudent?.name}
+                alt={"No Image"}
                 className="w-12 h-12 rounded-full object-cover"
               />
               <div className="flex-1">

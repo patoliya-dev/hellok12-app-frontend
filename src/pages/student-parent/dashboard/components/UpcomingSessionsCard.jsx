@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
 import { CourseIcon } from 'components/icons';
 import LessonDetailsModal from "./LessonDetailsModal";
+import { selectAuthUser } from "reducers/auth/authSelectors";
+import { getRolePath } from "../../../../utils/rolePath";
 
 const UpcomingSessionsCard = () => {
   const [upcomingSessions, setUpcomingSessions] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedSession, setSelectedSession] = useState(null);
   const navigate = useNavigate();
+  const authUser = useSelector(selectAuthUser);
 
   useEffect(() => {
     // Update current time every minute
@@ -100,7 +104,7 @@ const UpcomingSessionsCard = () => {
   };
 
   const handleViewSchedule = () => {
-    navigate("/student-parent/lessons");
+    navigate(getRolePath(authUser?.role || "student", "lessons"));
   };
 
   const handleSessionClick = (session) => {

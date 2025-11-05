@@ -1,10 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Icon from "../../components/ui/Icon";
 import Button from "../../components/ui/Button";
+import { selectAuthUser } from "reducers/auth/authSelectors";
+import { getRolePath } from "../../utils/rolePath";
 
 const CourseCard = ({ courseItem, teacherId }) => {
   const navigate = useNavigate();
+  const authUser = useSelector(selectAuthUser);
 
   const handleBookNow = () => {
     // router.push({
@@ -26,7 +30,12 @@ const CourseCard = ({ courseItem, teacherId }) => {
       price: courseItem.price.toString(),
     });
 
-    navigate(`/student-parent/course-details/${courseItem.id}`);
+    navigate(
+      getRolePath(
+        authUser?.role || "student",
+        `course-details/${courseItem.id}`
+      )
+    );
   };
 
   const getTypeIcon = () => (courseItem?.type === "1-on-1" ? "User" : "Users");
@@ -91,7 +100,6 @@ const CourseCard = ({ courseItem, teacherId }) => {
             <span className="text-2xl font-bold text-foreground">
               ${courseItem?.price}
             </span>
-            <span className="text-xs text-text-secondary">per session</span>
           </div>
           <div className="flex items-center gap-2">
             {courseItem?.type === "Group" &&

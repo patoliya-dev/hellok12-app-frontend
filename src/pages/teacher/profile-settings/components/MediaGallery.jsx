@@ -5,6 +5,7 @@ import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
 import MediaModal from "./MediaModal";
 import DeleteModal from "components/ui/DeleteModal";
+import { errorToast } from "../../../../utils/utils";
 
 const MediaGallery = ({
   mediaItems,
@@ -59,6 +60,10 @@ const MediaGallery = ({
   };
 
   const handleIntroChange = (item) => {
+    if (!item?.mime.startsWith("video")) {
+      errorToast("Only video can be set as intro highlight");
+      return;
+    }
     const updatedItems = items.map((mediaItem) => {
       const itemId = mediaItem.id || mediaItem._id;
       const clickedItemId = item?.id || item?._id;
@@ -154,8 +159,8 @@ const MediaGallery = ({
                   px-2 py-1 rounded-full text-xs font-medium
                   ${
                     item?.mime.startsWith("video")
-                      ? "bg-primary/90 text-primary-foreground"
-                      : "bg-secondary/90 text-secondary-foreground"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-accent text-accent-foreground"
                   }
                 `}
                 >
@@ -164,7 +169,7 @@ const MediaGallery = ({
                     size={12}
                     className="inline mr-1"
                   />
-                  {item?.mime?.toUpperCase()}
+                  {item?.mime?.split("/")[0]?.toUpperCase()}
                 </div>
               </div>
             </div>

@@ -1,10 +1,14 @@
 import React, { useState, MouseEvent } from "react";
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Image from "../../../../components/AppImage";
 import Icon from "../../../../components/ui/Icon";
 import locationIcon from "../../../../assets/images/teacherCard/location-icon.png";
+import { selectAuthUser } from "reducers/auth/authSelectors";
+import { getRolePath } from "../../../../utils/rolePath";
 
 const TeacherCard = ({ teacher }) => {
+  const authUser = useSelector(selectAuthUser);
   const [isFavorited, setIsFavorited] = useState(teacher?.isFavorited || false);
 
   const handleFavoriteToggle = (e) => {
@@ -69,7 +73,10 @@ const TeacherCard = ({ teacher }) => {
 
   return (
     <Link
-      to={`/student-parent/teacher-profile-detail/${teacher?.id}`}
+      to={getRolePath(
+        authUser?.role || "student",
+        `teacher-profile-detail/${teacher?.id}`
+      )}
       className="block bg-card border border-border rounded-lg hover:shadow-educational-lg transition-educational group hover-lift"
     >
       <div className="relative">

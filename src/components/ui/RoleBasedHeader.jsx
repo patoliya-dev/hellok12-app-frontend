@@ -10,6 +10,7 @@ import Image from "components/AppImage";
 import ManageCourseIcon from "components/icons/ManageCourseIcon";
 import NotificationModal from "./NotificationModal";
 import { getNotificationByRole } from "./data";
+import { getRolePath } from "../../utils/rolePath";
 
 const RoleBasedHeader = () => {
   const authUser = useSelector(selectAuthUser);
@@ -45,56 +46,75 @@ const RoleBasedHeader = () => {
   }, [userRole]);
 
   const getNavigationItems = () => {
+    const currentRole =
+      userRole === "student" || userRole === "parent" ? userRole : "student";
+
     const baseItems = {
       student: [
         {
           label: "Dashboard",
-          path: "/student-parent/dashboard",
+          path: getRolePath("student", "dashboard"),
           icon: "House",
           children: [
-            "/student-parent/lesson-calendar",
-            "/student-parent/progress-analytics",
-            "/student-parent/profile-settings",
-            "/student-parent/payment-billing",
+            getRolePath("student", "lesson-calendar"),
+            getRolePath("student", "progress-analytics"),
+            getRolePath("student", "profile-settings"),
+            getRolePath("student", "payment-billing"),
           ],
         },
         {
           label: "Find Teacher",
-          path: "/student-parent/find-teacher",
+          path: getRolePath("student", "find-teacher"),
           icon: "Search",
         },
         // { label: "Schedule", path: "/booking-system", icon: "Calendar" },
-        { label: "Lessons", path: "/student-parent/lessons", icon: "Book" },
-        // { label: "Progress",  path: "/student-parent/progress", icon: "TrendingUp" },
-        { label: "Practice", path: "/student-parent/games", icon: "Gamepad2" },
+        {
+          label: "Lessons",
+          path: getRolePath("student", "lessons"),
+          icon: "Book",
+        },
+        // { label: "Progress",  path: getRolePath("student", "progress"), icon: "TrendingUp" },
+        {
+          label: "Practice",
+          path: getRolePath("student", "games"),
+          icon: "Gamepad2",
+        },
         {
           label: "Messages",
-          path: "/student-parent/messages",
+          path: getRolePath("student", "messages"),
           icon: "MessageCircle",
         },
       ],
       parent: [
         {
           label: "Dashboard",
-          path: "/student-parent/dashboard",
+          path: getRolePath("parent", "dashboard"),
           icon: "Home",
           children: [
-            "/student-parent/profile-settings",
-            "/student-parent/payment-billing",
+            getRolePath("parent", "profile-settings"),
+            getRolePath("parent", "payment-billing"),
           ],
         },
         {
           label: "Find Teacher",
-          path: "/student-parent/find-teacher",
+          path: getRolePath("parent", "find-teacher"),
           icon: "Search",
         },
         // { label: "Schedule", path: "/booking-system", icon: "Calendar" },
-        { label: "Lessons", path: "/student-parent/lessons", icon: "Book" },
-        // { label: "Progress",  path: "/student-parent/progress", icon: "TrendingUp" },
-        { label: "Practice", path: "/student-parent/games", icon: "Gamepad2" },
+        {
+          label: "Lessons",
+          path: getRolePath("parent", "lessons"),
+          icon: "Book",
+        },
+        // { label: "Progress",  path: getRolePath("parent", "progress"), icon: "TrendingUp" },
+        {
+          label: "Practice",
+          path: getRolePath("parent", "games"),
+          icon: "Gamepad2",
+        },
         {
           label: "Messages",
-          path: "/student-parent/messages",
+          path: getRolePath("parent", "messages"),
           icon: "MessageCircle",
         },
       ],
@@ -364,11 +384,7 @@ const RoleBasedHeader = () => {
                         className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
                         onClick={() =>
                           navigate(
-                            `/${
-                              ["student", "parent"].includes(authUser.role)
-                                ? "student-parent"
-                                : authUser.role
-                            }/profile-settings`
+                            getRolePath(authUser.role, "profile-settings")
                           )
                         }
                       >
@@ -380,11 +396,7 @@ const RoleBasedHeader = () => {
                           className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
                           onClick={() =>
                             navigate(
-                              `/${
-                                ["student", "parent"].includes(authUser.role)
-                                  ? "student-parent"
-                                  : authUser.role
-                              }/payment-billing`
+                              getRolePath(authUser.role, "payment-billing")
                             )
                           }
                         >

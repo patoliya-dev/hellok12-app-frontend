@@ -18,9 +18,9 @@ const ClassesTab = ({ courses, teacherId }) => {
   ];
 
   const typeOptions = [
-    { value: 'all', label: 'All Classes' },
-    { value: '1-on-1', label: '1-on-1 Classes' },
-    { value: 'Group', label: 'Group Classes' },
+    { value: 'all', label: 'All Courses' },
+    { value: '1-on-1', label: '1-on-1 Courses' },
+    { value: 'group', label: 'Group Courses' },
   ];
 
   const filteredAndSortedClasses = () => {
@@ -78,15 +78,15 @@ const ClassesTab = ({ courses, teacherId }) => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground">
-            Available Classes ({processedClasses?.length})
+              Available Courses ({processedClasses?.length})
           </h3>
           <p className="text-sm text-text-secondary">
-            Choose from individual or group learning options
+            Choose from 1-on-1 or group learning options
           </p>
         </div>
       </div>
 
-      {/* Classes Grid */}
+      {/* Courses Grid */}
       {processedClasses?.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">
           {processedClasses?.map((courseItem) => (

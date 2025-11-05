@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Icon from "../../../../components/AppIcon";
 import Button from "../../../../components/ui/Button";
+import { selectAuthUser } from "reducers/auth/authSelectors";
+import { getRolePath } from "../../../../utils/rolePath";
 
 const ScheduleWidget = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState("week"); // 'week' or 'month'
   const [weeklySchedule, setWeeklySchedule] = useState([]);
   const navigate = useNavigate();
+  const authUser = useSelector(selectAuthUser);
 
   useEffect(() => {
     // Mock weekly schedule data
@@ -151,7 +155,7 @@ const ScheduleWidget = () => {
   };
 
   const handleViewFullSchedule = () => {
-    navigate("/student-parent/lesson-calendar");
+    navigate(getRolePath(authUser?.role || "student", "lesson-calendar"));
   };
 
   return (
@@ -215,18 +219,20 @@ const ScheduleWidget = () => {
         {weeklySchedule.map((day) => (
           <div
             key={day.id}
-            className={`min-w-[230px] flex-shrink-0 p-4 rounded-lg border transition-micro ${isToday(day.date)
-              ? "border-primary bg-primary/5"
-              : "border-border bg-muted/30"
-              }`}
+            className={`min-w-[230px] flex-shrink-0 p-4 rounded-lg border transition-micro ${
+              isToday(day.date)
+                ? "border-primary bg-primary/5"
+                : "border-border bg-muted/30"
+            }`}
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-3">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${isToday(day.date)
-                    ? "bg-primary text-white"
-                    : "bg-muted text-muted-foreground"
-                    }`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    isToday(day.date)
+                      ? "bg-primary text-white"
+                      : "bg-muted text-muted-foreground"
+                  }`}
                 >
                   <span className="text-sm font-medium">
                     {day.date.getDate()}
@@ -234,8 +240,9 @@ const ScheduleWidget = () => {
                 </div>
                 <div>
                   <h3
-                    className={`font-medium ${isToday(day.date) ? "text-primary" : "text-foreground"
-                      }`}
+                    className={`font-medium ${
+                      isToday(day.date) ? "text-primary" : "text-foreground"
+                    }`}
                   >
                     {day.day}
                   </h3>

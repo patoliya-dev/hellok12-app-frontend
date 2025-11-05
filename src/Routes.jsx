@@ -35,11 +35,17 @@ const Routes = () => {
             <Route path="/teacher/*" element={<TeacherRoutes />} />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={["student", "parent"]} />}>
-            <Route path="/student-parent/*" element={<StudentParentRoutes />} />
+          <Route element={<ProtectedRoute allowedRoles={["student"]} />}>
+            <Route path="/student/*" element={<StudentParentRoutes />} />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={["admin", "school"]} />}>
+          <Route element={<ProtectedRoute allowedRoles={["parent"]} />}>
+            <Route path="/parent/*" element={<StudentParentRoutes />} />
+          </Route>
+
+          <Route
+            element={<ProtectedRoute allowedRoles={["admin", "school"]} />}
+          >
             <Route path="/school/*" element={<SchoolRoutes />} />
           </Route>
 

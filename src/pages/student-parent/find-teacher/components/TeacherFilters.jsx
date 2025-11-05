@@ -13,9 +13,17 @@ export default function TeacherFilters({
   schoolSlug,
 }) {
   const [localFilters, setLocalFilters] = useState(filters);
+  const [priceInputs, setPriceInputs] = useState({
+    min: filters?.priceRange?.[0] ?? 0,
+    max: filters?.priceRange?.[1] ?? 1000,
+  });
 
   useEffect(() => {
     setLocalFilters(filters);
+    setPriceInputs({
+      min: filters?.priceRange?.[0] ?? 0,
+      max: filters?.priceRange?.[1] ?? 1000,
+    });
   }, [filters]);
 
   const handleChange = (key, value) => {
@@ -32,25 +40,40 @@ export default function TeacherFilters({
       availability: "",
       ageRange: "",
       rating: "",
-      priceRange: [0, 100],
+      priceRange: [0, 1000],
     };
     setLocalFilters(clearedFilters);
     onFiltersChange(clearedFilters);
   };
 
   const handlePriceInputChange = (index, rawValue) => {
-    const parsed = Number(rawValue);
-    if (Number.isNaN(parsed)) return;
+    // Update local state immediately for free typing
+    if (index === 0) {
+      setPriceInputs((prev) => ({ ...prev, min: rawValue }));
+    } else {
+      setPriceInputs((prev) => ({ ...prev, max: rawValue }));
+    }
+  };
+
+  const handlePriceInputBlur = (index) => {
     const minBound = 0;
-    const maxBound = 100;
-    let [currentMin, currentMax] = filters.priceRange || [minBound, maxBound];
+    const maxBound = 1000;
+    const [filterMin, filterMax] = filters.priceRange || [minBound, maxBound];
+
+    const parsedMin = Number(priceInputs.min);
+    const parsedMax = Number(priceInputs.max);
+
+    const validMin = Number.isNaN(parsedMin) ? filterMin : parsedMin;
+    const validMax = Number.isNaN(parsedMax) ? filterMax : parsedMax;
 
     if (index === 0) {
-      const nextMin = Math.max(minBound, Math.min(parsed, currentMax));
-      handleChange("priceRange", [nextMin, currentMax]);
+      const nextMin = Math.max(minBound, Math.min(validMin, validMax));
+      handleChange("priceRange", [nextMin, validMax]);
+      setPriceInputs({ min: nextMin, max: validMax });
     } else {
-      const nextMax = Math.min(maxBound, Math.max(parsed, currentMin));
-      handleChange("priceRange", [currentMin, nextMax]);
+      const nextMax = Math.min(maxBound, Math.max(validMax, validMin));
+      handleChange("priceRange", [validMin, nextMax]);
+      setPriceInputs({ min: validMin, max: nextMax });
     }
   };
 
@@ -197,8 +220,9 @@ export default function TeacherFilters({
                 className="h-9 px-2 border-2 border-border"
                 min={0}
                 max={100}
-                value={filters?.priceRange?.[0] ?? 0}
+                value={priceInputs.min}
                 onChange={(e) => handlePriceInputChange(0, e.target.value)}
+                onBlur={() => handlePriceInputBlur(0)}
               />
             </div>
             <div className="flex items-center gap-2 w-28">
@@ -208,26 +232,31 @@ export default function TeacherFilters({
                 className="h-9 px-2 border-2 border-border"
                 min={0}
                 max={100}
-                value={filters?.priceRange?.[1] ?? 100}
+                value={priceInputs.max}
                 onChange={(e) => handlePriceInputChange(1, e.target.value)}
+                onBlur={() => handlePriceInputBlur(1)}
               />
             </div>
           </div>
           <div className="flex w-full items-center gap-4 mt-5">
-          <span className="text-xs text-[#2B67F6]">${filters?.priceRange[0] ?? 0}</span> 
+            <span className="text-xs text-[#2B67F6]">
+              ${filters?.priceRange[0] ?? 0}
+            </span>
             <RangeSlider
               min={0}
-              max={100}
+              max={1000}
               value={filters.priceRange}
               onInput={([min, max]) => {
                 handleChange("priceRange", [min, max]);
               }}
               className="range-slider flex-1"
             />
-            <span className="text-xs text-[#2B67F6]">${filters?.priceRange[1] ?? 100}</span>
+            <span className="text-xs text-[#2B67F6]">
+              ${filters?.priceRange[1] ?? 1000}
+            </span>
           </div>
         </div>
-        <div className="flex items-end">
+        <div className="flex items-start mt-5">
           <Button
             variant="outline"
             onClick={handleClearFilters}

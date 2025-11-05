@@ -18,6 +18,7 @@ import PaymentMethodSelector from "./components/PaymentMethodSelector";
 import BookingConfirmation from "./components/BookingConfirmation";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { copyToClipboard } from "../../../utils/utils";
+import { getRolePath } from "../../../utils/rolePath";
 
 // Steps for enrollment
 const stepsForEntrollment = [
@@ -30,12 +31,6 @@ const stepsForEntrollment = [
 const stepsForTrial = [
   { id: 1, title: "Student Info", icon: "User" },
   { id: 2, title: "Confirm", icon: "CheckCircle" },
-];
-
-const breadCrumbData = [
-  { label: "Find Teachers", path: "#" },
-  { label: "Teacher Details", path: "#" },
-  { label: "Book Lessons", path: "#", current: true },
 ];
 
 const mockStudents = [
@@ -133,6 +128,38 @@ const BookLesson = () => {
 
   const steps = type === "trial" ? stepsForTrial : stepsForEntrollment;
 
+  const goBackOne = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(getRolePath(currentUser?.role || "student", "find-teacher"));
+    }
+  };
+
+  const goBackTwo = () => {
+    if (window.history.length > 2) {
+      navigate(-2);
+    } else {
+      navigate(getRolePath(currentUser?.role || "student", "find-teacher"));
+    }
+  };
+
+  const breadCrumbData = [
+    {
+      label: "Find Teachers",
+      path: getRolePath(currentUser?.role || "student", "find-teacher"),
+    },
+    {
+      label: "Teacher Details",
+      onClick: goBackTwo,
+    },
+    {
+      label: "Course Details",
+      onClick: goBackOne,
+    },
+    { label: "Book Lessons", path: "#", current: true },
+  ];
+
   useEffect(() => {
     if (isStudent) {
       setSelectedStudent(currentUser);
@@ -207,7 +234,7 @@ const BookLesson = () => {
         savedCards?.find((card) => card?.isDefault) || savedCards?.[0];
       setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
     }
-    navigate(`/student-parent/dashboard`);
+    navigate(getRolePath(currentUser?.role || "student", "dashboard"));
   };
 
   const getButtonText = () => {

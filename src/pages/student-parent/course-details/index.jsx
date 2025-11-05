@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Icon from "../../../components/ui/Icon";
 import Button from "../../../components/ui/Button";
 import CourseHero from "../../../components/courseDetails/CourseHero";
@@ -8,10 +9,13 @@ import EnrollmentSection from "../../../components/courseDetails/EnrollmentSecti
 import ReviewsSection from "../../../components/courseDetails/ReviewsSection";
 import LessonModal from "../../../components/courseDetails/LessonModal";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
+import { selectAuthUser } from "reducers/auth/authSelectors";
+import { getRolePath } from "../../../utils/rolePath";
 
 const PublicCourseDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const authUser = useSelector(selectAuthUser);
 
   const [course, setCourse] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -204,9 +208,9 @@ const PublicCourseDetails = () => {
 
     fetchCourse();
   }, [id]);
-  console.log("id", id);
+
   const handleEnrollCourse = () =>
-    navigate(`/student-parent/book-lesson/${id}?action=enroll`);
+    navigate(getRolePath(authUser?.role || "student", `book-lesson/${id}?action=enroll`));
 
   const handleTrialLesson = () => {
     // alert('Trial lesson booking would be implemented here');
@@ -322,7 +326,7 @@ const PublicCourseDetails = () => {
         }}
         onTrial={() => {
           setShowLessonModal(false);
-          navigate(`/student-parent/book-lesson/${id}?action=trial`);
+          navigate(getRolePath(authUser?.role || "student", `book-lesson/${id}?action=trial`));
         }}
       />
     </div>
