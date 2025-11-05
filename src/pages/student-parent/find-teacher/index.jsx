@@ -22,7 +22,7 @@ const FindTeacher = () => {
     availability: "",
     ageRange: "",
     rating: "",
-    priceRange: [0, 100],
+    priceRange: [0, 1000],
     onlineStatus: "",
     lessonType: "",
   });
