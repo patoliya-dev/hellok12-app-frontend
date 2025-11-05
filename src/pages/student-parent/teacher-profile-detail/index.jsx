@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Breadcrumb from "../../../components/ui/Breadcrumb";
+import { useSelector } from "react-redux";
+import { selectAuthUser } from "reducers/auth/authSelectors";
+import { getRolePath } from "../../../utils/rolePath";
 import TeacherHero from "../../../components/teacherProfileDetails/TeacherHero";
 import TabNavigation from "../../../components/teacherProfileDetails/TabNavigation";
 import AboutTab from "../../../components/teacherProfileDetails/AboutTab";
@@ -11,6 +14,7 @@ import RoleBasedHeader from "components/ui/RoleBasedHeader";
 
 const TeacherProfileDetail = () => {
   const [activeTab, setActiveTab] = useState("about");
+  const currentUser = useSelector(selectAuthUser);
 
   const courses = mockClasses;
 
@@ -100,12 +104,24 @@ const TeacherProfileDetail = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [activeTab]);
 
+  const breadCrumbData = [
+    {
+      label: "Dashboard",
+      path: getRolePath(currentUser?.role || "student", "dashboard"),
+    },
+    {
+      label: "Find Teachers",
+      path: getRolePath(currentUser?.role || "student", "find-teacher"),
+    },
+    { label: teacher?.name, path: "#", current: true },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <RoleBasedHeader />
       <main className="pt-16 pb-20 lg:pb-8">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
-          <Breadcrumb teacherName={teacher?.name} />
+          <Breadcrumb customPath={breadCrumbData} />
 
           <TeacherHero teacher={teacher} />
         </div>
