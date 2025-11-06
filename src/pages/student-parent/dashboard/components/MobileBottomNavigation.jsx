@@ -1,17 +1,22 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Icon from "../../../../components/AppIcon";
+import { selectAuthUser } from "reducers/auth/authSelectors";
+import { getRolePath } from "../../../../utils/rolePath";
 
 const MobileBottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const authUser = useSelector(selectAuthUser);
+  const role = authUser?.role || "student";
 
   const navigationItems = [
     {
       id: "dashboard",
       label: "Home",
       icon: "Home",
-      path: "/student-parent/dashboard",
+      path: getRolePath(role, "dashboard"),
       badge: null,
     },
     {
@@ -25,21 +30,21 @@ const MobileBottomNavigation = () => {
       id: "games",
       label: "Games",
       icon: "Gamepad2",
-      path: "/student-parent/games",
+      path: getRolePath(role, "games"),
       badge: "New",
     },
     {
       id: "progress",
       label: "Progress",
       icon: "TrendingUp",
-      path: "/student-parent/progress",
+      path: getRolePath(role, "progress"),
       badge: null,
     },
     {
       id: "messages",
       label: "Messages",
       icon: "MessageCircle",
-      path: "/student-parent/messages",
+      path: getRolePath(role, "messages"),
       badge: "3",
     },
   ];

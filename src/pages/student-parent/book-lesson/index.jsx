@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Navigate,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import BookingSteps from "./components/BookingSteps";
 import Breadcrumb from "../../../components/ui/Breadcrumb";
@@ -13,6 +18,7 @@ import PaymentMethodSelector from "./components/PaymentMethodSelector";
 import BookingConfirmation from "./components/BookingConfirmation";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { copyToClipboard } from "../../../utils/utils";
+import { getRolePath } from "../../../utils/rolePath";
 
 // Steps for enrollment
 const stepsForEntrollment = [
@@ -25,12 +31,6 @@ const stepsForEntrollment = [
 const stepsForTrial = [
   { id: 1, title: "Student Info", icon: "User" },
   { id: 2, title: "Confirm", icon: "CheckCircle" },
-];
-
-const breadCrumbData = [
-  { label: "Find Teachers", path: "#" },
-  { label: "Teacher Details", path: "#" },
-  { label: "Book Lessons", path: "#", current: true },
 ];
 
 const mockStudents = [
@@ -103,11 +103,15 @@ const savedCards = [
 
 const BookLesson = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams(); // enroll && trial
+  const { id } = useParams(); // path param (e.g., class-004)
+  const [searchParams] = useSearchParams();
   const action = searchParams.get("action");
 
   // ✅ Validate both path param and query param
   if (!["enroll", "trial"].includes(action)) {
+    return <Navigate to="/404" replace />;
+  }
+  if (!id) {
     return <Navigate to="/404" replace />;
   }
 
@@ -123,6 +127,38 @@ const BookLesson = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const steps = type === "trial" ? stepsForTrial : stepsForEntrollment;
+
+  const goBackOne = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(getRolePath(currentUser?.role || "student", "find-teacher"));
+    }
+  };
+
+  const goBackTwo = () => {
+    if (window.history.length > 2) {
+      navigate(-2);
+    } else {
+      navigate(getRolePath(currentUser?.role || "student", "find-teacher"));
+    }
+  };
+
+  const breadCrumbData = [
+    {
+      label: "Find Teachers",
+      path: getRolePath(currentUser?.role || "student", "find-teacher"),
+    },
+    {
+      label: "Teacher Details",
+      onClick: goBackTwo,
+    },
+    {
+      label: "Course Details",
+      onClick: goBackOne,
+    },
+    { label: "Book Lessons", path: "#", current: true },
+  ];
 
   useEffect(() => {
     if (isStudent) {
@@ -198,7 +234,7 @@ const BookLesson = () => {
         savedCards?.find((card) => card?.isDefault) || savedCards?.[0];
       setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
     }
-    navigate(`/student-parent/dashboard`);
+    navigate(getRolePath(currentUser?.role || "student", "dashboard"));
   };
 
   const getButtonText = () => {

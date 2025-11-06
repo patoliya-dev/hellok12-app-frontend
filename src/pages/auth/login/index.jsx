@@ -24,7 +24,7 @@ const Login = () => {
   useEffect(() => {
     setActiveTab(tab);
   }, [tab]);
-  
+
   const dispatch = useDispatch();
   const tabs = [
     {
@@ -50,7 +50,7 @@ const Login = () => {
   // };
 
   const redirectToRoleDashboard = (role) => {
-    navigate(DEFAULT_ROUTES[role] || "/student-parent/dashboard", {
+    navigate(DEFAULT_ROUTES[role] || "/student/dashboard", {
       replace: true,
     });
   };
@@ -143,10 +143,11 @@ const Login = () => {
                       }}
                       className={`
                             flex flex-1 justify-center text-center items-center space-x-2 py-[18px] px-1 border-b-2 font-medium text-sm transition-smooth
-                            ${activeTab === tab.id
-                          ? "border-primary text-primary"
-                          : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
-                        }
+                            ${
+                              activeTab === tab.id
+                                ? "border-primary text-primary"
+                                : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
+                            }
                           `}
                     >
                       <IconComponent selected={activeTab === tab.id} />

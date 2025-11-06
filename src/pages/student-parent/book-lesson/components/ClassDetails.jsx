@@ -1,5 +1,6 @@
 import React from "react";
 import Icon from "../../../../components/AppIcon";
+import Image from "../../../../components/AppImage";
 
 const ClassDetails = ({ classData, type = "enroll" }) => {
   const formatDuration = (minutes) => {
@@ -35,9 +36,9 @@ const ClassDetails = ({ classData, type = "enroll" }) => {
         {/* Teacher Info */}
         <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
           <div className="relative">
-            <img
+            <Image
               src={classData?.teacher?.profileImage}
-              alt={classData?.teacher?.name}
+              alt={"No Image"}
               className="w-12 h-12 rounded-full object-cover"
             />
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
