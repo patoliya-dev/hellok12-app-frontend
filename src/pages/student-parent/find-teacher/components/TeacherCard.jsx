@@ -1,11 +1,13 @@
 import React, { useState, MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import Image from "../../../../components/AppImage";
+import AppImage from "../../../../components/AppImage";
 import Icon from "../../../../components/ui/Icon";
 import locationIcon from "../../../../assets/images/teacherCard/location-icon.png";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { getRolePath } from "../../../../utils/rolePath";
+import { getLanguageName } from "../../../../utils/utils";
+import { Country, State } from "country-state-city";
 
 const TeacherCard = ({ teacher }) => {
   const authUser = useSelector(selectAuthUser);
@@ -33,19 +35,32 @@ const TeacherCard = ({ teacher }) => {
               name="Star"
               size={14}
               className={
-                i < Math.floor(rating)
-                  ? "text-secondary fill-current"
-                  : "text-gray-300"
+                i < Math.floor(4) ? "text-accent fill-current" : "text-gray-300"
               }
             />
           ))}
         </div>
-        <span className="text-sm font-medium text-foreground">{rating}</span>
+        <span className="text-sm font-medium text-foreground">
+          {rating ?? 5}
+        </span>
         <span className="text-sm text-text-secondary">
-          ({teacher?.reviewCount})
+          ({teacher?.reviewCount ?? 5})
         </span>
       </div>
     );
+  };
+
+  const getFullLocationName = (location) => {
+    if (!location) return "";
+
+    const { country, state, city } = location;
+    const stateName = state
+      ? State.getStateByCodeAndCountry(state, country)?.name
+      : "";
+    const cityName = city || "";
+
+    // Build string dynamically (avoid undefined or extra commas)
+    return [cityName, stateName].filter(Boolean).join(", ");
   };
 
   const renderLanguages = (languages) => {
@@ -57,9 +72,9 @@ const TeacherCard = ({ teacher }) => {
         {displayLanguages?.map((lang, index) => (
           <span
             key={index}
-            className="inline-block bg-accent/10 text-accent px-2 py-1 rounded-educational text-xs font-medium"
+            className="inline-block bg-accent text-accent-foreground px-2 py-1 rounded text-xs font-medium"
           >
-            {lang}
+            {getLanguageName(lang)}
           </span>
         ))}
         {remainingCount > 0 && (
@@ -75,7 +90,7 @@ const TeacherCard = ({ teacher }) => {
     <Link
       to={getRolePath(
         authUser?.role || "student",
-        `teacher-profile-detail/${teacher?.id}`
+        `teacher-profile-detail/${teacher?._id}`
       )}
       className="block bg-card border border-border rounded-lg hover:shadow-educational-lg transition-educational group hover-lift"
     >
@@ -83,9 +98,9 @@ const TeacherCard = ({ teacher }) => {
         {/* Profile Image */}
         <div className="relative p-6 pb-4">
           <div className="relative mx-auto w-24 h-24">
-            <Image
-              src={teacher?.profileImage}
-              alt={teacher?.name}
+            <AppImage
+              src={teacher?.profileImage?.url || "/assets/images/no_image.png"}
+              alt={teacher?.name || "Teacher Profile Image"}
               className="w-full h-full rounded-full object-cover"
             />
             {teacher?.isOnline && (
@@ -122,19 +137,17 @@ const TeacherCard = ({ teacher }) => {
             </div>
             {/* Languages */}
             <div className="mb-4 flex justify-center">
-              {renderLanguages(teacher?.languages)}
+              {renderLanguages(teacher?.profile?.teachingLanguages)}
             </div>
-            <p className="text-text-secondary text-sm mb-2 flex justify-center align-items-center font-semibold">
-              <img
-                src={locationIcon}
-                alt="location"
-                className="center mb-6 mr-1"
-                width={15}
-                height={15}
-              />
-              {teacher?.location}
+            <p className="text-text-secondary text-sm mb-2 flex items-center justify-center font-semibold">
+              <Icon name="MapPin" className="mr-1 flex-none" size={16} />
+              <span className="truncate max-w-full">
+                {getFullLocationName(teacher?.profile?.location)}
+              </span>
             </p>
-            <p className="text-text-secondary text-sm">{teacher?.title}</p>
+            <p className="text-text-secondary text-sm">
+              {teacher?.profile.teachingSpecialties}
+            </p>
           </div>
 
           {/* Rating */}
@@ -149,11 +162,11 @@ const TeacherCard = ({ teacher }) => {
           <div className="flex items-center justify-center space-x-4 text-sm text-text-secondary mb-4">
             <div className="flex items-center space-x-1">
               <Icon name="Users" size={14} />
-              <span>{teacher?.studentCount}</span>
+              <span>{teacher?.studentCount || 100}</span>
             </div>
             <div className="flex items-center space-x-1">
               <Icon name="Clock" size={14} />
-              <span>{teacher?.experience}y</span>
+              <span>{teacher?.profile?.yearsOfExperience ?? 0}y</span>
             </div>
           </div>
         </div>
