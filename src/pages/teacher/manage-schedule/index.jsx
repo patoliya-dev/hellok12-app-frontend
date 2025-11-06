@@ -1,58 +1,130 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
-import Icon from "components/AppIcon";
 import AvailabilityCalendar from "./components/AvailabilityCalendar";
 import Minicalendar from "./components/MiniCalendar";
 import TimeSlots from "./components/TimeSlots";
 import { timeSlots } from "./data";
+import {
+  fetchSchedule,
+  saveSchedule,
+  fetchSlotsForDate,
+  updateDateSlots,
+} from "../../../reducers/schedule/scheduleThunks";
+import { errorToast, successToast } from "../../../utils/utils";
+import { dayStrToIdx, idxToDayStr, isHHMM, isNumber, minutesToHHMM } from "../../../utils/time12h";
+
+const pad = (n) => String(n).padStart(2, "0");
+const toISO = (d) =>
+  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 const ManageSchedule = () => {
+  const dispatch = useDispatch();
+  const auth = useSelector((s) => s.auth);
+  const teacherId = auth?.user?._id || auth?.user?.id;
+
+  const scheduleState = useSelector((s) => s.schedule);
+  const serverWeekly = useSelector((s) => s.schedule.schedule?.weekly) || {};; // may be minutes[] or HH:MM[]
+
+  // selected day/date state
   const [currentDate, setCurrentDate] = useState(new Date());
-  // Mock availability data
+  const [selectedDateISO, setSelectedDateISO] = useState(null); // null => weekly mode
+
+  // availability
   const [availability, setAvailability] = useState({
-    mon: ["09:00", "10:00", "14:00", "15:00", "16:00"],
-    tue: ["09:00", "10:00", "11:00", "14:00", "15:00"],
-    wed: ["10:00", "11:00", "14:00", "15:00", "16:00"],
-    thu: ["09:00", "10:00", "14:00", "15:00"],
-    fri: ["09:00", "10:00", "11:00", "14:00"],
-    sat: ["10:00", "11:00"],
+    mon: [],
+    tue: [],
+    wed: [],
+    thu: [],
+    fri: [],
+    sat: [],
     sun: [],
   });
 
+  // ---- initial load schedule ----
+  useEffect(() => {
+    if (!teacherId) return;
+    dispatch(fetchSchedule(teacherId))
+      .unwrap()
+      .catch((err) => {
+        errorToast(err?.message || "Failed to fetch schedule");
+      });
+  }, [dispatch, teacherId]);
+
+  // ---- hydrate weekly availability from BE (accept minutes or HH:MM) ----
+  useEffect(() => {
+    const next = { sun: [], mon: [], tue: [], wed: [], thu: [], fri: [], sat: [] };
+
+    Object.entries(serverWeekly || {}).forEach(([k, arr]) => {
+      const idx = Number(k);
+      const key = idxToDayStr[idx];
+      if (!key) return;
+
+      const normalized = (arr || [])
+        .map((item) => {
+          if (isHHMM(item)) return item;
+          if (isNumber(item)) return minutesToHHMM(item);
+          return null;
+        })
+        .filter(Boolean);
+
+      next[key] = normalized;
+    });
+
+    setAvailability((prev) => ({ ...prev, ...next }));
+  }, [serverWeekly]);
+
+  // ---- pick/unpick date from MiniCalendar ----
   const handleDateSelect = (date) => {
+    const iso = toISO(date);
+    const clickedPast = new Date(iso) < new Date(toISO(new Date()));
+    if (clickedPast) return; // guard, though MiniCalendar already disables
+
+    if (selectedDateISO === iso) {
+      // deselect -> back to weekly editing
+      setSelectedDateISO(null);
+      successToast("Switched to weekly editing");
+    } else {
+      setSelectedDateISO(iso);
+      // fetch that date’s slots (override) so TimeSlots can reflect instantly
+      dispatch(fetchSlotsForDate({ teacherId, date: iso }))
+        .unwrap()
+        .catch((err) => errorToast(err?.message || "Failed to load date slots"));
+    }
     setCurrentDate(date);
   };
 
-  const dayName = currentDate?.toLocaleDateString("en-US", {
-    weekday: "short",
-  });
+  const dayName = useMemo(
+    () =>
+      currentDate?.toLocaleDateString("en-US", {
+        weekday: "short",
+      }),
+    [currentDate]
+  );
 
+  // ---- WEEKLY: toggle single time for currently selected weekday (local only) ----
   const handleAvailabilitySelect = (time) => {
     const day = dayName.toLowerCase();
-    if (availability[day].includes(time)) {
-      setAvailability({
-        ...availability,
-        [day]: availability[day].filter((t) => t !== time),
-      });
-    } else {
-      setAvailability({
-        ...availability,
-        [day]: [...availability[day], time],
-      });
-    }
+    setAvailability((prev) => {
+      if (prev[day].includes(time)) {
+        return { ...prev, [day]: prev[day].filter((t) => t !== time) };
+      }
+      return { ...prev, [day]: [...prev[day], time] };
+    });
   };
 
+  // ---- WEEKLY: select/clear all for a day ----
   const toggleAllSlotsForDay = (day) => {
-    const dayAvailability = availability?.[day] || [];
-    const isAllSelected = dayAvailability?.length === timeSlots?.length;
-
-    const updatedAvailability = {
-      ...availability,
-      [day]: isAllSelected ? [] : [...timeSlots],
-    };
-    setAvailability(updatedAvailability);
+    setAvailability((prev) => {
+      const isAllSelected = (prev?.[day] || []).length === timeSlots.length;
+      return {
+        ...prev,
+        [day]: isAllSelected ? [] : [...timeSlots],
+      };
+    });
   };
 
+  // ---- WEEKLY: clear all days ----
   const handleClearAll = () => {
     setAvailability({
       mon: [],
@@ -63,6 +135,59 @@ const ManageSchedule = () => {
       sat: [],
       sun: [],
     });
+  };
+
+  // ---- SAVE WEEKLY ----
+  const handleSaveWeekly = useCallback(async () => {
+    try {
+      const weeklyStrings = {};
+      Object.entries(availability).forEach(([dayStr, arr]) => {
+        const idx = dayStrToIdx[dayStr];
+        if (idx === undefined) return;
+        weeklyStrings[idx] = (arr || []).slice(); // HH:MM strings
+      });
+
+      const body = {
+        // uncomment to override slot length intentionally; else server keeps existing
+        // slotMinutes: 45,
+        weekly: weeklyStrings,
+      };
+
+      await dispatch(saveSchedule({ teacherId, body })).unwrap();
+      successToast("Schedule saved successfully!");
+    } catch (err) {
+      errorToast(err?.message || "Failed to save schedule");
+    }
+  }, [availability, dispatch, teacherId]);
+
+  // ---- OVERRIDE: toggle a time for selected date ----
+  const handleToggleOverride = async (hhmm) => {
+    if (!selectedDateISO) return;
+    try {
+      // Optional: optimistic update (update store immediately), then rollback on error
+      await dispatch(updateDateSlots({ teacherId, body: { date: selectedDateISO, toggle: [hhmm] } })).unwrap();
+      successToast(`Updated ${selectedDateISO} slot: ${hhmm}`);
+    } catch (err) {
+      errorToast(err?.message || "Failed to update date slot");
+    }
+  };
+
+  // ---- derive slots for TimeSlots: weekly vs override ----
+  const slotsByDate = useSelector((s) => s.schedule.slotsByDate || {});
+
+  const effectiveSlotsForDate = (iso) => {
+    // override exists?
+    if (Object.prototype.hasOwnProperty.call(slotsByDate, iso)) {
+      return slotsByDate[iso]; // may be [], which means: override exists and is empty
+    }
+
+    // fallback to weekly for that weekday
+    const d = new Date(iso + "T00:00:00Z");
+    const dow = d.getUTCDay(); // 0..6
+    const weeklyArr = serverWeekly[dow] || [];
+
+    // normalize to HH:MM for UI
+    return weeklyArr.map((x) => (isHHMM(x) ? x : minutesToHHMM(x)));
   };
 
   return (
@@ -82,16 +207,14 @@ const ManageSchedule = () => {
             </div>
           </div>
         </section>
+
         <section>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div className="lg:col-span-2 bg-card rounded-lg border border-border p-6">
               <div className="mb-8">
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Set Availability
-                </h3>
+                <h3 className="text-lg font-semibold text-foreground">Set Availability</h3>
                 <p className="text-muted-foreground">
-                  Set your available hours for each day of the week. Click on
-                  time slots to toggle availability.
+                  Set your available hours for each day of the week. Click on time slots to toggle availability.
                 </p>
               </div>
               <div className="flex flex-col gap-8">
@@ -102,10 +225,19 @@ const ManageSchedule = () => {
                 <TimeSlots
                   selectedDay={dayName}
                   selectedDate={currentDate}
+                  // weekly editing local state
                   availability={availability}
-                  setAvailability={handleAvailabilitySelect}
+                  setAvailability={
+                    selectedDateISO
+                      ? (hhmm) => handleToggleOverride(hhmm) // instant API
+                      : handleAvailabilitySelect               // local only
+                  }
                   toggleAllSlotsForDay={toggleAllSlotsForDay}
                   handleClearAll={handleClearAll}
+                  onSaveWeekly={handleSaveWeekly}
+                  saving={scheduleState.loading}
+                  isOverrideMode={!!selectedDateISO}
+                  overrideSlots={selectedDateISO ? effectiveSlotsForDate(selectedDateISO) : []}
                 />
               </div>
             </div>

@@ -6,6 +6,7 @@ import profileReducer from '../reducers/profile/profileSlice';
 import attachmentReducer from '../reducers/attachments/attachmentSlice';
 import courseReducers from '../reducers/courses/courseSlice';
 import pageLoaderReducer from '../reducers/ui/pageLoaderSlice';
+import scheduleReducer from '../reducers/schedule/scheduleSlice'
 
 // In reducer:
 
@@ -19,6 +20,7 @@ const store = configureStore({
     courseList: courseReducers.courseList,
     courseDetail: courseReducers.courseDetail,
     pageLoader: pageLoaderReducer,
+    schedule: scheduleReducer,
   },
 });
 
