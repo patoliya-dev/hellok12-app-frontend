@@ -41,10 +41,11 @@ import {
   applyUpdateApiErrorsToForm,
 } from "../manage-courses/utils/mapApiFieldErrors";
 import { clearCreateError } from "../../../reducers/lessons/lessonsSlice";
-import PageLoaderOverlay from 'components/ui/PageLoaderOverlay';
-import { selectPageLoading } from '../../../reducers/ui/pageLoaderSlice';
+import PageLoaderOverlay from "components/ui/PageLoaderOverlay";
+import { selectPageLoading } from "../../../reducers/ui/pageLoaderSlice";
 
 const CreateCourse = () => {
+  const { user } = useSelector((s) => s.auth);
   const originalLessonsRef = useRef([]);
   const lastSubmittedUpdatesRef = useRef(null);
   const lastActionRef = useRef(null);
@@ -72,6 +73,7 @@ const CreateCourse = () => {
     price: "",
     startDate: "",
     endDate: "",
+    teachers: [user.id],
 
     // Step 2
     lessons: [
@@ -375,6 +377,7 @@ const CreateCourse = () => {
         ? { attachmentId: formData.introImageRef.attachmentId }
         : undefined,
       introImageRef: formData.introImageRef.attachmentId,
+      teachers: formData.teachers,
     };
 
     try {
@@ -581,7 +584,10 @@ const CreateCourse = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Page loader */}
-      <PageLoaderOverlay show={pageLoading} label="Loading course & lessons..." />
+      <PageLoaderOverlay
+        show={pageLoading}
+        label="Loading course & lessons..."
+      />
       {/* Header */}
       <RoleBasedHeader />
       <main className="max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">

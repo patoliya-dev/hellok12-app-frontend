@@ -78,7 +78,10 @@ export const getLanguageName = (code) => {
 
 // utils/objectPath.js
 export function setIn(obj, path, value) {
-  const segs = path.replace(/\[(\d+)\]/g, '.$1').split('.').filter(Boolean);
+  const segs = path
+    .replace(/\[(\d+)\]/g, ".$1")
+    .split(".")
+    .filter(Boolean);
   const clone = Array.isArray(obj) ? [...obj] : { ...obj };
   let cur = clone;
 
@@ -105,7 +108,10 @@ export function setIn(obj, path, value) {
 
 export function getIn(obj, path, fallback = undefined) {
   if (!obj) return fallback;
-  const segs = path.replace(/\[(\d+)\]/g, '.$1').split('.').filter(Boolean);
+  const segs = path
+    .replace(/\[(\d+)\]/g, ".$1")
+    .split(".")
+    .filter(Boolean);
   let cur = obj;
   for (const k of segs) {
     if (cur == null) return fallback;
@@ -115,27 +121,30 @@ export function getIn(obj, path, fallback = undefined) {
 }
 
 export function to12hTime(input) {
-  if (!input) return '';
-  let s = String(input).trim().toUpperCase().replace(/\s+/g, ' ');
-  const ampmGiven = s.includes('AM') || s.includes('PM');
-  const hhmm = s.replace(/AM|PM/g, '').trim();
-  let [hStr, mStr = '00'] = hhmm.split(':');
+  if (!input) return "";
+  let s = String(input).trim().toUpperCase().replace(/\s+/g, " ");
+  const ampmGiven = s.includes("AM") || s.includes("PM");
+  const hhmm = s.replace(/AM|PM/g, "").trim();
+  let [hStr, mStr = "00"] = hhmm.split(":");
   let h = parseInt(hStr, 10);
   let m = parseInt(mStr, 10);
   if (isNaN(h) || h < 0 || h > 23) h = 0;
   if (isNaN(m) || m < 0 || m > 59) m = 0;
 
   if (!ampmGiven) {
-    const suffix = h >= 12 ? 'PM' : 'AM';
+    const suffix = h >= 12 ? "PM" : "AM";
     const twelve = h % 12 || 12;
-    return `${String(twelve).padStart(2, '0')}:${String(m).padStart(2, '0')} ${suffix}`;
+    return `${String(twelve).padStart(2, "0")}:${String(m).padStart(
+      2,
+      "0"
+    )} ${suffix}`;
   } else {
-    const isPM = s.includes('PM');
+    const isPM = s.includes("PM");
     if (h === 0) h = 12;
     if (h > 12) h = h % 12;
-    const hh = String(h || 12).padStart(2, '0');
-    const mm = String(m).padStart(2, '0');
-    return `${hh}:${mm} ${isPM ? 'PM' : 'AM'}`;
+    const hh = String(h || 12).padStart(2, "0");
+    const mm = String(m).padStart(2, "0");
+    return `${hh}:${mm} ${isPM ? "PM" : "AM"}`;
   }
 }
 
@@ -143,11 +152,34 @@ export const safeParseArray = (s) => {
   try {
     const v = JSON.parse(s);
     return Array.isArray(v) ? v : [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 };
 
 // body.lessons.0.schedule.date -> lessons[0].schedule.date
 export const toBracketPath = (p) =>
-  String(p || '')
-    .replace(/^body\./, '')
-    .replace(/\.([0-9]+)(?=\.|$)/g, '[$1]');
+  String(p || "")
+    .replace(/^body\./, "")
+    .replace(/\.([0-9]+)(?=\.|$)/g, "[$1]");
+
+export const buildQueryParams = (filters, pagination) => {
+  const params = new URLSearchParams();
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value === "" || value === undefined || value === null) return;
+
+    // Handle arrays (like price)
+    if (Array.isArray(value)) {
+      params.append(key, JSON.stringify(value));
+    } else {
+      params.append(key, value);
+    }
+  });
+
+  // Pagination
+  params.append("limit", pagination.limit);
+  params.append("offset", pagination.offset);
+
+  return params.toString();
+};

@@ -14,15 +14,15 @@ export default function TeacherFilters({
 }) {
   const [localFilters, setLocalFilters] = useState(filters);
   const [priceInputs, setPriceInputs] = useState({
-    min: filters?.priceRange?.[0] ?? 0,
-    max: filters?.priceRange?.[1] ?? 1000,
+    min: filters?.price?.[0] ?? 0,
+    max: filters?.price?.[1] ?? 1000,
   });
 
   useEffect(() => {
     setLocalFilters(filters);
     setPriceInputs({
-      min: filters?.priceRange?.[0] ?? 0,
-      max: filters?.priceRange?.[1] ?? 1000,
+      min: filters?.price?.[0] ?? 0,
+      max: filters?.price?.[1] ?? 1000,
     });
   }, [filters]);
 
@@ -40,7 +40,7 @@ export default function TeacherFilters({
       availability: "",
       ageRange: "",
       rating: "",
-      priceRange: [0, 1000],
+      price: [0, 1000],
     };
     setLocalFilters(clearedFilters);
     onFiltersChange(clearedFilters);
@@ -58,7 +58,7 @@ export default function TeacherFilters({
   const handlePriceInputBlur = (index) => {
     const minBound = 0;
     const maxBound = 1000;
-    const [filterMin, filterMax] = filters.priceRange || [minBound, maxBound];
+    const [filterMin, filterMax] = filters.price || [minBound, maxBound];
 
     const parsedMin = Number(priceInputs.min);
     const parsedMax = Number(priceInputs.max);
@@ -68,11 +68,11 @@ export default function TeacherFilters({
 
     if (index === 0) {
       const nextMin = Math.max(minBound, Math.min(validMin, validMax));
-      handleChange("priceRange", [nextMin, validMax]);
+      handleChange("price", [nextMin, validMax]);
       setPriceInputs({ min: nextMin, max: validMax });
     } else {
       const nextMax = Math.min(maxBound, Math.max(validMax, validMin));
-      handleChange("priceRange", [validMin, nextMax]);
+      handleChange("price", [validMin, nextMax]);
       setPriceInputs({ min: validMin, max: nextMax });
     }
   };
@@ -240,19 +240,19 @@ export default function TeacherFilters({
           </div>
           <div className="flex w-full items-center gap-4 mt-5">
             <span className="text-xs text-[#2B67F6]">
-              ${filters?.priceRange[0] ?? 0}
+              ${filters?.price[0] ?? 0}
             </span>
             <RangeSlider
               min={0}
               max={1000}
-              value={filters.priceRange}
+              value={filters.price}
               onInput={([min, max]) => {
-                handleChange("priceRange", [min, max]);
+                handleChange("price", [min, max]);
               }}
               className="range-slider flex-1"
             />
             <span className="text-xs text-[#2B67F6]">
-              ${filters?.priceRange[1] ?? 1000}
+              ${filters?.price[1] ?? 1000}
             </span>
           </div>
         </div>
