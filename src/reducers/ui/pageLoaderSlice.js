@@ -1,24 +1,42 @@
 import { createSlice, isAnyOf } from '@reduxjs/toolkit';
 
-// === TRACK THE THUNKS USED BY THESE PAGES ===
-// Adjust the imports below to match your repo names exactly.
+// === TRACK THE THUNKS USED ===
 import {
     // Course/Lesson list/detail
     fetchCourses as fetchCoursesThunk,
     fetchCourse as fetchCourseThunk,
-    fetchCourseWithLessons as fetchCourseWithLessonsThunk
+    fetchCourseWithLessons as fetchCourseWithLessonsThunk,
 } from '../../reducers/courses/courseThunks';
+
+import {
+    fetchSchedule as fetchScheduleThunk,
+    fetchSlotsForDate as fetchSlotsForDateThunk,
+    saveSchedule as saveScheduleThunk,
+    updateDateSlots as updateDateSlotsThunk,
+} from '../../reducers/schedule/scheduleThunks';
 
 const trackedPending = [
     fetchCourseThunk.pending,
     fetchCoursesThunk.pending,
     fetchCourseWithLessonsThunk.pending,
+
+    // schedule page thunks
+    fetchScheduleThunk?.pending,
+    fetchSlotsForDateThunk?.pending,
+    saveScheduleThunk?.pending,
+    updateDateSlotsThunk?.pending,
 ].filter(Boolean);
 
 const trackedSettled = [
     fetchCourseThunk.fulfilled, fetchCourseThunk.rejected,
     fetchCoursesThunk.fulfilled, fetchCoursesThunk.rejected,
     fetchCourseWithLessonsThunk.fulfilled, fetchCourseWithLessonsThunk.rejected,
+
+    // schedule page thunks
+    fetchScheduleThunk?.fulfilled, fetchScheduleThunk?.rejected,
+    fetchSlotsForDateThunk?.fulfilled, fetchSlotsForDateThunk?.rejected,
+    saveScheduleThunk?.fulfilled, saveScheduleThunk?.rejected,
+    updateDateSlotsThunk?.fulfilled, updateDateSlotsThunk?.rejected,
 ].filter(Boolean);
 
 const pageLoaderSlice = createSlice({

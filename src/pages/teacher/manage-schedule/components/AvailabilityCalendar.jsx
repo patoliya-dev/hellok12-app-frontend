@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Icon from "../../../../components/AppIcon";
 import { timeSlots } from "../data";
 
@@ -46,9 +46,8 @@ const AvailabilityCalendar = ({ availability, currentDate }) => {
             {daysOfWeek.map((day, index) => (
               <div
                 key={day}
-                className={`p-2 text-center ${
-                  isToday(weekDates[index]) ? "bg-muted" : ""
-                }`}
+                className={`p-2 text-center ${isToday(weekDates[index]) ? "bg-muted" : ""
+                  }`}
               >
                 <div className="text-xs font-medium text-foreground">{day}</div>
                 <div className="text-xs text-muted-foreground">
@@ -68,11 +67,10 @@ const AvailabilityCalendar = ({ availability, currentDate }) => {
                 {daysOfWeek.map((_, dayIndex) => (
                   <button
                     key={`${dayIndex}-${timeSlot}`}
-                    className={`p-2 rounded text-xs transition-micro flex items-center justify-center ${
-                      isTimeSlotAvailable(dayIndex, timeSlot)
+                    className={`p-2 rounded text-xs transition-micro flex items-center justify-center ${isTimeSlotAvailable(dayIndex, timeSlot)
                         ? "bg-success text-success-foreground"
                         : "bg-muted hover:bg-muted/80"
-                    }`}
+                      }`}
                   >
                     {isTimeSlotAvailable(dayIndex, timeSlot) ? (
                       <Icon name="Check" size={12} />

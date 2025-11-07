@@ -43,11 +43,13 @@ const scheduleSlice = createSlice({
       })
 
       .addCase(fetchSlotsForDate.fulfilled, (s, { payload }) => {
-        s.slotsByDate[payload.date] = payload.slots;
+        const { date, slots } = payload || {};
+        if (date) s.slotsByDate[date] = Array.isArray(slots) ? slots : [];
       })
 
       .addCase(updateDateSlots.fulfilled, (s, { payload }) => {
-        s.slotsByDate[payload.date] = payload.slots;
+        const { date, slots } = payload || {};
+        if (date) s.slotsByDate[date] = Array.isArray(slots) ? slots : [];
       })
 
       .addCase(validateLessonSlot.fulfilled, (s, { payload }) => {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Button from "components/ui/Button";
 import { daysOfWeek, timeSlots } from "../data";
+import { toISO } from "../../../../utils/time12h";
 
 const TimeSlots = ({
   selectedDay,
@@ -32,12 +33,21 @@ const TimeSlots = ({
     setDisabled(selectDate < today);
   }, [selectedDate]);
 
+  // ---- Dynamic heading: Weekly vs Date mode ----
+  const weekdayLabel =
+    daysOfWeek?.find((d) => d?.short === selectedDay)?.label || "";
+  const dateISO = selectedDate ? toISO(new Date(selectedDate)) : "";
+  const dateWeekday = selectedDate
+    ? new Date(selectedDate).toLocaleDateString("en-US", { weekday: "short" })
+    : "";
+  const headingTitle = isOverrideMode
+    ? `Day ${dateISO}${dateWeekday ? ` (${dateWeekday})` : ""} Schedule`
+    : `Weekly ${weekdayLabel} Schedule`;
+
   return (
     <div className="border border-border rounded-lg p-4 mb-4">
       <div className="flex items-center justify-between mb-4">
-        <h4 className="text-md font-medium text-foreground">
-          {daysOfWeek?.find((d) => d?.short === selectedDay)?.label} Schedule
-        </h4>
+        <h4 className="text-md font-medium text-foreground">{headingTitle}</h4>
         {!isOverrideMode && (
           <div className="flex items-center space-x-2">
             <span className="text-sm text-muted-foreground">
@@ -61,7 +71,7 @@ const TimeSlots = ({
           <button
             key={timeSlot}
             disabled={disabled || saving}
-            onClick={() => setAvailability(timeSlot)}
+            onClick={() => setAvailability(timeSlot, isSelected(timeSlot))}
             className={`p-2 text-xs font-medium rounded border transition-smooth disabled:cursor-not-allowed ${isSelected(timeSlot)
               ? "bg-success text-success-foreground border-success"
               : "bg-background text-foreground border-border hover:bg-muted"
