@@ -13,6 +13,8 @@ import {
 } from "../../../reducers/schedule/scheduleThunks";
 import { errorToast, successToast } from "../../../utils/utils";
 import { dayStrToIdx, idxToDayStr, isHHMM, isNumber, minutesToHHMM, toISO, weekdayKeys } from "../../../utils/time12h";
+import { selectPageLoading } from "../../../reducers/ui/pageLoaderSlice";
+import PageLoaderOverlay from "components/ui/PageLoaderOverlay";
 
 const ManageSchedule = () => {
   const dispatch = useDispatch();
@@ -21,6 +23,7 @@ const ManageSchedule = () => {
 
   const scheduleState = useSelector((s) => s.schedule);
   const serverWeekly = useSelector((s) => s.schedule.schedule?.weekly) || {};; // may be minutes[] or HH:MM[]
+  const pageLoading = useSelector(selectPageLoading);
 
   // selected day/date state
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -156,13 +159,47 @@ const ManageSchedule = () => {
     }
   }, [availability, dispatch, teacherId]);
 
-  // ---- OVERRIDE: toggle a time for selected date ----
+  // Determine if we already have an override entry for this date
+  const hasOverrideFor = (iso) =>
+    Object.prototype.hasOwnProperty.call(slotsByDate, iso);
+
+  // Unified slot toggle handler for override (date-wise)
   const handleToggleOverride = async (hhmm) => {
     if (!selectedDateISO) return;
+
     try {
-      // Optional: optimistic update (update store immediately), then rollback on error
-      await dispatch(updateDateSlots({ teacherId, body: { date: selectedDateISO, toggle: [hhmm] } })).unwrap();
-      successToast(`Updated ${selectedDateISO} slot: ${hhmm}`);
+      const overrideExists = hasOverrideFor(selectedDateISO);
+      const weeklyForDate = effectiveSlotsForDate(selectedDateISO); // normalized fallback
+      const currentOverrideSlots = slotsByDate[selectedDateISO] || [];
+      const isCurrentlySelected = (overrideExists
+        ? currentOverrideSlots
+        : weeklyForDate
+      ).includes(hhmm);
+
+      let payload = null;
+
+      // Decide what type of operation to send:
+      if (!overrideExists) {
+        // First time editing this date → baseline comes from weekly schedule
+        payload = {
+          date: selectedDateISO,
+          [isCurrentlySelected ? "remove" : "add"]: [hhmm],
+        };
+      } else {
+        // Existing override → use toggle
+        payload = {
+          date: selectedDateISO,
+          toggle: [hhmm],
+        };
+      }
+
+      // Call API through Redux thunk
+      await dispatch(updateDateSlots({ teacherId, body: payload })).unwrap();
+
+      successToast(
+        `Updated ${selectedDateISO} — ${isCurrentlySelected ? "removed" : "added"
+        } slot ${hhmm}`
+      );
     } catch (err) {
       errorToast(err?.message || "Failed to update date slot");
     }
@@ -197,6 +234,7 @@ const ManageSchedule = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageLoaderOverlay show={pageLoading} label="Loading schedule…" />
       {/* Header */}
       <RoleBasedHeader />
       <main className="max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
@@ -241,7 +279,7 @@ const ManageSchedule = () => {
                   availability={availability}
                   setAvailability={
                     selectedDateISO
-                      ? (hhmm) => handleToggleOverride(hhmm) // instant API
+                      ? (hhmm, wasSelected) => handleToggleOverride(hhmm, wasSelected) // instant API
                       : handleAvailabilitySelect               // local only
                   }
                   toggleAllSlotsForDay={toggleAllSlotsForDay}

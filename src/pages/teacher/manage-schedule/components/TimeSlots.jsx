@@ -71,7 +71,7 @@ const TimeSlots = ({
           <button
             key={timeSlot}
             disabled={disabled || saving}
-            onClick={() => setAvailability(timeSlot)}
+            onClick={() => setAvailability(timeSlot, isSelected(timeSlot))}
             className={`p-2 text-xs font-medium rounded border transition-smooth disabled:cursor-not-allowed ${isSelected(timeSlot)
               ? "bg-success text-success-foreground border-success"
               : "bg-background text-foreground border-border hover:bg-muted"

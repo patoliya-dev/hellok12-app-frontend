@@ -46,7 +46,7 @@ export const updateDateSlots = createAsyncThunk(
     try {
       const { data } = await api.patchDateSlots(teacherId, body);
       if (!data.success) return rejectWithValue(data);
-      return { date: body.date, slots: data.data.slots };
+      return data.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: "Update date slots failed" });
     }
