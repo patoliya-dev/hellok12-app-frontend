@@ -12,11 +12,7 @@ import {
   updateDateSlots,
 } from "../../../reducers/schedule/scheduleThunks";
 import { errorToast, successToast } from "../../../utils/utils";
-import { dayStrToIdx, idxToDayStr, isHHMM, isNumber, minutesToHHMM } from "../../../utils/time12h";
-
-const pad = (n) => String(n).padStart(2, "0");
-const toISO = (d) =>
-  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+import { dayStrToIdx, idxToDayStr, isHHMM, isNumber, minutesToHHMM, toISO, weekdayKeys } from "../../../utils/time12h";
 
 const ManageSchedule = () => {
   const dispatch = useDispatch();
@@ -29,6 +25,7 @@ const ManageSchedule = () => {
   // selected day/date state
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDateISO, setSelectedDateISO] = useState(null); // null => weekly mode
+  const [selectedWeekday, setSelectedWeekday] = useState(weekdayKeys[new Date().getDay()]);
 
   // availability
   const [availability, setAvailability] = useState({
@@ -94,13 +91,12 @@ const ManageSchedule = () => {
     setCurrentDate(date);
   };
 
-  const dayName = useMemo(
-    () =>
-      currentDate?.toLocaleDateString("en-US", {
-        weekday: "short",
-      }),
-    [currentDate]
-  );
+  // update dayName based on selected weekday instead of current date
+  const dayName = useMemo(() => {
+    return selectedWeekday
+      ? selectedWeekday.charAt(0).toUpperCase() + selectedWeekday.slice(1)
+      : currentDate?.toLocaleDateString("en-US", { weekday: "short" });
+  }, [selectedWeekday, currentDate]);
 
   // ---- WEEKLY: toggle single time for currently selected weekday (local only) ----
   const handleAvailabilitySelect = (time) => {
@@ -190,6 +186,15 @@ const ManageSchedule = () => {
     return weeklyArr.map((x) => (isHHMM(x) ? x : minutesToHHMM(x)));
   };
 
+  // handle weekday click → weekly editing mode
+  const handleWeekdaySelect = (dayKey) => {
+    setSelectedWeekday(dayKey);
+    setSelectedDateISO(null); // exit override mode
+    successToast(`Editing weekly schedule for ${dayKey.toUpperCase()}`);
+  };
+
+  const showPageLoader = scheduleState.loading && !scheduleState.schedule;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -211,6 +216,11 @@ const ManageSchedule = () => {
         <section>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div className="lg:col-span-2 bg-card rounded-lg border border-border p-6">
+              {showPageLoader && (
+                <div className="w-full py-10 text-center text-sm text-muted-foreground">
+                  Loading schedule…
+                </div>
+              )}
               <div className="mb-8">
                 <h3 className="text-lg font-semibold text-foreground">Set Availability</h3>
                 <p className="text-muted-foreground">
@@ -220,7 +230,9 @@ const ManageSchedule = () => {
               <div className="flex flex-col gap-8">
                 <Minicalendar
                   currentDate={currentDate}
-                  onDateSelect={handleDateSelect}
+                  onDateSelect={handleDateSelect} // override mode
+                  onWeekdaySelect={handleWeekdaySelect} // weekly mode
+                  selectedWeekday={selectedWeekday}
                 />
                 <TimeSlots
                   selectedDay={dayName}
