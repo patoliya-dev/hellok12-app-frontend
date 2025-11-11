@@ -41,11 +41,6 @@ const CourseCard = ({ courseItem, teacherId }) => {
   const getTypeIcon = () =>
     courseItem?.lessonType === "1-on-1" ? "User" : "Users";
 
-  const getTypeBadgeColor = () =>
-    courseItem?.type === "1-on-1"
-      ? "bg-primary text-primary-foreground"
-      : "bg-accent text-accent-foreground";
-
   return (
     <div className="bg-card border border-border rounded-lg p-6 hover:shadow-interactive transition-smooth flex flex-col justify-between">
       <div>
@@ -115,14 +110,32 @@ const CourseCard = ({ courseItem, teacherId }) => {
           </div>
         </div>
 
-        <div className="mt-6 bg-warning/10">
+        <div className="mt-6 bg-warning/10 flex gap-3">
           <span
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTypeBadgeColor()}`}
+            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground`}
           >
             <Icon name={getTypeIcon()} size={12} />
             {courseItem?.lessonType.charAt(0).toUpperCase() +
               courseItem?.lessonType.slice(1)}
           </span>
+          {courseItem.mode === "online" && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-success text-success-foreground">
+              <Icon name="Video" size={12} />
+              Online
+            </span>
+          )}
+          {courseItem.mode === "in-person" && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-success text-success-foreground">
+              <Icon name="MapPin" size={12} />
+              In-Person
+            </span>
+          )}
+          {courseItem?.isTrialAvailable && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-sky text-sky-foreground">
+              <Icon name="Gift" size={12} />
+              Trial Lesson
+            </span>
+          )}
         </div>
       </div>
     </div>
