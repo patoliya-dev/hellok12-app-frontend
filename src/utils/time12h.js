@@ -47,3 +47,7 @@ export const dateToISO = (d) => {
   const day = pad(d.getDate());
   return `${y}-${m}-${day}`;
 };
+
+export const weekdayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
+export const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;

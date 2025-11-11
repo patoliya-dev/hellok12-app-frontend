@@ -12,11 +12,9 @@ import {
   updateDateSlots,
 } from "../../../reducers/schedule/scheduleThunks";
 import { errorToast, successToast } from "../../../utils/utils";
-import { dayStrToIdx, idxToDayStr, isHHMM, isNumber, minutesToHHMM } from "../../../utils/time12h";
-
-const pad = (n) => String(n).padStart(2, "0");
-const toISO = (d) =>
-  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+import { dayStrToIdx, idxToDayStr, isHHMM, isNumber, minutesToHHMM, toISO, weekdayKeys } from "../../../utils/time12h";
+import { selectPageLoading } from "../../../reducers/ui/pageLoaderSlice";
+import PageLoaderOverlay from "components/ui/PageLoaderOverlay";
 
 const ManageSchedule = () => {
   const dispatch = useDispatch();
@@ -25,10 +23,12 @@ const ManageSchedule = () => {
 
   const scheduleState = useSelector((s) => s.schedule);
   const serverWeekly = useSelector((s) => s.schedule.schedule?.weekly) || {};; // may be minutes[] or HH:MM[]
+  const pageLoading = useSelector(selectPageLoading);
 
   // selected day/date state
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDateISO, setSelectedDateISO] = useState(null); // null => weekly mode
+  const [selectedWeekday, setSelectedWeekday] = useState(weekdayKeys[new Date().getDay()]);
 
   // availability
   const [availability, setAvailability] = useState({
@@ -94,13 +94,12 @@ const ManageSchedule = () => {
     setCurrentDate(date);
   };
 
-  const dayName = useMemo(
-    () =>
-      currentDate?.toLocaleDateString("en-US", {
-        weekday: "short",
-      }),
-    [currentDate]
-  );
+  // update dayName based on selected weekday instead of current date
+  const dayName = useMemo(() => {
+    return selectedWeekday
+      ? selectedWeekday.charAt(0).toUpperCase() + selectedWeekday.slice(1)
+      : currentDate?.toLocaleDateString("en-US", { weekday: "short" });
+  }, [selectedWeekday, currentDate]);
 
   // ---- WEEKLY: toggle single time for currently selected weekday (local only) ----
   const handleAvailabilitySelect = (time) => {
@@ -160,13 +159,47 @@ const ManageSchedule = () => {
     }
   }, [availability, dispatch, teacherId]);
 
-  // ---- OVERRIDE: toggle a time for selected date ----
+  // Determine if we already have an override entry for this date
+  const hasOverrideFor = (iso) =>
+    Object.prototype.hasOwnProperty.call(slotsByDate, iso);
+
+  // Unified slot toggle handler for override (date-wise)
   const handleToggleOverride = async (hhmm) => {
     if (!selectedDateISO) return;
+
     try {
-      // Optional: optimistic update (update store immediately), then rollback on error
-      await dispatch(updateDateSlots({ teacherId, body: { date: selectedDateISO, toggle: [hhmm] } })).unwrap();
-      successToast(`Updated ${selectedDateISO} slot: ${hhmm}`);
+      const overrideExists = hasOverrideFor(selectedDateISO);
+      const weeklyForDate = effectiveSlotsForDate(selectedDateISO); // normalized fallback
+      const currentOverrideSlots = slotsByDate[selectedDateISO] || [];
+      const isCurrentlySelected = (overrideExists
+        ? currentOverrideSlots
+        : weeklyForDate
+      ).includes(hhmm);
+
+      let payload = null;
+
+      // Decide what type of operation to send:
+      if (!overrideExists) {
+        // First time editing this date → baseline comes from weekly schedule
+        payload = {
+          date: selectedDateISO,
+          [isCurrentlySelected ? "remove" : "add"]: [hhmm],
+        };
+      } else {
+        // Existing override → use toggle
+        payload = {
+          date: selectedDateISO,
+          toggle: [hhmm],
+        };
+      }
+
+      // Call API through Redux thunk
+      await dispatch(updateDateSlots({ teacherId, body: payload })).unwrap();
+
+      successToast(
+        `Updated ${selectedDateISO} — ${isCurrentlySelected ? "removed" : "added"
+        } slot ${hhmm}`
+      );
     } catch (err) {
       errorToast(err?.message || "Failed to update date slot");
     }
@@ -190,8 +223,18 @@ const ManageSchedule = () => {
     return weeklyArr.map((x) => (isHHMM(x) ? x : minutesToHHMM(x)));
   };
 
+  // handle weekday click → weekly editing mode
+  const handleWeekdaySelect = (dayKey) => {
+    setSelectedWeekday(dayKey);
+    setSelectedDateISO(null); // exit override mode
+    successToast(`Editing weekly schedule for ${dayKey.toUpperCase()}`);
+  };
+
+  const showPageLoader = scheduleState.loading && !scheduleState.schedule;
+
   return (
     <div className="min-h-screen bg-background">
+      <PageLoaderOverlay show={pageLoading} label="Loading schedule…" />
       {/* Header */}
       <RoleBasedHeader />
       <main className="max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
@@ -211,6 +254,11 @@ const ManageSchedule = () => {
         <section>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div className="lg:col-span-2 bg-card rounded-lg border border-border p-6">
+              {showPageLoader && (
+                <div className="w-full py-10 text-center text-sm text-muted-foreground">
+                  Loading schedule…
+                </div>
+              )}
               <div className="mb-8">
                 <h3 className="text-lg font-semibold text-foreground">Set Availability</h3>
                 <p className="text-muted-foreground">
@@ -220,7 +268,9 @@ const ManageSchedule = () => {
               <div className="flex flex-col gap-8">
                 <Minicalendar
                   currentDate={currentDate}
-                  onDateSelect={handleDateSelect}
+                  onDateSelect={handleDateSelect} // override mode
+                  onWeekdaySelect={handleWeekdaySelect} // weekly mode
+                  selectedWeekday={selectedWeekday}
                 />
                 <TimeSlots
                   selectedDay={dayName}
@@ -229,7 +279,7 @@ const ManageSchedule = () => {
                   availability={availability}
                   setAvailability={
                     selectedDateISO
-                      ? (hhmm) => handleToggleOverride(hhmm) // instant API
+                      ? (hhmm, wasSelected) => handleToggleOverride(hhmm, wasSelected) // instant API
                       : handleAvailabilitySelect               // local only
                   }
                   toggleAllSlotsForDay={toggleAllSlotsForDay}
