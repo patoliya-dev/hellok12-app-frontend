@@ -51,7 +51,7 @@ const TeacherGrid = ({ teachers, loading, hasMore, onLoadMore }) => {
       {/* Teachers Grid/List */}
       <div className={"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"}>
         {Array.isArray(teachers) && teachers.map((teacher) => (
-          <TeacherCard key={teacher?.id} teacher={teacher} />
+          <TeacherCard key={teacher?._id} teacher={teacher} />
         ))}
       </div>
 
