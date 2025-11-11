@@ -3,74 +3,17 @@ import FilterTabs from "./FilterTabs";
 import BulkActionsBar from "./BulkActionsBar";
 import MediaGallery from "./MediaGallery";
 
-const TeachingHighlightsManagement = () => {
+const TeachingHighlightsManagement = ({ highlights }) => {
   const [mediaItems, setMediaItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItems, setSelectedItems] = useState([]);
 
-  // Mock data
-  const mockMediaItems = [
-    {
-      id: 1,
-      name: "Spanish Conversation Class - Beginner Level",
-      type: "video",
-      url: "https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_640x360.m4v",
-      size: 15728640,
-      uploadDate: new Date("2024-08-10T14:30:00"),
-      format: "mp4",
-    },
-    {
-      id: 2,
-      name: "Grammar Lesson Whiteboard",
-      type: "image",
-      url: "https://images.pixabay.com/photo/2017/05/13/12/40/fashion-2309519_1280.jpg",
-      size: 2097152,
-      uploadDate: new Date("2024-08-09T10:15:00"),
-      format: "jpg",
-    },
-    {
-      id: 3,
-      name: "Student Presentation - French Culture",
-      type: "video",
-      url: "https://images.unsplash.com/photo-1544717297-fa95b6ee9643",
-      size: 25165824,
-      uploadDate: new Date("2024-08-08T16:45:00"),
-      format: "mov",
-    },
-    {
-      id: 4,
-      name: "Vocabulary Cards Activity",
-      type: "image",
-      url: "https://images.pexels.com/photos/8471918/pexels-photo-8471918.jpeg",
-      size: 1572864,
-      uploadDate: new Date("2024-08-07T11:20:00"),
-      format: "png",
-    },
-    {
-      id: 5,
-      name: "Interactive Language Game Session",
-      type: "video",
-      url: "https://images.pixabay.com/photo/2015/07/17/22/43/student-849825_1280.jpg",
-      size: 18874368,
-      uploadDate: new Date("2024-08-06T13:10:00"),
-      format: "mp4",
-    },
-    {
-      id: 6,
-      name: "Classroom Setup for Group Work",
-      type: "image",
-      url: "https://images.unsplash.com/photo-1509062522246-3755977927d7",
-      size: 3145728,
-      uploadDate: new Date("2024-08-05T09:30:00"),
-      format: "jpg",
-    },
-  ];
 
-  // Load mock data
+  // Load data
   useEffect(() => {
-    setMediaItems(mockMediaItems);
+    setMediaItems(highlights);
   }, []);
 
   // Filter and search logic
@@ -78,9 +21,9 @@ const TeachingHighlightsManagement = () => {
     let filtered = mediaItems;
 
     if (activeFilter === "videos")
-      filtered = filtered.filter((item) => item.type === "video");
+      filtered = filtered.filter((item) => item.mime.startsWith("video"));
     if (activeFilter === "images")
-      filtered = filtered.filter((item) => item.type === "image");
+      filtered = filtered.filter((item) => item.mime.startsWith("image"));
 
     if (searchQuery.trim()) {
       filtered = filtered.filter((item) =>
@@ -129,8 +72,8 @@ const TeachingHighlightsManagement = () => {
 
   const mediaCounts = {
     all: mediaItems.length,
-    videos: mediaItems.filter((item) => item.type === "video").length,
-    images: mediaItems.filter((item) => item.type === "image").length,
+    videos: mediaItems.filter((item) => item?.mime?.startsWith("video")).length,
+    images: mediaItems.filter((item) => item?.mime?.startsWith("image")).length,
   };
 
   return (

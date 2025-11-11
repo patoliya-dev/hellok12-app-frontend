@@ -73,7 +73,7 @@ const ReviewsTab = ({ reviews, overallRating, ratingDistribution }) => {
         {processedReviews.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {processedReviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
+              <ReviewCard key={review._id} review={review} />
             ))}
           </div>
         ) : (

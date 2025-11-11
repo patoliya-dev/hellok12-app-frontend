@@ -23,10 +23,40 @@ const FindTeacher = () => {
     availability: "",
     ageRange: "",
     rating: "",
-    price: [0, 1000],
+    price: "",
     onlineStatus: "",
     lessonType: "",
+    name: "",
   });
+  const [quickFilters, setQuickFilters] = useState({
+    mode: [], // ['online', 'in-person']
+    lessonType: [], // ['group', '1-on-1']
+    isTrialAvailable: false,
+  });
+
+  // Handle quick filter toggle
+  const handleQuickFilterToggle = (filterType, value) => {
+    setQuickFilters((prev) => {
+      if (filterType === "isTrialAvailable") {
+        return { ...prev, isTrialAvailable: !prev.isTrialAvailable };
+      }
+
+      const currentValues = prev[filterType];
+      const newValues = currentValues.includes(value)
+        ? currentValues.filter((v) => v !== value)
+        : [...currentValues, value];
+
+      return { ...prev, [filterType]: newValues };
+    });
+  };
+
+  // 🔹 Check if a filter is active
+  const isFilterActive = (filterType, value) => {
+    if (filterType === "isTrialAvailable") {
+      return quickFilters.isTrialAvailable;
+    }
+    return quickFilters[filterType].includes(value);
+  };
 
   // 🔹 Fetch teachers function (load more or reset)
   const loadTeachers = async (loadMore = false) => {
@@ -36,10 +66,17 @@ const FindTeacher = () => {
     try {
       const currentOffset = loadMore ? offset : 0;
 
-      const response = await fetchTeachers(filters, {
-        limit: itemsPerPage,
-        offset: currentOffset,
-      });
+      const response = await fetchTeachers(
+        {
+          ...filters,
+          name: searchQuery,
+          ...quickFilters,
+        },
+        {
+          limit: itemsPerPage,
+          offset: currentOffset,
+        }
+      );
 
       const newTeachers = response?.data || [];
 
@@ -60,15 +97,10 @@ const FindTeacher = () => {
   useEffect(() => {
     setOffset(0);
     loadTeachers(false);
-  }, [filters, searchQuery]);
+  }, [filters, searchQuery, quickFilters]);
 
   const handleSearchChange = (query) => setSearchQuery(query);
   const handleFilterChange = (newFilters) => setFilters(newFilters);
-  const handleQuickFilter = (filterType, value) =>
-    setFilters((prev) => ({
-      ...prev,
-      [filterType]: prev[filterType] === value ? "" : value,
-    }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -116,40 +148,64 @@ const FindTeacher = () => {
           <div className="flex flex-wrap gap-3">
             <Button
               variant="outline"
-              className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 cursor-pointer"
-              onClick={() => handleQuickFilter("onlineStatus", "online")}
+              onClick={() => handleQuickFilterToggle("mode", "online")}
+              className={`cursor-pointer transition-colors ${
+                isFilterActive("mode", "online")
+                  ? "bg-primary text-pr border-blue-200 text-blue-700 hover:bg-blue-100"
+                  : "hover:bg-primary border-muted-1 bg-transparent"
+              }`}
             >
               Online
             </Button>
             <Button
               variant="outline"
-              className="hover:bg-primary border-muted-1 bg-transparent cursor-pointer"
-              onClick={() => handleQuickFilter("lessonType", "group")}
+              onClick={() => handleQuickFilterToggle("mode", "in-person")}
+              className={`cursor-pointer transition-colors ${
+                isFilterActive("mode", "in-person")
+                  ? "bg-primary text-pr border-blue-200 text-blue-700 hover:bg-blue-100"
+                  : "hover:bg-primary border-muted-1 bg-transparent"
+              }`}
+            >
+              In-Person
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleQuickFilterToggle("lessonType", "group")}
+              className={`cursor-pointer transition-colors ${
+                isFilterActive("lessonType", "group")
+                  ? "bg-primary text-pr border-blue-200 text-blue-700 hover:bg-blue-100"
+                  : "hover:bg-primary border-muted-1 bg-transparent"
+              }`}
             >
               Group
             </Button>
             <Button
               variant="outline"
-              className="hover:bg-primary border-muted-1 bg-transparent cursor-pointer"
+              onClick={() => handleQuickFilterToggle("lessonType", "1-on-1")}
+              className={`cursor-pointer transition-colors ${
+                isFilterActive("lessonType", "1-on-1")
+                  ? "bg-primary text-pr border-blue-200 text-blue-700 hover:bg-blue-100"
+                  : "hover:bg-primary border-muted-1 bg-transparent"
+              }`}
             >
               1-on-1
             </Button>
             <Button
               variant="outline"
-              className="hover:bg-primary border-muted-1 bg-transparent cursor-pointer"
-            >
-              Curriculum-Aligned Games
-            </Button>
-            <Button
-              variant="outline"
-              className="hover:bg-primary border-muted-1 bg-transparent cursor-pointer"
+              onClick={() => handleQuickFilterToggle("isTrialAvailable")}
+              className={`cursor-pointer transition-colors ${
+                isFilterActive("isTrialAvailable")
+                  ? "bg-primary text-pr border-blue-200 text-blue-700 hover:bg-blue-100"
+                  : "hover:bg-primary border-muted-1 bg-transparent"
+              }`}
             >
               Trial Lessons
             </Button>
           </div>
           {/* Teacher Count */}
           <div className="text-sm text-gray-800 whitespace-nowrap">
-            {teachers.length} <span className="text-gray-500">teachers found</span>
+            {teachers.length}{" "}
+            <span className="text-gray-500">teachers found</span>
           </div>
         </div>
 

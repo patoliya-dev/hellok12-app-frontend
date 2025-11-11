@@ -38,19 +38,13 @@ const CourseCard = ({ courseItem, teacherId }) => {
     );
   };
 
-  const getTypeIcon = () => (courseItem?.type === "1-on-1" ? "User" : "Users");
+  const getTypeIcon = () =>
+    courseItem?.lessonType === "1-on-1" ? "User" : "Users";
 
   const getTypeBadgeColor = () =>
     courseItem?.type === "1-on-1"
       ? "bg-primary text-primary-foreground"
       : "bg-accent text-accent-foreground";
-
-  const formatSchedule = () => {
-    if (courseItem?.type === "1-on-1") return "Flexible scheduling available";
-    return `${courseItem?.schedule?.days?.join(", ")} at ${
-      courseItem?.schedule?.time
-    }`;
-  };
 
   return (
     <div className="bg-card border border-border rounded-lg p-6 hover:shadow-interactive transition-smooth flex flex-col justify-between">
@@ -71,13 +65,12 @@ const CourseCard = ({ courseItem, teacherId }) => {
         <div className="space-y-3 mb-4">
           <div className="flex items-center gap-2 text-sm text-text-secondary">
             <Icon name="Clock" size={16} />
-            <span>{courseItem?.duration} minutes</span>
+            <span>
+              {courseItem?.startDate.slice(0, 10)}{" "}
+              {courseItem?.endDate && `- ${courseItem?.endDate.slice(0, 10)}`}
+            </span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-text-secondary">
-            <Icon name="Calendar" size={16} />
-            <span>{formatSchedule()}</span>
-          </div>
-          {courseItem?.type === "Group" && courseItem?.location && (
+          {courseItem?.lessonType === "group" && courseItem?.location && (
             <div className="flex items-center gap-2 text-sm text-text-secondary">
               <Icon name="MapPin" size={16} />
               <span>{courseItem?.location}</span>
@@ -86,15 +79,15 @@ const CourseCard = ({ courseItem, teacherId }) => {
           <div className="flex items-center gap-2 text-sm text-text-secondary">
             <Icon name="Users" size={16} />
             <span>
-              {courseItem?.type === "1-on-1"
+              {courseItem?.lessonType === "1-on-1"
                 ? "Individual session"
-                : `${courseItem?.enrolledStudents}/${courseItem?.maxStudents} students enrolled`}
+                : `${courseItem?.enrolledCount}/${courseItem?.studentCapacity} students enrolled`}
             </span>
           </div>
         </div>
       </div>
 
-      <div>
+      <div className="mt-10">
         <div className="flex items-center justify-between pt-4 border-t border-border">
           <div className="flex flex-col">
             <span className="text-2xl font-bold text-foreground">
@@ -102,10 +95,10 @@ const CourseCard = ({ courseItem, teacherId }) => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {courseItem?.type === "Group" &&
-            courseItem?.enrolledStudents &&
-            courseItem?.maxStudents &&
-            courseItem.enrolledStudents >= courseItem.maxStudents ? (
+            {courseItem?.lessonType === "group" &&
+            courseItem?.enrolledCount &&
+            courseItem?.studentCapacity &&
+            courseItem.enrolledCount >= courseItem.studentCapacity ? (
               <Button variant="secondary" disabled>
                 Class Full
               </Button>
@@ -127,7 +120,8 @@ const CourseCard = ({ courseItem, teacherId }) => {
             className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTypeBadgeColor()}`}
           >
             <Icon name={getTypeIcon()} size={12} />
-            {courseItem?.type}
+            {courseItem?.lessonType.charAt(0).toUpperCase() +
+              courseItem?.lessonType.slice(1)}
           </span>
         </div>
       </div>

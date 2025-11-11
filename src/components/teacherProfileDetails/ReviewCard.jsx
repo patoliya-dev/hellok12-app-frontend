@@ -34,8 +34,8 @@ const ReviewCard = ({ review }) => {
         <div className="flex-shrink-0">
           <div className="w-12 h-12 rounded-full overflow-hidden bg-muted">
             <Image
-              src={review?.studentAvatar || ""}
-              alt={`${review?.studentName} avatar`}
+              src={review?.author?.profileImage || ""}
+              alt={`${review?.author?.name} avatar`}
               className="w-full h-full object-cover"
             />
           </div>
@@ -46,7 +46,7 @@ const ReviewCard = ({ review }) => {
           <div className="flex items-start justify-between mb-2">
             <div>
               <h4 className="font-medium text-foreground">
-                {review?.studentName}
+                {review?.author?.name}
               </h4>
             </div>
             <div className="flex items-center gap-2 mt-1 flex-col">
@@ -65,7 +65,7 @@ const ReviewCard = ({ review }) => {
                 ))}
               </div>
               <span className="text-sm text-text-secondary">
-                {getTimeAgo(review?.date)}
+                {getTimeAgo(review?.createdAt)}
               </span>
             </div>
           </div>
@@ -76,10 +76,10 @@ const ReviewCard = ({ review }) => {
           </p>
 
           {/* Class Information */}
-          {review?.className && (
+          {review?.lesson?.name && (
             <div className="flex items-center gap-2 text-xs text-text-secondary">
               <Icon name="BookOpen" size={12} />
-              <span>Lesson: {review?.className}</span>
+              <span>Lesson: {review?.lesson?.name}</span>
             </div>
           )}
         </div>

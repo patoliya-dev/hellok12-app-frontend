@@ -91,10 +91,10 @@ const ClassesTab = ({ courses, teacherId }) => {
         <div className="grid gap-6 md:grid-cols-2">
           {processedClasses?.map((courseItem) => (
             <CourseCard
-              key={courseItem?.id}
+              key={courseItem?._id}
               courseItem={{
                 ...courseItem,
-                id: courseItem.id.toString(),   // Convert id to string for CourseCard
+                id: courseItem?._id.toString(),   // Convert id to string for CourseCard
               }}
               teacherId={teacherId.toString()}
             />
