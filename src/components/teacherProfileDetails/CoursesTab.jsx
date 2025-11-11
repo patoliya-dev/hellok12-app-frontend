@@ -1,47 +1,45 @@
-import React, { useState } from 'react';
-import Icon from '../ui/Icon';
-import Button from '../ui/Button';
-import Select from '../ui/Select';
-import CourseCard from './CourseCard';
-
+import React, { useState } from "react";
+import Icon from "../ui/Icon";
+import Button from "../ui/Button";
+import Select from "../ui/Select";
+import CourseCard from "./CourseCard";
 
 const ClassesTab = ({ courses, teacherId }) => {
   // Type state as string | number | array to match Select onChange type
-  const [sortBy, setSortBy] = useState('price-low');
-  const [filterType, setFilterType] = useState('all');
+  const [sortBy, setSortBy] = useState("price-low");
+  const [filterType, setFilterType] = useState("all");
 
   const sortOptions = [
-    { value: 'price-low', label: 'Price: Low to High' },
-    { value: 'price-high', label: 'Price: High to Low' },
-    { value: 'duration', label: 'Duration' },
-    { value: 'popularity', label: 'Most Popular' },
+    { value: "price-low", label: "Price: Low to High" },
+    { value: "price-high", label: "Price: High to Low" },
+    { value: "popularity", label: "Most Popular" },
   ];
 
   const typeOptions = [
-    { value: 'all', label: 'All Courses' },
-    { value: '1-on-1', label: '1-on-1 Courses' },
-    { value: 'group', label: 'Group Courses' },
+    { value: "all", label: "All Courses" },
+    { value: "1-on-1", label: "1-on-1 Courses" },
+    { value: "group", label: "Group Courses" },
   ];
 
   const filteredAndSortedClasses = () => {
     let filtered = courses;
 
     // Filter by type
-    if (filterType !== 'all') {
-      filtered = filtered?.filter(cls => cls?.type === filterType);
+    if (filterType !== "all") {
+      filtered = filtered?.filter((cls) => cls?.lessonType === filterType);
     }
 
     // Sort courses
     return filtered?.sort((a, b) => {
       switch (sortBy) {
-        case 'price-low':
+        case "price-low":
           return a?.price - b?.price;
-        case 'price-high':
+        case "price-high":
           return b?.price - a?.price;
-        case 'duration':
+        case "duration":
           return a?.duration - b?.duration;
-        case 'popularity':
-          return (b?.enrolledStudents || 0) - (a?.enrolledStudents || 0);
+        case "popularity":
+          return (b?.enrolledCount || 0) - (a?.enrolledCount || 0);
         default:
           return 0;
       }
@@ -78,7 +76,7 @@ const ClassesTab = ({ courses, teacherId }) => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground">
-              Available Courses ({processedClasses?.length})
+            Available Courses ({processedClasses?.length})
           </h3>
           <p className="text-sm text-text-secondary">
             Choose from 1-on-1 or group learning options
@@ -94,7 +92,7 @@ const ClassesTab = ({ courses, teacherId }) => {
               key={courseItem?._id}
               courseItem={{
                 ...courseItem,
-                id: courseItem?._id.toString(),   // Convert id to string for CourseCard
+                id: courseItem?._id.toString(), // Convert id to string for CourseCard
               }}
               teacherId={teacherId.toString()}
             />
@@ -105,15 +103,17 @@ const ClassesTab = ({ courses, teacherId }) => {
           <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
             <Icon name="BookOpen" size={24} className="text-text-secondary" />
           </div>
-          <h3 className="text-lg font-medium text-foreground mb-2">No Classes Found</h3>
+          <h3 className="text-lg font-medium text-foreground mb-2">
+            No Classes Found
+          </h3>
           <p className="text-text-secondary mb-4">
             No courses match your current filter criteria.
           </p>
           <Button
             variant="outline"
             onClick={() => {
-              setFilterType('all');
-              setSortBy('price-low');
+              setFilterType("all");
+              setSortBy("price-low");
             }}
           >
             Clear Filters
