@@ -54,7 +54,7 @@ const AboutTab = ({ teacher }) => {
                   {teacher?.profile?.ageGroupTeach?.map((ageGroup, index) => (
                     <span
                       key={index}
-                      className="px-3 py-2 bg-accent text-accent-foreground text-sm font-medium rounded-lg"
+                      className="px-3 py-2 bg-[#f59e0b]/10 text-[#f59e0b] text-sm font-medium rounded-lg"
                     >
                       {ageGroup}
                     </span>

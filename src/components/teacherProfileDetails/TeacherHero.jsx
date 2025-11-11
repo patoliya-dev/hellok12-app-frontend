@@ -84,7 +84,7 @@ const TeacherHero = ({ teacher }) => {
                       (language, index) => (
                         <span
                           key={index}
-                          className="px-3 py-1 bg-primary text-primary-foreground text-sm font-medium rounded-full"
+                          className="px-3 py-1 bg-[#2563eb]/10 text-[#2563eb] text-sm font-medium rounded-full" 
                         >
                           {getLanguageName(language) || language}
                         </span>

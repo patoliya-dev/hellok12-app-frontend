@@ -112,26 +112,26 @@ const CourseCard = ({ courseItem, teacherId }) => {
 
         <div className="mt-6 bg-warning/10 flex gap-3">
           <span
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground`}
+            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#2563eb]/5 text-[#2563eb]`}
           >
             <Icon name={getTypeIcon()} size={12} />
             {courseItem?.lessonType.charAt(0).toUpperCase() +
               courseItem?.lessonType.slice(1)}
           </span>
           {courseItem.mode === "online" && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-success text-success-foreground">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#10b981]/10 text-[#10b981]">
               <Icon name="Video" size={12} />
               Online
             </span>
           )}
           {courseItem.mode === "in-person" && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-success text-success-foreground">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#10b981]/10 text-[#10b981]">
               <Icon name="MapPin" size={12} />
               In-Person
             </span>
           )}
           {courseItem?.isTrialAvailable && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-sky text-sky-foreground">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#0ea5e9]/10 text-[#0ea5e9]">
               <Icon name="Gift" size={12} />
               Trial Lesson
             </span>
