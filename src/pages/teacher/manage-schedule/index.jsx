@@ -12,7 +12,7 @@ import {
   updateDateSlots,
 } from "../../../reducers/schedule/scheduleThunks";
 import { errorToast, successToast } from "../../../utils/utils";
-import { dayStrToIdx, idxToDayStr, isHHMM, isNumber, minutesToHHMM, toISO, weekdayKeys } from "../../../utils/time12h";
+import { dayStrToIdx, idxToDayStr, isHHMM, isNumber, minutesToHHMM, toHHMM, toISO, weekdayKeys } from "../../../utils/time12h";
 import { selectPageLoading } from "../../../reducers/ui/pageLoaderSlice";
 import PageLoaderOverlay from "components/ui/PageLoaderOverlay";
 
@@ -89,7 +89,7 @@ const ManageSchedule = () => {
       // fetch that date’s slots (override) so TimeSlots can reflect instantly
       dispatch(fetchSlotsForDate({ teacherId, date: iso }))
         .unwrap()
-        .catch((err) => errorToast(err?.message || "Failed to load date slots"));
+        .catch((err) => errorToast(err?.error || "Failed to load date slots"));
     }
     setCurrentDate(date);
   };
@@ -155,7 +155,7 @@ const ManageSchedule = () => {
       await dispatch(saveSchedule({ teacherId, body })).unwrap();
       successToast("Schedule saved successfully!");
     } catch (err) {
-      errorToast(err?.message || "Failed to save schedule");
+      errorToast(err?.error || "Failed to save schedule");
     }
   }, [availability, dispatch, teacherId]);
 
@@ -201,7 +201,7 @@ const ManageSchedule = () => {
         } slot ${hhmm}`
       );
     } catch (err) {
-      errorToast(err?.message || "Failed to update date slot");
+      errorToast(err?.error || "Failed to update date slot");
     }
   };
 
@@ -209,17 +209,21 @@ const ManageSchedule = () => {
   const slotsByDate = useSelector((s) => s.schedule.slotsByDate || {});
 
   const effectiveSlotsForDate = (iso) => {
-    // override exists?
+    // override exists? slotsByDate may contain array of objects or legacy strings
     if (Object.prototype.hasOwnProperty.call(slotsByDate, iso)) {
-      return slotsByDate[iso]; // may be [], which means: override exists and is empty
+      const raw = slotsByDate[iso] || [];
+      // normalize to string array of labels for existing TimeSlots component (which expects HH:MM[])
+      // But we can allow objects too — TimeSlots now expects strings or will work with object labels
+      // To keep minimal changes, return array of labels:
+      if (raw.length && typeof raw[0] === 'string') return raw;
+      return raw.map((it) => (typeof it === 'string' ? it : (it.label || toHHMM(it.minutes))));
     }
 
-    // fallback to weekly for that weekday
+    // fallback to weekly for that weekday (serverWeekly may have numbers or HH:MM strings)
     const d = new Date(iso + "T00:00:00Z");
     const dow = d.getUTCDay(); // 0..6
     const weeklyArr = serverWeekly[dow] || [];
 
-    // normalize to HH:MM for UI
     return weeklyArr.map((x) => (isHHMM(x) ? x : minutesToHHMM(x)));
   };
 
