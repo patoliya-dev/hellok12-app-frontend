@@ -17,7 +17,7 @@ const TeacherGrid = ({ teachers, loading, hasMore, onLoadMore }) => {
     );
   }
 
-  if (teachers?.length === 0) {
+  if (Array.isArray(teachers) && teachers.length === 0 || !Array.isArray(teachers)) {
     return (
       <div className="text-center py-12">
         <div className="w-24 h-24 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
@@ -50,8 +50,8 @@ const TeacherGrid = ({ teachers, loading, hasMore, onLoadMore }) => {
     <div className="space-y-6">
       {/* Teachers Grid/List */}
       <div className={"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"}>
-        {teachers?.map((teacher) => (
-          <TeacherCard key={teacher?.id} teacher={teacher} />
+        {Array.isArray(teachers) && teachers.map((teacher) => (
+          <TeacherCard key={teacher?._id} teacher={teacher} />
         ))}
       </div>
 
