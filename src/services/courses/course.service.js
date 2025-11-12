@@ -1,3 +1,4 @@
+import { errorToast } from "../../utils/utils";
 import api from "../../utils/axiosInstance";
 
 export const getCourseDetails = async (id) => {
