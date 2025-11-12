@@ -38,19 +38,8 @@ const CourseCard = ({ courseItem, teacherId }) => {
     );
   };
 
-  const getTypeIcon = () => (courseItem?.type === "1-on-1" ? "User" : "Users");
-
-  const getTypeBadgeColor = () =>
-    courseItem?.type === "1-on-1"
-      ? "bg-primary text-primary-foreground"
-      : "bg-accent text-accent-foreground";
-
-  const formatSchedule = () => {
-    if (courseItem?.type === "1-on-1") return "Flexible scheduling available";
-    return `${courseItem?.schedule?.days?.join(", ")} at ${
-      courseItem?.schedule?.time
-    }`;
-  };
+  const getTypeIcon = () =>
+    courseItem?.lessonType === "1-on-1" ? "User" : "Users";
 
   return (
     <div className="bg-card border border-border rounded-lg p-6 hover:shadow-interactive transition-smooth flex flex-col justify-between">
@@ -71,13 +60,12 @@ const CourseCard = ({ courseItem, teacherId }) => {
         <div className="space-y-3 mb-4">
           <div className="flex items-center gap-2 text-sm text-text-secondary">
             <Icon name="Clock" size={16} />
-            <span>{courseItem?.duration} minutes</span>
+            <span>
+              {courseItem?.startDate.slice(0, 10)}{" "}
+              {courseItem?.endDate && `- ${courseItem?.endDate.slice(0, 10)}`}
+            </span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-text-secondary">
-            <Icon name="Calendar" size={16} />
-            <span>{formatSchedule()}</span>
-          </div>
-          {courseItem?.type === "Group" && courseItem?.location && (
+          {courseItem?.lessonType === "group" && courseItem?.location && (
             <div className="flex items-center gap-2 text-sm text-text-secondary">
               <Icon name="MapPin" size={16} />
               <span>{courseItem?.location}</span>
@@ -86,15 +74,15 @@ const CourseCard = ({ courseItem, teacherId }) => {
           <div className="flex items-center gap-2 text-sm text-text-secondary">
             <Icon name="Users" size={16} />
             <span>
-              {courseItem?.type === "1-on-1"
+              {courseItem?.lessonType === "1-on-1"
                 ? "Individual session"
-                : `${courseItem?.enrolledStudents}/${courseItem?.maxStudents} students enrolled`}
+                : `${courseItem?.enrolledCount}/${courseItem?.studentCapacity} students enrolled`}
             </span>
           </div>
         </div>
       </div>
 
-      <div>
+      <div className="mt-10">
         <div className="flex items-center justify-between pt-4 border-t border-border">
           <div className="flex flex-col">
             <span className="text-2xl font-bold text-foreground">
@@ -102,10 +90,10 @@ const CourseCard = ({ courseItem, teacherId }) => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {courseItem?.type === "Group" &&
-            courseItem?.enrolledStudents &&
-            courseItem?.maxStudents &&
-            courseItem.enrolledStudents >= courseItem.maxStudents ? (
+            {courseItem?.lessonType === "group" &&
+            courseItem?.enrolledCount &&
+            courseItem?.studentCapacity &&
+            courseItem.enrolledCount >= courseItem.studentCapacity ? (
               <Button variant="secondary" disabled>
                 Class Full
               </Button>
@@ -122,13 +110,32 @@ const CourseCard = ({ courseItem, teacherId }) => {
           </div>
         </div>
 
-        <div className="mt-6 bg-warning/10">
+        <div className="mt-6 bg-warning/10 flex gap-3">
           <span
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getTypeBadgeColor()}`}
+            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#2563eb]/5 text-[#2563eb]`}
           >
             <Icon name={getTypeIcon()} size={12} />
-            {courseItem?.type}
+            {courseItem?.lessonType.charAt(0).toUpperCase() +
+              courseItem?.lessonType.slice(1)}
           </span>
+          {courseItem.mode === "online" && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#10b981]/10 text-[#10b981]">
+              <Icon name="Video" size={12} />
+              Online
+            </span>
+          )}
+          {courseItem.mode === "in-person" && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#10b981]/10 text-[#10b981]">
+              <Icon name="MapPin" size={12} />
+              In-Person
+            </span>
+          )}
+          {courseItem?.isTrialAvailable && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#0ea5e9]/10 text-[#0ea5e9]">
+              <Icon name="Gift" size={12} />
+              Trial Lesson
+            </span>
+          )}
         </div>
       </div>
     </div>

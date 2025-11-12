@@ -1,42 +1,47 @@
-import React, { useState } from 'react';
-import Icon from '../ui/Icon';
-import Image from '../AppImage'; 
-import Button from '../ui/Button';
-import MediaModal from './MediaModal';
+import React, { useState } from "react";
+import Icon from "../ui/Icon";
+import Image from "../AppImage";
+import Button from "../ui/Button";
+import MediaModal from "./MediaModal";
 
-const MediaGallery= ({
+const MediaGallery = ({
   mediaItems,
   selectedItems,
   onItemSelect,
   onItemDelete,
   onItemReplace,
-  showBulkActions
+  showBulkActions,
 }) => {
   const [modalItem, setModalItem] = useState(null);
 
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const formatDate = (date) => {
-    const d = typeof date === 'string' ? new Date(date) : date;
-    return d.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    const d = typeof date === "string" ? new Date(date) : date;
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
   const getFileIcon = (type) => {
-    return type === 'video' ? 'Video' : 'Image';
+    return type.startsWith("video") ? "Video" : "Image";
   };
 
   const handleItemClick = (item) => {
-    setModalItem(item);
+    setModalItem({
+      ...item,
+      name: item?.name.substring(item?.name.indexOf("_") + 1),
+      type: item?.mime,
+      uploadDate: item?.createdAt,
+    });
   };
 
   const handleModalClose = () => {
@@ -53,7 +58,8 @@ const MediaGallery= ({
           No highlights yet
         </h3>
         <p className="text-muted-foreground mb-6">
-          Start building your teaching portfolio by uploading your first video or image
+          Start building your teaching portfolio by uploading your first video
+          or image
         </p>
         <div className="flex flex-wrap justify-center gap-2 text-sm">
           <span className="bg-primary/20 text-primary px-3 py-1 rounded-full">
@@ -75,15 +81,15 @@ const MediaGallery= ({
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {mediaItems.map((item) => (
           <div
-            key={item.id}
+            key={item?._id}
             className="bg-card rounded-lg border border-border overflow-hidden shadow-card hover:shadow-modal transition-all duration-200 hover-scale"
           >
             {showBulkActions && (
               <div className="absolute top-2 left-2 z-10">
                 <input
                   type="checkbox"
-                  checked={selectedItems.includes(item.id)}
-                  onChange={() => onItemSelect(item.id)}
+                  checked={selectedItems.includes(item?._id)}
+                  onChange={() => onItemSelect(item?._id)}
                   className="w-4 h-4 text-primary bg-card border-border rounded focus:ring-primary focus:ring-2"
                 />
               </div>
@@ -93,21 +99,21 @@ const MediaGallery= ({
               className="relative aspect-video bg-muted cursor-pointer"
               onClick={() => handleItemClick(item)}
             >
-              {item.type === 'video' ? (
+              {item?.mime?.startsWith("video") ? (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
                     <Icon name="Play" size={24} className="text-primary ml-1" />
                   </div>
                   <video
-                    src={item.url}
+                    src={item?.url}
                     className="absolute inset-0 w-full h-full object-cover"
                     muted
                   />
                 </div>
               ) : (
                 <Image
-                  src={item.url}
-                  alt={item.name}
+                  src={item?.url}
+                  alt={item?.name}
                   className="w-full h-full object-cover"
                 />
               )}
@@ -116,13 +122,19 @@ const MediaGallery= ({
                 <div
                   className={`
                     px-2 py-1 rounded-full text-xs font-medium
-                    ${item.type === 'video'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-accent text-accent-foreground'}
+                    ${
+                      item?.mime.startsWith("video")
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-accent text-accent-foreground"
+                    }
                   `}
                 >
-                  <Icon name={getFileIcon(item.type)} size={12} className="inline mr-1" />
-                  {item.type.toUpperCase()}
+                  <Icon
+                    name={getFileIcon(item?.mime)}
+                    size={12}
+                    className="inline mr-1"
+                  />
+                  {item?.mime.toUpperCase().split("/")[0]}
                 </div>
               </div>
             </div>
@@ -130,11 +142,13 @@ const MediaGallery= ({
             <div className="p-3">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-medium text-foreground truncate">{item.name}</h4>
+                  <h4 className="text-sm font-medium text-foreground truncate">
+                    {item?.name.substring(item?.name.indexOf("_") + 1)}
+                  </h4>
                   <div className="flex items-center space-x-2 mt-1 text-xs text-muted-foreground">
-                    <span>{formatFileSize(item.size)}</span>
+                    <span>{formatFileSize(item?.size)}</span>
                     <span>•</span>
-                    <span>{formatDate(item.uploadDate)}</span>
+                    <span>{formatDate(item?.createdAt)}</span>
                   </div>
                 </div>
 
@@ -157,14 +171,14 @@ const MediaGallery= ({
                         <span>View</span>
                       </button>
                       <button
-                        onClick={() => onItemReplace(item.id)}
+                        onClick={() => onItemReplace(item?._id)}
                         className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center space-x-2"
                       >
                         <Icon name="RefreshCw" size={14} />
                         <span>Replace</span>
                       </button>
                       <button
-                        onClick={() => onItemDelete(item.id)}
+                        onClick={() => onItemDelete(item?._id)}
                         className="w-full px-3 py-2 text-left text-sm text-error hover:bg-error/10 transition-colors flex items-center space-x-2"
                       >
                         <Icon name="Trash2" size={14} />
@@ -184,11 +198,11 @@ const MediaGallery= ({
           item={modalItem}
           onClose={handleModalClose}
           onDelete={() => {
-            onItemDelete(modalItem.id);
+            onItemDelete(modalitem?._id);
             handleModalClose();
           }}
           onReplace={() => {
-            onItemReplace(modalItem.id);
+            onItemReplace(modalitem?._id);
             handleModalClose();
           }}
         />

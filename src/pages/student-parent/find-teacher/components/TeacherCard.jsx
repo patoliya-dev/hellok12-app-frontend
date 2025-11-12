@@ -35,16 +35,18 @@ const TeacherCard = ({ teacher }) => {
               name="Star"
               size={14}
               className={
-                i < Math.floor(4) ? "text-accent fill-current" : "text-gray-300"
+                i < Math.floor(rating)
+                  ? "text-accent fill-current"
+                  : "text-gray-300"
               }
             />
           ))}
         </div>
         <span className="text-sm font-medium text-foreground">
-          {rating ?? 5}
+          {(Math.floor(rating * 10) / 10).toFixed(1)}
         </span>
         <span className="text-sm text-text-secondary">
-          ({teacher?.reviewCount ?? 5})
+          ({teacher?.reviewsCount ?? 5})
         </span>
       </div>
     );
@@ -72,9 +74,9 @@ const TeacherCard = ({ teacher }) => {
         {displayLanguages?.map((lang, index) => (
           <span
             key={index}
-            className="inline-block bg-accent text-accent-foreground px-2 py-1 rounded text-xs font-medium"
+            className="inline-block bg-[#f59e0b]/10 text-[#f59e0b] px-2 py-1 rounded text-xs font-medium"
           >
-            {getLanguageName(lang)}
+            {getLanguageName(lang) || lang}
           </span>
         ))}
         {remainingCount > 0 && (
@@ -99,7 +101,7 @@ const TeacherCard = ({ teacher }) => {
         <div className="relative p-6 pb-4">
           <div className="relative mx-auto w-24 h-24">
             <AppImage
-              src={teacher?.profileImage?.url || "/assets/images/no_image.png"}
+              src={teacher?.profileImage || "/assets/images/no_image.png"}
               alt={teacher?.name || "Teacher Profile Image"}
               className="w-full h-full rounded-full object-cover"
             />
@@ -139,30 +141,57 @@ const TeacherCard = ({ teacher }) => {
             <div className="mb-4 flex justify-center">
               {renderLanguages(teacher?.profile?.teachingLanguages)}
             </div>
-            <p className="text-text-secondary text-sm mb-2 flex items-center justify-center font-semibold">
-              <Icon name="MapPin" className="mr-1 flex-none" size={16} />
-              <span className="truncate max-w-full">
-                {getFullLocationName(teacher?.profile?.location)}
-              </span>
-            </p>
+            {teacher?.profile?.location &&
+              teacher?.profile?.location?.country && (
+                <p className="text-text-secondary text-sm mb-2 flex items-center justify-center font-semibold">
+                  <Icon name="MapPin" className="mr-1 flex-none" size={16} />
+                  <span className="truncate max-w-full">
+                    {getFullLocationName(teacher?.profile?.location)}
+                  </span>
+                </p>
+              )}
             <p className="text-text-secondary text-sm">
-              {teacher?.profile.teachingSpecialties}
+              {teacher?.profile?.teachingSpecialties}
             </p>
           </div>
 
           {/* Rating */}
           <div className="flex items-center justify-center mb-3">
-            {renderRating(teacher?.rating)}
+            {renderRating(teacher?.averageRating)}
           </div>
 
           {/* Languages */}
-          {/* <div className="mb-4">{renderLanguages(teacher?.languages)}</div> */}
+          <div className="flex items-center justify-center mb-4">
+            {teacher?.school ? (
+              <>
+                <Icon
+                  name="School"
+                  size={20}
+                  className="text-muted-foreground"
+                />
+                <span className="ml-2 text-sm text-text-secondary">
+                  {teacher?.school?.name}
+                </span>
+              </>
+            ) : (
+              <>
+                <Icon
+                  name="UserRound"
+                  size={20}
+                  className="text-muted-foreground"
+                />
+                <span className="ml-2 text-sm text-text-secondary">
+                  Independent Teacher
+                </span>
+              </>
+            )}
+          </div>
 
           {/* Stats */}
           <div className="flex items-center justify-center space-x-4 text-sm text-text-secondary mb-4">
             <div className="flex items-center space-x-1">
               <Icon name="Users" size={14} />
-              <span>{teacher?.studentCount || 100}</span>
+              <span>{teacher?.studentsTaught}</span>
             </div>
             <div className="flex items-center space-x-1">
               <Icon name="Clock" size={14} />

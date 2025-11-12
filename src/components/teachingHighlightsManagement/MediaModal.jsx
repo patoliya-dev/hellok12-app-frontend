@@ -3,12 +3,7 @@ import Icon from "../ui/Icon";
 import Image from "../AppImage";
 import Button from "../ui/Button";
 
-const MediaModal = ({
-  item,
-  onClose,
-  onDelete,
-  onReplace,
-}) => {
+const MediaModal = ({ item, onClose, onDelete, onReplace }) => {
   const formatFileSize = (bytes) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -29,9 +24,7 @@ const MediaModal = ({
     });
   };
 
-  const handleBackdropClick = (
-    e
-  ) => {
+  const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
@@ -50,23 +43,19 @@ const MediaModal = ({
               className={`
               w-8 h-8 rounded-full flex items-center justify-center
               ${
-                item.type === "video"
+                item.type.startsWith("video")
                   ? "bg-primary/20 text-primary"
                   : "bg-secondary/20 text-secondary"
               }
             `}
             >
               <Icon
-                name={item.type === "video" ? "Video" : "Image"}
+                name={item.type.startsWith("video") ? "Video" : "Image"}
                 size={16}
               />
             </div>
             <div>
               <h3 className="font-semibold text-foreground">{item.name}</h3>
-              <p className="text-sm text-muted-foreground">
-                {formatFileSize(item.size)} • Uploaded{" "}
-                {formatDate(item.uploadDate)}
-              </p>
             </div>
           </div>
 
@@ -83,7 +72,7 @@ const MediaModal = ({
         {/* Media Content */}
         <div className="p-4">
           <div className="bg-muted rounded-lg overflow-hidden">
-            {item.type === "video" ? (
+            {item.type.startsWith("video") ? (
               <video
                 src={item.url}
                 controls
@@ -101,14 +90,6 @@ const MediaModal = ({
                 />
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center justify-between p-4 border-t border-border bg-muted/30">
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <Icon name="Calendar" size={16} />
-            <span>Uploaded on {formatDate(item.uploadDate)}</span>
           </div>
         </div>
       </div>
