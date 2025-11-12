@@ -56,10 +56,6 @@ const MediaModal = ({ item, onClose, onDelete, onReplace }) => {
             </div>
             <div>
               <h3 className="font-semibold text-foreground">{item.name}</h3>
-              <p className="text-sm text-muted-foreground">
-                {formatFileSize(item.size)} • Uploaded{" "}
-                {formatDate(item.uploadDate)}
-              </p>
             </div>
           </div>
 
@@ -94,14 +90,6 @@ const MediaModal = ({ item, onClose, onDelete, onReplace }) => {
                 />
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center justify-between p-4 border-t border-border bg-muted/30">
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <Icon name="Calendar" size={16} />
-            <span>Uploaded on {formatDate(item.uploadDate)}</span>
           </div>
         </div>
       </div>

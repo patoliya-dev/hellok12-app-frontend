@@ -74,9 +74,9 @@ const TeacherCard = ({ teacher }) => {
         {displayLanguages?.map((lang, index) => (
           <span
             key={index}
-            className="inline-block bg-[#f59e0b]/10 text-[#f59e0b] px-2 py-1 rounded text-xs font-medium"  
+            className="inline-block bg-[#f59e0b]/10 text-[#f59e0b] px-2 py-1 rounded text-xs font-medium"
           >
-            {getLanguageName(lang)}
+            {getLanguageName(lang) || lang}
           </span>
         ))}
         {remainingCount > 0 && (

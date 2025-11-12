@@ -34,7 +34,7 @@ export default function TeacherFilters({
       rating: "",
       price: "",
     };
-    setPriceInputs({ min: 0, max: 0 });
+    setPriceInputs({ min: "", max: "" });
     setLocalFilters(clearedFilters);
     onFiltersChange(clearedFilters);
   };

@@ -151,7 +151,7 @@ const FindTeacher = () => {
               onClick={() => handleQuickFilterToggle("mode", "online")}
               className={`cursor-pointer transition-colors ${
                 isFilterActive("mode", "online")
-                  ? "bg-primary text-pr border-blue-200 text-blue-700 hover:bg-blue-100"
+                  ? "bg-primary text-white border-blue-200 hover:bg-blue-500"
                   : "hover:bg-primary border-muted-1 bg-transparent"
               }`}
             >
@@ -162,7 +162,7 @@ const FindTeacher = () => {
               onClick={() => handleQuickFilterToggle("mode", "in-person")}
               className={`cursor-pointer transition-colors ${
                 isFilterActive("mode", "in-person")
-                  ? "bg-primary text-pr border-blue-200 text-blue-700 hover:bg-blue-100"
+                  ? "bg-primary text-white border-blue-200 hover:bg-blue-500"
                   : "hover:bg-primary border-muted-1 bg-transparent"
               }`}
             >
@@ -173,7 +173,7 @@ const FindTeacher = () => {
               onClick={() => handleQuickFilterToggle("lessonType", "group")}
               className={`cursor-pointer transition-colors ${
                 isFilterActive("lessonType", "group")
-                  ? "bg-primary text-pr border-blue-200 text-blue-700 hover:bg-blue-100"
+                  ? "bg-primary text-white border-blue-200 hover:bg-blue-500"
                   : "hover:bg-primary border-muted-1 bg-transparent"
               }`}
             >
@@ -184,7 +184,7 @@ const FindTeacher = () => {
               onClick={() => handleQuickFilterToggle("lessonType", "1-on-1")}
               className={`cursor-pointer transition-colors ${
                 isFilterActive("lessonType", "1-on-1")
-                  ? "bg-primary text-pr border-blue-200 text-blue-700 hover:bg-blue-100"
+                  ? "bg-primary text-white border-blue-200 hover:bg-blue-500"
                   : "hover:bg-primary border-muted-1 bg-transparent"
               }`}
             >
@@ -195,7 +195,7 @@ const FindTeacher = () => {
               onClick={() => handleQuickFilterToggle("isTrialAvailable")}
               className={`cursor-pointer transition-colors ${
                 isFilterActive("isTrialAvailable")
-                  ? "bg-primary text-pr border-blue-200 text-blue-700 hover:bg-blue-100"
+                  ? "bg-primary text-white border-blue-200 hover:bg-blue-500"
                   : "hover:bg-primary border-muted-1 bg-transparent"
               }`}
             >
