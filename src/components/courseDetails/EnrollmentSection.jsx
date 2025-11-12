@@ -40,17 +40,22 @@ const EnrollmentSection = ({ course, onEnroll, onTrial }) => {
               className="text-primary flex-shrink-0"
             />
             <span className="text-sm text-muted-foreground">
-              {course?.totalLessons} comprehensive lessons
+              {course?.lessons?.length} comprehensive lessons
             </span>
           </div>
           <div className="flex items-center space-x-3">
             <Icon
               name="Clock"
               size={16}
-              className="text-secondary flex-shrink-0"
+              className="text-purple-700 flex-shrink-0"
             />
             <span className="text-sm text-muted-foreground">
-              {course?.duration} of content
+              {course?.lessons?.reduce(
+                (total, lesson) =>
+                  total + parseInt(lesson?.schedule.duration || "0"),
+                0
+              )}{" "}
+              minutes of content
             </span>
           </div>
           <div className="flex items-center space-x-3">
@@ -92,7 +97,7 @@ const EnrollmentSection = ({ course, onEnroll, onTrial }) => {
             Enroll Now
           </Button>
 
-          {course?.hasTrialLesson && (
+          {course?.isTrialAvailable && (
             <Button
               variant="outline"
               size="lg"

@@ -1,23 +1,55 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Icon from "../ui/Icon";
 import Image from "../AppImage";
 import Button from "../ui/Button";
+import { getTimeAgo } from "../../utils/utils";
 
 const ReviewsSection = ({ reviews, rating, reviewCount }) => {
+  const [reviewsList, setReviewsList] = useState(reviews);
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [sortBy, setSortBy] = useState("recent");
 
   if (!reviews?.length) return null;
 
-  const displayedReviews = showAllReviews ? reviews : reviews?.slice(0, 3);
+  useEffect(() => {
+    const reviewsToDisplay = showAllReviews
+      ? [...reviews]
+      : [...reviews.slice(0, 3)];
+    let sorted = [];
 
-  const ratingDistribution = {
-    5: Math.floor(reviewCount * 0.68),
-    4: Math.floor(reviewCount * 0.2),
-    3: Math.floor(reviewCount * 0.08),
-    2: Math.floor(reviewCount * 0.03),
-    1: Math.floor(reviewCount * 0.01),
-  };
+    switch (sortBy) {
+      case "recent":
+        sorted = [...reviewsToDisplay].sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        break;
+
+      case "highest":
+        sorted = [...reviewsToDisplay].sort((a, b) => b.rating - a.rating);
+        break;
+
+      default:
+        sorted = reviewsToDisplay;
+        break;
+    }
+
+    setReviewsList(sorted);
+  }, [reviews, showAllReviews, sortBy]);
+
+  function calculateRatingStats(feedbacks) {
+    const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+    for (const fb of feedbacks) {
+      const stars = fb.rating;
+      if (stars >= 1 && stars <= 5) {
+        ratingDistribution[stars]++;
+      }
+    }
+
+    return {
+      ratingDistribution,
+    };
+  }
 
   const renderStars = (ratingValue) => {
     return Array.from({ length: 5 }, (_, i) => (
@@ -26,8 +58,8 @@ const ReviewsSection = ({ reviews, rating, reviewCount }) => {
         name="Star"
         size={16}
         className={`${
-          i < ratingValue
-            ? "fill-current text-secondary"
+          i < Math.floor(ratingValue)
+            ? "fill-current text-accent"
             : "text-muted-foreground"
         }`}
       />
@@ -45,10 +77,10 @@ const ReviewsSection = ({ reviews, rating, reviewCount }) => {
         {/* Overall Rating */}
         <div className="text-center md:text-left">
           <div className="flex items-center justify-center md:justify-start space-x-2 mb-2">
-            <span className="text-4xl font-bold text-foreground">{rating}</span>
-            <div className="flex space-x-1">
-              {renderStars(Math.round(rating))}
-            </div>
+            <span className="text-4xl font-bold text-foreground">
+              {Math.round(rating * 10) / 10}
+            </span>
+            <div className="flex space-x-1">{renderStars(rating)}</div>
           </div>
           <p className="text-muted-foreground">
             Based on {reviewCount?.toLocaleString()} reviews
@@ -72,13 +104,17 @@ const ReviewsSection = ({ reviews, rating, reviewCount }) => {
                   className="bg-warning rounded-full h-2 transition-all duration-300"
                   style={{
                     width: `${
-                      (ratingDistribution?.[star] / reviewCount) * 100
+                      (calculateRatingStats(reviews).ratingDistribution?.[
+                        star
+                      ] /
+                        reviewCount) *
+                      100
                     }%`,
                   }}
                 ></div>
               </div>
               <span className="text-sm text-muted-foreground w-12 text-right">
-                {ratingDistribution?.[star]}
+                {calculateRatingStats(reviews).ratingDistribution?.[star]}
               </span>
             </div>
           ))}
@@ -95,22 +131,21 @@ const ReviewsSection = ({ reviews, rating, reviewCount }) => {
             className="text-sm border border-border rounded px-2 py-1 bg-background"
           >
             <option value="recent">Most Recent</option>
-            <option value="helpful">Most Helpful</option>
-            <option value="rating">Highest Rating</option>
+            <option value="highest">Highest Rating</option>
           </select>
         </div>
       </div>
 
       {/* Reviews List */}
       <div className="space-y-6">
-        {displayedReviews?.map((review) => (
+        {reviewsList?.map((review) => (
           <div
-            key={review.id}
+            key={review._id}
             className="border-b border-border pb-6 last:border-b-0 last:pb-0"
           >
             <div className="flex items-start space-x-4">
               <Image
-                src={review.avatar}
+                src={review.avatar || "/assets/images/no_image.png"}
                 alt={review.name}
                 className="w-12 h-12 rounded-full object-cover flex-shrink-0"
               />
@@ -119,7 +154,7 @@ const ReviewsSection = ({ reviews, rating, reviewCount }) => {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-3">
                     <h4 className="font-medium text-foreground">
-                      {review.name}
+                      {review.author.name}
                     </h4>
                     {review.progress && (
                       <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs">
@@ -128,7 +163,7 @@ const ReviewsSection = ({ reviews, rating, reviewCount }) => {
                     )}
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {review.date}
+                    {getTimeAgo(review.createdAt)}
                   </span>
                 </div>
 
@@ -140,16 +175,6 @@ const ReviewsSection = ({ reviews, rating, reviewCount }) => {
                 </div>
 
                 <p className="text-muted-foreground">{review.comment}</p>
-
-                <div className="flex items-center space-x-4 mt-3">
-                  <button className="flex items-center space-x-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    <Icon name="ThumbsUp" size={14} />
-                    <span>Helpful (12)</span>
-                  </button>
-                  <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    Reply
-                  </button>
-                </div>
               </div>
             </div>
           </div>
