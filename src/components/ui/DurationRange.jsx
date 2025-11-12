@@ -18,7 +18,7 @@ export default function DurationRange({ formData, handleInputChange, error = "" 
       <label className="block text-sm font-medium text-brand-gray-800 mb-2">
         Duration <span className="text-error">*</span>{" "}
         <span className="text-sm text-brand-gray-500 ml-1">
-          ({duration} min)
+          ({formData?.schedule?.duration || duration} min)
         </span>
       </label>
 
