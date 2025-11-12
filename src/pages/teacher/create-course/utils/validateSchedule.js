@@ -9,8 +9,8 @@ export const validateSchedule = (schedule = {}) => {
     errs.date = 'Please pick a valid date.';
 
   if (!time || !String(time).trim()) errs.time = 'Time is required.';
-  else if (!TIME_12H.test(String(time)))
-    errs.time = 'Time must be HH:MM AM/PM';
+  // else if (!TIME_12H.test(String(time)))
+  //   errs.time = 'Time must be HH:MM AM/PM';
 
   const dur = Number(duration);
   if (!Number.isFinite(dur)) {
