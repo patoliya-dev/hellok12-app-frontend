@@ -64,7 +64,7 @@ const TeacherHero = ({ teacher }) => {
                   />
                 </div>
                 {teacher?.isVerified && (
-                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-success rounded-full flex items-center justify-center border-2 border-card">
+                  <div className="absolute -bottom-1 right-3 w-8 h-8 bg-success rounded-full flex items-center justify-center border-2 border-card">
                     <Icon name="CheckCircle" size={16} color="white" />
                   </div>
                 )}
@@ -84,7 +84,7 @@ const TeacherHero = ({ teacher }) => {
                       (language, index) => (
                         <span
                           key={index}
-                          className="px-3 py-1 bg-[#2563eb]/10 text-[#2563eb] text-sm font-medium rounded-full" 
+                          className="px-3 py-1 bg-[#2563eb]/10 text-[#2563eb] text-sm font-medium rounded-full"
                         >
                           {getLanguageName(language) || language}
                         </span>
@@ -119,7 +119,7 @@ const TeacherHero = ({ teacher }) => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-center lg:justify-start">
+                {/* <div className="flex items-center justify-center lg:justify-start">
                   <div
                     className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${availability.bgColor}`}
                   >
@@ -134,7 +134,7 @@ const TeacherHero = ({ teacher }) => {
                       {availability.text}
                     </span>
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* Quick Stats */}
