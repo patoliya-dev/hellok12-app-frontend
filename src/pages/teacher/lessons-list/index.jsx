@@ -14,7 +14,7 @@ import { duplicateLesson as duplicateLessonThunk, removeLesson as removeLessonTh
 import PageLoaderOverlay from 'components/ui/PageLoaderOverlay';
 import { selectPageLoading } from '../../../reducers/ui/pageLoaderSlice';
 import { resetCourseDetail, updateLocalLessons } from "reducers/courses/courseSlice";
-import { successToast } from "../../../utils/utils";
+import { errorToast, successToast } from "../../../utils/utils";
 
 const LessonsList = () => {
   const dispatch = useDispatch();
@@ -107,7 +107,7 @@ const LessonsList = () => {
       dispatch(updateLocalLessons([duplicated, ...lessons]));
       successToast("Lesson duplicated successfully!");
     } catch (e) {
-      alert(e?.message || "Failed to duplicate lesson");
+      errorToast(e?.error || "Failed to duplicate lesson");
     }
   };
 

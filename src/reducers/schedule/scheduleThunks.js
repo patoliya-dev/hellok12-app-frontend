@@ -28,14 +28,36 @@ export const saveSchedule = createAsyncThunk(
 );
 
 export const fetchSlotsForDate = createAsyncThunk(
-  "schedule/fetchSlots",
-  async ({ teacherId, date }, { rejectWithValue }) => {
+  "schedule/fetchSlotsForDate",
+  async ({ teacherId, date, month }, { rejectWithValue }) => {
     try {
-      const { data } = await api.getSlotsForDate(teacherId, date);
+      // pass month optionally - backend may use it for caching or ignore it
+      const { data } = await api.getSlotsForDate(teacherId, date, month);
       if (!data.success) return rejectWithValue(data);
-      return { date, slots: data.data.slots };
+      const monthKey = month || (date ? String(date).slice(0, 7) : null);
+      return { date, month: monthKey, slots: data.data.slots };
     } catch (err) {
       return rejectWithValue(err.response?.data || { message: "Slots fetch failed" });
+    }
+  }
+);
+
+// Optional: fetch whole month (recommended)
+export const fetchSlotsForMonth = createAsyncThunk(
+  "schedule/fetchSlotsForMonth",
+  async ({ teacherId, month }, { rejectWithValue }) => {
+    try {
+      const { data } = await api.getSlotsForMonth(teacherId, month);
+      if (!data.success) return rejectWithValue(data);
+      // data.data expected: { month, weekly, overrides, slotsByDate? }
+      return {
+        month: data.data.month,
+        monthlyWeekly: data.data.weekly || {},
+        overrides: data.data.overrides || {},
+        slotsByDate: data.data.slotsByDate || {}
+      };
+    } catch (err) {
+      return rejectWithValue(err.response?.data || { message: "Month fetch failed" });
     }
   }
 );
