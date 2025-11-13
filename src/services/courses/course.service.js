@@ -3,7 +3,7 @@ import api from "../../utils/axiosInstance";
 
 export const getCourseDetails = async (id) => {
   try {
-    const response = await api.get(`/courses/getCourseDetails/${id}`);
+    const response = await api.get(`/courses/${id}/details`);
     return response.data;
   } catch (error) {
     errorToast(error.response?.data || error.message);
@@ -14,7 +14,7 @@ export const getCourseDetails = async (id) => {
 export const getFeedbacks = async (id, filters) => {
   try {
     const response = await api.get(
-      `/courses/getCourseFeedbacks/${id}?${new URLSearchParams(filters)}`
+      `/courses/${id}/feedbacks?${new URLSearchParams(filters)}`
     );
     return response.data;
   } catch (error) {
