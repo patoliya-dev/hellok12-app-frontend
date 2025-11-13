@@ -10,3 +10,15 @@ export const getCourseDetails = async (id) => {
     throw error;
   }
 };
+
+export const getFeedbacks = async (id, filters) => {
+  try {
+    const response = await api.get(
+      `/courses/getCourseFeedbacks/${id}?${new URLSearchParams(filters)}`
+    );
+    return response.data;
+  } catch (error) {
+    errorToast(error.response?.data || error.message);
+    throw error;
+  }
+};

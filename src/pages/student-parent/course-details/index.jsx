@@ -11,7 +11,10 @@ import LessonModal from "../../../components/courseDetails/LessonModal";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { getRolePath } from "../../../utils/rolePath";
-import { getCourseDetails } from "../../../services/courses/course.service";
+import {
+  getCourseDetails,
+  getFeedbacks,
+} from "../../../services/courses/course.service";
 import { errorToast } from "../../../utils/utils";
 
 const PublicCourseDetails = () => {
@@ -136,9 +139,7 @@ const PublicCourseDetails = () => {
                 selectedLesson={selectedLesson}
               />
               <ReviewsSection
-                reviews={course?.ratings}
-                rating={course?.averageRating}
-                reviewCount={course?.reviewsCount}
+                id = { id }
               />
             </div>
 
