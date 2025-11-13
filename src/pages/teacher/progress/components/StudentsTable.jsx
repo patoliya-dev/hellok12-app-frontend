@@ -3,6 +3,7 @@ import Icon from "components/AppIcon";
 import Image from "components/AppImage";
 import Button from "components/ui/Button";
 import Pagination from "components/ui/Pagination";
+import { errorToast } from "../../../../utils/utils";
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
@@ -50,7 +51,7 @@ const StudentTable = ({
     if (type === "message") {
       navigate("/teacher/messages");
     } else {
-      alert("Under development");
+      errorToast("Under development");
     }
   };
 

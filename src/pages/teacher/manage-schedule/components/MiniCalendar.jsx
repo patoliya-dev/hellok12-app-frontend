@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
 import { weekdayKeys } from "../../../../utils/time12h";
@@ -7,7 +7,8 @@ const isSameDay = (a, b) => a?.toDateString() === b?.toDateString();
 const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
 const today = startOfDay(new Date());
 
-const Minicalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeekday }) => {
+const MiniCalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeekday, onVisibleMonthChange }) => {
+  // Expose visible month to parent via onVisibleMonthChange
   const [miniCalendarDate, setMiniCalendarDate] = useState(new Date(currentDate));
 
   const handleMiniCalendarPrevious = () => {
@@ -21,6 +22,24 @@ const Minicalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeek
     newDate.setMonth(newDate.getMonth() + 1);
     setMiniCalendarDate(newDate);
   };
+
+  // notify parent about visible month (YYYY-MM)
+  useEffect(() => {
+    if (typeof onVisibleMonthChange === 'function') {
+      const d = miniCalendarDate;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      onVisibleMonthChange(key);
+    }
+  }, [miniCalendarDate, onVisibleMonthChange]);
+
+  // Sync visible month when parent currentDate changes (e.g., user selected a date)
+  useEffect(() => {
+    if (!currentDate) return;
+    const d = new Date(currentDate);
+    if (d.getMonth() !== miniCalendarDate.getMonth() || d.getFullYear() !== miniCalendarDate.getFullYear()) {
+      setMiniCalendarDate(d);
+    }
+  }, [currentDate]);
 
   const calendarDays = useMemo(() => {
     const year = miniCalendarDate.getFullYear();
@@ -44,6 +63,22 @@ const Minicalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeek
 
   const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
+  // Highlight: compute which dates in the visible month match the selectedWeekday
+  const highlightDates = useMemo(() => {
+    if (!selectedWeekday) return new Set();
+    const targetDow = weekdayKeys.indexOf(selectedWeekday); // weekdayKeys: ['sun','mon',...]
+    const set = new Set();
+    const year = miniCalendarDate.getFullYear();
+    const month = miniCalendarDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dt = new Date(Date.UTC(year, month, d)); // utc normalized
+      const dow = dt.getUTCDay(); // 0..6
+      if (dow === targetDow) set.add(d);
+    }
+    return set;
+  }, [miniCalendarDate, selectedWeekday]);
+
   return (
     <div className="space-y-4 bg-card rounded-lg border border-border p-6">
       <h4 className="text-lg font-semibold text-foreground">Select Date or Weekday</h4>
@@ -61,12 +96,8 @@ const Minicalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeek
         </Button>
       </div>
 
+      {/* Weekday buttons (unchanged) */}
       <div className="grid grid-cols-7 gap-1">
-      </div>
-
-      {/* Mini calendar grid */}
-      <div className="grid grid-cols-7 gap-1">
-        {/* Weekdays for weekly edit */}
         {weekdays.map((day, i) => (
           <button
             key={day}
@@ -80,30 +111,41 @@ const Minicalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeek
             {day}
           </button>
         ))}
-        {calendarDays.map((date, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              const day = startOfDay(date);
-              if (day < today) return; // disabled
-              onDateSelect(new Date(date)); // parent will toggle select/deselect if same day
-            }}
-            disabled={startOfDay(date) < today}
-            className={`w-9 h-9 sm:w-12 sm:h-12 text-sm p-2 rounded-full transition-colors disabled:opacity-50
-              ${isSelected(date)
-                ? "bg-primary text-primary-foreground"
-                : isToday(date)
-                  ? "bg-accent text-accent-foreground"
-                  : isCurrentMonth(date)
-                    ? "text-foreground hover:bg-muted"
-                    : "text-muted-foreground hover:bg-muted"}`}
-          >
-            {date.getDate()}
-          </button>
-        ))}
+      </div>
+
+      {/* Mini calendar grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {calendarDays.map((date, index) => {
+          const dayNum = date.getDate();
+          const inVisibleMonth = isCurrentMonth(date);
+          const showHighlight = inVisibleMonth && highlightDates.has(dayNum);
+          return (
+            <button
+              key={index}
+              onClick={() => {
+                const day = startOfDay(date);
+                if (day < today) return; // disabled
+                onDateSelect(new Date(date)); // parent will only select date (no weekly toggle)
+              }}
+              disabled={startOfDay(date) < today}
+              className={`w-9 h-9 sm:w-12 sm:h-12 text-sm p-2 rounded-full transition-colors disabled:opacity-50
+                ${isSelected(date)
+                  ? "bg-primary text-primary-foreground"
+                  : isToday(date)
+                    ? "bg-accent text-accent-foreground"
+                    : showHighlight
+                      ? "bg-primary/10 text-foreground border border-primary/20"
+                      : inVisibleMonth
+                        ? "text-foreground hover:bg-muted"
+                        : "text-muted-foreground hover:bg-muted"}`}
+            >
+              {dayNum}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 };
 
-export default Minicalendar;
+export default MiniCalendar;

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Icon from "components/AppIcon";
 import Pagination from "components/ui/Pagination";
 import ActionMenu from "../../../../pages/teacher/manage-courses/components/ActionMenu";
-import { capitalize, successToast } from "../../../../utils/utils";
+import { capitalize, errorToast, successToast } from "../../../../utils/utils";
 import DeleteModal from "components/ui/DeleteModal";
 import { updateLesson as updateLessonThunk, removeLesson as removeLessonThunk } from "reducers/lessons/lessonThunks";
 import { updateLocalLessons } from "reducers/courses/courseSlice";
@@ -319,7 +319,7 @@ const LessonsTable = ({
               dispatch(updateLocalLessons(next));
               successToast("Lesson deleted successfully!");
             } catch (e) {
-              alert(e?.message || "Failed to delete lesson");
+              errorToast(e?.error || "Failed to delete lesson");
             } finally {
               setDeleteLessonId(null);
               handleDeleteModal();

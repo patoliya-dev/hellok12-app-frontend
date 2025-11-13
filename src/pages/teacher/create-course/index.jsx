@@ -23,6 +23,7 @@ import {
   claimAttachment,
 } from "../../../reducers/attachments/attachmentThunks";
 import {
+  errorToast,
   safeParseArray,
   setIn,
   successToast,
@@ -512,7 +513,7 @@ const CreateCourse = () => {
 
       // 409 overlap → banner/toast
       if (err?.message === "409_CONFLICT_OVERLAP") {
-        alert(
+        errorToast(
           "Lesson schedule overlaps an existing lesson for this teacher/course."
         );
         setCurrentStep(2);
@@ -524,7 +525,7 @@ const CreateCourse = () => {
         err?.error ||
         err?.details?.message ||
         "Unable to save course. Please review your inputs.";
-      alert(msg);
+      errorToast(msg);
     }
   };
 
