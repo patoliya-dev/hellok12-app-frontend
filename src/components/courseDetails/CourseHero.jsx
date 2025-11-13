@@ -5,6 +5,7 @@ import Button from "../ui/Button";
 
 const CourseHero = ({ course, onEnroll, onTrial }) => {
   if (!course) return null;
+  const getTypeIcon = () => (course?.type === "1-on-1" ? "User" : "Users");
 
   return (
     <section className="border-b border-border">
@@ -13,11 +14,11 @@ const CourseHero = ({ course, onEnroll, onTrial }) => {
           {/* Course Info */}
           <div className="order-2 lg:order-1">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              {course.title}
+              {course?.title}
             </h1>
 
             <p className="text-lg text-muted-foreground mb-6">
-              {course.description}
+              {course?.description}
             </p>
 
             {/* Course Stats */}
@@ -26,33 +27,65 @@ const CourseHero = ({ course, onEnroll, onTrial }) => {
                 <Icon
                   name="Star"
                   size={20}
-                  className="text-secondary fill-current"
+                  className="text-accent fill-current"
                 />
                 <span className="font-semibold text-foreground">
-                  {course.rating}
+                  {Math.round(course?.averageRating * 10) / 10}
                 </span>
                 <span className="text-muted-foreground">
-                  ({course.reviewCount} reviews)
+                  ({course?.reviewsCount} reviews)
                 </span>
               </div>
 
               <div className="flex items-center space-x-2">
                 <Icon name="Users" size={20} className="text-primary" />
                 <span className="text-muted-foreground">
-                  {course.enrolledStudents.toLocaleString()} students
+                  {course?.enrolledCount} students
                 </span>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Icon name="Clock" size={20} className="text-secondary" />
-                <span className="text-muted-foreground">{course.duration}</span>
               </div>
 
               <div className="flex items-center space-x-2">
                 <Icon name="BookOpen" size={20} className="text-accent" />
                 <span className="text-muted-foreground">
-                  {course.totalLessons} lessons
+                  {course?.lessons.length} lessons
                 </span>
+              </div>
+
+              <div className="w-full flex gap-2">
+                {course?.lessonType && (
+                  <div className="">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#2563eb]/5 text-[#2563eb]`}
+                    >
+                      <Icon name={getTypeIcon()} size={12} />
+                      {course?.lessonType === "1-on-1" ? "1-on-1" : "Group"}
+                    </span>
+                  </div>
+                )}
+                {course?.mode === "online" && (
+                  <div>
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#10b981]/5 text-[#10b981]">
+                      <Icon name="Video" size={12} />
+                      Online
+                    </span>
+                  </div>
+                )}
+                {course?.mode === "in-person" && (
+                  <div>
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#10b981]/5 text-[#10b981]">
+                      <Icon name="MapPin" size={12} />
+                      In-Person
+                    </span>
+                  </div>
+                )}
+                {course?.isTrialAvailable && (
+                  <div>
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#0ea5e9]/5 text-[#0ea5e9]">
+                      <Icon name="Gift" size={12} />
+                      Trial Lesson
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -64,10 +97,10 @@ const CourseHero = ({ course, onEnroll, onTrial }) => {
                 className="flex-1 sm:flex-none"
               >
                 <Icon name="ShoppingCart" size={20} className="mr-2" />
-                Enroll Now - ${course.price}
+                Enroll Now - ${course?.price}
               </Button>
 
-              {course.hasTrialLesson && (
+              {course?.isTrialAvailable && (
                 <Button
                   variant="outline"
                   size="lg"
@@ -85,8 +118,10 @@ const CourseHero = ({ course, onEnroll, onTrial }) => {
           <div className="order-1 lg:order-2">
             <div className="relative">
               <Image
-                src={course.image}
-                alt={course.title}
+                src={
+                  course?.introImageRef?.url || "/assets/images/no_image.png"
+                }
+                alt={course?.title}
                 className="w-full h-64 lg:h-80 object-cover rounded-lg shadow-medium"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-lg"></div>
