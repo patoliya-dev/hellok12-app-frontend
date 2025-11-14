@@ -7,7 +7,10 @@ const isSameDay = (a, b) => a?.toDateString() === b?.toDateString();
 const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
 const today = startOfDay(new Date());
 
-const MiniCalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeekday, onVisibleMonthChange }) => {
+const MiniCalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeekday, onVisibleMonthChange, selectedDateISO = null }) => {
+  // if a specific date is selected (date-edit mode), suppress weekday template highlights
+  const isDateSelected = Boolean(selectedDateISO);
+
   // Expose visible month to parent via onVisibleMonthChange
   const [miniCalendarDate, setMiniCalendarDate] = useState(new Date(currentDate));
 
@@ -64,8 +67,9 @@ const MiniCalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeek
   const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
   // Highlight: compute which dates in the visible month match the selectedWeekday
+  // IMPORTANT: when a specific date is selected (date-edit mode), we suppress these weekday highlights.
   const highlightDates = useMemo(() => {
-    if (!selectedWeekday) return new Set();
+    if (!selectedWeekday || isDateSelected) return new Set();
     const targetDow = weekdayKeys.indexOf(selectedWeekday); // weekdayKeys: ['sun','mon',...]
     const set = new Set();
     const year = miniCalendarDate.getFullYear();
@@ -77,7 +81,7 @@ const MiniCalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeek
       if (dow === targetDow) set.add(d);
     }
     return set;
-  }, [miniCalendarDate, selectedWeekday]);
+  }, [miniCalendarDate, selectedWeekday, isDateSelected]);
 
   return (
     <div className="space-y-4 bg-card rounded-lg border border-border p-6">
@@ -98,19 +102,22 @@ const MiniCalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeek
 
       {/* Weekday buttons (unchanged) */}
       <div className="grid grid-cols-7 gap-1">
-        {weekdays.map((day, i) => (
-          <button
-            key={day}
-            onClick={() => onWeekdaySelect(weekdayKeys[i])}
-            className={`w-9 sm:w-12 text-xs font-medium rounded-full py-2 text-center transition-colors
-                ${selectedWeekday === weekdayKeys[i]
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted"
-              }`}
-          >
-            {day}
-          </button>
-        ))}
+        {weekdays.map((day, i) => {
+          const isThisSelectedWeekday = !isDateSelected && selectedWeekday === weekdayKeys[i];
+          return (
+            <button
+              key={day}
+              onClick={() => onWeekdaySelect(weekdayKeys[i])}
+              className={`w-9 sm:w-12 text-xs font-medium rounded-full py-2 text-center transition-colors
+                ${isThisSelectedWeekday
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted"
+                }`}
+            >
+              {day}
+            </button>
+          );
+        })}
       </div>
 
       {/* Mini calendar grid */}
@@ -129,15 +136,13 @@ const MiniCalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeek
               }}
               disabled={startOfDay(date) < today}
               className={`w-9 h-9 sm:w-12 sm:h-12 text-sm p-2 rounded-full transition-colors disabled:opacity-50
-                ${isSelected(date)
-                  ? "bg-primary text-primary-foreground"
+                ${isSelected(date) || showHighlight
+                  ? `${isToday(date) ? "bg-accent text-accent-foreground" : "bg-primary text-primary-foreground"}`
                   : isToday(date)
                     ? "bg-accent text-accent-foreground"
-                    : showHighlight
-                      ? "bg-primary/10 text-foreground border border-primary/20"
-                      : inVisibleMonth
-                        ? "text-foreground hover:bg-muted"
-                        : "text-muted-foreground hover:bg-muted"}`}
+                    : inVisibleMonth
+                      ? "text-foreground hover:bg-muted"
+                      : "text-muted-foreground hover:bg-muted"}`}
             >
               {dayNum}
             </button>
