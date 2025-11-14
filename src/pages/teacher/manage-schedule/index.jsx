@@ -324,6 +324,7 @@ const ManageSchedule = () => {
                   onWeekdaySelect={handleWeekdaySelect} // weekly mode
                   onVisibleMonthChange={(monthKey) => setVisibleMonth(monthKey)}
                   selectedWeekday={selectedWeekday}
+                  selectedDateISO={selectedDateISO} // inform MiniCalendar of date-edit mode
                 />
                 <TimeSlots
                   selectedDay={dayName}
