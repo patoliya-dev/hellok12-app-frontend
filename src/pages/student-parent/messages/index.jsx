@@ -9,11 +9,12 @@ import MobileBottomNavigation from "../dashboard/components/MobileBottomNavigati
 import NewMassageModal from "./components/NewMassageModal";
 import { useSocket } from "../../../services/sockets/ws";
 import { listConversations } from "../../../services/messages/message.service";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { Navigate } from "react-router-dom";
 import Loader from "components/ui/Loader";
 import { toast } from "react-toastify";
+import { setUnreadMessageCount } from "reducers/messages/messageSlice";
 
 const Messages = () => {
   const [activeConversation, setActiveConversation] = useState(null);
@@ -26,6 +27,7 @@ const Messages = () => {
 
   const { socket, threadOpen, markAsRead, closeThread } = useSocket();
   const currentUser = useSelector(selectAuthUser);
+  const dispatch = useDispatch();
   const activeConversationRef = useRef(null);
 
   if (!currentUser) return <Navigate to="/login" replace />;
@@ -61,8 +63,6 @@ const Messages = () => {
      * Handle new messages in ACTIVE conversations (user is in the room)
      */
     const handleNewMessage = (message) => {
-
-
       setConversations((prev) => {
         return prev
           .map((conv) => {
@@ -97,7 +97,6 @@ const Messages = () => {
      * This fires even if user is not in the thread room
      */
     const handleNewMessageNotification = (data) => {
-
       const { message, thread } = data;
 
       // Skip if it's the current active conversation (already handled by handleNewMessage)
@@ -157,8 +156,6 @@ const Messages = () => {
      * Handle messages marked as read
      */
     const handleMessagesRead = (data) => {
-
-
       // Update unread count for the specific thread
       setConversations((prev) =>
         prev.map((conv) =>
@@ -179,36 +176,20 @@ const Messages = () => {
     };
   }, [socket, currentUser]);
 
-  // Request notification permission on mount
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission().then((permission) => {
-
-      });
-    }
-  }, []);
-
   // Handle conversation selection
   const handleConversationSelect = (conversation) => {
-
-
-    // Close previous thread if any
     if (
       activeConversation?._id &&
       activeConversation._id !== conversation._id
     ) {
-
       closeThread(activeConversation._id, currentUser?.id);
     }
-
-    // Set as active
     setActiveConversation(conversation);
-
-    // Open thread via socket
     threadOpen(conversation._id, currentUser?.id);
 
     // Mark as read if has unread messages
     if (conversation.unreadCount > 0) {
+      const unreadToClear = conversation.unreadCount;
       markAsRead(conversation._id, currentUser?.id);
 
       // Optimistically update UI
@@ -217,6 +198,9 @@ const Messages = () => {
           conv._id === conversation._id ? { ...conv, unreadCount: 0 } : conv
         )
       );
+
+      // Sync unread count badge in header
+      dispatch(setUnreadMessageCount({ decrement: unreadToClear }));
     }
   };
 
@@ -225,8 +209,6 @@ const Messages = () => {
   };
 
   const handleGroupCreated = (newGroup) => {
-
-
     // Check if group already exists
     const exists = conversations.find((c) => c._id === newGroup._id);
 
@@ -244,8 +226,6 @@ const Messages = () => {
   };
 
   const handleNewConversation = (newConversation) => {
-
-
     // Check if conversation already exists
     const exists = conversations.find((c) => c._id === newConversation._id);
 
@@ -263,7 +243,6 @@ const Messages = () => {
   useEffect(() => {
     return () => {
       if (activeConversation?._id) {
-
         closeThread(activeConversation._id, currentUser?.id);
       }
     };

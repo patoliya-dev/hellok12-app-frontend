@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, use } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Icon from "../AppIcon";
@@ -11,6 +11,11 @@ import ManageCourseIcon from "components/icons/ManageCourseIcon";
 import NotificationModal from "./NotificationModal";
 import { getNotificationByRole } from "./data";
 import { getRolePath } from "../../utils/rolePath";
+import {
+  selectUnreadCount,
+  selectMessagesLoading,
+  fetchUnreadCount,
+} from "../../reducers/messages/messageSlice";
 
 const RoleBasedHeader = () => {
   const authUser = useSelector(selectAuthUser);
@@ -24,6 +29,10 @@ const RoleBasedHeader = () => {
   const [notifications, setNotifications] = useState([]);
   const [hoveredPath, setHoveredPath] = useState(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  // Get unread count from Redux
+  const messageUnreadCount = useSelector(selectUnreadCount);
+  const messagesLoading = useSelector(selectMessagesLoading);
 
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
@@ -44,6 +53,22 @@ const RoleBasedHeader = () => {
     const notifications = getNotificationByRole(userRole);
     setNotifications(notifications);
   }, [userRole]);
+
+  // Fetch initial unread count when user logs in
+  useEffect(() => {
+    if (authUser && userRole !== "guest") {
+      console.log("📊 Fetching initial unread count");
+      dispatch(fetchUnreadCount());
+    }
+  }, [authUser, userRole, dispatch]);
+
+  // Refresh unread count when messagesLoading is true (triggered by socket events)
+  useEffect(() => {
+    if (messagesLoading && authUser && userRole !== "guest") {
+      console.log("🔄 Refreshing unread count");
+      dispatch(fetchUnreadCount());
+    }
+  }, [messagesLoading, authUser, userRole, dispatch]);
 
   const getNavigationItems = () => {
     const currentRole =
@@ -67,13 +92,11 @@ const RoleBasedHeader = () => {
           path: getRolePath("student", "find-teacher"),
           icon: "Search",
         },
-        // { label: "Schedule", path: "/booking-system", icon: "Calendar" },
         {
           label: "Lessons",
           path: getRolePath("student", "lessons"),
           icon: "Book",
         },
-        // { label: "Progress",  path: getRolePath("student", "progress"), icon: "TrendingUp" },
         {
           label: "Practice",
           path: getRolePath("student", "games"),
@@ -100,13 +123,11 @@ const RoleBasedHeader = () => {
           path: getRolePath("parent", "find-teacher"),
           icon: "Search",
         },
-        // { label: "Schedule", path: "/booking-system", icon: "Calendar" },
         {
           label: "Lessons",
           path: getRolePath("parent", "lessons"),
           icon: "Book",
         },
-        // { label: "Progress",  path: getRolePath("parent", "progress"), icon: "TrendingUp" },
         {
           label: "Practice",
           path: getRolePath("parent", "games"),
@@ -230,7 +251,6 @@ const RoleBasedHeader = () => {
   };
 
   const handleNotificationClick = (notificationId) => {
-    // Mark as read logic would go here
     console.log("Notification clicked:", notificationId);
   };
 
@@ -257,17 +277,31 @@ const RoleBasedHeader = () => {
   const navigationItems = getNavigationItems();
   const unreadCount = notifications.filter((n) => n.unread).length;
 
+  const renderNavLabel = (item) => {
+    const showUnreadBadge =
+      typeof item.path === "string" &&
+      item.path.includes("messages") &&
+      messageUnreadCount > 0;
+
+    return (
+      <span className="relative inline-flex items-center gap-1">
+        {item.label}
+        {showUnreadBadge && (
+          <span className="ml-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
+            {messageUnreadCount > 99 ? "99+" : messageUnreadCount}
+          </span>
+        )}
+      </span>
+    );
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 bg-card border-b border-border z-50">
       <div className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Logo Section */}
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
-            {/* <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Icon name="GraduationCap" size={20} color="white" />
-            </div> */}
             <div className="flex flex-col">
-              {/* <span className="text-lg font-semibold text-foreground">HelloK12</span> */}
               <Image
                 src={logo}
                 alt="Company Logo"
@@ -299,11 +333,12 @@ const RoleBasedHeader = () => {
                 size="sm"
                 onClick={() => handleNavigation(item.path)}
                 className="transition-micro"
-                children={item.label}
                 iconName={item.icon}
                 iconPosition="left"
                 iconSize={16}
-              />
+              >
+                {renderNavLabel(item)}
+              </Button>
             ) : (
               <button
                 key={item.path}
@@ -319,7 +354,7 @@ const RoleBasedHeader = () => {
                 <item.iconComponent
                   selected={isActive || hoveredPath === item.path}
                 />
-                {item.label}
+                {renderNavLabel(item)}
               </button>
             );
           })}
@@ -404,10 +439,6 @@ const RoleBasedHeader = () => {
                           Payment & Billing
                         </button>
                       )}
-                      {/* <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
-                        <Icon name="HelpCircle" size={16} className="mr-3" />
-                        Help & Support
-                      </button> */}
                       <div className="border-t border-border mt-1 pt-1">
                         <button
                           onClick={handleLogout}
@@ -423,16 +454,6 @@ const RoleBasedHeader = () => {
               </div>
             </>
           )}
-
-          {/* Mobile Menu Button */}
-          {/* <Button
-            variant="ghost"
-            size="icon"
-            iconName={isMenuOpen ? "X" : "Menu"}
-            iconSize={20}
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden"
-          /> */}
         </div>
       </div>
 
@@ -451,7 +472,7 @@ const RoleBasedHeader = () => {
                 onClick={() => handleNavigation(item.path)}
                 className="w-full justify-start"
               >
-                {item.label}
+                {renderNavLabel(item)}
               </Button>
             ))}
 
