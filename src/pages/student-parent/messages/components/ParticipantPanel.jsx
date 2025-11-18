@@ -48,7 +48,7 @@ const ParticipantPanel = ({
     }
   };
 
-  if (!conversation || conversation?.type === "direct") {
+  if (!conversation || conversation?.threadType === "direct") {
     return null;
   }
 

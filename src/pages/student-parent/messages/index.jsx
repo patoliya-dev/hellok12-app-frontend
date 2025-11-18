@@ -187,6 +187,11 @@ const Messages = () => {
     setActiveConversation(conversation);
     threadOpen(conversation._id, currentUser?.id);
 
+    if (conversation.threadType === "GROUP") {
+      setShowParticipants(true);
+    } else {
+      setShowParticipants(false);
+    }
     // Mark as read if has unread messages
     if (conversation.unreadCount > 0) {
       const unreadToClear = conversation.unreadCount;
@@ -284,6 +289,7 @@ const Messages = () => {
             <div className="hidden xl:block">
               <ParticipantPanel
                 conversation={activeConversation}
+                participants={activeConversation?.participants}
                 currentUser={currentUser}
               />
             </div>
