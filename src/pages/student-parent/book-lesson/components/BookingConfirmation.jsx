@@ -3,7 +3,7 @@ import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 
 const BookingConfirmation = ({
-  classData,
+  courseData,
   selectedPaymentMethod,
   teacherData,
   selectedStudent,
@@ -23,11 +23,10 @@ const BookingConfirmation = ({
     const isOnlineCourse = type === "Online Course";
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-          isOneOnOne
+        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${isOneOnOne
             ? "bg-blue-100 text-blue-800"
             : "bg-green-100 text-green-800"
-        }`}
+          }`}
       >
         {isOnlineCourse ? (
           <Image
@@ -69,7 +68,7 @@ const BookingConfirmation = ({
                 />
                 <div className="flex-1">
                   <h5 className="font-medium text-foreground">
-                    {classData?.title}
+                    {courseData?.title}
                   </h5>
                   <p className="text-sm text-muted-foreground mb-2">
                     with {teacherData?.name}
@@ -77,7 +76,7 @@ const BookingConfirmation = ({
                   <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                     <div className="flex items-center space-x-1">
                       <Icon name="Clock" size={14} />
-                      <span>{classData?.duration} minutes</span>
+                      <span>{courseData?.duration} minutes</span>
                     </div>
                   </div>
                 </div>
@@ -90,8 +89,8 @@ const BookingConfirmation = ({
                   </span>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {getClassTypeBadge(classData?.type)}
-                  {getClassTypeBadge(classData?.courseType)}
+                  {getClassTypeBadge(courseData?.type)}
+                  {getClassTypeBadge(courseData?.courseType)}
                 </div>
               </div>
             </div>
@@ -112,7 +111,7 @@ const BookingConfirmation = ({
           <div className="flex justify-between">
             <span className="text-muted-foreground">Time:</span>
             <span className="font-medium text-foreground">
-              {classData?.groupSchedule?.time}
+              {courseData?.groupSchedule?.time}
             </span>
           </div>
         </div>
@@ -164,7 +163,7 @@ const BookingConfirmation = ({
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Lesson Fee:</span>
               <span className="font-medium text-foreground">
-                ${classData?.price.toFixed(2)}
+                ${courseData?.price.toFixed(2)}
               </span>
             </div>
           </div>

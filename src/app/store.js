@@ -7,6 +7,8 @@ import attachmentReducer from '../reducers/attachments/attachmentSlice';
 import courseReducers from '../reducers/courses/courseSlice';
 import pageLoaderReducer from '../reducers/ui/pageLoaderSlice';
 import scheduleReducer from '../reducers/schedule/scheduleSlice'
+import paymentReducer from '../reducers/payments/paymentsSlice';
+import teachersReducer from '../reducers/teachers/teachersSlice';
 
 // In reducer:
 
@@ -21,6 +23,8 @@ const store = configureStore({
     courseDetail: courseReducers.courseDetail,
     pageLoader: pageLoaderReducer,
     schedule: scheduleReducer,
+    payments: paymentReducer,
+    teachers: teachersReducer,
   },
 });
 
