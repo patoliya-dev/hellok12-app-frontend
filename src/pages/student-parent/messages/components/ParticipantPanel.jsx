@@ -115,13 +115,16 @@ const ParticipantPanel = ({
         <div className="p-2 space-y-1">
           {filteredParticipants?.map((participant) => (
             <div
-              key={participant?.id}
+              key={participant?._id}
               className="flex items-center p-3 rounded-lg hover:bg-muted transition-colors duration-200"
             >
               {/* Avatar */}
               <div className="relative flex-shrink-0 mr-3">
                 <Image
-                  src={participant?.avatar}
+                  src={
+                    participant?.profileImage?.url ||
+                    "/assets/images/no_image.png"
+                  }
                   alt={participant?.name}
                   className="w-10 h-10 rounded-full object-cover"
                 />
@@ -138,7 +141,7 @@ const ParticipantPanel = ({
                 <div className="flex items-center justify-between mb-1">
                   <h4 className="font-medium text-foreground truncate">
                     {participant?.name}
-                    {participant?.id === currentUser?.id && (
+                    {participant?._id === currentUser?.id && (
                       <span className="text-xs text-muted-foreground ml-1">
                         (You)
                       </span>
@@ -148,7 +151,7 @@ const ParticipantPanel = ({
                   {/* Actions Menu */}
                   {(currentUser?.role === "teacher" ||
                     currentUser?.role === "admin") &&
-                    participant?.id !== currentUser?.id && (
+                    participant?._id !== currentUser?.id && (
                       <div className="relative">
                         <Button variant="ghost" size="icon" className="h-6 w-6">
                           <Icon name="MoreHorizontal" size={14} />
@@ -183,7 +186,7 @@ const ParticipantPanel = ({
       </div>
       {/* Group Actions */}
       <div className="p-4 border-t border-border space-y-2">
-        {conversation?.type === "group" && (
+        {conversation?.threadType === "GROUP" && (
           <Button
             variant="destructive"
             size="sm"

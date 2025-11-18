@@ -2,14 +2,23 @@ import React, { useState, useRef, useEffect } from "react";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
+import { listChats } from "../../../../services/messages/message.service";
+import Loader from "../../../../components/ui/Loader";
+import { useSocket } from "../../../../services/sockets/ws";
 
-const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
+const ChatArea = ({ conversation, currentUser }) => {
   const [messageText, setMessageText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const [typingUsers, setTypingUsers] = useState([]);
   const [dragOver, setDragOver] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+
+  const { sendMessage, socket, sendTyping, markAsRead } = useSocket();
 
   const emojis = [
     "😀",
@@ -26,18 +35,118 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
     "💯",
   ];
 
+  // Load messages when conversation changes
+  useEffect(() => {
+    if (!conversation?._id) return;
+
+    const loadMessages = async () => {
+      setLoading(true);
+      try {
+        const data = await listChats(conversation._id);
+        setMessages(data);
+      } catch (err) {
+        console.error("Message fetching failed:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMessages();
+  }, [conversation?._id]);
+
+  // Socket listeners for real-time updates
+  useEffect(() => {
+    if (!socket || !conversation?._id) return;
+    const handleNewMessage = (message) => {
+      if (message.thread === conversation._id) {
+        setMessages((prev) => {
+          const exists = prev.some((m) => m._id === message._id);
+          if (exists) {
+            return prev;
+          }
+          return [...prev, message];
+        });
+        if (message.sender._id !== currentUser.id) {
+          markAsRead(conversation._id, currentUser.id);
+        }
+      }
+    };
+
+    // Handle typing indicator
+    const handleUserTyping = (data) => {
+      if (
+        data.threadId === conversation._id &&
+        data.userId !== currentUser.id
+      ) {
+        if (data.isTyping) {
+          setTypingUsers((prev) => {
+            if (!prev.includes(data.userName)) {
+              return [...prev, data.userName];
+            }
+            return prev;
+          });
+        } else {
+          setTypingUsers((prev) =>
+            prev.filter((name) => name !== data.userName)
+          );
+        }
+      }
+    };
+
+    // Handle messages read
+    const handleMessagesRead = (data) => {
+      if (data.threadId === conversation._id) {
+        // Update read status for messages
+        setMessages((prev) =>
+          prev.map((msg) => ({
+            ...msg,
+            readBy: msg.readBy
+              ? [...new Set([...msg.readBy, data.userId])]
+              : [data.userId],
+          }))
+        );
+      }
+    };
+
+    socket.on("newMessage", handleNewMessage);
+    socket.on("userTyping", handleUserTyping);
+    socket.on("messagesRead", handleMessagesRead);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+      socket.off("userTyping", handleUserTyping);
+      socket.off("messagesRead", handleMessagesRead);
+    };
+  }, [socket, conversation?._id, currentUser, markAsRead]);
+
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef?.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Handle sending message
   const handleSendMessage = () => {
-    if (messageText?.trim()) {
-      onSendMessage({
-        text: messageText,
-        type: "text",
-        timestamp: new Date(),
-      });
+    if (!messageText?.trim()) return;
+
+    const messageData = {
+      thread: conversation._id,
+      body: messageText.trim(),
+      sender: currentUser.id,
+      sentAt: new Date().toISOString(),
+      type: "text",
+    };
+
+    const sent = sendMessage(
+      messageData.thread,
+      messageData.body,
+      messageData.sender,
+      messageData.sentAt,
+      messageData.type
+    );
+
+    if (sent) {
       setMessageText("");
+      sendTyping(conversation._id, currentUser.id, currentUser.name, false);
     }
   };
 
@@ -48,17 +157,27 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
     }
   };
 
+  // Handle typing indicator
+  const handleTyping = (e) => {
+    setMessageText(e.target.value);
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Send typing = true
+    sendTyping(conversation._id, currentUser.id, currentUser.name, true);
+
+    // Set timeout to send typing = false
+    typingTimeoutRef.current = setTimeout(() => {
+      sendTyping(conversation._id, currentUser.id, currentUser.name, false);
+    }, 2000);
+  };
+
   const handleFileUpload = (e) => {
     const files = Array.from(e?.target?.files);
-    files?.forEach((file) => {
-      onSendMessage({
-        type: "file",
-        file: file,
-        fileName: file?.name,
-        fileSize: file?.size,
-        timestamp: new Date(),
-      });
-    });
+    // TODO: Implement file upload
   };
 
   const handleDragOver = (e) => {
@@ -75,15 +194,7 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
     e?.preventDefault();
     setDragOver(false);
     const files = Array.from(e?.dataTransfer?.files);
-    files?.forEach((file) => {
-      onSendMessage({
-        type: "file",
-        file: file,
-        fileName: file?.name,
-        fileSize: file?.size,
-        timestamp: new Date(),
-      });
-    });
+    // TODO: Implement file upload
   };
 
   const formatTime = (timestamp) => {
@@ -93,44 +204,25 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
     });
   };
 
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i))?.toFixed(2)) + " " + sizes?.[i];
+  const getParticipantName = (thread, currentUser) => {
+    const participants = thread?.participants;
+    const otherParticipant = participants?.find(
+      (p) => p._id !== currentUser?.id
+    );
+    return thread.threadType?.toLowerCase() === "direct"
+      ? otherParticipant?.name
+      : thread.groupName;
   };
 
-  const getFileIcon = (fileName) => {
-    const extension = fileName?.split(".")?.pop()?.toLowerCase();
-    switch (extension) {
-      case "pdf":
-        return "FileText";
-      case "doc":
-      case "docx":
-        return "FileText";
-      case "jpg":
-      case "jpeg":
-      case "png":
-      case "gif":
-        return "Image";
-      case "mp3":
-      case "wav":
-        return "Music";
-      case "mp4":
-      case "avi":
-        return "Video";
-      default:
-        return "File";
-    }
+  const getParticipantAvatar = (thread, currentUser) => {
+    const participants = thread?.participants;
+    const otherParticipant = participants?.find(
+      (p) => p._id !== currentUser?.id
+    );
+    return otherParticipant?.profileImage?.url || "/assets/images/no_image.png";
   };
 
-  const handleReaction = (messageId, emoji) => {
-    // Handle message reaction
-    console.log("Reaction:", messageId, emoji);
-  };
-
-  if (!conversation) {
+  if (!conversation && !loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background">
         <div className="text-center">
@@ -150,16 +242,18 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
     );
   }
 
-  return (
+  return loading ? (
+    <Loader fullScreen={false} className="flex-1 bg-background" />
+  ) : (
     <div className="flex-1 flex flex-col bg-background">
       {/* Chat Header */}
       <div className="bg-card border-b border-border p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            {conversation?.type === "direct" ? (
+            {conversation?.threadType?.toLowerCase() === "direct" ? (
               <Image
-                src={conversation?.avatar}
-                alt={conversation?.name}
+                src={getParticipantAvatar(conversation, currentUser)}
+                alt={getParticipantName(conversation, currentUser)}
                 className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
@@ -173,19 +267,20 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
             )}
             <div>
               <h3 className="font-semibold text-foreground">
-                {conversation?.name}
+                {getParticipantName(conversation, currentUser)}
               </h3>
               <p className="text-sm text-muted-foreground">
-                {conversation?.type === "direct"
+                {conversation?.threadType?.toLowerCase() === "direct"
                   ? conversation?.isOnline
                     ? "Online"
                     : "Last seen recently"
-                  : `${conversation?.participantCount} participants`}
+                  : `${conversation?.participants?.length} participants`}
               </p>
             </div>
           </div>
         </div>
       </div>
+
       {/* Messages Area */}
       <div
         className={`flex-1 overflow-y-auto p-4 space-y-4 ${
@@ -211,15 +306,15 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
         )}
 
         {messages?.map((message, index) => {
-          const isCurrentUser = message?.senderId === currentUser?.id;
+          const isCurrentUser = message?.sender?._id === currentUser?.id;
           const showAvatar =
             !isCurrentUser &&
             (index === 0 ||
-              messages?.[index - 1]?.senderId !== message?.senderId);
+              messages?.[index - 1]?.sender?._id !== message?.sender?._id);
 
           return (
             <div
-              key={message?.id}
+              key={message?._id}
               className={`flex ${
                 isCurrentUser ? "justify-end" : "justify-start"
               }`}
@@ -232,8 +327,11 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
                 {/* Avatar */}
                 {showAvatar && !isCurrentUser && (
                   <Image
-                    src={message?.senderAvatar}
-                    alt={message?.senderName}
+                    src={
+                      message?.sender?.profileImage?.url ||
+                      "/assets/images/no_image.png"
+                    }
+                    alt={message?.sender?.name}
                     className="w-8 h-8 rounded-full object-cover mr-2 mt-1"
                   />
                 )}
@@ -250,7 +348,7 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
                   {/* Sender Name */}
                   {!isCurrentUser && showAvatar && (
                     <p className="text-xs text-muted-foreground mb-1 ml-3">
-                      {message?.senderName}
+                      {message?.sender?.name}
                     </p>
                   )}
 
@@ -262,49 +360,9 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
                         : "bg-card border border-border text-foreground"
                     }`}
                   >
-                    {message?.type === "text" && (
-                      <p className="whitespace-pre-wrap break-words">
-                        {message?.content}
-                      </p>
-                    )}
-
-                    {message?.type === "file" && (
-                      <div className="flex items-center space-x-3">
-                        <div
-                          className={`p-2 rounded-lg ${
-                            isCurrentUser
-                              ? "bg-primary-foreground/20"
-                              : "bg-muted"
-                          }`}
-                        >
-                          <Icon
-                            name={getFileIcon(message?.fileName)}
-                            size={20}
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">
-                            {message?.fileName}
-                          </p>
-                          <p className="text-xs opacity-75">
-                            {formatFileSize(message?.fileSize)}
-                          </p>
-                        </div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Icon name="Download" size={14} />
-                        </Button>
-                      </div>
-                    )}
-
-                    {message?.type === "image" && (
-                      <div className="max-w-xs">
-                        <Image
-                          src={message?.imageUrl}
-                          alt="Shared image"
-                          className="rounded-lg w-full h-auto"
-                        />
-                      </div>
-                    )}
+                    <p className="whitespace-pre-wrap break-words">
+                      {message?.body}
+                    </p>
 
                     {/* Message Time */}
                     <div
@@ -314,7 +372,7 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
                           : "text-muted-foreground"
                       }`}
                     >
-                      {formatTime(message?.timestamp)}
+                      {formatTime(message?.sentAt)}
                       {isCurrentUser && (
                         <Icon
                           name={
@@ -328,26 +386,6 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
                       )}
                     </div>
                   </div>
-
-                  {/* Message Reactions */}
-                  {message?.reactions && message?.reactions?.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1 ml-3">
-                      {message?.reactions?.map((reaction, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() =>
-                            handleReaction(message?.id, reaction?.emoji)
-                          }
-                          className="bg-muted hover:bg-muted/80 rounded-full px-2 py-1 text-xs flex items-center space-x-1 transition-colors duration-200"
-                        >
-                          <span>{reaction?.emoji}</span>
-                          <span className="text-muted-foreground">
-                            {reaction?.count}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -355,7 +393,7 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
         })}
 
         {/* Typing Indicator */}
-        {isTyping && (
+        {typingUsers.length > 0 && (
           <div className="flex justify-start">
             <div className="flex items-center space-x-2 bg-card border border-border rounded-2xl px-4 py-2">
               <div className="flex space-x-1">
@@ -370,7 +408,7 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
                 ></div>
               </div>
               <span className="text-sm text-muted-foreground">
-                Someone is typing...
+                {typingUsers[0]} is typing...
               </span>
             </div>
           </div>
@@ -378,6 +416,7 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
 
         <div ref={messagesEndRef} />
       </div>
+
       {/* Message Input */}
       <div className="bg-card border-t border-border p-4">
         {/* Emoji Picker */}
@@ -409,7 +448,6 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
             onChange={handleFileUpload}
             className="hidden"
           />
-
           <Button
             variant="ghost"
             size="icon"
@@ -423,14 +461,13 @@ const ChatArea = ({ conversation, messages, onSendMessage, currentUser }) => {
           <div className="flex-1 relative">
             <textarea
               value={messageText}
-              onChange={(e) => setMessageText(e?.target?.value)}
+              onChange={handleTyping}
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
               className="w-full bg-background border border-border rounded-lg px-4 py-3 pr-12 resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               rows="1"
               style={{ minHeight: "44px", maxHeight: "120px" }}
             />
-
             <Button
               variant="ghost"
               size="icon"

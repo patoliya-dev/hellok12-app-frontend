@@ -8,13 +8,16 @@ import { Provider } from "react-redux";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "react-tooltip/dist/react-tooltip.css";
+import SocketProvider from "./services/sockets/ws";
 
 const container = document.getElementById("root");
 const root = createRoot(container);
 
 root.render(
   <Provider store={store}>
-    <App />
-    <ToastContainer position="top-right" autoClose={2000} />
+    <SocketProvider>
+      <App />
+      <ToastContainer position="top-right" autoClose={2000} />
+    </SocketProvider>
   </Provider>
 );

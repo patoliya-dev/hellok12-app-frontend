@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import Input from "../../../../components/ui/Input";
-import Select from "../../../../components/ui/Select";
 import Button from "../../../../components/ui/Button";
 
 const ConversationList = ({
@@ -13,19 +12,45 @@ const ConversationList = ({
   onSearchChange,
   onGroupCreate,
   onNewMessage,
+  currentUser,
 }) => {
   const [buttonType, setButtonType] = useState("all");
 
+  const getParticipantName = (thread, currentUser) => {
+    if (!thread?.participants) return "Unknown";
+
+    const participants = thread.participants;
+    const otherParticipant = participants.find(
+      (participant) => participant?._id !== currentUser?.id
+    );
+
+    return thread.threadType?.toLowerCase() === "direct"
+      ? otherParticipant?.name || "Unknown User"
+      : thread.groupName || "Group Chat";
+  };
   const filteredConversations = conversations?.filter((conv) => {
+    const name = conv?.groupName || "";
+    const participantName = getParticipantName(conv, currentUser);
+    const lastMessageBody = conv?.lastMessage?.body || "";
+
     const matchesSearch =
-      conv?.name?.toLowerCase()?.includes(searchQuery?.toLowerCase()) ||
-      conv?.lastMessage?.toLowerCase()?.includes(searchQuery?.toLowerCase());
+      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      participantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lastMessageBody.toLowerCase().includes(searchQuery.toLowerCase());
 
     if (buttonType === "all") return matchesSearch;
-    return matchesSearch && conv?.type === buttonType;
+
+    // Filter by type
+    if (buttonType === "group") {
+      return matchesSearch && conv?.threadType?.toLowerCase() === "group";
+    }
+
+    return matchesSearch && conv?.threadType?.toLowerCase() === buttonType;
   });
 
   const formatTime = (timestamp) => {
+    if (!timestamp) return "";
+
     const now = new Date();
     const messageTime = new Date(timestamp);
     const diffInHours = (now - messageTime) / (1000 * 60 * 60);
@@ -35,13 +60,18 @@ const ConversationList = ({
       return minutes < 1 ? "now" : `${minutes}m`;
     } else if (diffInHours < 24) {
       return `${Math.floor(diffInHours)}h`;
+    } else if (diffInHours < 48) {
+      return "Yesterday";
     } else {
-      return messageTime?.toLocaleDateString();
+      return messageTime?.toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+      });
     }
   };
 
   const getConversationIcon = (type) => {
-    switch (type) {
+    switch (type?.toLowerCase()) {
       case "direct":
         return "User";
       case "group":
@@ -51,6 +81,40 @@ const ConversationList = ({
       default:
         return "MessageSquare";
     }
+  };
+
+  const getParticipantAvatar = (thread, currentUser) => {
+    if (thread.threadType?.toLowerCase() !== "direct") {
+      return null; // Groups use icon instead
+    }
+
+    const participants = thread.participants;
+    const otherParticipant = participants?.find(
+      (participant) => participant?._id !== currentUser?.id
+    );
+
+    return otherParticipant?.profileImage?.url || "/assets/images/no_image.png";
+  };
+
+  const getLastMessagePreview = (conversation) => {
+    if (!conversation?.lastMessage?.body) {
+      return "No messages yet";
+    }
+
+    const body = conversation.lastMessage.body;
+    const sender = conversation.lastMessage.sender;
+
+    // For group chats, show sender name
+    if (conversation.threadType?.toLowerCase() === "group" && sender?.name) {
+      return `${sender.name}: ${body}`;
+    }
+
+    // For direct messages from current user
+    if (sender?._id === currentUser?.id) {
+      return `You: ${body}`;
+    }
+
+    return body;
   };
 
   return (
@@ -68,7 +132,7 @@ const ConversationList = ({
           className="mb-3"
         />
 
-        {/* Filter */}
+        {/* Filter Buttons */}
         <div className="flex space-x-2">
           <Button
             size="sm"
@@ -76,7 +140,7 @@ const ConversationList = ({
             className={`font-normal ${
               buttonType === "all"
                 ? "bg-primary text-white"
-                : "!bg-inherit text-black"
+                : "!bg-inherit text-black hover:bg-muted"
             }`}
           >
             All Messages
@@ -87,13 +151,14 @@ const ConversationList = ({
             className={`font-normal ${
               buttonType === "group"
                 ? "bg-primary text-white"
-                : "!bg-inherit text-black"
+                : "!bg-inherit text-black hover:bg-muted"
             }`}
           >
-            Group
+            Groups
           </Button>
         </div>
       </div>
+
       {/* Conversations List */}
       <div className="flex-1 overflow-y-auto">
         {filteredConversations?.length === 0 ? (
@@ -103,41 +168,48 @@ const ConversationList = ({
               size={48}
               className="mx-auto text-muted-foreground mb-2"
             />
-            <p className="text-muted-foreground">No conversations found</p>
+            <p className="text-muted-foreground">
+              {searchQuery ? "No conversations found" : "No conversations yet"}
+            </p>
+            {!searchQuery && (
+              <Button size="sm" onClick={onNewMessage} className="mt-4">
+                Start a conversation
+              </Button>
+            )}
           </div>
         ) : (
           <div className="space-y-1 p-2">
             {filteredConversations?.map((conversation) => (
               <div
-                key={conversation?.id}
+                key={conversation?._id}
                 onClick={() => onConversationSelect(conversation)}
                 className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
-                  activeConversation?.id === conversation?.id
+                  activeConversation?._id === conversation?._id
                     ? "bg-primary/10 border border-primary/20"
                     : "hover:bg-muted"
                 }`}
               >
                 {/* Avatar/Icon */}
                 <div className="relative flex-shrink-0 mr-3">
-                  {conversation?.type === "direct" ? (
+                  {conversation?.threadType?.toLowerCase() === "direct" ? (
                     <Image
-                      src={conversation?.avatar}
-                      alt={conversation?.name}
+                      src={getParticipantAvatar(conversation, currentUser)}
+                      alt={getParticipantName(conversation, currentUser)}
                       className="w-12 h-12 rounded-full object-cover"
                     />
                   ) : (
                     <div className="w-12 h-12 bg-secondary rounded-full flex items-center justify-center">
                       <Icon
-                        name={getConversationIcon(conversation?.type)}
+                        name={getConversationIcon(conversation?.threadType)}
                         size={20}
                         className="text-secondary-foreground"
                       />
                     </div>
                   )}
 
-                  {/* Online Status */}
+                  {/* Online Status for Direct Messages */}
                   {conversation?.isOnline &&
-                    conversation?.type === "direct" && (
+                    conversation?.threadType?.toLowerCase() === "direct" && (
                       <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success rounded-full border-2 border-card"></div>
                     )}
 
@@ -159,14 +231,17 @@ const ConversationList = ({
                     <h3
                       className={`font-medium truncate ${
                         conversation?.unreadCount > 0
-                          ? "text-foreground"
+                          ? "text-foreground font-semibold"
                           : "text-foreground"
                       }`}
                     >
-                      {conversation?.name}
+                      {getParticipantName(conversation, currentUser)}
                     </h3>
                     <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                      {formatTime(conversation?.timestamp)}
+                      {formatTime(
+                        conversation?.lastMessage?.createdAt ||
+                          conversation?.createdAt
+                      )}
                     </span>
                   </div>
 
@@ -178,18 +253,12 @@ const ConversationList = ({
                           : "text-muted-foreground"
                       }`}
                     >
-                      {conversation?.lastSender &&
-                        conversation?.type !== "direct" && (
-                          <span className="text-primary">
-                            {conversation?.lastSender}:{" "}
-                          </span>
-                        )}
-                      {conversation?.lastMessage}
+                      {getLastMessagePreview(conversation)}
                     </p>
 
                     {/* Unread Badge */}
                     {conversation?.unreadCount > 0 && (
-                      <div className="bg-primary text-primary-foreground text-xs rounded-full px-2 py-1 ml-2 flex-shrink-0 min-w-[20px] text-center">
+                      <div className="bg-primary text-primary-foreground text-xs rounded-full px-2 py-1 ml-2 flex-shrink-0 min-w-[20px] text-center font-semibold">
                         {conversation?.unreadCount > 99
                           ? "99+"
                           : conversation?.unreadCount}
@@ -222,15 +291,17 @@ const ConversationList = ({
           </div>
         )}
       </div>
-      {/* New Message Button */}
-      <div className="p-4 border-t border-border flex flex-col items-center gap-6">
+
+      {/* Action Buttons */}
+      <div className="p-4 border-t border-border flex flex-col items-center gap-3">
         <button
-          className="w-52 border border-primary text-primary rounded-lg py-2 px-4 flex items-center justify-center space-x-2 hover:bg-primary/90 transition-colors duration-200"
+          className="w-full border border-primary text-primary rounded-lg py-2 px-4 flex items-center justify-center space-x-2 hover:bg-primary/10 transition-colors duration-200"
           onClick={onGroupCreate}
         >
           <Icon name="Users" size={16} />
           <span className="font-medium">New Group</span>
         </button>
+
         <button
           className="w-full bg-primary text-primary-foreground rounded-lg py-2 px-4 flex items-center justify-center space-x-2 hover:bg-primary/90 transition-colors duration-200"
           onClick={onNewMessage}
