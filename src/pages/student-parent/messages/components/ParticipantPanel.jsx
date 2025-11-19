@@ -131,7 +131,7 @@ const ParticipantPanel = ({
                 {/* Status Indicator */}
                 <div
                   className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-card ${getStatusColor(
-                    participant?.status
+                    participant?.availabilityStatus
                   )}`}
                 ></div>
               </div>
@@ -170,12 +170,8 @@ const ParticipantPanel = ({
                   </span>
 
                   <span className="text-xs text-muted-foreground">
-                    {participant?.status === "online"
+                    {participant?.availabilityStatus === "online"
                       ? "Online"
-                      : participant?.status === "away"
-                      ? "Away"
-                      : participant?.status === "busy"
-                      ? "Busy"
                       : "Offline"}
                   </span>
                 </div>

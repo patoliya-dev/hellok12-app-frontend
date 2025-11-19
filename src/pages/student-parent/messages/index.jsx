@@ -3,7 +3,6 @@ import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import ConversationList from "./components/ConversationList";
 import ChatArea from "./components/ChatArea";
 import ParticipantPanel from "./components/ParticipantPanel";
-import Icon from "../../../components/AppIcon";
 import CreateGroupModal from "./components/CreateGroupModal";
 import MobileBottomNavigation from "../dashboard/components/MobileBottomNavigation";
 import NewMassageModal from "./components/NewMassageModal";
@@ -43,7 +42,6 @@ const Messages = () => {
       try {
         setLoadingConversations(true);
         const data = await listConversations();
-
         setConversations(data);
       } catch (err) {
         console.error("Failed to load conversations:", err);
@@ -77,6 +75,7 @@ const Messages = () => {
                   body: message.body,
                   sender: message.sender,
                   createdAt: message.sentAt,
+                  attachments: message.attachments || [],
                 },
                 // Only increment unread if NOT active and NOT sent by current user
                 unreadCount:
@@ -119,6 +118,7 @@ const Messages = () => {
                     body: message.body,
                     sender: message.sender,
                     createdAt: message.sentAt,
+                    attachments: message.attachments || [],
                   },
                   unreadCount: (conv.unreadCount || 0) + 1,
                   updatedAt: message.sentAt,
@@ -135,6 +135,7 @@ const Messages = () => {
               body: message.body,
               sender: message.sender,
               createdAt: message.sentAt,
+              attachments: message.attachments || [],
             },
             unreadCount: 1,
             updatedAt: message.sentAt,
@@ -146,10 +147,14 @@ const Messages = () => {
         }
       });
 
-      const sender =
-        thread.threadType === "GROUP" ? thread.groupName : message.sender.name;
+      if (activeConversationRef.current?._id !== thread._id) {
+        const sender =
+          thread.threadType === "GROUP"
+            ? thread.groupName
+            : message.sender.name;
 
-      toast.info(`Message from ${sender}`);
+        toast.info(`Message from ${sender}`);
+      }
     };
 
     /**
@@ -164,10 +169,40 @@ const Messages = () => {
       );
     };
 
+    const handleUserOnline = ({ userId }) => {
+      setConversations((prev) =>
+        prev.map((conv) => ({
+          ...conv,
+          participants: conv.participants.map((p) =>
+            p._id === userId ? { ...p, availabilityStatus: "online" } : p
+          ),
+        }))
+      );
+    };
+
+    const handleUserOffline = ({ userId }) => {
+      setConversations((prev) =>
+        prev.map((conv) => ({
+          ...conv,
+          participants: conv.participants.map((p) =>
+            p._id === userId
+              ? {
+                  ...p,
+                  availabilityStatus: "offline",
+                  lastSeen: new Date().toISOString(),
+                }
+              : p
+          ),
+        }))
+      );
+    };
+
     // Register event listeners
     socket.on("newMessage", handleNewMessage);
     socket.on("newMessageNotification", handleNewMessageNotification);
     socket.on("messagesRead", handleMessagesRead);
+    socket.on("USER_ONLINE", handleUserOnline);
+    socket.on("USER_OFFLINE", handleUserOffline);
 
     return () => {
       socket.off("newMessage", handleNewMessage);
@@ -175,6 +210,13 @@ const Messages = () => {
       socket.off("messagesRead", handleMessagesRead);
     };
   }, [socket, currentUser]);
+
+  // Sync activeConversation with the newest object from conversations
+  useEffect(() => {
+    if (!activeConversation?._id) return;
+    const fresh = conversations.find((c) => c._id === activeConversation._id);
+    if (fresh && fresh !== activeConversation) setActiveConversation(fresh);
+  }, [conversations, activeConversation]);
 
   // Handle conversation selection
   const handleConversationSelect = (conversation) => {
@@ -260,7 +302,7 @@ const Messages = () => {
       <RoleBasedHeader />
 
       {/* Main Content */}
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-28 lg:pb-8">
         <div className="flex h-[calc(100vh-9rem)] mt-10 border border-border">
           {/* Conversation List */}
           <div className="w-full lg:w-80 lg:flex-shrink-0">
@@ -302,27 +344,20 @@ const Messages = () => {
 
       {/* Mobile Chat Overlay */}
       {activeConversation && (
-        <div className="lg:hidden fixed inset-0 bg-background z-50 pt-16">
-          <div className="flex h-full">
-            <div className="flex-1">
+        <div className="lg:hidden fixed inset-0 bg-background z-40 pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))]">
+          <div className="flex flex-col h-full min-h-0">
+            <div className="flex-1 overflow-hidden min-h-0">
               <ChatArea
                 conversation={activeConversation}
                 currentUser={currentUser}
+                participants={activeConversation?.participants}
+                onBack={() => {
+                  closeThread(activeConversation._id, currentUser?.id);
+                  setActiveConversation(null);
+                }}
               />
             </div>
           </div>
-
-          {/* Back Button */}
-          <button
-            onClick={() => {
-              // Close thread when going back
-              closeThread(activeConversation._id, currentUser?.id);
-              setActiveConversation(null);
-            }}
-            className="absolute top-20 left-4 bg-card border border-border rounded-full p-2 shadow-lg"
-          >
-            <Icon name="ArrowLeft" size={20} />
-          </button>
         </div>
       )}
 

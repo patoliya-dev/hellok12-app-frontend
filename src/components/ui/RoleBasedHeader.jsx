@@ -57,7 +57,6 @@ const RoleBasedHeader = () => {
   // Fetch initial unread count when user logs in
   useEffect(() => {
     if (authUser && userRole !== "guest") {
-      console.log("📊 Fetching initial unread count");
       dispatch(fetchUnreadCount());
     }
   }, [authUser, userRole, dispatch]);
@@ -65,7 +64,6 @@ const RoleBasedHeader = () => {
   // Refresh unread count when messagesLoading is true (triggered by socket events)
   useEffect(() => {
     if (messagesLoading && authUser && userRole !== "guest") {
-      console.log("🔄 Refreshing unread count");
       dispatch(fetchUnreadCount());
     }
   }, [messagesLoading, authUser, userRole, dispatch]);

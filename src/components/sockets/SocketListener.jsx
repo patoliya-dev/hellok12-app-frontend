@@ -18,24 +18,27 @@ const SocketListener = () => {
   useEffect(() => {
     if (!socket || !isConnected || !currentUser) return;
 
-    console.log("🎧 Global socket listeners registered");
-
     /**
      * Listen for new message notifications globally
      * This updates the header badge count
      */
     const handleNewMessageNotification = (data) => {
-      console.log("🔔 [Global] New message notification:", data);
-
       // Increment unread count in global state
       dispatch(setUnreadMessageCount({ increment: 1 }));
+
+      const isOnMessagesPage =
+        typeof window !== "undefined" &&
+        window.location?.pathname?.toLowerCase?.().includes("messages");
+
+      if (isOnMessagesPage) {
+        return;
+      }
 
       // Show toast notification
       const sender =
         data.thread.threadType === "GROUP"
           ? data.thread.groupName
           : data.sender.name;
-
       toast.info(`New message from ${sender}`, {
         position: "top-right",
         autoClose: 3000,
@@ -47,8 +50,6 @@ const SocketListener = () => {
      * This decreases the header badge count
      */
     const handleMessagesRead = (data) => {
-      console.log("✅ [Global] Messages marked as read:", data);
-
       // Only update if it's the current user who marked as read
       if (data.userId === currentUser.id) {
         // Fetch updated count from server
@@ -61,8 +62,6 @@ const SocketListener = () => {
      * When user opens a thread, we need to refresh the count
      */
     const handleThreadOpened = (data) => {
-      console.log("📂 [Global] Thread opened:", data);
-
       // Refresh unread count when user opens a thread
       if (data.senderId === currentUser.id) {
         dispatch(setUnreadMessageCount({ refresh: true }));
@@ -76,7 +75,6 @@ const SocketListener = () => {
 
     // Cleanup on unmount
     return () => {
-      console.log("🧹 Cleaning up global socket listeners");
       socket.off("newMessageNotification", handleNewMessageNotification);
       socket.off("messagesRead", handleMessagesRead);
       socket.off("threadOpen", handleThreadOpened);

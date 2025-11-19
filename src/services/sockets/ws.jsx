@@ -43,18 +43,12 @@ const SocketProvider = ({ children }) => {
 
     // Connection event handlers
     _socket.on("connect", () => {
-      console.log("✅ Socket connected:", _socket.id);
+      
       setIsConnected(true);
-
       // Join user's personal room on connect
       _socket.emit("userConnect", { userId: currentUser.id });
-
       // Rejoin current thread if any (for page reload scenario)
       if (currentThreadRef.current) {
-        console.log(
-          "🔄 Rejoining thread after reconnect:",
-          currentThreadRef.current
-        );
         _socket.emit("threadOpen", {
           threadId: currentThreadRef.current,
           senderId: currentUser.id,
@@ -62,22 +56,15 @@ const SocketProvider = ({ children }) => {
       }
     });
 
-    _socket.on("userConnected", (data) => {
-      console.log("✅ User room joined:", data);
-    });
-
     _socket.on("disconnect", (reason) => {
-      console.log("🔴 Socket disconnected:", reason);
       setIsConnected(false);
     });
 
     _socket.on("connect_error", (error) => {
-      console.error("🔴 Socket connection error:", error);
       setIsConnected(false);
     });
 
     _socket.on("reconnect", (attemptNumber) => {
-      console.log("🔄 Socket reconnected, attempt:", attemptNumber);
       setIsConnected(true);
 
       // Rejoin user room after reconnect
@@ -92,7 +79,6 @@ const SocketProvider = ({ children }) => {
 
     // Cleanup on unmount
     return () => {
-      console.log("🧹 Cleaning up socket connection");
       if (currentThreadRef.current) {
         _socket.emit("closeThread", {
           threadId: currentThreadRef.current,
@@ -116,14 +102,12 @@ const SocketProvider = ({ children }) => {
 
       // Leave previous thread if different
       if (currentThreadRef.current && currentThreadRef.current !== threadId) {
-        console.log("🚪 Leaving previous thread:", currentThreadRef.current);
         socket.emit("closeThread", {
           threadId: currentThreadRef.current,
           userId: senderId,
         });
       }
 
-      console.log("🚪 Opening thread:", threadId);
       currentThreadRef.current = threadId;
 
       socket.emit("threadOpen", {
@@ -143,8 +127,6 @@ const SocketProvider = ({ children }) => {
         return;
       }
 
-      console.log("🚪 Closing thread:", threadId);
-
       socket.emit("closeThread", {
         threadId,
         userId,
@@ -162,7 +144,7 @@ const SocketProvider = ({ children }) => {
    * Send a message
    */
   const sendMessage = useCallback(
-    (thread, body, sender, sentAt, type = "text") => {
+    (thread, body, sender, sentAt, type = "text", attachments = []) => {
       if (!socket || !isConnected) {
         console.error("❌ Cannot send message - socket not connected");
         return false;
@@ -174,6 +156,7 @@ const SocketProvider = ({ children }) => {
         sender,
         sentAt,
         type,
+        attachments,
       });
 
       return true;
@@ -190,9 +173,6 @@ const SocketProvider = ({ children }) => {
         console.error("❌ Cannot mark as read - socket not connected");
         return;
       }
-
-      console.log("✅ Marking as read:", threadId);
-
       socket.emit("markAsRead", {
         threadId,
         userId,
@@ -209,7 +189,6 @@ const SocketProvider = ({ children }) => {
       if (!socket || !isConnected) {
         return;
       }
-
       socket.emit("typing", {
         threadId,
         userId,

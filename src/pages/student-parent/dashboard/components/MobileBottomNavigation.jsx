@@ -58,16 +58,17 @@ const MobileBottomNavigation = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-1000 lg:hidden">
+    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-[60] lg:hidden">
       <div className="flex items-center justify-around py-2">
         {navigationItems.map((item) => (
           <button
             key={item.id}
             onClick={() => handleNavigation(item.path)}
-            className={`relative flex flex-col items-center justify-center p-2 min-w-0 flex-1 transition-micro ${isActive(item.path)
+            className={`relative flex flex-col items-center justify-center p-2 min-w-0 flex-1 transition-micro ${
+              isActive(item.path)
                 ? "text-primary"
                 : "text-muted-foreground hover:text-foreground"
-              }`}
+            }`}
           >
             {/* Badge */}
             {item.badge && (
@@ -78,8 +79,9 @@ const MobileBottomNavigation = () => {
 
             {/* Icon */}
             <div
-              className={`mb-1 ${isActive(item.path) ? "scale-110" : ""
-                } transition-transform duration-200`}
+              className={`mb-1 ${
+                isActive(item.path) ? "scale-110" : ""
+              } transition-transform duration-200`}
             >
               <Icon
                 name={item.icon}
@@ -92,8 +94,9 @@ const MobileBottomNavigation = () => {
 
             {/* Label */}
             <span
-              className={`text-xs font-medium truncate ${isActive(item.path) ? "text-primary" : "text-muted-foreground"
-                }`}
+              className={`text-xs font-medium truncate ${
+                isActive(item.path) ? "text-primary" : "text-muted-foreground"
+              }`}
             >
               {item.label}
             </span>

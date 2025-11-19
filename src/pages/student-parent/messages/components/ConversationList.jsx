@@ -97,16 +97,47 @@ const ConversationList = ({
   };
 
   const getLastMessagePreview = (conversation) => {
-    if (!conversation?.lastMessage?.body) {
+    const lastMessage = conversation?.lastMessage;
+    if (!lastMessage) {
       return "No messages yet";
     }
 
-    const body = conversation.lastMessage.body;
-    const sender = conversation.lastMessage.sender;
+    const hasBody = lastMessage?.body?.trim?.();
+    const hasAttachments =
+      Array.isArray(lastMessage?.attachments) &&
+      lastMessage.attachments.length > 0;
+
+    if (!hasBody && !hasAttachments) {
+      return "No messages yet";
+    }
+
+    const body = lastMessage.body;
+    const sender = lastMessage.sender;
 
     // For group chats, show sender name
     if (conversation.threadType?.toLowerCase() === "group" && sender?.name) {
+      if (hasAttachments && !hasBody) {
+        return `${sender.name}: ${lastMessage.attachments.length} attachment(s)`;
+      }
+      if (hasAttachments && hasBody) {
+        return `${sender.name}: ${body}`;
+      }
       return `${sender.name}: ${body}`;
+    }
+
+    // Handle attachments
+    if (hasAttachments) {
+      if (sender?._id === currentUser?.id) {
+        return hasBody
+          ? `You: ${body}`
+          : `You: ${lastMessage.attachments.length} attachment(s)`;
+      } else {
+        return hasBody
+          ? `${sender?.name || "Someone"}: ${body}`
+          : `${sender?.name || "Someone"}: ${
+              lastMessage.attachments.length
+            } attachment(s)`;
+      }
     }
 
     // For direct messages from current user
@@ -114,7 +145,19 @@ const ConversationList = ({
       return `You: ${body}`;
     }
 
-    return body;
+    return body || "No messages yet";
+  };
+
+  const onlineStatus = (conversation) => {
+    if (conversation?.threadType?.toLowerCase() === "direct") {
+      const otherParticipant = conversation?.participants?.find(
+        (participant) => participant?._id !== currentUser?.id
+      );
+      const status = otherParticipant?.availabilityStatus;
+      return typeof status === "string" ? status.toLowerCase() : status;
+    } else {
+      return null;
+    }
   };
 
   return (
@@ -208,7 +251,7 @@ const ConversationList = ({
                   )}
 
                   {/* Online Status for Direct Messages */}
-                  {conversation?.isOnline &&
+                  {onlineStatus(conversation) === "online" &&
                     conversation?.threadType?.toLowerCase() === "direct" && (
                       <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success rounded-full border-2 border-card"></div>
                     )}
