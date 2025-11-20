@@ -7,30 +7,40 @@ import {
   listTeachers,
 } from "../../../../services/messages/message.service";
 
-const NewMessageModal = ({ onClose, onNewConversation, currentUser }) => {
+const NewMessageModal = ({ onClose, onNewConversation, currentUser, conversations = [] }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
+  const [creatingUserId, setCreatingUserId] = useState(null); // Track specific user being created
 
   useEffect(() => {
     const loadUsers = async () => {
       try {
         setLoading(true);
-        const data = await listTeachers();
-        setUsers(data);
+        const data = await listTeachers(); 
+        const directConversations = conversations.filter(
+          (conv) => conv.threadType === "DIRECT"
+        );
+        const usersWithDirectChats = directConversations.flatMap((conv) =>
+          conv.participants
+            .filter((p) => p._id !== currentUser?.id)
+            .map((p) => p._id)
+        );
+        const availableUsers = data.filter(
+          (user) => !usersWithDirectChats.includes(user._id)
+        );
+        setUsers(availableUsers);
       } catch (err) {
         console.error("Failed to load users", err);
       } finally {
         setLoading(false);
       }
     };
-
     loadUsers();
-  }, []);
+  }, [conversations, currentUser]);
 
   const handleNewMessage = async (userId) => {
     try {
-      setCreating(true);
+      setCreatingUserId(userId);
       const data = await createThread({
         userId: currentUser?.id,
         threadType: "DIRECT",
@@ -41,7 +51,7 @@ const NewMessageModal = ({ onClose, onNewConversation, currentUser }) => {
     } catch (error) {
       console.error("Failed to create thread:", error);
     } finally {
-      setCreating(false);
+      setCreatingUserId(null);
     }
   };
 
@@ -62,7 +72,7 @@ const NewMessageModal = ({ onClose, onNewConversation, currentUser }) => {
               <div
                 key={user._id}
                 className="flex items-center justify-between border-b border-[#E4E4E4] pb-4 cursor-pointer hover:bg-muted/50 transition-colors rounded-lg p-2"
-                onClick={() => !creating && handleNewMessage(user._id)}
+                onClick={() => !creatingUserId && handleNewMessage(user._id)}
               >
                 <div className="flex items-center gap-4">
                   <Image
@@ -85,7 +95,7 @@ const NewMessageModal = ({ onClose, onNewConversation, currentUser }) => {
                     )}
                   </div>
                 </div>
-                {creating && (
+                {creatingUserId === user._id && (
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
                 )}
               </div>

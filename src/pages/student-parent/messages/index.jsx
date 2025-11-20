@@ -57,18 +57,55 @@ const Messages = () => {
   useEffect(() => {
     if (!socket) return;
 
-    /**
-     * Handle new messages in ACTIVE conversations (user is in the room)
-     */
     const handleNewMessage = (message) => {
       setConversations((prev) => {
-        return prev
-          .map((conv) => {
-            if (conv._id === message.thread) {
-              // Check if this thread is currently active
-              const isActive =
-                activeConversationRef.current?._id === message.thread;
+        return prev.map((conv) => {
+          if (conv._id === message.thread) {
+            // Don't update if user has left this group
+            if (conv.hasLeft) {
+              return conv;
+            }
 
+            const isActive = activeConversationRef.current?._id === message.thread;
+
+            return {
+              ...conv,
+              lastMessage: {
+                body: message.body,
+                sender: message.sender,
+                createdAt: message.sentAt,
+                attachments: message.attachments || [],
+              },
+              unreadCount:
+                isActive || message.sender._id === currentUser.id
+                  ? conv.unreadCount || 0
+                  : (conv.unreadCount || 0) + 1,
+              updatedAt: message.sentAt,
+            };
+          }
+          return conv;
+        }).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      });
+    };
+
+    const handleNewMessageNotification = (data) => {
+      const { message, thread } = data;
+
+      if (activeConversationRef.current?._id === thread._id) {
+        return;
+      }
+
+      setConversations((prev) => {
+        const existingConv = prev.find((c) => c._id === thread._id);
+
+        if (existingConv) {
+          //  Don't update if user has left
+          if (existingConv.hasLeft) {
+            return prev;
+          }
+
+          return prev.map((conv) => {
+            if (conv._id === thread._id) {
               return {
                 ...conv,
                 lastMessage: {
@@ -77,84 +114,16 @@ const Messages = () => {
                   createdAt: message.sentAt,
                   attachments: message.attachments || [],
                 },
-                // Only increment unread if NOT active and NOT sent by current user
-                unreadCount:
-                  isActive || message.sender._id === currentUser.id
-                    ? conv.unreadCount || 0
-                    : (conv.unreadCount || 0) + 1,
+                unreadCount: (conv.unreadCount || 0) + 1,
                 updatedAt: message.sentAt,
               };
             }
             return conv;
-          })
-          .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-      });
-    };
-
-    /**
-     * Handle message notifications for conversations user is NOT viewing
-     * This fires even if user is not in the thread room
-     */
-    const handleNewMessageNotification = (data) => {
-      const { message, thread } = data;
-
-      // Skip if it's the current active conversation (already handled by handleNewMessage)
-      if (activeConversationRef.current?._id === thread._id) {
-        return;
-      }
-
-      setConversations((prev) => {
-        // Check if conversation already exists
-        const existingConv = prev.find((c) => c._id === thread._id);
-
-        if (existingConv) {
-          // Update existing conversation
-          return prev
-            .map((conv) => {
-              if (conv._id === thread._id) {
-                return {
-                  ...conv,
-                  lastMessage: {
-                    body: message.body,
-                    sender: message.sender,
-                    createdAt: message.sentAt,
-                    attachments: message.attachments || [],
-                  },
-                  unreadCount: (conv.unreadCount || 0) + 1,
-                  updatedAt: message.sentAt,
-                };
-              }
-              return conv;
-            })
-            .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-        } else {
-          // Add new conversation to the list
-          const newConversation = {
-            ...thread,
-            lastMessage: {
-              body: message.body,
-              sender: message.sender,
-              createdAt: message.sentAt,
-              attachments: message.attachments || [],
-            },
-            unreadCount: 1,
-            updatedAt: message.sentAt,
-          };
-
-          return [newConversation, ...prev].sort(
-            (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
-          );
+          }).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         }
+
+        return prev;
       });
-
-      if (activeConversationRef.current?._id !== thread._id) {
-        const sender =
-          thread.threadType === "GROUP"
-            ? thread.groupName
-            : message.sender.name;
-
-        toast.info(`Message from ${sender}`);
-      }
     };
 
     /**
@@ -169,6 +138,9 @@ const Messages = () => {
       );
     };
 
+    /**
+     * Handle user online status
+     */
     const handleUserOnline = ({ userId }) => {
       setConversations((prev) =>
         prev.map((conv) => ({
@@ -180,6 +152,9 @@ const Messages = () => {
       );
     };
 
+    /**
+     * Handle user offline status
+     */
     const handleUserOffline = ({ userId }) => {
       setConversations((prev) =>
         prev.map((conv) => ({
@@ -187,14 +162,130 @@ const Messages = () => {
           participants: conv.participants.map((p) =>
             p._id === userId
               ? {
-                  ...p,
-                  availabilityStatus: "offline",
-                  lastSeen: new Date().toISOString(),
-                }
+                ...p,
+                availabilityStatus: "offline",
+                lastSeen: new Date().toISOString(),
+              }
               : p
           ),
         }))
       );
+    };
+
+    /**
+     *  Handle participants added to group
+     */
+    const handleParticipantsAdded = (data) => {
+      const { threadId, newParticipants, addedBy } = data;
+      setConversations((prev) =>
+        prev.map((conv) => {
+          if (conv._id === threadId) {
+            if (addedBy !== currentUser.id) {
+              toast.info(`New members added to ${conv.groupName || "group"}`);
+            }
+            return conv;
+          }
+          return conv;
+        })
+      );
+    };
+
+    /**
+     *  Handle being added to a group
+     */
+    /**
+   * Handle being added to a group (including re-additions)
+   */
+    const handleAddedToGroup = async (data) => {
+      const { threadId, addedBy } = data;
+      const existingConv = conversations.find((c) => c._id === threadId);
+
+      if (existingConv && existingConv.hasLeft) {
+        toast.success("You were added back to the group!");
+        try {
+          const updatedConversations = await listConversations();
+          const updatedConv = updatedConversations.find((c) => c._id === threadId);
+
+          if (updatedConv) {
+            setConversations((prev) =>
+              prev.map((conv) => (conv._id === threadId ? updatedConv : conv))
+            );
+            if (activeConversationRef.current?._id === threadId) {
+              setActiveConversation(updatedConv);
+              threadOpen(threadId, currentUser?.id);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to refresh conversation:", err);
+        }
+      } else if (!existingConv) {
+        toast.success("You were added to a new group!");
+        try {
+          const updatedConversations = await listConversations();
+          setConversations(updatedConversations);
+        } catch (err) {
+          console.error("Failed to refresh conversations:", err);
+        }
+      }
+    };
+
+    /**
+     *  Handle participant leaving group
+     */
+    const handleParticipantLeft = (data) => {
+      const { threadId, userId } = data;
+
+      setConversations((prev) =>
+        prev.map((conv) => {
+          if (conv._id === threadId) {
+            const updatedParticipants = conv.participants.filter(
+              (p) => p._id !== userId
+            );
+            const leftParticipant = conv.participants.find(
+              (p) => p._id === userId
+            );
+
+            if (leftParticipant && leftParticipant._id !== currentUser.id) {
+              toast.info(
+                `${leftParticipant.name} left ${conv.groupName || "the group"}`
+              );
+            }
+
+            return {
+              ...conv,
+              participants: updatedParticipants,
+            };
+          }
+          return conv;
+        })
+      );
+      if (activeConversationRef.current?._id === threadId) {
+        setActiveConversation((prev) => ({
+          ...prev,
+          participants: prev.participants.filter((p) => p._id !== userId),
+        }));
+      }
+    };
+
+    /**
+     *  Handle current user leaving a group (socket event from server)
+     */
+    const handleLeftGroup = (data) => {
+      const { threadId } = data;
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv._id === threadId
+            ? { ...conv, hasLeft: true, leftAt: new Date().toISOString() }
+            : conv
+        )
+      );
+      if (activeConversationRef.current?._id === threadId) {
+        setActiveConversation((prev) => ({
+          ...prev,
+          hasLeft: true,
+          leftAt: new Date().toISOString(),
+        }));
+      }
     };
 
     // Register event listeners
@@ -204,12 +295,26 @@ const Messages = () => {
     socket.on("USER_ONLINE", handleUserOnline);
     socket.on("USER_OFFLINE", handleUserOffline);
 
+    //  Register group management event listeners
+    socket.on("participantsAdded", handleParticipantsAdded);
+    socket.on("addedToGroup", handleAddedToGroup);
+    socket.on("participantLeft", handleParticipantLeft);
+    socket.on("leftGroup", handleLeftGroup);
+
     return () => {
       socket.off("newMessage", handleNewMessage);
       socket.off("newMessageNotification", handleNewMessageNotification);
       socket.off("messagesRead", handleMessagesRead);
+      socket.off("USER_ONLINE", handleUserOnline);
+      socket.off("USER_OFFLINE", handleUserOffline);
+
+      //  Cleanup group management event listeners
+      socket.off("participantsAdded", handleParticipantsAdded);
+      socket.off("addedToGroup", handleAddedToGroup);
+      socket.off("participantLeft", handleParticipantLeft);
+      socket.off("leftGroup", handleLeftGroup);
     };
-  }, [socket, currentUser]);
+  }, [socket, currentUser, closeThread]);
 
   // Sync activeConversation with the newest object from conversations
   useEffect(() => {
@@ -286,7 +391,32 @@ const Messages = () => {
     threadOpen(newConversation._id, currentUser?.id);
   };
 
-  // Cleanup on unmount
+  const handleParticipantsUpdated = (updatedThread) => {
+    setConversations((prev) =>
+      prev.map((conv) =>
+        conv._id === updatedThread._id ? updatedThread : conv
+      )
+    );
+    if (activeConversation?._id === updatedThread._id) {
+      setActiveConversation(updatedThread);
+    }
+  };
+
+  const handleLeaveGroup = (threadId) => {
+    setConversations((prev) =>
+      prev.map((conv) =>
+        conv._id === threadId
+          ? { ...conv, hasLeft: true, leftAt: new Date().toISOString() }
+          : conv
+      )
+    );
+    if (activeConversation?._id === threadId) {
+      setActiveConversation(null);
+    }
+
+    toast.success("You have left the group");
+  };
+
   useEffect(() => {
     return () => {
       if (activeConversation?._id) {
@@ -333,6 +463,8 @@ const Messages = () => {
                 conversation={activeConversation}
                 participants={activeConversation?.participants}
                 currentUser={currentUser}
+                onParticipantsUpdated={handleParticipantsUpdated}
+                onLeaveGroup={handleLeaveGroup}
               />
             </div>
           )}
@@ -376,6 +508,7 @@ const Messages = () => {
           onClose={handleNewMessageModal}
           onNewConversation={handleNewConversation}
           currentUser={currentUser}
+          conversations={conversations}
         />
       )}
     </div>

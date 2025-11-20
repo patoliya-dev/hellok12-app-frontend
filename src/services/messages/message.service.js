@@ -110,6 +110,68 @@ export const getTotalUnreadCount = async () => {
 };
 
 /**
+ * Add participants to a group
+ */
+export const addParticipantsToGroup = async (threadId, participants) => {
+  try {
+    const { data } = await api.post(
+      `/messages/thread/${threadId}/participants`,
+      {
+        participants,
+      }
+    );
+    return data.data;
+  } catch (error) {
+    console.error("Add participants error:", error);
+    throw new Error(
+      error.response?.data?.message || "Failed to add participants"
+    );
+  }
+};
+
+/**
+ * Leave a group
+ */
+export const leaveGroup = async (threadId) => {
+  try {
+    const { data } = await api.delete(`/messages/thread/${threadId}/leave`);
+    return data.data;
+  } catch (error) {
+    console.error("Leave group error:", error);
+    throw new Error(error.response?.data?.message || "Failed to leave group");
+  }
+};
+
+/**
+ * Download attachment
+ */
+export const downloadAttachment = async (url, filename) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+
+    // Create a temporary URL for the blob
+    const blobUrl = window.URL.createObjectURL(blob);
+
+    // Create a temporary anchor element and trigger download
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+
+    return true;
+  } catch (error) {
+    console.error("Download error:", error);
+    throw new Error("Failed to download file");
+  }
+};
+
+/**
  * Search messages within a thread
  */
 export const searchMessages = async (threadId, query) => {

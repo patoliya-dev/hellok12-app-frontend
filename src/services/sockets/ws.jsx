@@ -208,6 +208,47 @@ const SocketProvider = ({ children }) => {
     return 0;
   }, []);
 
+  /**
+   * Notify server that participants were added
+   */
+  const notifyParticipantsAdded = useCallback(
+    (threadId, participants, userId) => {
+      if (!socket || !socket.connected) {
+        console.warn("Socket not connected");
+        return false;
+      }
+
+      socket.emit("addParticipants", {
+        threadId,
+        participants,
+        userId,
+      });
+
+      return true;
+    },
+    [socket]
+  );
+
+  /**
+   * Notify server that user is leaving group
+   */
+  const notifyLeaveGroup = useCallback(
+    (threadId, userId) => {
+      if (!socket || !socket.connected) {
+        console.warn("Socket not connected");
+        return false;
+      }
+
+      socket.emit("leaveGroup", {
+        threadId,
+        userId,
+      });
+
+      return true;
+    },
+    [socket]
+  );
+
   return (
     <SocketContext.Provider
       value={{
@@ -220,6 +261,8 @@ const SocketProvider = ({ children }) => {
         sendTyping,
         getUnreadCount,
         currentUser,
+        notifyParticipantsAdded,
+        notifyLeaveGroup,
       }}
     >
       {children}

@@ -2,12 +2,16 @@ import React, { useState, useRef, useEffect } from "react";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
-import { listChats } from "../../../../services/messages/message.service";
+import {
+  downloadAttachment,
+  listChats,
+} from "../../../../services/messages/message.service";
 import Loader from "../../../../components/ui/Loader";
 import { useSocket } from "../../../../services/sockets/ws";
 import { useDispatch } from "react-redux";
 import { uploadAttachmentFlow } from "../../../../reducers/attachments/attachmentThunks";
 import { errorToast, successToast } from "../../../../utils/utils";
+import { toast } from "react-toastify";
 
 const MAX_ATTACHMENT_BYTES = 100 * 1024 * 1024; // 100MB limit per file
 
@@ -53,6 +57,8 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
     total: 0,
     fileName: "",
   });
+  const [hasLeftGroup, setHasLeftGroup] = useState(false);
+  const [leftAt, setLeftAt] = useState(null);
 
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -84,6 +90,8 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
       try {
         const data = await listChats(conversation._id);
         setMessages(data);
+        setHasLeftGroup(conversation.hasLeft || false);
+        setLeftAt(conversation.leftAt || null);
       } catch (err) {
         console.error("Message fetching failed:", err);
       } finally {
@@ -188,6 +196,8 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
   useEffect(() => {
     messagesEndRef?.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const canSendMessages = !hasLeftGroup;
 
   // Handle sending text message
   const handleSendMessage = () => {
@@ -379,8 +389,7 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
         setMessages((prev) => prev.filter((m) => m._id !== tempMessageId));
       } else {
         successToast(
-          `${uploadedAttachments.length} ${
-            uploadedAttachments.length === 1 ? "file" : "files"
+          `${uploadedAttachments.length} ${uploadedAttachments.length === 1 ? "file" : "files"
           } sent successfully`
         );
       }
@@ -440,6 +449,28 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
     return otherParticipant?.profileImage?.url || "/assets/images/no_image.png";
   };
 
+  const handleDownload = async (url, filename) => {
+    const toastId = toast.loading("Downloading...");
+    try {
+      await downloadAttachment(url, filename);
+      toast.update(toastId, {
+        render: "Downloaded successfully",
+        type: "success",
+        isLoading: false,
+        autoClose: 2000,
+      });
+    } catch (error) {
+      console.error("Download error:", error);
+      errorToast("Failed to download file");
+      toast.update(toastId, {
+        render: "Failed to download",
+        type: "error",
+        isLoading: false,
+        autoClose: 2000,
+      });
+    }
+  };
+
   if (!conversation && !loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background">
@@ -493,9 +524,8 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
               <div
                 className="bg-primary h-full transition-all duration-300 ease-out"
                 style={{
-                  width: `${
-                    (uploadProgress.current / uploadProgress.total) * 100
-                  }%`,
+                  width: `${(uploadProgress.current / uploadProgress.total) * 100
+                    }%`,
                 }}
               ></div>
             </div>
@@ -540,23 +570,23 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
               <p className="text-sm text-muted-foreground">
                 {conversation?.threadType?.toLowerCase() === "direct"
                   ? (() => {
-                      const other = conversation.participants.find(
-                        (p) => p._id !== currentUser.id
-                      );
+                    const other = conversation.participants.find(
+                      (p) => p._id !== currentUser.id
+                    );
 
-                      if (other?.availabilityStatus === "online") {
-                        return "Online";
-                      }
+                    if (other?.availabilityStatus === "online") {
+                      return "Online";
+                    }
 
-                      return other?.lastSeen
-                        ? `Last seen ${new Date(
-                            other.lastSeen
-                          ).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}`
-                        : "Offline";
-                    })()
+                    return other?.lastSeen
+                      ? `Last seen ${new Date(
+                        other.lastSeen
+                      ).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}`
+                      : "Offline";
+                  })()
                   : `${conversation?.participants?.length} participants`}
               </p>
             </div>
@@ -564,11 +594,24 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
         </div>
       </div>
 
+      {/* Info banner for left groups */}
+      {hasLeftGroup && (
+        <div className="bg-warning/10 border-b border-warning/20 px-4 py-3">
+          <div className="flex items-center space-x-2 text-warning">
+            <Icon name="AlertCircle" size={18} />
+            <p className="text-sm">
+              You left this group on{" "}
+              {leftAt && new Date(leftAt).toLocaleDateString()}.
+              You can view old messages but cannot send new ones.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Messages Area */}
       <div
-        className={`flex-1 min-h-0 overflow-y-auto p-4 space-y-4 ${
-          dragOver ? "bg-primary/5 border-2 border-dashed border-primary" : ""
-        }`}
+        className={`flex-1 min-h-0 overflow-y-auto p-4 space-y-4 ${dragOver ? "bg-primary/5 border-2 border-dashed border-primary" : ""
+          }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -598,14 +641,12 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
           return (
             <div
               key={message?._id}
-              className={`flex ${
-                isCurrentUser ? "justify-end" : "justify-start"
-              }`}
+              className={`flex ${isCurrentUser ? "justify-end" : "justify-start"
+                }`}
             >
               <div
-                className={`flex max-w-[85%] sm:max-w-[70%] ${
-                  isCurrentUser ? "flex-row-reverse" : "flex-row"
-                }`}
+                className={`flex max-w-[85%] sm:max-w-[70%] ${isCurrentUser ? "flex-row-reverse" : "flex-row"
+                  }`}
               >
                 {/* Avatar */}
                 {showAvatar && !isCurrentUser && (
@@ -624,9 +665,8 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
 
                 {/* Message Content */}
                 <div
-                  className={`group relative ${
-                    isCurrentUser ? "ml-2" : "mr-2"
-                  }`}
+                  className={`group relative ${isCurrentUser ? "ml-2" : "mr-2"
+                    }`}
                 >
                   {/* Sender Name */}
                   {!isCurrentUser && showAvatar && (
@@ -637,19 +677,17 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
 
                   {/* Message Bubble */}
                   <div
-                    className={`relative px-4 py-2 rounded-2xl ${
-                      isCurrentUser
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-card border border-border text-foreground"
-                    }`}
+                    className={`relative px-4 py-2 rounded-2xl ${isCurrentUser
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card border border-border text-foreground"
+                      }`}
                   >
                     {/* Attachments */}
                     {Array.isArray(message?.attachments) &&
                       message.attachments.length > 0 && (
                         <div
-                          className={`space-y-2 ${
-                            message?.body?.trim?.() ? "mb-2" : ""
-                          }`}
+                          className={`space-y-2 ${message?.body?.trim?.() ? "mb-2" : ""
+                            }`}
                         >
                           {message.attachments.map((attachment, idx) => {
                             const attachmentType = getAttachmentType(
@@ -671,81 +709,148 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
                               "Attachment";
                             if (attachmentType === "image" && url) {
                               return (
-                                <Image
-                                  key={key}
-                                  src={url}
-                                  alt={displayName}
-                                  className="max-h-64 rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                  onClick={() => window.open(url, "_blank")}
-                                />
+                                <div key={key} className="relative group">
+                                  <Image
+                                    src={url}
+                                    alt={displayName}
+                                    className="max-h-64 rounded-xl object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={() => window.open(url, "_blank")}
+                                  />
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDownload(url, displayName);
+                                    }}
+                                    className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                    title="Download"
+                                  >
+                                    <Icon name="Download" size={16} />
+                                  </button>
+                                </div>
                               );
                             }
 
                             if (attachmentType === "video" && url) {
                               return (
-                                <video
-                                  key={key}
-                                  controls
-                                  className="max-h-64 rounded-xl"
-                                >
-                                  <source
-                                    src={url}
-                                    type={
-                                      attachment?.mimeType ||
-                                      attachment?.mime ||
-                                      "video/mp4"
-                                    }
-                                  />
-                                  Your browser does not support the video tag.
-                                </video>
+                                <div key={key} className="relative group">
+                                  <video
+                                    controls
+                                    className="max-h-64 rounded-xl"
+                                  >
+                                    <source
+                                      src={url}
+                                      type={
+                                        attachment?.mimeType ||
+                                        attachment?.mime ||
+                                        "video/mp4"
+                                      }
+                                    />
+                                    Your browser does not support the video tag.
+                                  </video>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDownload(url, displayName);
+                                    }}
+                                    className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                    title="Download"
+                                  >
+                                    <Icon name="Download" size={16} />
+                                  </button>
+                                </div>
                               );
                             }
 
                             if (attachmentType === "audio" && url) {
                               return (
-                                <audio key={key} controls className="w-full">
-                                  <source
-                                    src={url}
-                                    type={
-                                      attachment?.mimeType ||
-                                      attachment?.mime ||
-                                      "audio/mpeg"
-                                    }
-                                  />
-                                  Your browser does not support the audio tag.
-                                </audio>
+                                <div key={key} className="space-y-2">
+                                  <audio controls className="w-full">
+                                    <source
+                                      src={url}
+                                      type={
+                                        attachment?.mimeType ||
+                                        attachment?.mime ||
+                                        "audio/mpeg"
+                                      }
+                                    />
+                                    Your browser does not support the audio tag.
+                                  </audio>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDownload(url, displayName);
+                                    }}
+                                    className={`flex items-center justify-center space-x-2 text-xs font-medium p-2 rounded-lg w-full transition-colors ${isCurrentUser
+                                      ? "bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
+                                      : "bg-muted hover:bg-muted/80 text-foreground"
+                                      }`}
+                                  >
+                                    <Icon name="Download" size={12} />
+                                    <span>Download Audio</span>
+                                  </button>
+                                </div>
                               );
                             }
 
                             return (
-                              <a
+                              <div
                                 key={key}
-                                href={url || "#"}
-                                target="_blank"
-                                rel="noreferrer"
-                                className={`flex items-center space-x-2 text-sm font-medium p-3 rounded-lg transition-colors ${
-                                  isCurrentUser
-                                    ? "bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
-                                    : "bg-muted hover:bg-muted/80 text-foreground"
-                                }`}
+                                className={`flex items-center justify-between space-x-2 text-sm font-medium p-3 rounded-lg transition-colors ${isCurrentUser
+                                  ? "bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
+                                  : "bg-muted hover:bg-muted/80 text-foreground"
+                                  }`}
                               >
-                                <Icon name="Paperclip" size={16} />
-                                <div className="flex-1 min-w-0">
-                                  <p className="truncate">{displayName}</p>
-                                  {attachment?.size && (
-                                    <p
-                                      className={`text-xs ${
-                                        isCurrentUser
+                                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                                  <Icon
+                                    name="Paperclip"
+                                    size={16}
+                                    className="flex-shrink-0"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="truncate">{displayName}</p>
+                                    {attachment?.size && (
+                                      <p
+                                        className={`text-xs ${isCurrentUser
                                           ? "text-primary-foreground/60"
                                           : "text-muted-foreground"
-                                      }`}
-                                    >
-                                      {formatFileSize(attachment.size)}
-                                    </p>
-                                  )}
+                                          }`}
+                                      >
+                                        {formatFileSize(attachment.size)}
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
-                                <Icon name="Download" size={16} />
-                              </a>
+
+                                <div className="flex items-center space-x-1 flex-shrink-0">
+                                  {/* Preview/Open button */}
+                                  <button
+                                    onClick={() => window.open(url, "_blank")}
+                                    className={`p-1.5 rounded hover:bg-background/50 transition-colors ${isCurrentUser
+                                      ? "text-primary-foreground"
+                                      : "text-foreground"
+                                      }`}
+                                    title="Open in new tab"
+                                  >
+                                    <Icon name="ExternalLink" size={14} />
+                                  </button>
+
+                                  {/* Download button */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleDownload(url, displayName);
+                                    }}
+                                    className={`p-1.5 rounded hover:bg-background/50 transition-colors ${isCurrentUser
+                                      ? "text-primary-foreground"
+                                      : "text-foreground"
+                                      }`}
+                                    title="Download"
+                                  >
+                                    <Icon name="Download" size={14} />
+                                  </button>
+                                </div>
+                              </div>
                             );
                           })}
                         </div>
@@ -760,11 +865,10 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
 
                     {/* Message Time */}
                     <div
-                      className={`text-xs mt-1 ${
-                        isCurrentUser
-                          ? "text-primary-foreground/70"
-                          : "text-muted-foreground"
-                      }`}
+                      className={`text-xs mt-1 ${isCurrentUser
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground"
+                        }`}
                     >
                       {formatTime(message?.sentAt)}
                       {isCurrentUser && (
@@ -773,9 +877,8 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
                             message?.status === "read" ? "CheckCheck" : "Check"
                           }
                           size={12}
-                          className={`inline ml-1 ${
-                            message?.status === "read" ? "text-success" : ""
-                          }`}
+                          className={`inline ml-1 ${message?.status === "read" ? "text-success" : ""
+                            }`}
                         />
                       )}
                     </div>
@@ -812,81 +915,92 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
       </div>
 
       {/* Message Input */}
-      <div className="bg-card border-t border-border p-4">
-        {/* Emoji Picker */}
-        {showEmojiPicker && (
-          <div className="mb-3 p-3 bg-muted rounded-lg">
-            <div className="grid grid-cols-6 gap-2">
-              {emojis?.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => {
-                    setMessageText((prev) => prev + emoji);
-                    setShowEmojiPicker(false);
-                  }}
-                  className="text-xl hover:bg-background rounded p-2 transition-colors duration-200"
-                >
-                  {emoji}
-                </button>
-              ))}
+      {canSendMessages ? (
+        <div className="bg-card border-t border-border p-4">
+          {/* Emoji Picker */}
+          {showEmojiPicker && (
+            <div className="mb-3 p-3 bg-muted rounded-lg">
+              <div className="grid grid-cols-6 gap-2">
+                {emojis?.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => {
+                      setMessageText((prev) => prev + emoji);
+                      setShowEmojiPicker(false);
+                    }}
+                    className="text-xl hover:bg-background rounded p-2 transition-colors duration-200"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="flex items-end space-x-3">
-          {/* File Upload */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            onChange={handleFileUpload}
-            className="hidden"
-            accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar"
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => !uploadingFiles && fileInputRef?.current?.click()}
-            className="flex-shrink-0"
-            disabled={uploadingFiles}
-          >
-            <Icon name="Paperclip" size={18} />
-          </Button>
-
-          {/* Message Input */}
-          <div className="flex-1 relative">
-            <textarea
-              value={messageText}
-              onChange={handleTyping}
-              onKeyPress={handleKeyPress}
-              placeholder="Type a message..."
-              disabled={uploadingFiles}
-              className="w-full bg-background border border-border rounded-lg px-4 py-3 pr-12 resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-              rows="1"
-              style={{ minHeight: "44px", maxHeight: "120px" }}
+          <div className="flex items-end space-x-3">
+            {/* File Upload */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              className="hidden"
+              accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar"
             />
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="absolute right-2 top-1/2 -translate-y-1/2"
+              onClick={() => !uploadingFiles && fileInputRef?.current?.click()}
+              className="flex-shrink-0"
               disabled={uploadingFiles}
             >
-              <Icon name="Smile" size={18} />
+              <Icon name="Paperclip" size={18} />
+            </Button>
+
+            {/* Message Input */}
+            <div className="flex-1 relative">
+              <textarea
+                value={messageText}
+                onChange={handleTyping}
+                onKeyPress={handleKeyPress}
+                placeholder="Type a message..."
+                disabled={uploadingFiles}
+                className="w-full bg-background border border-border rounded-lg px-4 py-3 pr-12 resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                rows="1"
+                style={{ minHeight: "44px", maxHeight: "120px" }}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+                disabled={uploadingFiles}
+              >
+                <Icon name="Smile" size={18} />
+              </Button>
+            </div>
+
+            {/* Send Button */}
+            <Button
+              onClick={handleSendMessage}
+              disabled={!messageText?.trim() || uploadingFiles}
+              className="flex-shrink-0"
+              size="icon"
+            >
+              <Icon name="Send" size={18} />
             </Button>
           </div>
-
-          {/* Send Button */}
-          <Button
-            onClick={handleSendMessage}
-            disabled={!messageText?.trim() || uploadingFiles}
-            className="flex-shrink-0"
-            size="icon"
-          >
-            <Icon name="Send" size={18} />
-          </Button>
         </div>
-      </div>
+      ) : (
+        <div className="bg-card border-t border-border p-4">
+          <div className="flex items-center justify-center space-x-2 text-muted-foreground bg-muted rounded-lg px-4 py-3">
+            <Icon name="Lock" size={18} />
+            <span className="text-sm">
+              You cannot send messages because you left this group
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
