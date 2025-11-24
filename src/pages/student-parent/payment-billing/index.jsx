@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import Icon from "../../../components/AppIcon";
 import PaymentMethodSelector from "./components/PaymentMethodSelector";
@@ -9,6 +11,7 @@ import {
   fetchPaymentMethods,
   fetchTransactions,
   fetchInvoices,
+  createSetupIntent,
 } from "../../../reducers/payments/paymentsThunks";
 
 const PaymentBilling = () => {
@@ -33,6 +36,10 @@ const PaymentBilling = () => {
     dispatch(fetchTransactions({ status: 'All' }));
     dispatch(fetchInvoices());
   }, [dispatch]);
+
+  // Load Stripe (publishable key must be set in env)
+  // Keep this at module/component scope so it's only created once.
+  const stripePromise = loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY);
 
   const tabConfig = [
     {
@@ -62,13 +69,16 @@ const PaymentBilling = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case "payment-methods":
+        // Wrap PaymentMethodSelector with Elements so it can use Stripe hooks
         return (
-          <PaymentMethodSelector
-            savedCards={paymentMethods}
-            onPaymentMethodSelect={handlePaymentMethodSelect}
-            selectedMethod={selectedPaymentMethod}
-            onAddPaymentMethod={handleAddPaymentMethod}
-          />
+          <Elements stripe={stripePromise}>
+            <PaymentMethodSelector
+              savedCards={paymentMethods}
+              onPaymentMethodSelect={handlePaymentMethodSelect}
+              selectedMethod={selectedPaymentMethod}
+              onAddPaymentMethod={handleAddPaymentMethod}
+            />
+          </Elements>
         );
       case "transactions-history":
         return <TransactionsHistory transactions={transactions} />;
@@ -130,8 +140,8 @@ const PaymentBilling = () => {
                     key={tab?.id}
                     onClick={() => setActiveTab(tab?.id)}
                     className={`flex items-center space-x-2 py-4 px-6 border-b-2 font-medium text-sm whitespace-nowrap transition-smooth ${activeTab === tab?.id
-                        ? "border-primary text-primary"
-                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
                       }`}
                   >
                     <Icon name={tab?.icon} size={16} />

@@ -1,4 +1,3 @@
-// src/reducers/payments/paymentsSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 import {
   fetchPaymentMethods,
@@ -9,6 +8,8 @@ import {
   fetchInvoices,
   fetchParentStudents,
   setDefaultPaymentMethod,
+  fetchInvoiceDetail,
+  downloadInvoicePdf
 } from './paymentsThunks';
 
 const initialState = {
@@ -18,9 +19,33 @@ const initialState = {
   lastPaymentIntentId: null,
   error: null,
 
-  // new
-  transactions: { loading: false, data: [], total: 0 },
-  invoices: { loading: false, data: [], total: 0 },
+  // transactions & invoices: normalized containers + caches
+  transactions: {
+    items: [],
+    loading: false,
+    total: 0,
+    page: 1,
+    limit: 20,
+    error: null,
+    statusFilter: 'ALL',
+  },
+  invoices: {
+    items: [],
+    loading: false,
+    total: 0,
+    page: 1,
+    limit: 10,
+    error: null,
+    statusFilter: 'ALL',
+  },
+
+  // caches keyed by "STATUS::PAGE"
+  transactionsCache: {},
+  invoicesCache: {},
+
+  // invoice detail modal
+  invoiceDetail: { loading: false, data: null, error: null },
+
   parentStudents: { loading: false, data: [] },
 };
 
@@ -28,10 +53,17 @@ const paymentsSlice = createSlice({
   name: 'payments',
   initialState,
   reducers: {
-    clearPaymentError(state) { state.error = null; }
+    clearPaymentError(state) { state.error = null; },
+
+    // optional: clear caches (admin action)
+    clearPaymentsCache(state) {
+      state.transactionsCache = {};
+      state.invoicesCache = {};
+    },
   },
   extraReducers: (builder) => {
     builder
+      // existing flows (payment methods, create intents, etc.)
       .addCase(fetchPaymentMethods.pending, (s) => { s.loading = true; s.error = null; })
       .addCase(fetchPaymentMethods.fulfilled, (s, a) => { s.loading = false; s.methods = a.payload?.data || a.payload || []; })
       .addCase(fetchPaymentMethods.rejected, (s, a) => { s.loading = false; s.error = a.payload?.message || a.error?.message; })
@@ -39,40 +71,79 @@ const paymentsSlice = createSlice({
       .addCase(createPaymentIntent.pending, (s) => { s.loading = true; s.error = null; })
       .addCase(createPaymentIntent.fulfilled, (s, a) => {
         s.loading = false;
-        s.lastClientSecret = a.payload?.client_secret || a.payload?.data?.client_secret;
-        s.lastPaymentIntentId = a.payload?.paymentIntentId || a.payload?.id;
+        s.lastClientSecret = a.payload?.client_secret || a.payload?.data?.client_secret || null;
+        s.lastPaymentIntentId = a.payload?.paymentIntentId || a.payload?.id || null;
       })
       .addCase(createPaymentIntent.rejected, (s, a) => { s.loading = false; s.error = a.payload?.message || a.error?.message; })
 
       .addCase(createSetupIntent.pending, (s) => { s.loading = true; s.error = null; })
       .addCase(createSetupIntent.fulfilled, (s, a) => {
         s.loading = false;
-        s.lastClientSecret = a.payload?.client_secret || a.payload?.data?.client_secret;
+        s.lastClientSecret = a.payload?.client_secret || a.payload?.data?.client_secret || null;
       })
       .addCase(createSetupIntent.rejected, (s, a) => { s.loading = false; s.error = a.payload?.message || a.error?.message; })
 
       .addCase(refundPayment.pending, (s) => { s.loading = true; s.error = null; })
-      .addCase(refundPayment.fulfilled, (s, a) => { s.loading = false; })
+      .addCase(refundPayment.fulfilled, (s) => { s.loading = false; })
       .addCase(refundPayment.rejected, (s, a) => { s.loading = false; s.error = a.payload?.message || a.error?.message; })
 
       // transactions
-      .addCase(fetchTransactions.pending, (s) => { s.transactions.loading = true; })
-      .addCase(fetchTransactions.fulfilled, (s, a) => {
-        s.transactions.loading = false;
-        // backend expected shape: { transactions: [], total } or axios response object
-        s.transactions.data = a.payload?.data?.transactions || a.payload?.transactions || a.payload?.data || a.payload || [];
-        s.transactions.total = a.payload?.data?.total || a.payload?.total || (s.transactions.data?.length || 0);
+      .addCase(fetchTransactions.pending, (s, a) => {
+        s.transactions.loading = true;
+        s.error = null;
       })
-      .addCase(fetchTransactions.rejected, (s, a) => { s.transactions.loading = false; s.error = a.payload?.message || a.error?.message; })
+      .addCase(fetchTransactions.fulfilled, (s, { payload }) => {
+        s.transactions.loading = false;
+        const items = payload?.data || [];
+        const meta = payload?.meta || {};
+        s.transactions.items = items;
+        s.transactions.total = meta.total || items.length;
+        s.transactions.page = meta.page || 1;
+        s.transactions.limit = meta.limit || s.transactions.limit;
+      })
+      .addCase(fetchTransactions.rejected, (s, a) => {
+        s.transactions.loading = false;
+        s.transactions.error = a.payload?.message || a.error?.message;
+      })
 
       // invoices
-      .addCase(fetchInvoices.pending, (s) => { s.invoices.loading = true; })
-      .addCase(fetchInvoices.fulfilled, (s, a) => {
-        s.invoices.loading = false;
-        s.invoices.data = a.payload?.data?.invoices || a.payload?.invoices || a.payload?.data || a.payload || [];
-        s.invoices.total = a.payload?.data?.total || a.payload?.total || (s.invoices.data?.length || 0);
+      .addCase(fetchInvoices.pending, (s) => {
+        s.invoices.loading = true;
+        s.error = null;
       })
-      .addCase(fetchInvoices.rejected, (s, a) => { s.invoices.loading = false; s.error = a.payload?.message || a.error?.message; })
+      .addCase(fetchInvoices.fulfilled, (s, { payload }) => {
+        s.invoices.loading = false;
+        const items = payload?.data || [];
+        const meta = payload?.meta || {};
+        s.invoices.items = meta.page && meta.page > 1 ? [...(s.invoices.items || []), ...items] : items;
+        s.invoices.total = meta.total || items.length;
+        s.invoices.page = meta.page || 1;
+        s.invoices.pageSize = meta.limit || s.invoices.pageSize;
+      })
+      .addCase(fetchInvoices.rejected, (s, a) => {
+        s.invoices.loading = false;
+        s.error = a.payload?.message || a.error?.message;
+      })
+
+      // invoice detail
+      .addCase(fetchInvoiceDetail.pending, (s) => {
+        s.invoiceDetail.loading = true;
+        s.invoiceDetail.error = null;
+      })
+      .addCase(fetchInvoiceDetail.fulfilled, (s, action) => {
+        s.invoiceDetail.loading = false;
+        const payload = action.payload || {};
+        s.invoiceDetail.data = payload?.data || payload || null;
+      })
+      .addCase(fetchInvoiceDetail.rejected, (s, action) => {
+        s.invoiceDetail.loading = false;
+        s.invoiceDetail.error = action.payload?.message || action.error?.message;
+      })
+
+      // download invoice
+      .addCase(downloadInvoicePdf.fulfilled, (s, { payload }) => {
+        // no-op: UI will handle returned pdfUrl from thunk result
+      })
 
       // parent students
       .addCase(fetchParentStudents.pending, (s) => { s.parentStudents.loading = true; })
@@ -84,13 +155,10 @@ const paymentsSlice = createSlice({
 
       // set default
       .addCase(setDefaultPaymentMethod.pending, (s) => { s.loading = true; s.error = null; })
-      .addCase(setDefaultPaymentMethod.fulfilled, (s, a) => {
-        s.loading = false;
-        // After setting default, it's best to refresh methods via fetchPaymentMethods in UI
-      })
+      .addCase(setDefaultPaymentMethod.fulfilled, (s) => { s.loading = false; })
       .addCase(setDefaultPaymentMethod.rejected, (s, a) => { s.loading = false; s.error = a.payload?.message || a.error?.message; });
   }
 });
 
-export const { clearPaymentError } = paymentsSlice.actions;
+export const { clearPaymentError, clearPaymentsCache } = paymentsSlice.actions;
 export default paymentsSlice.reducer;

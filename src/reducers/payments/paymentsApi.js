@@ -16,6 +16,9 @@ export const listPaymentMethods = (params) =>
 export const createSetupIntent = (payload) =>
   api.post(`/payments/save-payment-method`, payload);
 
+export const attachPaymentMethod = ({ body }) =>
+  api.post('/payments/payment-methods/attach', body);
+
 // -----------------------------
 // PaymentIntents / Checkout
 // -----------------------------
@@ -47,6 +50,9 @@ export const setDefaultPaymentMethod = (paymentMethodId) =>
 export const listTransactions = (params) =>
   api.get(`/payments/transactions`, { params: cleanParams(params) });
 
+export const getTransactionReceipt = (txId) =>
+  api.get(`/payments/transactions/${txId}/receipt`);
+
 // -----------------------------
 // Invoices
 // -----------------------------
@@ -55,6 +61,10 @@ export const listInvoices = (params) =>
 
 export const getInvoice = (invoiceId) =>
   api.get(`/payments/invoices/${invoiceId}`);
+
+export const getInvoiceDownload = (invoiceId) =>
+  api.get(`/payments/invoices/${invoiceId}/download`);
+
 
 // -----------------------------
 // Parent students (for parent role)

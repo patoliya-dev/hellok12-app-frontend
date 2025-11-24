@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 import {
   Navigate,
   useNavigate,
@@ -20,14 +21,16 @@ import BookingConfirmation from "./components/BookingConfirmation";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { copyToClipboard } from "../../../utils/utils";
 import { getRolePath } from "../../../utils/rolePath";
+import { successToast, errorToast } from "../../../utils/utils";
+import { fetchCurrentUser } from "reducers/auth/authThunks";
 import {
   createPaymentIntent,
-  createSetupIntent,
-  fetchPaymentMethods
+  fetchPaymentMethods,
+  createCustomer
 } from "../../../reducers/payments/paymentsThunks";
-import { successToast, errorToast } from "../../../utils/utils";
 import { getCourseDetails } from "../../../services/courses/course.service";
-import { fetchCurrentUser } from "reducers/auth/authThunks";
+import { createBooking } from "reducers/bookings/bookingsThunks";
+import { selectSelectedTeacher } from "reducers/teachers/teachersSlice";
 
 // Steps for enrollment
 const stepsForEntrollment = [
@@ -85,6 +88,7 @@ const BookLesson = () => {
   }
 
   const currentUser = useSelector(selectAuthUser);
+  const selectedTeacher = useSelector(selectSelectedTeacher);
   const isStudent = currentUser?.role === "student";
   const isParent = currentUser?.role === "parent";
 
@@ -94,7 +98,8 @@ const BookLesson = () => {
   const [address, setAddress] = useState("");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [courseData, setCourseData] = useState(classData)
+  const [courseData, setCourseData] = useState({}); // initially empty
+  const stripePromise = loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY);
 
   // NEW: read payment methods & parent students from payments slice
   const paymentMethods = useSelector((s) => s.payments?.methods || []);
@@ -239,19 +244,19 @@ const BookLesson = () => {
 
       // 2) Create booking on server BEFORE payment so bookingId is available
       const bookingPayload = {
-        classId: courseData?.id,
-        studentId: selectedStudent?.id,
-        teacherId: courseData?.teacher?.id,
+        classId: courseData?._id,
+        studentId: selectedStudent?._id,
+        teacherId: selectedTeacher?._id,
         // include amount so server knows payment expectations
         amount: Math.round((courseData?.price || 0) * 100),
       };
       const bookingRes = await dispatch(createBooking(bookingPayload)).unwrap();
-      const bookingId = bookingRes?.booking?._id || bookingRes?.booking?.id || bookingRes?._id;
 
       // 3) Create PaymentIntent via thunk
       const paymentIntentRes = await dispatch(createPaymentIntent({
-        bookingId: bookingId || null,
-        amountCents: Math.round((courseData?.price || 0) * 100),
+        bookingId: bookingRes?.booking?._id || null,
+        teacherId: selectedTeacher?._id || null,
+        amount: Math.round((courseData?.price || 0) * 100),
         currency: 'usd',
         paymentMethodId: selectedPaymentMethod?.type === 'saved_card' ? selectedPaymentMethod?.data?.stripePaymentMethodId || selectedPaymentMethod?.data?.id : undefined,
         savePaymentMethod: selectedPaymentMethod?.type !== 'saved_card', // if new, maybe save
@@ -266,7 +271,7 @@ const BookLesson = () => {
       if (!clientSecret) throw new Error('Missing client secret from createPaymentIntent');
 
       // 4) Confirm payment via Stripe
-      const stripe = await loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+      const stripe = await loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY);
       if (!stripe) throw new Error('Stripe failed to load');
 
       let confirmResult;
@@ -296,32 +301,37 @@ const BookLesson = () => {
     }
   };
 
-  // New: save card flow - call createSetupIntent thunk with card payload (UI currently collects raw card fields)
-  const handleAddPaymentMethod = (cardData) => {
-    (async () => {
+  // PaymentMethodSelector will confirm SetupIntent and return { paymentMethodId, pm } on success.
+  const handleAddPaymentMethod = async (result = {}) => {
+    try {
+      // result: { paymentMethodId, pm } where pm is optional local metadata
+      const { paymentMethodId, pm } = result;
+      // Refresh saved methods
+      await dispatch(fetchPaymentMethods()).unwrap();
+      // Find the newly saved payment method in the refreshed list (best-effort)
+      const refreshed = (store => store?.payments?.methods || [])( /* access via selector is preferred but keep minimal here */);
+      // If parent expects a shape with stripePaymentMethodId, map accordingly
+      let newCard = null;
       try {
-        successToast("Saving payment method...");
-        // createSetupIntent will call backend endpoint - payload may include card data
-        const res = await dispatch(createSetupIntent(cardData)).unwrap();
-        // backend shape may be { data: { paymentMethod: {...} } } or { paymentMethod: {...} }
-        const pm = res?.data?.paymentMethod || res?.paymentMethod || res?.data;
-        if (pm) {
-          // refresh list
-          await dispatch(fetchPaymentMethods());
-          setSelectedPaymentMethod({ type: "saved_card", data: pm });
-          successToast("Payment method saved");
-        } else {
-          // fallback: show success and refresh methods
-          await dispatch(fetchPaymentMethods());
-          successToast("Payment method saved");
-        }
-      } catch (err) {
-        console.error("Failed to save payment method", err);
-        // surface backend message when available
-        const message = err?.payload?.message || err?.message || 'Failed to save payment method';
-        errorToast(message);
+        const methods = (paymentMethods) || [];
+        newCard = methods.find((m) => m?.stripePaymentMethodId === paymentMethodId || m?.id === paymentMethodId) || null;
+      } catch (e) {
+        newCard = null;
       }
-    })();
+      // Prefer the explicit pm returned by child (if provided)
+      if (pm) {
+        setSelectedPaymentMethod({ type: "saved_card", data: pm });
+      } else if (newCard) {
+        setSelectedPaymentMethod({ type: "saved_card", data: newCard });
+      } else if (paymentMethodId) {
+        // fallback create a minimal object
+        setSelectedPaymentMethod({ type: "saved_card", data: { id: paymentMethodId, stripePaymentMethodId: paymentMethodId, last4: "****" } });
+      }
+      successToast("Card saved");
+    } catch (err) {
+      console.error("Failed to process added payment method", err);
+      errorToast(err?.message || "Failed to save payment method");
+    }
   };
 
   const onCloseSuccessModal = () => {
@@ -453,12 +463,14 @@ const BookLesson = () => {
                     {/* Left Panel - Booking Form */}
                     {currentStep === 2 && (
                       <div className="col-span-6 space-y-6">
-                        <PaymentMethodSelector
-                          savedCards={paymentMethods}
-                          onPaymentMethodSelect={handlePaymentMethodSelect}
-                          selectedMethod={selectedPaymentMethod}
-                          onAddPaymentMethod={handleAddPaymentMethod}
-                        />
+                        <Elements stripe={stripePromise}>
+                          <PaymentMethodSelector
+                            savedCards={paymentMethods}
+                            onPaymentMethodSelect={handlePaymentMethodSelect}
+                            selectedMethod={selectedPaymentMethod}
+                            onAddPaymentMethod={handleAddPaymentMethod}
+                          />
+                        </Elements>
                       </div>
                     )}
                     {currentStep === 3 && (
@@ -514,12 +526,14 @@ const BookLesson = () => {
                 {/* Mobile View */}
                 <div className="lg:hidden space-y-6">
                   {currentStep === 2 && (
-                    <PaymentMethodSelector
-                      savedCards={paymentMethods}
-                      onPaymentMethodSelect={handlePaymentMethodSelect}
-                      selectedMethod={selectedPaymentMethod}
-                      onAddPaymentMethod={handleAddPaymentMethod}
-                    />
+                    <Elements stripe={stripePromise}>
+                      <PaymentMethodSelector
+                        savedCards={paymentMethods}
+                        onPaymentMethodSelect={handlePaymentMethodSelect}
+                        selectedMethod={selectedPaymentMethod}
+                        onAddPaymentMethod={handleAddPaymentMethod}
+                      />
+                    </Elements>
                   )}
                   {currentStep === 3 && (
                     <BookingConfirmation

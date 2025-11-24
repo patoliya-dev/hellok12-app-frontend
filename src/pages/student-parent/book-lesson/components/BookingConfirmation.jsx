@@ -1,14 +1,18 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
+import { selectSelectedTeacher } from "reducers/teachers/teachersSlice";
 
 const BookingConfirmation = ({
   courseData,
   selectedPaymentMethod,
   teacherData,
   selectedStudent,
-  type = "enroll",
+  type = "enroll"
 }) => {
+  const selectedTeacher = useSelector(selectSelectedTeacher);
+
   const formatDate = (date) => {
     return date.toLocaleDateString("en-US", {
       weekday: "long",
@@ -20,12 +24,12 @@ const BookingConfirmation = ({
 
   const getClassTypeBadge = (type) => {
     const isOneOnOne = type === "1-on-1";
-    const isOnlineCourse = type === "Online Course";
+    const isOnlineCourse = type === "online";
     return (
       <span
         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${isOneOnOne
-            ? "bg-blue-100 text-blue-800"
-            : "bg-green-100 text-green-800"
+          ? "bg-blue-100 text-blue-800"
+          : "bg-green-100 text-green-800"
           }`}
       >
         {isOnlineCourse ? (
@@ -62,8 +66,8 @@ const BookingConfirmation = ({
             <div className="flex flex-col gap-5 md:gap-0 md:flex-row md:justify-between">
               <div className="flex items-start space-x-4">
                 <Image
-                  src={teacherData?.profileImage}
-                  alt={teacherData?.name}
+                  src={courseData?.introImageRef?.url}
+                  alt={courseData?.name}
                   className="w-12 h-12 rounded-full object-cover flex-shrink-0"
                 />
                 <div className="flex-1">
@@ -71,12 +75,16 @@ const BookingConfirmation = ({
                     {courseData?.title}
                   </h5>
                   <p className="text-sm text-muted-foreground mb-2">
-                    with {teacherData?.name}
+                    with {selectedTeacher?.name}
                   </p>
                   <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                     <div className="flex items-center space-x-1">
                       <Icon name="Clock" size={14} />
-                      <span>{courseData?.duration} minutes</span>
+                      <span>
+                        {courseData?.startDate.slice(0, 10)}{" "}
+                        {courseData?.endDate && `- ${courseData?.endDate.slice(0, 10)}`}
+                      </span>
+                      {/* <span>{courseData?.duration} minutes</span> */}
                     </div>
                   </div>
                 </div>
@@ -89,8 +97,8 @@ const BookingConfirmation = ({
                   </span>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {getClassTypeBadge(courseData?.type)}
-                  {getClassTypeBadge(courseData?.courseType)}
+                  {getClassTypeBadge(courseData?.lessonType)}
+                  {getClassTypeBadge(courseData?.mode)}
                 </div>
               </div>
             </div>

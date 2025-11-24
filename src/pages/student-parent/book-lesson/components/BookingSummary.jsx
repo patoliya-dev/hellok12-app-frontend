@@ -1,7 +1,8 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import { format } from "date-fns";
 import Icon from "../../../../components/AppIcon";
-import { Checkbox } from "../../../../components/ui/Checkbox";
+import { selectSelectedTeacher } from "reducers/teachers/teachersSlice";
 
 const BookingSummary = ({
   courseData,
@@ -10,6 +11,8 @@ const BookingSummary = ({
   selectedStudent,
   total,
 }) => {
+  const selectedTeacher = useSelector(selectSelectedTeacher);
+
   const formatDuration = (minutes) => {
     if (minutes < 60) {
       return `${minutes} min`;
@@ -36,7 +39,7 @@ const BookingSummary = ({
                 {courseData?.title}
               </h3>
               <p className="text-sm text-text-secondary">
-                with {courseData?.teacher?.name}
+                with {selectedTeacher?.name}
               </p>
             </div>
             <div className="text-right">
@@ -44,23 +47,27 @@ const BookingSummary = ({
                 ${courseData?.price}
               </p>
               <p className="text-xs text-text-secondary">
-                {formatDuration(courseData?.duration)}
+                {/* {formatDuration(courseData?.duration)} */}
+                <span>
+                  {courseData?.startDate?.slice(0, 10)}{" "}
+                  {courseData?.endDate && `- ${courseData?.endDate?.slice(0, 10)}`}
+                </span>
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center">
+        {courseData?.ownerType === "school" && <div className="flex items-center">
           <Icon name="SchoolIcon" size={22} className="mr-2" />
           <span className="text-body2 text-text-secondary">
             {courseData?.teacher?.school}
           </span>
-        </div>
+        </div>}
 
         <div className="border-t border-border pt-4">
           <div className="space-y-3">
             {/* Date & Time for 1-on-1 classes */}
-            {courseData?.type === "1-on-1" &&
+            {courseData?.lessonType === "1-on-1" &&
               selectedDate &&
               selectedTimeSlot && (
                 <div className="flex items-center space-x-3">
@@ -82,7 +89,7 @@ const BookingSummary = ({
               )}
 
             {/* Group Class Schedule */}
-            {courseData?.type === "Group" && (
+            {courseData?.lessonType === "group" && (
               <div className="flex items-center space-x-3">
                 <Icon
                   name="Calendar"
@@ -102,12 +109,12 @@ const BookingSummary = ({
             )}
 
             {/* Location for Group Classes */}
-            {courseData?.type === "Group" && courseData?.location && (
+            {courseData?.lessonType === "group" && courseData?.location && (
               <div className="flex items-center space-x-3">
                 <Icon name="MapPin" size={16} className="text-text-secondary" />
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    In-person class
+                    {(courseData?.mode).toUpperCase()} class
                   </p>
                   <p className="text-sm text-text-secondary">
                     {courseData?.location}

@@ -9,6 +9,7 @@ import pageLoaderReducer from '../reducers/ui/pageLoaderSlice';
 import scheduleReducer from '../reducers/schedule/scheduleSlice'
 import paymentReducer from '../reducers/payments/paymentsSlice';
 import teachersReducer from '../reducers/teachers/teachersSlice';
+import stripeReducer from "../reducers/stripe/stripeSlice";
 
 // In reducer:
 
@@ -25,6 +26,7 @@ const store = configureStore({
     schedule: scheduleReducer,
     payments: paymentReducer,
     teachers: teachersReducer,
+    stripe: stripeReducer,
   },
 });
 

@@ -3,11 +3,10 @@ import * as bookingsApi from './bookingsApi';
 
 export const createBooking = createAsyncThunk(
     'bookings/createBooking',
-    async (payload, { getState, rejectWithValue }) => {
+    async (payload, { rejectWithValue }) => {
         try {
-            const token = getState().auth?.token;
-            const res = await bookingsApi.createBooking({ token, body: payload });
-            return res.data || res;
+            const { data } = await bookingsApi.createBooking(payload);
+            return data;
         } catch (err) {
             return rejectWithValue(err.body || { message: err.message });
         }

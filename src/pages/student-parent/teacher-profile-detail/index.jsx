@@ -15,7 +15,7 @@ import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import Loader from "components/ui/Loader";
 
 // NEW: redux import
-import { selectSelectedTeacher, selectTeachersLoading } from "../../../reducers/teachers/teachersSlice";
+import { selectSelectedTeacher, selectTeacherLoading } from "../../../reducers/teachers/teachersSlice";
 import { fetchTeacherDetails } from "../../../reducers/teachers/teacherThunks";
 
 const TeacherProfileDetail = () => {
@@ -26,14 +26,14 @@ const TeacherProfileDetail = () => {
 
   // read selectedTeacher from redux
   const teacher = useSelector(selectSelectedTeacher);
-  const loading = useSelector(selectTeachersLoading);
+  const loading = useSelector(selectTeacherLoading);
 
   // fetch teacher when entering page — only once per mount
   useEffect(() => {
-    if (id) {
-      dispatch(fetchTeacherDetails(id));
-    }
-    // We intentionally do not add teacher to deps here because we want to fetch when route id changes only.
+    if (!id) return;
+    // Dispatch thunk once to populate selectedTeacher.
+    dispatch(fetchTeacherDetails({ teacherId: id }));
+    // If user navigates to another teacher, thunk will replace selectedTeacher.
   }, [id, dispatch]);
 
   // Mock reviews data

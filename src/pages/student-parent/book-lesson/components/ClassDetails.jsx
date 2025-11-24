@@ -24,8 +24,8 @@ const ClassDetails = ({ courseData, type = "enroll" }) => {
     return (
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isOneOnOne
-            ? "bg-blue-100 text-blue-800"
-            : "bg-green-100 text-green-800"
+          ? "bg-blue-100 text-blue-800"
+          : "bg-green-100 text-green-800"
           }`}
       >
         <Icon name={isOneOnOne ? "User" : "Users"} size={12} className="mr-1" />
@@ -54,13 +54,13 @@ const ClassDetails = ({ courseData, type = "enroll" }) => {
             <p className="text-sm text-text-secondary">Instructor</p>
           </div>
           <div className="space-y-1 flex flex-col items-end gap-2">
-            {getClassTypeBadge(courseData?.type)}
-            <div className="flex items-center">
+            {getClassTypeBadge(courseData?.mode)}
+            {courseData?.ownerType === 'school' && <div className="flex items-center">
               <Icon name="SchoolIcon" size={22} className="mr-2" />
               <span className="text-body2 text-text-secondary">
                 {teacher?.school || courseData?.teacher?.school}
               </span>
-            </div>
+            </div>}
           </div>
         </div>
 
