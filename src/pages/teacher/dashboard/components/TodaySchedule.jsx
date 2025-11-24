@@ -10,12 +10,10 @@ const TodaySchedule = ({
   onViewAllSchedules,
   onMessage,
 }) => {
-  const [currentTime] = useState(new Date());
-
   const getSessionStatus = (session) => {
     const sessionTime = new Date(session.startTime);
-    const endTime = new Date(sessionTime.getTime() + session.duration * 60000);
-    const now = currentTime;
+    const endTime = new Date(sessionTime.getTime() + session.lesson.schedule.duration * 60000);
+    const now = new Date();
 
     if (now < sessionTime) {
       const minutesUntil = Math.floor((sessionTime - now) / (1000 * 60));
@@ -77,25 +75,26 @@ const TodaySchedule = ({
       </div>
 
       {sortedSessions.length === 0 ? (
-        <div className="text-center py-8">
+        <div className="text-center py-8 flex items-center justify-center flex-col gap-5">
           <Icon
             name="Calendar"
             size={48}
             color="var(--color-muted-foreground)"
           />
-          <p className="text-muted-foreground mt-2">
-            No sessions scheduled for today
-          </p>
-          <p className="text-sm text-muted-foreground">Enjoy your free day!</p>
+          <div className='flex flex-col gap-2'>
+            <p className="text-muted-foreground mt-2">
+              No sessions scheduled for today
+            </p>
+            <p className="text-sm text-muted-foreground">Enjoy your free day!</p>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
           {sortedSessions.map((session) => {
             const sessionStatus = getSessionStatus(session);
-
             return (
               <div
-                key={session.id}
+                key={session._id}
                 className={`p-4 rounded-lg border transition-micro ${getStatusBgColor(
                   sessionStatus.status
                 )}`}
@@ -103,16 +102,16 @@ const TodaySchedule = ({
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
                     <Image
-                      src={session.student.avatar}
-                      alt={session.student.name}
+                      src={session?.course?.introImageRef?.url}
+                      alt={session?.course?.title}
                       className="w-10 h-10 rounded-full object-cover"
                     />
                     <div>
                       <h4 className="font-medium text-foreground">
-                        {session.student.name}
+                        {session?.course?.title}
                       </h4>
                       <p className="text-sm text-muted-foreground">
-                        {session.subject}
+                        {session?.lesson?.title}
                       </p>
                     </div>
                   </div>
@@ -125,7 +124,7 @@ const TodaySchedule = ({
                       {sessionStatus.text}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {session.duration} minutes
+                      {session.lesson.schedule.duration} minutes
                     </div>
                   </div>
                 </div>
@@ -146,7 +145,7 @@ const TodaySchedule = ({
                         -{" "}
                         {new Date(
                           new Date(session.startTime).getTime() +
-                            session.duration * 60000
+                          session.lesson.schedule.duration * 60000
                         ).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -160,13 +159,13 @@ const TodaySchedule = ({
                         color="var(--color-muted-foreground)"
                       />
                       <span className="text-muted-foreground">
-                        {session.type}
+                        {session.course.mode}
                       </span>
                     </div>
                   </div>
-                  <span className="text-success font-medium">
+                  {/* <span className="text-success font-medium">
                     ${session.earnings}
-                  </span>
+                  </span> */}
                 </div>
 
                 <div className="flex space-x-2">
@@ -192,7 +191,7 @@ const TodaySchedule = ({
                       iconPosition="left"
                       iconSize={16}
                       onClick={() => onJoinSession(session)}
-                      className="flex-1"
+                      className="flex-1 cursor-pointer"
                     >
                       Rejoin Session
                     </Button>
@@ -211,7 +210,7 @@ const TodaySchedule = ({
                       >
                         Message Student
                       </Button>
-                      <Button
+                      {/* <Button
                         variant="outline"
                         size="sm"
                         iconName="X"
@@ -221,7 +220,7 @@ const TodaySchedule = ({
                         className="text-destructive hover:text-destructive"
                       >
                         Cancel
-                      </Button>
+                      </Button> */}
                     </>
                   )}
 

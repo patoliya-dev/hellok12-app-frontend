@@ -28,22 +28,6 @@ const MetricsCard = ({
           {subtitle && (
             <p className="text-sm text-muted-foreground">{subtitle}</p>
           )}
-          {trend && (
-            <div className="flex items-center mt-2">
-              <Icon
-                name={trend === "up" ? "TrendingUp" : "TrendingDown"}
-                size={16}
-                className={trend === "up" ? "text-success" : "text-error"}
-              />
-              <span
-                className={`text-sm font-medium ml-1 ${
-                  trend === "up" ? "text-success" : "text-error"
-                }`}
-              >
-                {trendValue}
-              </span>
-            </div>
-          )}
         </div>
         <div
           className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses?.[color]}`}
