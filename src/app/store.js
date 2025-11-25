@@ -10,7 +10,7 @@ import scheduleReducer from '../reducers/schedule/scheduleSlice'
 import paymentReducer from '../reducers/payments/paymentsSlice';
 import teachersReducer from '../reducers/teachers/teachersSlice';
 import stripeReducer from "../reducers/stripe/stripeSlice";
-
+import messagesReducer from "../reducers/messages/messageSlice";
 // In reducer:
 
 const store = configureStore({
@@ -27,6 +27,7 @@ const store = configureStore({
     payments: paymentReducer,
     teachers: teachersReducer,
     stripe: stripeReducer,
+    messages: messagesReducer,
   },
 });
 
