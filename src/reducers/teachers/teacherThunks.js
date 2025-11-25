@@ -20,12 +20,12 @@ export const fetchTeacherDetails = createAsyncThunk(
         return rejectWithValue({ message: "teacherId required" });
       }
 
-      const state = getState();
-      const current = state.teachers?.selectedTeacher;
-      // If we already have the same teacher and not forced, return it (avoid network)
-      if (!forceReload && current && (current._id === teacherId || current.id === teacherId)) {
-        return current;
-      }
+      // const state = getState();
+      // const current = state.teachers?.selectedTeacher;
+      // // If we already have the same teacher and not forced, return it (avoid network)
+      // if (!forceReload && current && (current._id === teacherId || current.id === teacherId)) {
+      //   return current;
+      // }
 
       const { data } = await fetchTeacherDetailsService(teacherId);
       if (!data) {

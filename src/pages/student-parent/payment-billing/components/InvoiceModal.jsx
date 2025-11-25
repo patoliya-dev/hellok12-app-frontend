@@ -16,34 +16,34 @@ const InvoiceModal = ({ selectedInvoice, onClose }) => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      Paid: {
+      PAID: {
         color: "bg-success/10 text-success",
         label: "Paid",
         icon: "CheckCircle",
       },
-      Pending: {
+      PENDING: {
         color: "bg-warning/10 text-warning",
         label: "Pending",
         icon: "Clock",
       },
-      Overdue: {
+      OVERDUE: {
         color: "bg-destructive/10 text-destructive",
         label: "Overdue",
         icon: "AlertCircle",
       },
-      Refunded: {
+      REFUNDED: {
         color: "bg-muted text-muted-foreground",
         label: "Refunded",
         icon: "RotateCcw",
       },
-      Cancelled: {
+      CANCELLED: {
         color: "bg-muted text-muted-foreground",
         label: "Cancelled",
         icon: "XCircle",
       },
     };
 
-    const config = statusConfig?.[status] || statusConfig?.Pending;
+    const config = statusConfig?.[status] || statusConfig?.PENDING;
     return (
       <div
         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config?.color}`}

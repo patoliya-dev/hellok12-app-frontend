@@ -45,33 +45,6 @@ const stepsForTrial = [
   { id: 2, title: "Confirm", icon: "CheckCircle" },
 ];
 
-const classData = {
-  id: "class-001",
-  title: "Conversational English Mastery",
-  description:
-    "Improve your speaking confidence through engaging conversations about daily topics, current events, and personal interests. Perfect for intermediate to advanced learners.",
-  type: "1-on-1", // or "Group"
-  courseType: "Online Course",
-  duration: 60,
-  price: 45,
-  teacher: {
-    id: "teacher-001",
-    name: "Sarah Martinez",
-    profileImage:
-      "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
-    timezone: "America/New_York",
-    school: "Adrian High School",
-  },
-  maxStudents: 8,
-  enrolledStudents: 6,
-  location: "Downtown Learning Center, Room 204",
-  groupSchedule: {
-    days: ["Monday", "Wednesday", "Friday"],
-    time: "6:00 PM - 7:15 PM",
-    nextSession: "Monday, January 8th at 6:00 PM",
-  },
-};
-
 const BookLesson = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -79,7 +52,10 @@ const BookLesson = () => {
   const [searchParams] = useSearchParams();
   const action = searchParams.get("action");
 
-  // ✅ Validate both path param and query param
+  // grab lessonId query param (may be present for trial flow)
+  const lessonId = searchParams.get("lessonId") || null;
+
+  // Validate action
   if (!["enroll", "trial"].includes(action)) {
     return <Navigate to="/404" replace />;
   }
@@ -118,17 +94,13 @@ const BookLesson = () => {
 
   useEffect(() => {
     const fetchCourse = async () => {
-      // setIsLoading(true);
       try {
         const { data } = await getCourseDetails(id);
         setCourseData(data);
       } catch (error) {
         errorToast(error.response?.data || error.message);
-      } finally {
-        // setIsLoading(false);
       }
     };
-
     fetchCourse();
   }, [id]);
 
@@ -226,70 +198,96 @@ const BookLesson = () => {
   // New: use real createPaymentIntent thunk and confirm via stripe
   const handleSubmit = async () => {
     try {
-      // ensure student selected
-      if (!selectedStudent) return errorToast('Select a student');
+      if (!selectedStudent) return errorToast('Please select a student before continuing.');
 
-      // generate idempotency key (uuid recommended)
+      // generate idempotency key
       const idempotencyKey = `booking-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-      // 1) Ensure Stripe customer exists for this user (server will create & return user)
+      // Ensure Stripe customer exists
       if (!currentUser?.stripeCustomerId) {
         try {
           await dispatch(createCustomer({})).unwrap();
         } catch (err) {
-          // non-fatal: allow createPaymentIntent to trigger createCustomer on server too
-          console.warn('createCustomer failed or already exists', err);
+          console.warn('createCustomer failed (non-fatal)', err);
         }
       }
 
       // 2) Create booking on server BEFORE payment so bookingId is available
       const bookingPayload = {
-        classId: courseData?._id,
-        studentId: selectedStudent?._id,
-        teacherId: selectedTeacher?._id,
-        // include amount so server knows payment expectations
+        courseId: courseData?._id || courseData?.id,
+        studentId: selectedStudent?._id || selectedStudent?.id,
+        teacherId: selectedTeacher?._id || selectedTeacher?.id,
         amount: Math.round((courseData?.price || 0) * 100),
+        isTrial: type === 'trial',
+        lessonId: type === 'trial' ? (lessonId || (courseData?.lessons?.[0]?._id)) : undefined
       };
-      const bookingRes = await dispatch(createBooking(bookingPayload)).unwrap();
 
-      // 3) Create PaymentIntent via thunk
-      const paymentIntentRes = await dispatch(createPaymentIntent({
-        bookingId: bookingRes?.booking?._id || null,
-        teacherId: selectedTeacher?._id || null,
+      let bookingRes;
+      try {
+        bookingRes = await dispatch(createBooking(bookingPayload)).unwrap();
+      } catch (err) {
+        // Map backend validation codes to friendly UI messages
+        const code = err?.code || err?.statusCode || err?.error?.code;
+        switch (code) {
+          case 'COURSE_FULL':
+            return errorToast('This course is full. Please choose a different course or contact support.');
+          case 'TRIAL_CAPACITY_EXHAUSTED':
+            return errorToast('Trial capacity is exhausted for this lesson.');
+          case 'ALREADY_TAKEN_TRIAL':
+            return errorToast('Selected student has already used a trial for this course.');
+          case 'STUDENT_REQUIRED':
+          case 'INVALID_STUDENT':
+            return errorToast('Please select a valid student.');
+          default:
+            return errorToast(err?.message || 'Failed to create booking');
+        }
+      }
+
+      // If this is a trial booking and payment not required, bookingRes.booking already created and may be PAID
+      if (bookingRes?.booking?.isTrial) {
+        successToast('Trial booked successfully');
+        setShowSuccessModal(true);
+        return;
+      }
+
+      // 3) Create PaymentIntent
+      const piPayload = {
+        bookingId: bookingRes?.booking?._id,
+        teacherId: selectedTeacher?._id || selectedTeacher?.id,
         amount: Math.round((courseData?.price || 0) * 100),
         currency: 'usd',
-        paymentMethodId: selectedPaymentMethod?.type === 'saved_card' ? selectedPaymentMethod?.data?.stripePaymentMethodId || selectedPaymentMethod?.data?.id : undefined,
-        savePaymentMethod: selectedPaymentMethod?.type !== 'saved_card', // if new, maybe save
+        paymentMethodId: selectedPaymentMethod?.type === 'saved_card' ? (selectedPaymentMethod?.data?.stripePaymentMethodId || selectedPaymentMethod?.data?.id) : undefined,
+        savePaymentMethod: selectedPaymentMethod?.type !== 'saved_card',
         idempotencyKey,
         metadata: {
-          classId: courseData?.id,
-          studentId: selectedStudent?.id
+          courseId: courseData?._id || courseData?.id,
+          studentId: selectedStudent?._id || selectedStudent?.id
         }
-      })).unwrap();
+      };
 
-      const clientSecret = paymentIntentRes?.data?.client_secret || paymentIntentRes?.client_secret || paymentIntentRes?.client_secret;
-      if (!clientSecret) throw new Error('Missing client secret from createPaymentIntent');
+      const paymentIntentRes = await dispatch(createPaymentIntent(piPayload)).unwrap();
+      const clientSecret = paymentIntentRes?.client_secret || paymentIntentRes?.raw?.client_secret;
+      if (!clientSecret) throw new Error('Missing client secret from server');
 
-      // 4) Confirm payment via Stripe
+      // 4) Confirm via Stripe (if using saved PM provide it)
       const stripe = await loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY);
       if (!stripe) throw new Error('Stripe failed to load');
 
       let confirmResult;
-      if (selectedPaymentMethod?.type === 'saved_card' && selectedPaymentMethod?.data?.stripePaymentMethodId) {
+      if (selectedPaymentMethod?.type === 'saved_card' && (selectedPaymentMethod?.data?.stripePaymentMethodId || selectedPaymentMethod?.data?.id)) {
         confirmResult = await stripe.confirmCardPayment(clientSecret, {
           payment_method: selectedPaymentMethod.data.stripePaymentMethodId || selectedPaymentMethod.data.id
         });
       } else {
-        // No Elements in UI: call confirm without payment_method; server may respond with next action
+        // If the FE used a SetupIntent to save card, the backend may accept paymentMethodId
         confirmResult = await stripe.confirmCardPayment(clientSecret);
       }
 
       if (confirmResult.error) {
-        // Handle 3DS or other errors — show error toast
         throw confirmResult.error;
       }
 
-      if (confirmResult.paymentIntent && confirmResult.paymentIntent.status === 'succeeded') {
+      if (confirmResult.paymentIntent && (confirmResult.paymentIntent.status === 'succeeded' || confirmResult.paymentIntent.status === 'requires_capture' || confirmResult.paymentIntent.status === 'processing')) {
         successToast('Payment successful');
         setShowSuccessModal(true);
       } else {
@@ -297,7 +295,7 @@ const BookLesson = () => {
       }
     } catch (err) {
       console.error('Payment error', err);
-      errorToast(err?.message || 'Payment failed');
+      errorToast(err?.message || 'Payment failed. Please try again.');
     }
   };
 

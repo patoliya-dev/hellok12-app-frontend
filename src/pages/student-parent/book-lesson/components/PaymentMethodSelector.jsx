@@ -89,12 +89,21 @@ const PaymentMethodSelector = ({
       setBillingName("");
     } catch (err) {
       console.error("Save card failed", err);
-      const message = err?.message || (err?.error && err.error.message) || "Failed to save card";
-      errorToast(message);
+      // attempt to extract server code/message
+      const serverMsg = err?.response?.data?.message || err?.message || 'Failed to save card';
+      const serverCode = err?.response?.data?.code;
+      // possible mapping if needed
+      if (serverCode === 'TRIAL_CAPACITY_EXHAUSTED') {
+        errorToast('Trial capacity exhausted for this lesson.');
+      } else {
+        errorToast(serverMsg);
+      }
     } finally {
       setIsSaving(false);
     }
   };
+
+  const getPmId = (card) => card?.stripePaymentMethodId || card?.id || card?.stripeId;
 
   return (
     <div className="bg-card rounded-lg">
@@ -108,8 +117,8 @@ const PaymentMethodSelector = ({
           <div className={`space-y-3 overflow-auto ${savedCards?.length > 2 && "max-h-[250px]"}`}>
             {savedCards?.map((card) => (
               <div
-                key={card?.id}
-                className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${selectedMethod?.data?.id === card?.id ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                key={getPmId(card)}
+                className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${selectedMethod?.data?.id === getPmId(card) ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
                   }`}
                 onClick={() => onPaymentMethodSelect({ type: "saved_card", data: card })}
               >
@@ -130,9 +139,9 @@ const PaymentMethodSelector = ({
                   <div className="flex items-center space-x-2">
                     {card?.isDefault && <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">Default</span>}
                     <Icon
-                      name={selectedMethod?.data?.id === card?.id ? "CheckCircle" : "Circle"}
+                      name={selectedMethod?.data?.id === getPmId(card) ? "CheckCircle" : "Circle"}
                       size={20}
-                      className={selectedMethod?.data?.id === card?.id ? "text-primary" : "text-muted-foreground"}
+                      className={selectedMethod?.data?.id === getPmId(card) ? "text-primary" : "text-muted-foreground"}
                     />
                   </div>
                 </div>

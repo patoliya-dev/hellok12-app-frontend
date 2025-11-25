@@ -23,7 +23,7 @@ const CourseCard = ({ courseItem, teacherId }) => {
     // });
 
     const params = new URLSearchParams({
-      classId: courseItem.id,
+      courseId: courseItem.id,
       teacherId: teacherId,
       classType: courseItem.type,
       className: courseItem.title,
@@ -90,23 +90,23 @@ const CourseCard = ({ courseItem, teacherId }) => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {courseItem?.lessonType === "group" &&
-            courseItem?.enrolledCount &&
-            courseItem?.studentCapacity &&
-            courseItem.enrolledCount >= courseItem.studentCapacity ? (
-              <Button variant="secondary" disabled>
-                Class Full
-              </Button>
-            ) : (
-              <Button
-                variant="default"
-                iconName="Calendar"
-                iconPosition="left"
-                onClick={handleBookNow}
-              >
-                Book Now
-              </Button>
-            )}
+            {
+              courseItem?.enrolledCount &&
+                courseItem?.studentCapacity &&
+                courseItem.enrolledCount >= courseItem.studentCapacity ? (
+                <Button variant="secondary" disabled>
+                  Class Full
+                </Button>
+              ) : (
+                <Button
+                  variant="default"
+                  iconName="Calendar"
+                  iconPosition="left"
+                  onClick={handleBookNow}
+                >
+                  Book Now
+                </Button>
+              )}
           </div>
         </div>
 

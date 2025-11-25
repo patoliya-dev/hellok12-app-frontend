@@ -1,5 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import * as paymentsApi from './paymentsApi';
+import { normalizeErr } from '../../features/shared/apiTypes';
 
 export const createCustomer = createAsyncThunk(
   'payments/createCustomer',
@@ -8,20 +9,21 @@ export const createCustomer = createAsyncThunk(
       const { data } = await paymentsApi.createCustomer(payload);
       return data;
     } catch (err) {
-      return rejectWithValue(err.body || { message: err.message });
+      return rejectWithValue(normalizeErr(err));
     }
   }
 );
 
-// get token from store or pass it via thunk arg
 export const fetchPaymentMethods = createAsyncThunk(
   'payments/fetchPaymentMethods',
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await paymentsApi.listPaymentMethods();
-      return data.data;
+      const res = await paymentsApi.listPaymentMethods();
+      // API returns { success:true, data: [ ... ] } OR direct array
+      const items = res?.data?.data || res?.data || res;
+      return items;
     } catch (err) {
-      return rejectWithValue(err.body || { message: err.message });
+      return rejectWithValue(normalizeErr(err));
     }
   }
 );
@@ -30,21 +32,14 @@ export const createPaymentIntent = createAsyncThunk(
   'payments/createPaymentIntent',
   async (payload, { rejectWithValue }) => {
     try {
-      // API expects amount in cents; your existing code used amount as amount
-      // const body = {
-      //   bookingId,
-      //   amount: amount,
-      //   currency,
-      //   paymentMethodId, // optional: server may confirm
-      //   description,
-      //   teacherId,
-      //   studentId,
-      // };
-      // pass idempotencyKey in headers if backend supports it via axios instance (or as part of body)
-      const { data } = await paymentsApi.createPaymentIntent(payload);
-      return data; // expected { client_secret, paymentIntentId, transactionId? }
+      const res = await paymentsApi.createPaymentIntent(payload);
+      // Normalize return: accept { client_secret, paymentIntentId } or { data: { client_secret } }
+      const d = res?.data || res;
+      const client_secret = d?.client_secret || d?.data?.client_secret || d?.clientSecret || null;
+      const paymentIntentId = d?.paymentIntentId || d?.id || d?.payment_intent_id || null;
+      return { client_secret, paymentIntentId, raw: d };
     } catch (err) {
-      return rejectWithValue(err.body || { message: err.message });
+      return rejectWithValue(normalizeErr(err));
     }
   }
 );
@@ -53,13 +48,12 @@ export const createSetupIntent = createAsyncThunk(
   'payments/createSetupIntent',
   async (payload, { rejectWithValue }) => {
     try {
-      // payload may include card information (since current UI collects it)
-      // Backend should implement secure handling: either accept raw card data (temporary)
-      // or expose an endpoint to return client_secret for SetupIntent (preferred).
       const res = await paymentsApi.createSetupIntent(payload);
-      return res; // expected { client_secret, paymentMethod }
+      const d = res?.data || res;
+      const client_secret = d?.client_secret || d?.data?.client_secret || d?.clientSecret || null;
+      return { client_secret, raw: d };
     } catch (err) {
-      return rejectWithValue(err.body || { message: err.message });
+      return rejectWithValue(normalizeErr(err));
     }
   }
 );
@@ -69,10 +63,9 @@ export const attachPaymentMethod = createAsyncThunk(
   async ({ paymentMethodId, setDefault = false }, { rejectWithValue }) => {
     try {
       const { data } = await paymentsApi.attachPaymentMethod({ body: { paymentMethodId, setDefault } });
-      // After attach, refresh the list
       return data;
     } catch (err) {
-      return rejectWithValue(err.body || { message: err.message });
+      return rejectWithValue(normalizeErr(err));
     }
   }
 );
@@ -82,9 +75,10 @@ export const refundPayment = createAsyncThunk(
   async ({ transactionId, amount }, { rejectWithValue }) => {
     try {
       const res = await paymentsApi.refundPayment({ body: { transactionId, amount: amount } });
-      return res;
+      const d = res?.data || res;
+      return d;
     } catch (err) {
-      return rejectWithValue(err.body || { message: err.message });
+      return rejectWithValue(normalizeErr(err));
     }
   }
 );
@@ -95,13 +89,16 @@ export const fetchTransactions = createAsyncThunk(
   async ({ status = '', page = 1, pageSize = 20, studentId } = {}, { rejectWithValue }) => {
     try {
       const params = { page, limit: pageSize };
-      if (status) params.status = status;
+      if (status && status !== 'ALL') params.status = status;
       if (studentId) params.studentId = studentId;
       const res = await paymentsApi.listTransactions(params);
-      // backend returns { success: true, data: [...], meta: {...} }
-      return res.data; // res.data === { success, data, meta }
+      // Expect { success: true, data: [...], meta: { total, page, limit } }
+      const d = res?.data || res;
+      const data = d?.data || d?.transactions || d || [];
+      const meta = d?.meta || d?.pagination || {};
+      return { data, meta };
     } catch (err) {
-      return rejectWithValue(err.response?.data || { message: err.message || 'Failed to load transactions' });
+      return rejectWithValue(normalizeErr(err));
     }
   }
 );
@@ -114,9 +111,12 @@ export const fetchInvoices = createAsyncThunk(
       const params = { page, limit: pageSize };
       if (studentId) params.studentId = studentId;
       const res = await paymentsApi.listInvoices(params);
-      return res.data;
+      const d = res?.data || res;
+      const items = d?.data || d?.invoices || d || [];
+      const meta = d?.meta || d?.pagination || {};
+      return { items, meta };
     } catch (err) {
-      return rejectWithValue(err.response?.data || { message: err.message || 'Failed to load invoices' });
+      return rejectWithValue(normalizeErr(err));
     }
   }
 );
@@ -127,11 +127,10 @@ export const fetchInvoiceDetail = createAsyncThunk(
   async (invoiceId, { rejectWithValue }) => {
     try {
       const res = await paymentsApi.getInvoice(invoiceId);
-      // res.data expected to be { success: true, data: invoice }
-      return res.data;
+      const d = res?.data || res;
+      return d;
     } catch (err) {
-      const payload = err.response?.data || { message: err.message || 'Failed to load invoice detail' };
-      return rejectWithValue(payload);
+      return rejectWithValue(normalizeErr(err));
     }
   }
 );
@@ -141,12 +140,11 @@ export const downloadInvoicePdf = createAsyncThunk(
   'payments/downloadInvoicePdf',
   async (invoiceId, { rejectWithValue }) => {
     try {
-      const res = await paymentsApi.downloadInvoice(invoiceId);
-      // res.data => { success: true, url }
-      return res.data;
+      const res = await paymentsApi.getInvoiceDownload(invoiceId);
+      const d = res?.data || res;
+      return d;
     } catch (err) {
-      const payload = err.response?.data || { message: err.message || 'Failed to download invoice' };
-      return rejectWithValue(payload);
+      return rejectWithValue(normalizeErr(err));
     }
   }
 );
@@ -157,10 +155,10 @@ export const downloadTransactionReceipt = createAsyncThunk(
   async (transactionId, { rejectWithValue }) => {
     try {
       const res = await paymentsApi.getTransactionReceipt(transactionId);
-      return res.data;
+      const d = res?.data || res;
+      return d;
     } catch (err) {
-      const payload = err.response?.data || { message: err.message || 'Failed to download receipt' };
-      return rejectWithValue(payload);
+      return rejectWithValue(normalizeErr(err));
     }
   }
 );
@@ -169,10 +167,13 @@ export const fetchParentStudents = createAsyncThunk(
   'payments/fetchParentStudents',
   async ({ parentId }, { rejectWithValue }) => {
     try {
-      const { data } = await paymentsApi.listParentStudents(parentId);
-      if (!data?.success) return rejectWithValue(data);
-      return data.data;
-    } catch (err) { return rejectWithValue(normalizeErr(err)); }
+      const res = await paymentsApi.listParentStudents(parentId);
+      const d = res?.data || res;
+      if (!d?.success) return rejectWithValue(d);
+      return d.data;
+    } catch (err) {
+      return rejectWithValue(normalizeErr(err));
+    }
   }
 );
 
@@ -181,9 +182,10 @@ export const setDefaultPaymentMethod = createAsyncThunk(
   async ({ paymentMethodId }, { rejectWithValue }) => {
     try {
       const res = await paymentsApi.setDefaultPaymentMethod(paymentMethodId);
-      return res;
+      const d = res?.data || res;
+      return d;
     } catch (err) {
-      return rejectWithValue(err.body || { message: err.message });
+      return rejectWithValue(normalizeErr(err));
     }
   }
 );
