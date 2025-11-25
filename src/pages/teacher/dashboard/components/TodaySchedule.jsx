@@ -11,7 +11,10 @@ const TodaySchedule = ({
   onMessage,
 }) => {
   const getSessionStatus = (session) => {
-    const sessionTime = new Date(session.startTime);
+    console.log(session.startTime, 'start Time')
+    // Remove 'Z' to treat as local time instead of UTC
+    const localTimeString = session.startTime.replace('Z', '');
+    const sessionTime = new Date(localTimeString);
     const endTime = new Date(sessionTime.getTime() + session.lesson.schedule.duration * 60000);
     const now = new Date();
 
@@ -19,6 +22,7 @@ const TodaySchedule = ({
       const minutesUntil = Math.floor((sessionTime - now) / (1000 * 60));
       if (minutesUntil <= 15)
         return { status: "starting-soon", text: `Starts in ${minutesUntil}m` };
+      console.log(sessionTime)
       return {
         status: "upcoming",
         text: sessionTime.toLocaleTimeString([], {
@@ -138,13 +142,13 @@ const TodaySchedule = ({
                         color="var(--color-muted-foreground)"
                       />
                       <span className="text-muted-foreground">
-                        {new Date(session.startTime).toLocaleTimeString([], {
+                        {new Date(session.startTime.replace('Z', '')).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}{" "}
                         -{" "}
                         {new Date(
-                          new Date(session.startTime).getTime() +
+                          new Date(session.startTime.replace('Z', '')).getTime() +
                           session.lesson.schedule.duration * 60000
                         ).toLocaleTimeString([], {
                           hour: "2-digit",
@@ -152,13 +156,12 @@ const TodaySchedule = ({
                         })}
                       </span>
                     </div>
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center space-x-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-blue-100 text-blue-700 border-blue-200">
                       <Icon
                         name="Video"
                         size={14}
-                        color="var(--color-muted-foreground)"
                       />
-                      <span className="text-muted-foreground">
+                      <span className="">
                         {session.course.mode}
                       </span>
                     </div>
