@@ -11,7 +11,7 @@ import { listConversations } from "../../../services/messages/message.service";
 import { useDispatch, useSelector } from "react-redux";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { Navigate } from "react-router-dom";
-import Loader from "components/ui/Loader";
+import PageLoaderOverlay from "components/ui/PageLoaderOverlay";
 import { toast } from "react-toastify";
 import { setUnreadMessageCount } from "reducers/messages/messageSlice";
 
@@ -425,10 +425,9 @@ const Messages = () => {
     };
   }, []);
 
-  return loadingConversations ? (
-    <Loader />
-  ) : (
+  return (
     <div className="min-h-screen bg-background">
+      <PageLoaderOverlay show={loadingConversations} label="Loading messages…" />
       <RoleBasedHeader />
 
       {/* Main Content */}

@@ -44,7 +44,7 @@ const LessonStatusBadge = ({ status }) => {
         return {
           color: "bg-muted text-muted-foreground border-border",
           icon: "Circle",
-          label: status,
+          label: status.charAt(0).toUpperCase() + status.slice(1),
         };
     }
   };

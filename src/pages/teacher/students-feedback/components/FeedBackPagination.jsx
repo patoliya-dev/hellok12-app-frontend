@@ -46,7 +46,7 @@ const FeedBackPagination = ({
     return pages;
   };
 
-  if (totalPages === 0) return null;
+  if (totalItems === 0) return null;
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-card border-t border-border">

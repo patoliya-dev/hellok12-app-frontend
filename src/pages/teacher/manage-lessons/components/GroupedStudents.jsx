@@ -54,70 +54,78 @@ const GroupedStudents = ({ students, onClose }) => {
       <div className="overflow-hidden">
         {/* Desktop Table */}
         <div className="overflow-x-auto">
-          <div className="w-full">
-            <table className="w-full border-collapse">
-              <thead className="bg-muted/30">
-                <tr>
-                  <th className="px-6 py-4 text-left sticky top-0 bg-muted/30">
-                    <button
-                      onClick={() => handleSort("name")}
-                      className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
-                    >
-                      Student
-                      {getSortIcon("name")}
-                    </button>
-                  </th>
-                  <th className="px-6 py-4 text-left sticky top-0 bg-muted/30">
-                    <button
-                      onClick={() => handleSort("age")}
-                      className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
-                    >
-                      Student Age
-                      {getSortIcon("age")}
-                    </button>
-                  </th>
-                  <th className="px-6 py-4 text-left sticky top-0 bg-muted/30">
-                    <button
-                      onClick={() => handleSort("status")}
-                      className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
-                    >
-                      Status
-                      {getSortIcon("status")}
-                    </button>
-                  </th>
-                </tr>
-              </thead>
-            </table>
+          <table className="w-full table-fixed border-collapse">
+            <colgroup>
+              <col style={{ width: "33.33%" }} />
+              <col style={{ width: "33.33%" }} />
+              <col style={{ width: "33.34%" }} />
+            </colgroup>
+            <thead className="bg-muted/30">
+              <tr>
+                <th className="px-6 py-4 text-left">
+                  <button
+                    onClick={() => handleSort("name")}
+                    className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
+                  >
+                    Student
+                    {getSortIcon("name")}
+                  </button>
+                </th>
+                <th className="px-6 py-4 text-left">
+                  <button
+                    onClick={() => handleSort("age")}
+                    className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
+                  >
+                    Student Age
+                    {getSortIcon("age")}
+                  </button>
+                </th>
+                <th className="px-6 py-4 text-left">
+                  <button
+                    onClick={() => handleSort("status")}
+                    className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
+                  >
+                    Status
+                    {getSortIcon("status")}
+                  </button>
+                </th>
+              </tr>
+            </thead>
+          </table>
 
-            {/* scrollable body wrapper */}
-            <div className="max-h-72 overflow-y-auto">
-              <table className="w-full border-collapse">
-                <tbody>
-                  {filteredAndSortedSessions?.map((stud) => (
-                    <tr
-                      key={stud?.id}
-                      className="border-t border-border hover:bg-muted/30 transition-smooth"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-foreground">
-                          {stud?.name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-foreground">
-                          {stud?.age} years old
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-foreground">
-                          {stud?.status}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {/* scrollable body wrapper */}
+          <div className="max-h-72 overflow-y-auto">
+            <table className="w-full table-fixed border-collapse">
+              <colgroup>
+                <col style={{ width: "33.33%" }} />
+                <col style={{ width: "33.33%" }} />
+                <col style={{ width: "33.34%" }} />
+              </colgroup>
+              <tbody>
+                {filteredAndSortedSessions?.map((stud) => (
+                  <tr
+                    key={stud?.id}
+                    className="border-t border-border hover:bg-muted/30 transition-smooth"
+                  >
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-foreground">
+                        {stud?.name}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-foreground">
+                        {stud?.age ? `${stud?.age} years old` : "N/A"}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-foreground capitalize">
+                        {stud?.status}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
         {/* Empty State */}

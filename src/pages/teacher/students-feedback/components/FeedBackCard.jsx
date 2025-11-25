@@ -8,9 +8,8 @@ const FeedBackCard = ({ feedback }) => {
         key={i}
         name="Star"
         size={14}
-        className={`fill-current ${
-          i < rating ? "text-warning " : "text-[#E6E6E6]"
-        }`}
+        className={`fill-current ${i < rating ? "text-warning " : "text-[#E6E6E6]"
+          }`}
       />
     ));
   };
@@ -20,38 +19,41 @@ const FeedBackCard = ({ feedback }) => {
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-3">
           <Image
-            src={feedback.student.avatar}
-            alt={feedback.student.name}
+            src={feedback?.author?.profileImage?.url || ""}
+            alt={feedback?.author?.name}
             className="w-8 h-8 rounded-full object-cover"
           />
           <div>
             <h4 className="text-sm font-medium text-foreground">
-              {feedback.student.name}
+              {feedback?.author?.name}
             </h4>
-            <p className="text-xs text-muted-foreground">{feedback.subject}</p>
           </div>
         </div>
         <div className="text-right">
           <div className="flex items-center space-x-1 mb-1">
-            {renderStars(feedback.rating)}
+            {renderStars(feedback?.rating)}
           </div>
           <div className="text-xs text-muted-foreground">
-            {new Date(feedback.date).toLocaleDateString()}
+            {new Date(feedback?.createdAt).toLocaleDateString()}
           </div>
         </div>
       </div>
 
       <div className="pr-24">
         <p className="text-sm text-brand-gray-800 mb-2 line-clamp-3 leading-6">
-          {feedback.comment}
+          {feedback?.comment}
         </p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-3 md:gap-3 md:items-center md:justify-between text-xs mb-2">
-        <div className="flex items-center space-x-2">
-          <span className="text-brand-gray-500">Session:</span>
-          <span className="text-brand-gray-800">{feedback.sessionDate}</span>
-        </div>
+        {
+          feedback.lesson && (
+            <div className="flex items-center space-x-2">
+              <span className="text-brand-gray-500">Session:</span>
+              <span className="text-brand-gray-800">{feedback?.sessionDate}</span>
+            </div>
+          )
+        }
         {feedback.parentFeedback && (
           <div className="flex items-center space-x-1 text-primary">
             <Icon name="Users" size={12} />

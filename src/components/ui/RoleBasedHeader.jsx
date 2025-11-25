@@ -47,7 +47,7 @@ const RoleBasedHeader = () => {
     } else {
       setUserRole("guest");
     }
-  }, [location.pathname]);
+  }, [authUser]);
 
   useEffect(() => {
     const notifications = getNotificationByRole(userRole);
@@ -60,13 +60,6 @@ const RoleBasedHeader = () => {
       dispatch(fetchUnreadCount());
     }
   }, [authUser, userRole, dispatch]);
-
-  // Refresh unread count when messagesLoading is true (triggered by socket events)
-  useEffect(() => {
-    if (messagesLoading && authUser && userRole !== "guest") {
-      dispatch(fetchUnreadCount());
-    }
-  }, [messagesLoading, authUser, userRole, dispatch]);
 
   const getNavigationItems = () => {
     const currentRole =
