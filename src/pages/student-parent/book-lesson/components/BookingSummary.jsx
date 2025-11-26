@@ -3,11 +3,10 @@ import { useSelector } from "react-redux";
 import { format } from "date-fns";
 import Icon from "../../../../components/AppIcon";
 import { selectSelectedTeacher } from "reducers/teachers/teachersSlice";
+import { formatLessonDate } from "../../../../utils/formatters";
 
 const BookingSummary = ({
   courseData,
-  selectedDate,
-  selectedTimeSlot,
   selectedStudent,
   total,
 }) => {
@@ -47,10 +46,9 @@ const BookingSummary = ({
                 ${courseData?.price}
               </p>
               <p className="text-xs text-text-secondary">
-                {/* {formatDuration(courseData?.duration)} */}
                 <span>
-                  {courseData?.startDate?.slice(0, 10)}{" "}
-                  {courseData?.endDate && `- ${courseData?.endDate?.slice(0, 10)}`}
+                  ({courseData?.startDate && formatLessonDate(courseData?.startDate?.slice(0, 10))}){" "}
+                  {courseData?.endDate && `to (${formatLessonDate(courseData?.endDate?.slice(0, 10))})`}
                 </span>
               </p>
             </div>
@@ -68,8 +66,8 @@ const BookingSummary = ({
           <div className="space-y-3">
             {/* Date & Time for 1-on-1 classes */}
             {courseData?.lessonType === "1-on-1" &&
-              selectedDate &&
-              selectedTimeSlot && (
+              courseData?.nextLessonDate &&
+              (
                 <div className="flex items-center space-x-3">
                   <Icon
                     name="Calendar"
@@ -78,18 +76,14 @@ const BookingSummary = ({
                   />
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      {format(selectedDate, "EEEE, MMMM d, yyyy")}
-                    </p>
-                    <p className="text-sm text-text-secondary">
-                      {selectedTimeSlot?.time} (
-                      {courseData?.teacher?.timezone?.replace("_", " ")})
+                      Next lesson scheduled for {format(courseData?.nextLessonDate, "EEEE, MMMM d, yyyy")}
                     </p>
                   </div>
                 </div>
               )}
 
             {/* Group Class Schedule */}
-            {courseData?.lessonType === "group" && (
+            {courseData?.lessonType === "group" && courseData?.nextLessonDate && (
               <div className="flex items-center space-x-3">
                 <Icon
                   name="Calendar"
@@ -98,11 +92,7 @@ const BookingSummary = ({
                 />
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    {courseData?.groupSchedule?.nextSession}
-                  </p>
-                  <p className="text-sm text-text-secondary">
-                    {courseData?.groupSchedule?.days?.join(", ")} •{" "}
-                    {courseData?.groupSchedule?.time}
+                    Next lesson scheduled for {format(courseData?.nextLessonDate, "EEEE, MMMM d, yyyy")}
                   </p>
                 </div>
               </div>

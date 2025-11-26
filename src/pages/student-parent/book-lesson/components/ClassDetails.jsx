@@ -3,6 +3,7 @@ import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import { useSelector } from "react-redux";
 import { selectSelectedTeacher } from "../../../../reducers/teachers/teachersSlice";
+import { formatLessonDate } from "../../../../utils/formatters";
 
 const ClassDetails = ({ courseData, type = "enroll" }) => {
   // Always read current teacher from Redux (selectedTeacher) per your requirements
@@ -82,7 +83,10 @@ const ClassDetails = ({ courseData, type = "enroll" }) => {
               Duration
             </div>
             <p className="font-medium text-foreground">
-              {formatDuration(courseData?.duration)}
+              <span>
+                ({courseData?.startDate && formatLessonDate(courseData?.startDate?.slice(0, 10))}){" "}
+                {courseData?.endDate && `to (${formatLessonDate(courseData?.endDate?.slice(0, 10))})`}
+              </span>
             </p>
           </div>
 

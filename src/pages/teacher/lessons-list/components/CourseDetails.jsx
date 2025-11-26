@@ -65,7 +65,7 @@ const CourseDetails = ({ course, lessonCount }) => {
       <div className="flex flex-wrap items-center gap-6 mb-6">
         {getCourseModeBadge(course?.mode)}
         <span className="text-[12px] text-[#7C3AED] font-medium">
-          {capitalize(course?.language)}
+          {capitalize(course?.languageCode)}
         </span>
 
         {course?.isTrialAvailable && getTrailBadge()}
