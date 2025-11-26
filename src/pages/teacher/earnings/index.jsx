@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PageHeader from "components/ui/PageHeader";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import EarningsHeader from "./components/EarningsHeader";
@@ -9,11 +9,17 @@ import EarningsTable from "./components/EarningsTable";
 import Pagination from "components/ui/Pagination";
 import InvoiceTable from "./components/InvoiceTable";
 import DateRangePicker from "components/ui/DateRangePicker";
+import {
+  fetchEarningsTrend,
+  fetchEarningsList,
+} from "../../../services/earningsService";
 
 const Earnings = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("weekly");
   const [currentPage, setCurrentPage] = useState(1);
   const [currentPageForInvoices, setCurrentPageForInvoices] = useState(1);
+  const [chartData, setChartData] = useState([]);
+  const [isLoadingChart, setIsLoadingChart] = useState(false);
   const [filters, setFilters] = useState({
     lessonType: "all",
     paymentStatus: "all",
@@ -27,6 +33,108 @@ const Earnings = () => {
     startDate: "",
     endDate: "",
   });
+  // State for earnings data from API
+  const [earningsData, setEarningsData] = useState([]);
+  const [isLoadingEarnings, setIsLoadingEarnings] = useState(false);
+  const [earningsPagination, setEarningsPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+  });
+
+  // Fetch earnings trend data when period changes
+  useEffect(() => {
+    const loadTrendData = async () => {
+      setIsLoadingChart(true);
+      try {
+        const data = await fetchEarningsTrend(selectedPeriod);
+        // Transform API response to match chart format
+        const transformedData = data.dataPoints.map((point) => ({
+          period: point.label,
+          earnings: point.amount,
+        }));
+        setChartData(transformedData);
+      } catch (error) {
+        console.error("Failed to fetch earnings trend:", error);
+        // Fallback to mock data on error
+        setChartData(mockEarningsData?.[selectedPeriod]?.chartData || []);
+      } finally {
+        setIsLoadingChart(false);
+      }
+    };
+
+    loadTrendData();
+  }, [selectedPeriod]);
+
+  // Fetch earnings list data when filters or page changes
+  useEffect(() => {
+    const loadEarningsData = async () => {
+      setIsLoadingEarnings(true);
+      try {
+        // Build query params from filters
+        const queryParams = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+
+        // Add lesson type filter
+        if (filters.lessonType !== "all") {
+          queryParams.lessonType = filters.lessonType;
+        }
+
+        // Add payment status filter
+        if (filters.paymentStatus !== "all") {
+          queryParams.status = filters.paymentStatus.toUpperCase();
+        }
+
+        // Add amount range filter
+        if (filters.amountRange !== "all") {
+          const [min, max] = filters.amountRange.split("-");
+          if (max === "+") {
+            queryParams.minAmount = parseInt(min);
+          } else {
+            queryParams.minAmount = parseInt(min);
+            queryParams.maxAmount = parseInt(max);
+          }
+        }
+
+        // Add date range filter
+        if (filters.dateRange.startDate && filters.dateRange.endDate) {
+          queryParams.startDate = filters.dateRange.startDate;
+          queryParams.endDate = filters.dateRange.endDate;
+        }
+
+        const response = await fetchEarningsList(queryParams);
+
+        // Transform API response to match component format
+        const transformedData = response.data.map((item) => ({
+          date: item.date,
+          description: item.lessonService,
+          amount: item.amount,
+          status: item.status.toLowerCase(),
+          lessonType: item.lessonType,
+        }));
+
+        setEarningsData(transformedData);
+        setEarningsPagination(response.pagination);
+      } catch (error) {
+        console.error("Failed to fetch earnings list:", error);
+        // Fallback to empty array on error
+        setEarningsData([]);
+        setEarningsPagination({
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 1,
+        });
+      } finally {
+        setIsLoadingEarnings(false);
+      }
+    };
+
+    loadEarningsData();
+  }, [filters, currentPage]);
 
   const handleSelectedPeriodChange = (period) => {
     setSelectedPeriod(period);
@@ -34,6 +142,7 @@ const Earnings = () => {
 
   const handleFiltersChange = (newFilters) => {
     setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const handleFiltersChangeForInvoices = (newFilters) => {
@@ -41,70 +150,6 @@ const Earnings = () => {
   };
 
   const currentData = mockEarningsData?.[selectedPeriod];
-
-  // Filter table data based on active filters
-  const filteredTableData = currentData?.tableData?.filter((item) => {
-    if (filters?.lessonType !== "all") {
-      const lessonType = item?.description?.toLowerCase();
-      if (
-        filters?.lessonType === "individual" &&
-        !lessonType?.includes("individual")
-      )
-        return false;
-      if (filters?.lessonType === "group" && !lessonType?.includes("group"))
-        return false;
-      if (
-        filters?.lessonType === "workshop" &&
-        !lessonType?.includes("workshop")
-      )
-        return false;
-      if (
-        filters?.lessonType === "assessment" &&
-        !lessonType?.includes("assessment")
-      )
-        return false;
-    }
-
-    if (filters?.paymentStatus !== "all") {
-      const status = item?.status;
-      if (filters?.paymentStatus === "completed" && status !== "completed")
-        return false;
-      if (filters?.paymentStatus === "pending" && status !== "pending")
-        return false;
-      if (filters?.paymentStatus === "processing" && status !== "processing")
-        return false;
-    }
-
-    if (filters?.amountRange !== "all") {
-      const amount = item?.amount;
-      if (filters?.amountRange === "0-50" && (amount < 0 || amount > 50))
-        return false;
-      if (filters?.amountRange === "50-100" && (amount < 50 || amount > 100))
-        return false;
-      if (filters?.amountRange === "100-200" && (amount < 100 || amount > 200))
-        return false;
-      if (filters?.amountRange === "200+" && amount < 200) return false;
-    }
-
-    if (
-      filters?.dateRange?.startDate !== "" &&
-      filters?.dateRange?.endDate !== ""
-    ) {
-      const date = new Date(item?.date);
-      const startDate = new Date(filters?.dateRange?.startDate);
-      const endDate = new Date(filters?.dateRange?.endDate);
-      if (date < startDate || date > endDate) return false;
-    }
-
-    return true;
-  });
-
-  // Pagination for earnings
-  const totalPages = Math.ceil(filteredTableData?.length / itemsPerPage);
-  const paginatedData = filteredTableData?.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
 
   // Filter invoice data based on active filters
   const filteredInvoiceData = currentData?.invoiceData?.filter((item) => {
@@ -149,20 +194,21 @@ const Earnings = () => {
         />
         <EarningsHeader selectedPeriod={selectedPeriod} />
         <EarningsChart
-          data={currentData?.chartData}
+          data={chartData}
           selectedPeriod={selectedPeriod}
           onPeriodChange={handleSelectedPeriodChange}
+          isLoading={isLoadingChart}
         />
         <section className="bg-card rounded-lg p-4 shadow-card border border-border mb-8">
           <FilterPanel
             filters={filters}
             onFiltersChange={handleFiltersChange}
           />
-          <EarningsTable data={paginatedData} />
+          <EarningsTable data={earningsData} />
           <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filteredTableData?.length}
+            currentPage={earningsPagination.page}
+            totalPages={earningsPagination.totalPages}
+            totalItems={earningsPagination.total}
             onPageChange={handlePageChange}
             isBorderTop={false}
           />

@@ -89,7 +89,7 @@ const TeacherDashboard = () => {
       const change = data.monthlyEarnings.changeFromLastMonth || 0;
       const amount = data.monthlyEarnings.amount || 0;
       const currency = data.monthlyEarnings.currency || "USD";
-      const symbol = currency === "USD" ? "$" : currency;
+      const symbol = currency.toLowerCase() === "usd" ? "$" : currency;
       metrics.push({
         title: "Monthly Earnings",
         value: `${symbol}${amount.toLocaleString()}`,
