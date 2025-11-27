@@ -334,8 +334,8 @@ const RoleBasedHeader = () => {
               <button
                 key={item.path}
                 className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-9 px-3 gap-2 ${isActive
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                  : "hover:bg-accent hover:text-accent-foreground"
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "hover:bg-accent hover:text-accent-foreground"
                   }`}
                 onClick={() => handleNavigation(item.path)}
                 onMouseEnter={() => setHoveredPath(item.path)}
@@ -429,6 +429,18 @@ const RoleBasedHeader = () => {
                           Payment & Billing
                         </button>
                       )}
+                      {/* {((authUser.role === "teacher" && !authUser.school)) && <button
+                        className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
+                        onClick={() => navigate(getRolePath(authUser.role, "billing"))}
+                      >
+                        <Icon name="CreditCard" size={16} className="mr-3" />
+                        Billing
+                      </button>
+                      } */}
+                      {/* <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
+                        <Icon name="HelpCircle" size={16} className="mr-3" />
+                        Help & Support
+                      </button> */}
                       <div className="border-t border-border mt-1 pt-1">
                         <button
                           onClick={handleLogout}

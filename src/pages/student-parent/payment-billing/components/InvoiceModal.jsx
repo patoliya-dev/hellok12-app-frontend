@@ -1,37 +1,49 @@
 import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
+import Loader from "components/ui/Loader";
+import { errorToast } from "../../../../utils/utils";
 
 const InvoiceModal = ({ selectedInvoice, onClose }) => {
+  if (!selectedInvoice) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-card border border-border rounded-lg max-w-2xl w-full p-8 text-center">
+          <Loader />
+        </div>
+      </div>
+    );
+  }
+
   const getStatusBadge = (status) => {
     const statusConfig = {
-      Paid: {
+      PAID: {
         color: "bg-success/10 text-success",
         label: "Paid",
         icon: "CheckCircle",
       },
-      Pending: {
+      PENDING: {
         color: "bg-warning/10 text-warning",
         label: "Pending",
         icon: "Clock",
       },
-      Overdue: {
+      OVERDUE: {
         color: "bg-destructive/10 text-destructive",
         label: "Overdue",
         icon: "AlertCircle",
       },
-      Refunded: {
+      REFUNDED: {
         color: "bg-muted text-muted-foreground",
         label: "Refunded",
         icon: "RotateCcw",
       },
-      Cancelled: {
+      CANCELLED: {
         color: "bg-muted text-muted-foreground",
         label: "Cancelled",
         icon: "XCircle",
       },
     };
 
-    const config = statusConfig?.[status] || statusConfig?.Pending;
+    const config = statusConfig?.[status] || statusConfig?.PENDING;
     return (
       <div
         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config?.color}`}
@@ -43,19 +55,26 @@ const InvoiceModal = ({ selectedInvoice, onClose }) => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toISOString().split("T")[0];
+    return new Date(dateString)?.toISOString().split("T")[0];
   };
 
   const handleDownloadInvoice = (invoice) => {
-    console.log("Downloading invoice:", invoice?.id);
-    alert("Invoice downloaded successfully!");
-    // Handle PDF download
+    if (invoice?.pdfUrl) {
+      window.open(invoice.pdfUrl, '_blank');
+      return;
+    }
+    // fallback: if invoice has hostedInvoiceUrl
+    if (invoice?.hostedInvoiceUrl) {
+      window.open(invoice.hostedInvoiceUrl, '_blank');
+      return;
+    }
+    errorToast("Invoice download not available");
   };
 
   const handlePayInvoice = (invoice) => {
-    console.log("Paying invoice:", invoice?.id);
-    alert("Invoice paid successfully!");
-    // Handle payment processing
+    // Keep payment flow unchanged - caller can implement createPaymentIntent etc.
+    console.log("Pay Invoice requested", invoice?._id);
+    errorToast("Pay flow not implemented in modal — use existing booking/payment flow.");
   };
 
   return (
@@ -90,11 +109,10 @@ const InvoiceModal = ({ selectedInvoice, onClose }) => {
                 INVOICE
               </h3>
               <p className="text-sm text-muted-foreground">
-                Invoice #: {selectedInvoice?.number}
+                Invoice #: {selectedInvoice?.number || selectedInvoice?._id}
                 <br />
-                Date: {formatDate(selectedInvoice?.dateTime)}
+                Date: {formatDate(selectedInvoice?.createdAt || selectedInvoice?.date)}
                 <br />
-                Due Date: {formatDate(selectedInvoice?.dueDate)}
               </p>
             </div>
           </div>
@@ -103,13 +121,9 @@ const InvoiceModal = ({ selectedInvoice, onClose }) => {
           <div>
             <h4 className="font-medium text-foreground mb-2">Bill To:</h4>
             <p className="text-sm text-muted-foreground">
-              John Smith
+              {selectedInvoice?.customerName || 'Customer'}
               <br />
-              john.smith@email.com
-              <br />
-              456 Student Avenue
-              <br />
-              Study Town, ST 67890
+              {selectedInvoice?.customerEmail || ''}
             </p>
           </div>
 
@@ -123,9 +137,9 @@ const InvoiceModal = ({ selectedInvoice, onClose }) => {
                     <th className="text-left py-2 px-4 text-sm font-medium text-muted-foreground">
                       Description
                     </th>
-                    <th className="text-center py-2 px-4 text-sm font-medium text-muted-foreground">
+                    {/* <th className="text-center py-2 px-4 text-sm font-medium text-muted-foreground">
                       Qty
-                    </th>
+                    </th> */}
                     <th className="text-right py-2 px-4 text-sm font-medium text-muted-foreground">
                       Amount
                     </th>
@@ -137,14 +151,14 @@ const InvoiceModal = ({ selectedInvoice, onClose }) => {
                       <td className="py-2 px-4 text-sm text-foreground">
                         {item?.description}
                       </td>
-                      <td className="py-2 px-4 text-sm text-center text-foreground">
+                      {/* <td className="py-2 px-4 text-sm text-center text-foreground">
                         {item?.quantity}
-                      </td>
+                      </td> */}
                       <td className="py-2 px-4 text-sm text-right font-medium text-foreground">
-                        {item?.price}
+                        {item?.priceDisplay}
                       </td>
                     </tr>
-                  ))}
+                  )) || <tr />}
                 </tbody>
               </table>
             </div>
@@ -156,7 +170,7 @@ const InvoiceModal = ({ selectedInvoice, onClose }) => {
               <div className="flex justify-between py-2 border-t border-border">
                 <span className="font-medium text-foreground">Total:</span>
                 <span className="font-bold text-foreground text-lg">
-                  {selectedInvoice?.amount}
+                  {selectedInvoice?.priceDisplay || selectedInvoice?.total || selectedInvoice?.amountDisplay}
                 </span>
               </div>
             </div>

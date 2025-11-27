@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import Breadcrumb from "../../../components/ui/Breadcrumb";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { getRolePath } from "../../../utils/rolePath";
@@ -12,33 +12,29 @@ import ReviewsTab from "../../../components/teacherProfileDetails/ReviewsTab";
 import { mockReviews } from "../../../services/mockApi";
 import TeachingHighlightsManagement from "../../../components/teachingHighlightsManagement";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
-import { fetchDetails } from "../../../services/teachers/findTeachers.service";
 import Loader from "components/ui/Loader";
+
+// NEW: redux import
+import { selectSelectedTeacher, selectTeacherLoading } from "../../../reducers/teachers/teachersSlice";
+import { fetchTeacherDetails } from "../../../reducers/teachers/teacherThunks";
 
 const TeacherProfileDetail = () => {
   const [activeTab, setActiveTab] = useState("about");
   const currentUser = useSelector(selectAuthUser);
   const { id } = useParams();
-  const [teacher, setTeacher] = useState({});
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
 
-  const loadDetails = async () => {
-    setLoading(true);
-    try {
-      const response = await fetchDetails(id);
-      const teacherDetails = response?.data || [];
-      setTeacher(teacherDetails);
-    } catch (err) {
-      console.error("Failed to load teachers:", err);
-      setTeachers({});
-    } finally {
-      setLoading(false);
-    }
-  };
+  // read selectedTeacher from redux
+  const teacher = useSelector(selectSelectedTeacher);
+  const loading = useSelector(selectTeacherLoading);
 
+  // fetch teacher when entering page — only once per mount
   useEffect(() => {
-    loadDetails();
-  }, [id]);
+    if (!id) return;
+    // Dispatch thunk once to populate selectedTeacher.
+    dispatch(fetchTeacherDetails({ teacherId: id }));
+    // If user navigates to another teacher, thunk will replace selectedTeacher.
+  }, [id, dispatch]);
 
   // Mock reviews data
   const reviews = mockReviews;
@@ -62,10 +58,10 @@ const TeacherProfileDetail = () => {
       label: "Find Teachers",
       path: getRolePath(currentUser?.role || "student", "find-teacher"),
     },
-    { label: teacher?.name, path: "#", current: true },
+    { label: teacher?.name || "Teacher", path: "#", current: true },
   ];
 
-  return loading ? (
+  return loading && !teacher ? (
     <Loader />
   ) : (
     <div className="min-h-screen bg-background">
@@ -91,7 +87,7 @@ const TeacherProfileDetail = () => {
               {activeTab === "courses" && (
                 <CoursesTab
                   courses={teacher?.courses}
-                  teacherId={teacher?._id}
+                  teacherId={teacher?._id || id}
                 />
               )}
               {activeTab === "reviews" && (

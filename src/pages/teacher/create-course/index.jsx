@@ -63,7 +63,7 @@ const CreateCourse = () => {
   const [formData, setFormData] = useState({
     // Step 1
     title: "",
-    language: "",
+    languageCode: "",
     description: "",
     lessonType: "",
     mode: "",
@@ -191,7 +191,7 @@ const CreateCourse = () => {
         !formData?.introImageRef?.url
       )
         newErrors.introImage = "Intro image is required";
-      if (!formData?.language) newErrors.language = "Language is required";
+      if (!formData?.languageCode) newErrors.languageCode = "Language is required";
       if (
         formData?.lessonType === "group" &&
         Number(formData?.studentCapacity) < 1
@@ -362,7 +362,7 @@ const CreateCourse = () => {
     // Build course payload (align to BE contracts)
     const coursePayload = {
       title: formData.title,
-      language: formData.language,
+      languageCode: formData.languageCode,
       description: formData.description || undefined,
       lessonType: formData.lessonType,
       studentCapacity:

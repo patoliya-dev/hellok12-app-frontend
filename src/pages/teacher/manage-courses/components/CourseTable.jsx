@@ -134,11 +134,11 @@ const CourseTable = ({
               </th>
               <th className="px-6 py-4 text-left">
                 <button
-                  onClick={() => onSort("language")}
+                  onClick={() => onSort("languageCode")}
                   className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
                 >
                   Language
-                  {getSortIcon("language")}
+                  {getSortIcon("languageCode")}
                 </button>
               </th>
               <th className="px-6 py-4 text-left">
@@ -200,7 +200,7 @@ const CourseTable = ({
                 </td>
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
-                    {getLanguageName(course?.language)}
+                    {getLanguageName(course?.languageCode)}
                   </span>
                 </td>
                 <td className="px-6 py-4">

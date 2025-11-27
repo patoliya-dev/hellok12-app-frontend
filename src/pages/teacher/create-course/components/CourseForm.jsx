@@ -21,9 +21,9 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
         <Select
           label="Language"
           options={languageOptions}
-          value={formData?.language || ""}
-          onChange={(value) => handleInputChange("language", value)}
-          error={errors?.language}
+          value={formData?.languageCode || ""}
+          onChange={(value) => handleInputChange("languageCode", value)}
+          error={errors?.languageCode}
           required
           searchable
         />

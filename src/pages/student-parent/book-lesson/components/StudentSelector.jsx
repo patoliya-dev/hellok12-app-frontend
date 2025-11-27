@@ -12,15 +12,15 @@ const StudentSelector = ({
   onAddressChange,
 }) => {
   const studentOptions = students?.map((student) => ({
-    value: student?.id,
+    value: student?._id,
     label: student?.name,
-    description: `Age ${student?.age}`,
+    // description: `Age ${student?.age}`,
     student: student, // Include full student object for easy access
   }));
 
   const handleStudentChange = (studentId) => {
     const selectedStudentData = students?.find(
-      (student) => student?.id === studentId
+      (student) => student?._id === studentId
     );
     onStudentSelect(selectedStudentData);
   };
@@ -31,13 +31,13 @@ const StudentSelector = ({
     return (
       <div className="flex items-center space-x-3 p-2">
         <Image
-          src={student?.profileImage}
+          src={student?.profileImage?.url}
           alt={"No Image"}
           className="w-8 h-8 rounded-full object-cover"
         />
         <div>
           <p className="font-medium text-foreground">{student?.name}</p>
-          <p className="text-xs text-text-secondary">Age {student?.age}</p>
+          {/* <p className="text-xs text-text-secondary">Age {student?.age}</p> */}
         </div>
       </div>
     );
@@ -54,7 +54,7 @@ const StudentSelector = ({
           label="Choose student for this class"
           placeholder="Select a student..."
           options={studentOptions}
-          value={selectedStudent?.id}
+          value={selectedStudent?._id}
           onChange={handleStudentChange}
           required
           className="w-full"
@@ -65,7 +65,7 @@ const StudentSelector = ({
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
             <div className="flex items-center space-x-3">
               <Image
-                src={selectedStudent?.profileImage}
+                src={selectedStudent?.profileImage?.url || selectedStudent?.profileImage || null}
                 alt={"No Image"}
                 className="w-12 h-12 rounded-full object-cover"
               />
@@ -94,7 +94,7 @@ const StudentSelector = ({
             onChange={(e) => onAddressChange(e)}
             // error={fieldErrors.email}
             required
-            // disabled={isLoading}
+          // disabled={isLoading}
           />
         </div>
 

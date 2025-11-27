@@ -22,6 +22,16 @@ export const errorToast = (message) => {
   });
 };
 
+export const infoToast = (message) => {
+  toast.info(message, {
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+  });
+};
+
 export const capitalize = (s) => {
   if (typeof s !== "string") return "";
   return s.charAt(0).toUpperCase() + s.slice(1);

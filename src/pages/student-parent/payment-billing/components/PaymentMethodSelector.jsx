@@ -3,6 +3,10 @@ import Icon from "../../../../components/AppIcon";
 import Button from "../../../../components/ui/Button";
 import Input from "../../../../components/ui/Input";
 import Image from "components/AppImage";
+import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
+import { useDispatch } from "react-redux";
+import { createSetupIntent, fetchPaymentMethods } from "../../../../reducers/payments/paymentsThunks";
+import { successToast, errorToast } from "../../../../utils/utils";
 
 const PaymentMethodSelector = ({
   savedCards,
@@ -13,71 +17,69 @@ const PaymentMethodSelector = ({
   const [showNewCardForm, setShowNewCardForm] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  const [newCardData, setNewCardData] = useState({
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    cardholderName: "",
-  });
+  const [cardholderName, setCardholderName] = useState("");
+  const stripe = useStripe();
+  const elements = useElements();
+  const dispatch = useDispatch();
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleNewCardSubmit = (e) => {
+  const handleNewCardSubmit = async (e) => {
     e?.preventDefault();
 
-    const errors = validateCardData(newCardData);
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors); // show errors
-      return;
+    if (!stripe || !elements) {
+      return errorToast("Stripe is not ready. Please try again.");
+    }
+
+    if (!cardholderName?.trim()) {
+      return setFieldErrors({ cardholderName: "Cardholder name is required" });
     }
 
     setFieldErrors({});
-    onAddPaymentMethod(newCardData);
-    setNewCardData({
-      cardNumber: "",
-      expiryDate: "",
-      cvv: "",
-      cardholderName: "",
-    });
-    setShowNewCardForm(false);
+    setIsSaving(true);
+
+    try {
+      // 1) Ask backend to create a SetupIntent and return client_secret
+      const res = await dispatch(createSetupIntent({})).unwrap();
+      // Accept multiple shapes returned by your thunk:
+      const clientSecret = res?.client_secret || res?.data?.client_secret || res?.data?.client_secret;
+      if (!clientSecret) {
+        throw new Error("Failed to create SetupIntent (missing client_secret)");
+      }
+
+      // 2) Confirm SetupIntent with Elements
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) throw new Error("Card Element not found");
+
+      const confirmResult = await stripe.confirmCardSetup(clientSecret, {
+        payment_method: {
+          card: cardElement,
+          billing_details: {
+            name: cardholderName,
+          },
+        },
+      });
+
+      if (confirmResult.error) {
+        throw confirmResult.error;
+      }
+
+      // success: refresh saved payment methods from backend
+      await dispatch(fetchPaymentMethods()).unwrap();
+      successToast("Card saved successfully");
+      // optionally auto-select the new saved card (find last saved)
+      // fetchPaymentMethods updated the store; parent component sets selectedMethod from store on change
+      setCardholderName("");
+      setShowNewCardForm(false);
+    } catch (err) {
+      console.error("Failed to save card:", err);
+      const msg = err?.message || "Failed to save card";
+      errorToast(msg);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleInputChange = (field, value) => {
-    setNewCardData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const validateCardData = (data) => {
-    const errors = {};
-
-    // Cardholder Name
-    if (!data.cardholderName?.trim()) {
-      errors.cardholderName = "Cardholder name is required";
-    }
-
-    // Card Number
-    if (!data.cardNumber?.trim()) {
-      errors.cardNumber = "Card number is required";
-    } else if (!/^\d{16}$/.test(data.cardNumber.replace(/\s+/g, ""))) {
-      errors.cardNumber = "Card number must be 16 digits";
-    }
-
-    // Expiry Date
-    if (!data.expiryDate?.trim()) {
-      errors.expiryDate = "Expiry date is required";
-    } else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(data.expiryDate)) {
-      errors.expiryDate = "Expiry date must be in MM/YY format";
-    }
-
-    // CVV
-    if (!data.cvv?.trim()) {
-      errors.cvv = "CVV is required";
-    } else if (!/^\d{3,4}$/.test(data.cvv)) {
-      errors.cvv = "CVV must be 3 or 4 digits";
-    }
-
-    return errors;
-  };
+  const handleCardholderChange = (val) => setCardholderName(val);
 
   return (
     <div className="bg-card rounded-lg">
@@ -90,18 +92,16 @@ const PaymentMethodSelector = ({
       {savedCards?.length > 0 && (
         <div className="mb-6">
           <div
-            className={`space-y-3 overflow-auto ${
-              savedCards?.length > 2 && "max-h-[250px]"
-            }`}
+            className={`space-y-3 overflow-auto ${savedCards?.length > 2 && "max-h-[250px]"
+              }`}
           >
             {savedCards?.map((card) => (
               <div
                 key={card?.id}
-                className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
-                  selectedMethod?.data?.id === card?.id
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/50"
-                }`}
+                className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${selectedMethod?.data?.id === card?.id
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50"
+                  }`}
                 onClick={() =>
                   onPaymentMethodSelect({ type: "saved_card", data: card })
                 }
@@ -116,11 +116,10 @@ const PaymentMethodSelector = ({
                       />
                     ) : (
                       <Image
-                        src={`${
-                          card?.brand === "Visa"
-                            ? "/assets/images/visa.svg"
-                            : "/assets/images/mastercard.svg"
-                        }`}
+                        src={`${card?.brand === "Visa"
+                          ? "/assets/images/visa.svg"
+                          : "/assets/images/mastercard.svg"
+                          }`}
                         alt={card?.brand}
                       />
                     )}
@@ -129,7 +128,7 @@ const PaymentMethodSelector = ({
                         •••• •••• •••• {card?.last4}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {card?.brand} • Expires {card?.expiry}
+                        {card?.brand} • Expires {card?.expiry || `${card?.exp_month}/${String(card?.exp_year)?.slice(-2)}`}
                       </p>
                     </div>
                   </div>
@@ -186,47 +185,29 @@ const PaymentMethodSelector = ({
                 label="Cardholder Name"
                 type="text"
                 placeholder="John Doe"
-                value={newCardData?.cardholderName}
-                onChange={(e) =>
-                  handleInputChange("cardholderName", e?.target?.value)
-                }
+                value={cardholderName}
+                onChange={(e) => handleCardholderChange(e?.target?.value)}
                 required
                 error={fieldErrors.cardholderName}
               />
-              <Input
-                label="Card Number"
-                type="text"
-                placeholder="1234 5678 9012 3456"
-                value={newCardData?.cardNumber}
-                onChange={(e) =>
-                  handleInputChange("cardNumber", e?.target?.value)
-                }
-                required
-                error={fieldErrors.cardNumber}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Expiry Date"
-                type="text"
-                placeholder="MM/YY"
-                value={newCardData?.expiryDate}
-                onChange={(e) =>
-                  handleInputChange("expiryDate", e?.target?.value)
-                }
-                required
-                error={fieldErrors.expiryDate}
-              />
-              <Input
-                label="CVV"
-                type="text"
-                placeholder="123"
-                value={newCardData?.cvv}
-                onChange={(e) => handleInputChange("cvv", e?.target?.value)}
-                required
-                error={fieldErrors.cvv}
-              />
+              <div>
+                <label className="text-sm text-text-secondary block mb-2">
+                  Card details
+                </label>
+                <div className="p-3 bg-white rounded border border-border">
+                  <CardElement
+                    options={{
+                      style: {
+                        base: {
+                          fontSize: "16px",
+                          color: "#32325d",
+                          "::placeholder": { color: "#a0aec0" },
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
@@ -235,14 +216,15 @@ const PaymentMethodSelector = ({
                 variant="outline"
                 onClick={() => {
                   setFieldErrors({});
-                  setNewCardData({});
+                  setCardholderName("");
                   setShowNewCardForm(false);
                 }}
+                disabled={isSaving}
               >
                 Cancel
               </Button>
-              <Button type="submit" variant="default">
-                Save Card
+              <Button type="submit" variant="default" disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save Card"}
               </Button>
             </div>
           </form>

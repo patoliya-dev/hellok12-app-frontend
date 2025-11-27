@@ -210,7 +210,7 @@ const StudentProfileSection = ({
               <Input
                 label="Address"
                 name="profile.address"
-                value={formData.profile.address || ""}
+                value={formData.profile?.address || ""}
                 onChange={handleChange}
                 className="md:col-span-2"
               />
@@ -218,13 +218,13 @@ const StudentProfileSection = ({
                 label="Age"
                 name="profile.age"
                 type="number"
-                value={formData.profile.age || ""}
+                value={formData.profile?.age || ""}
                 onChange={handleChange}
               />
               <Select
                 label="Gender"
                 options={GENDER_OPTIONS}
-                value={formData.profile.gender || ""}
+                value={formData.profile?.gender || ""}
                 onChange={handleGenderChange}
               />
               <Select
@@ -300,8 +300,8 @@ const StudentProfileSection = ({
                 <p className="mt-1 text-sm text-foreground">
                   {Array.isArray(formData?.profile?.languages)
                     ? formData?.profile?.languages
-                        .map((l) => getLanguageName(l))
-                        .join(", ")
+                      .map((l) => getLanguageName(l))
+                      .join(", ")
                     : formData?.profile?.languages}
                 </p>
               </div>
