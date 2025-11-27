@@ -14,74 +14,39 @@ export const createCustomer = createAsyncThunk(
   }
 );
 
-export const fetchPaymentMethods = createAsyncThunk(
-  'payments/fetchPaymentMethods',
-  async (_, { rejectWithValue }) => {
-    try {
-      const res = await paymentsApi.listPaymentMethods();
-      // API returns { success:true, data: [ ... ] } OR direct array
-      const items = res?.data?.data || res?.data || res;
-      return items;
-    } catch (err) {
-      return rejectWithValue(normalizeErr(err));
-    }
+export const fetchPaymentMethods = createAsyncThunk('payments/fetchPaymentMethods', async (_, { rejectWithValue }) => {
+  try {
+    const resp = await paymentsApi.listPaymentMethods();
+    // server returns { success: true, data: [...] }
+    return resp.data?.data || resp.data || [];
+  } catch (err) {
+    return rejectWithValue(err.response?.data || { message: err.message });
   }
-);
+});
 
-export const createPaymentIntent = createAsyncThunk(
-  'payments/createPaymentIntent',
-  async (payload, { rejectWithValue }) => {
-    try {
-      const res = await paymentsApi.createPaymentIntent(payload);
-      // Normalize return: accept { client_secret, paymentIntentId } or { data: { client_secret } }
-      const d = res?.data || res;
-      const client_secret = d?.client_secret || d?.data?.client_secret || d?.clientSecret || null;
-      const paymentIntentId = d?.paymentIntentId || d?.id || d?.payment_intent_id || null;
-      return { client_secret, paymentIntentId, raw: d };
-    } catch (err) {
-      return rejectWithValue(normalizeErr(err));
-    }
+export const createPaymentIntent = createAsyncThunk('payments/createPaymentIntent', async (payload, { rejectWithValue }) => {
+  try {
+    const resp = await paymentsApi.createPaymentIntent(payload);
+    // expected { success: true, client_secret, paymentIntentId, transactionId }
+    const client_secret = resp.data?.client_secret || resp.data?.data?.client_secret || (resp.data?.data && resp.data.data.client_secret);
+    const paymentIntentId = resp.data?.paymentIntentId || resp.data?.data?.paymentIntentId || (resp.data?.data && resp.data.data.id);
+    const transactionId = resp.data?.transactionId || resp.data?.data?.transactionId || null;
+    return { client_secret, paymentIntentId, transactionId, raw: resp.data };
+  } catch (err) {
+    return rejectWithValue(err.response?.data || { message: err.message });
   }
-);
+});
 
-export const createSetupIntent = createAsyncThunk(
-  'payments/createSetupIntent',
-  async (payload, { rejectWithValue }) => {
-    try {
-      const res = await paymentsApi.createSetupIntent(payload);
-      const d = res?.data || res;
-      const client_secret = d?.client_secret || d?.data?.client_secret || d?.clientSecret || null;
-      return { client_secret, raw: d };
-    } catch (err) {
-      return rejectWithValue(normalizeErr(err));
-    }
+export const createSetupIntent = createAsyncThunk('payments/createSetupIntent', async (_, { rejectWithValue }) => {
+  try {
+    const resp = await paymentsApi.createSetupIntent(); // endpoint returns client_secret
+    // Normalize: return { client_secret }
+    const client_secret = resp.data?.client_secret || resp.data?.data?.client_secret || resp.data?.clientSecret;
+    return { client_secret, raw: resp.data };
+  } catch (err) {
+    return rejectWithValue(err.response?.data || { message: err.message });
   }
-);
-
-export const attachPaymentMethod = createAsyncThunk(
-  'payments/attachPaymentMethod',
-  async ({ paymentMethodId, setDefault = false }, { rejectWithValue }) => {
-    try {
-      const { data } = await paymentsApi.attachPaymentMethod({ body: { paymentMethodId, setDefault } });
-      return data;
-    } catch (err) {
-      return rejectWithValue(normalizeErr(err));
-    }
-  }
-);
-
-export const refundPayment = createAsyncThunk(
-  'payments/refundPayment',
-  async ({ transactionId, amount }, { rejectWithValue }) => {
-    try {
-      const res = await paymentsApi.refundPayment({ body: { transactionId, amount: amount } });
-      const d = res?.data || res;
-      return d;
-    } catch (err) {
-      return rejectWithValue(normalizeErr(err));
-    }
-  }
-);
+});
 
 // Fetch paged transactions
 export const fetchTransactions = createAsyncThunk(
@@ -194,7 +159,6 @@ export default {
   fetchPaymentMethods,
   createPaymentIntent,
   createSetupIntent,
-  refundPayment,
   fetchTransactions,
   fetchInvoices,
   fetchInvoiceDetail,

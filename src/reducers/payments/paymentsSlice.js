@@ -3,7 +3,6 @@ import {
   fetchPaymentMethods,
   createPaymentIntent,
   createSetupIntent,
-  refundPayment,
   fetchTransactions,
   fetchInvoices,
   fetchParentStudents,
@@ -91,11 +90,11 @@ const paymentsSlice = createSlice({
         s.lastClientSecret = null;
         s.lastPaymentIntentId = null;
       })
-      .addCase(createPaymentIntent.fulfilled, (s, action) => {
+      .addCase(createPaymentIntent.fulfilled, (s, a) => {
         s.loading = false;
-        const payload = action.payload || {};
-        s.lastClientSecret = payload?.client_secret || null;
-        s.lastPaymentIntentId = payload?.paymentIntentId || payload?.id || (payload?.raw && (payload.raw.id || payload.raw.paymentIntentId)) || null;
+        const payload = a.payload || {};
+        s.lastClientSecret = payload?.client_secret || payload?.raw?.client_secret || null;
+        s.lastPaymentIntentId = payload?.paymentIntentId || payload?.paymentIntentId || payload?.paymentIntentId || null;
       })
       .addCase(createPaymentIntent.rejected, (s, a) => {
         s.loading = false;
@@ -116,21 +115,6 @@ const paymentsSlice = createSlice({
         s.lastClientSecret = payload?.client_secret || null;
       })
       .addCase(createSetupIntent.rejected, (s, a) => {
-        s.loading = false;
-        s.error = a.payload?.message || a.error?.message;
-      })
-
-      // -----------------------
-      // Refund
-      // -----------------------
-      .addCase(refundPayment.pending, (s) => {
-        s.loading = true;
-        s.error = null;
-      })
-      .addCase(refundPayment.fulfilled, (s) => {
-        s.loading = false;
-      })
-      .addCase(refundPayment.rejected, (s, a) => {
         s.loading = false;
         s.error = a.payload?.message || a.error?.message;
       })

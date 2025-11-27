@@ -16,9 +16,6 @@ export const listPaymentMethods = (params) =>
 export const createSetupIntent = (payload) =>
   api.post(`/payments/save-payment-method`, payload);
 
-export const attachPaymentMethod = ({ body }) =>
-  api.post('/payments/payment-methods/attach', body);
-
 // -----------------------------
 // PaymentIntents / Checkout
 // -----------------------------
@@ -33,12 +30,6 @@ export const confirmPayment = (payload) =>
 // -----------------------------
 export const createCheckoutSession = (payload) =>
   api.post(`/payments/create-checkout-session`, payload);
-
-// -----------------------------
-// Refunds
-// -----------------------------
-export const refundPayment = (payload) =>
-  api.post(`/payments/refund`, payload);
 
 // Set a payment method as default
 export const setDefaultPaymentMethod = (paymentMethodId) =>

@@ -53,7 +53,7 @@ const BookLesson = () => {
   const action = searchParams.get("action");
 
   // grab lessonId query param (may be present for trial flow)
-  const lessonId = searchParams.get("lessonId") || null;
+  const lessonIdParam = searchParams.get("lessonId") || null;
 
   // Validate action
   if (!["enroll", "trial"].includes(action)) {
@@ -104,9 +104,15 @@ const BookLesson = () => {
     fetchCourse();
   }, [id]);
 
+  // make sure selectedStudent has _id (if currentUser is a student)
   useEffect(() => {
-    if (isStudent) {
-      setSelectedStudent(currentUser);
+    if (isStudent && currentUser) {
+      // if currentUser is the student (profile stored differently), normalize to object with _id
+      if (typeof currentUser?._id === 'undefined' && currentUser?.id) {
+        setSelectedStudent({ ...currentUser, _id: currentUser.id });
+      } else {
+        setSelectedStudent(currentUser);
+      }
     }
   }, [isStudent, currentUser]);
 
@@ -195,10 +201,29 @@ const BookLesson = () => {
     setSelectedPaymentMethod(method);
   };
 
+  const mapBackendErrorToMessage = (err) => {
+    const code = err?.code || err?.statusCode || err?.error?.code || err?.data?.code;
+    switch (code) {
+      case 'COURSE_FULL':
+        return 'This course is full. Please choose another or contact support.';
+      case 'TRIAL_CAPACITY_EXHAUSTED':
+        return 'Trial capacity for this lesson is exhausted.';
+      case 'ALREADY_TAKEN_TRIAL':
+        return 'Selected student has already used a trial for this course.';
+      case 'STUDENT_REQUIRED':
+      case 'INVALID_STUDENT':
+        return 'Please select a valid student.';
+      default:
+        return err?.message || 'Something went wrong. Please try again.';
+    }
+  };
+
   // New: use real createPaymentIntent thunk and confirm via stripe
   const handleSubmit = async () => {
     try {
-      if (!selectedStudent) return errorToast('Please select a student before continuing.');
+      if (!selectedStudent || !selectedStudent._id) {
+        return errorToast('Please select a student before continuing.');
+      }
 
       // generate idempotency key
       const idempotencyKey = `booking-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -219,28 +244,16 @@ const BookLesson = () => {
         teacherId: selectedTeacher?._id || selectedTeacher?.id,
         amount: Math.round((courseData?.price || 0) * 100),
         isTrial: type === 'trial',
-        lessonId: type === 'trial' ? (lessonId || (courseData?.lessons?.[0]?._id)) : undefined
+        lessonId: type === 'trial' ? (lessonIdParam || (courseData?.lessons?.[0]?._id)) : undefined
       };
 
       let bookingRes;
       try {
         bookingRes = await dispatch(createBooking(bookingPayload)).unwrap();
+        bookingRes = bookingRes?.data
       } catch (err) {
-        // Map backend validation codes to friendly UI messages
-        const code = err?.code || err?.statusCode || err?.error?.code;
-        switch (code) {
-          case 'COURSE_FULL':
-            return errorToast('This course is full. Please choose a different course or contact support.');
-          case 'TRIAL_CAPACITY_EXHAUSTED':
-            return errorToast('Trial capacity is exhausted for this lesson.');
-          case 'ALREADY_TAKEN_TRIAL':
-            return errorToast('Selected student has already used a trial for this course.');
-          case 'STUDENT_REQUIRED':
-          case 'INVALID_STUDENT':
-            return errorToast('Please select a valid student.');
-          default:
-            return errorToast(err?.message || 'Failed to create booking');
-        }
+        const message = mapBackendErrorToMessage(err);
+        return errorToast(message);
       }
 
       // If this is a trial booking and payment not required, bookingRes.booking already created and may be PAID
@@ -261,7 +274,9 @@ const BookLesson = () => {
         idempotencyKey,
         metadata: {
           courseId: courseData?._id || courseData?.id,
-          studentId: selectedStudent?._id || selectedStudent?.id
+          studentId: selectedStudent?._id || selectedStudent?.id,
+          lessonId: type === 'trial' ? (lessonIdParam || (courseData?.lessons?.[0]?._id)) : undefined,
+          bookingId: bookingRes?.booking?._id
         }
       };
 
@@ -287,15 +302,17 @@ const BookLesson = () => {
         throw confirmResult.error;
       }
 
-      if (confirmResult.paymentIntent && (confirmResult.paymentIntent.status === 'succeeded' || confirmResult.paymentIntent.status === 'requires_capture' || confirmResult.paymentIntent.status === 'processing')) {
-        successToast('Payment successful');
+      const pi = confirmResult.paymentIntent;
+      if (pi && (pi.status === 'succeeded' || pi.status === 'processing' || pi.status === 'requires_capture')) {
+        successToast('Payment initiated — confirmation will be finalised shortly.');
         setShowSuccessModal(true);
       } else {
-        throw new Error('Payment not completed: ' + (confirmResult.paymentIntent?.status || 'unknown'));
+        throw new Error('Payment not completed: ' + (pi?.status || 'unknown'));
       }
     } catch (err) {
       console.error('Payment error', err);
-      errorToast(err?.message || 'Payment failed. Please try again.');
+      const msg = err?.message || 'Payment failed. Please try again.';
+      errorToast(msg);
     }
   };
 
@@ -325,7 +342,7 @@ const BookLesson = () => {
         // fallback create a minimal object
         setSelectedPaymentMethod({ type: "saved_card", data: { id: paymentMethodId, stripePaymentMethodId: paymentMethodId, last4: "****" } });
       }
-      successToast("Card saved");
+      // successToast("Card saved");
     } catch (err) {
       console.error("Failed to process added payment method", err);
       errorToast(err?.message || "Failed to save payment method");
