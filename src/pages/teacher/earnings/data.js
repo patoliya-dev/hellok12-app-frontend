@@ -482,17 +482,15 @@ const mockEarningHeaderData = [
 
 const lessonTypeOptions = [
   { value: "all", label: "All Lesson Types" },
-  { value: "individual", label: "Individual Lessons" },
+  { value: "1-on-1", label: "Individual Lessons" },
   { value: "group", label: "Group Lessons" },
-  { value: "workshop", label: "Workshops" },
-  { value: "assessment", label: "Assessments" },
 ];
 
 const paymentStatusOptions = [
   { value: "all", label: "All Payments" },
-  { value: "completed", label: "Completed" },
-  { value: "pending", label: "Pending" },
-  { value: "processing", label: "Processing" },
+  { value: "SENT", label: "Sent" },
+  { value: "PENDING", label: "Pending" },
+  { value: "PAID", label: "Paid" },
 ];
 
 const amountRangeOptions = [
@@ -500,7 +498,7 @@ const amountRangeOptions = [
   { value: "0-50", label: "$0 - $50" },
   { value: "50-100", label: "$50 - $100" },
   { value: "100-200", label: "$100 - $200" },
-  { value: "200+", label: "$200+" },
+  { value: "200-+", label: "$200+" },
 ];
 
 const itemsPerPage = 10;

@@ -13,6 +13,7 @@ import { dashboardService } from "../../../services/dashboard/dashboard.service"
 import { feedbackRatingAPI } from "../../../services/feedbacks/feedback.service";
 import { fetchSchedule, fetchSlotsForMonth } from "../../../reducers/schedule/scheduleThunks";
 import { idxToDayStr, isHHMM, isNumber, minutesToHHMM } from "../../../utils/time12h";
+import Loader from "components/ui/Loader";
 
 
 
@@ -89,7 +90,7 @@ const TeacherDashboard = () => {
       const change = data.monthlyEarnings.changeFromLastMonth || 0;
       const amount = data.monthlyEarnings.amount || 0;
       const currency = data.monthlyEarnings.currency || "USD";
-      const symbol = currency === "USD" ? "$" : currency;
+      const symbol = currency.toLowerCase() === "usd" ? "$" : currency;
       metrics.push({
         title: "Monthly Earnings",
         value: `${symbol}${amount.toLocaleString()}`,
@@ -123,7 +124,6 @@ const TeacherDashboard = () => {
   const slotsByMonth = useSelector((s) => s.schedule?.slotsByMonth || {});
   const monthlyWeeklyBaseline = slotsByMonth?.[currentMonth]?.monthlyWeekly || {};
 
-  // Fetch month data when currentMonth changes (if not cached)
   useEffect(() => {
     if (!teacherId || !currentMonth) return;
     const cached = scheduleState?.slotsByMonth?.[currentMonth];
@@ -135,7 +135,6 @@ const TeacherDashboard = () => {
       });
   }, [currentMonth, teacherId, dispatch, scheduleState?.slotsByMonth]);
 
-  // Hydrate availability from API data
   useEffect(() => {
     const next = { sun: [], mon: [], tue: [], wed: [], thu: [], fri: [], sat: [] };
 
@@ -343,12 +342,7 @@ const TeacherDashboard = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div className="lg:col-span-2">
-              {loading ? (
-                <div className="bg-card rounded-lg border border-border p-8 text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Loading schedule...</p>
-                </div>
-              ) : error ? (
+              {loading ? <Loader /> : error ? (
                 <div className="bg-card rounded-lg border border-destructive/50 p-8 text-center">
                   <p className="text-destructive mb-2">Failed to load schedule</p>
                   <p className="text-sm text-muted-foreground">{error}</p>

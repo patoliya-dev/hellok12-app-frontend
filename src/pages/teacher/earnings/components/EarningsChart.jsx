@@ -13,7 +13,7 @@ import {
 import PeriodTabs from "./PeriodTab";
 import { capitalize } from "../../../../utils/utils";
 
-const EarningsChart = ({ data, selectedPeriod, onPeriodChange }) => {
+const EarningsChart = ({ data, selectedPeriod, onPeriodChange, isLoading }) => {
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -42,42 +42,48 @@ const EarningsChart = ({ data, selectedPeriod, onPeriodChange }) => {
       </div>
 
       <div className="h-64 md:h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-            <XAxis
-              dataKey="period"
-              stroke="var(--color-muted-foreground)"
-              fontSize={12}
-            />
-            <YAxis
-              stroke="var(--color-muted-foreground)"
-              fontSize={12}
-              tickFormatter={formatCurrency}
-            />
-            <Tooltip
-              formatter={formatTooltip}
-              contentStyle={{
-                backgroundColor: "var(--color-popover)",
-                border: "1px solid var(--color-border)",
-                borderRadius: "8px",
-                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-              }}
-            />
-            <Line
-              type="monotone"
-              dataKey="earnings"
-              stroke="var(--color-primary)"
-              strokeWidth={3}
-              dot={{ fill: "var(--color-primary)", strokeWidth: 2, r: 4 }}
-              activeDot={{
-                r: 6,
-                stroke: "var(--color-primary)",
-                strokeWidth: 2,
-              }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-muted-foreground">Loading chart data...</div>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis
+                dataKey="period"
+                stroke="var(--color-muted-foreground)"
+                fontSize={12}
+              />
+              <YAxis
+                stroke="var(--color-muted-foreground)"
+                fontSize={12}
+                tickFormatter={formatCurrency}
+              />
+              <Tooltip
+                formatter={formatTooltip}
+                contentStyle={{
+                  backgroundColor: "var(--color-popover)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="earnings"
+                stroke="var(--color-primary)"
+                strokeWidth={3}
+                dot={{ fill: "var(--color-primary)", strokeWidth: 2, r: 4 }}
+                activeDot={{
+                  r: 6,
+                  stroke: "var(--color-primary)",
+                  strokeWidth: 2,
+                }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </section>
   );
