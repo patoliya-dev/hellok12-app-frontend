@@ -52,9 +52,19 @@ const PublicCourseDetails = () => {
       )
     );
 
-  const handleTrialLesson = () => {
-    // alert('Trial lesson booking would be implemented here');
-    setShowLessonModal(true);
+  // onTrial now expects a lessonId argument from the modal
+  const handleTrialLesson = (selectedLessonId) => {
+    // close modal (modal will call onClose itself in most paths, but ensure it's closed)
+    setShowLessonModal(false);
+
+    // if no lesson id provided, fallback to regular trial navigation without lesson
+    const lessonQuery = selectedLessonId ? `&lessonId=${selectedLessonId}` : "";
+    navigate(
+      getRolePath(
+        authUser?.role || "student",
+        `book-lesson/${id}?action=trial${lessonQuery}`
+      )
+    );
   };
 
   // Loading state
@@ -128,7 +138,7 @@ const PublicCourseDetails = () => {
         <CourseHero
           course={course}
           onEnroll={handleEnrollCourse}
-          onTrial={handleTrialLesson}
+          onTrial={() => setShowLessonModal(true)}
         />
 
         <div className="max-w-6xl mx-auto px-6 py-8">
@@ -138,9 +148,7 @@ const PublicCourseDetails = () => {
                 lessons={course?.lessons}
                 selectedLesson={selectedLesson}
               />
-              <ReviewsSection
-                id = { id }
-              />
+              <ReviewsSection id={id} />
             </div>
 
             <div className="lg:col-span-1">
@@ -148,30 +156,24 @@ const PublicCourseDetails = () => {
                 <EnrollmentSection
                   course={course}
                   onEnroll={handleEnrollCourse}
-                  onTrial={handleTrialLesson}
+                  onTrial={() => setShowLessonModal(true)}
                 />
               </div>
             </div>
           </div>
         </div>
       </div>
+
       {/* Lesson Modal */}
       <LessonModal
         isOpen={showLessonModal}
-        lessons={course?.lessons}
-        teachers={course?.teachers}
+        lessons={course?.lessons || []}
+        teachers={course?.teachers || []}
         onClose={() => {
           setShowLessonModal(false);
         }}
-        onTrial={() => {
-          setShowLessonModal(false);
-          navigate(
-            getRolePath(
-              authUser?.role || "student",
-              `book-lesson/${id}?action=trial`
-            )
-          );
-        }}
+        // handleTrial now accepts a selectedLessonId from modal and navigates with it
+        onTrial={(selectedLessonId) => handleTrialLesson(selectedLessonId)}
       />
     </div>
   );

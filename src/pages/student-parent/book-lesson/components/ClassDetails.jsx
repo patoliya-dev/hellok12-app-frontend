@@ -1,8 +1,14 @@
 import React from "react";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
+import { useSelector } from "react-redux";
+import { selectSelectedTeacher } from "../../../../reducers/teachers/teachersSlice";
+import { formatLessonDate } from "../../../../utils/formatters";
 
-const ClassDetails = ({ classData, type = "enroll" }) => {
+const ClassDetails = ({ courseData, type = "enroll" }) => {
+  // Always read current teacher from Redux (selectedTeacher) per your requirements
+  const teacher = useSelector(selectSelectedTeacher) || {};
+
   const formatDuration = (minutes) => {
     if (minutes < 60) {
       return `${minutes} min`;
@@ -18,11 +24,10 @@ const ClassDetails = ({ classData, type = "enroll" }) => {
     const isOneOnOne = type === "1-on-1";
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          isOneOnOne
-            ? "bg-blue-100 text-blue-800"
-            : "bg-green-100 text-green-800"
-        }`}
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isOneOnOne
+          ? "bg-blue-100 text-blue-800"
+          : "bg-green-100 text-green-800"
+          }`}
       >
         <Icon name={isOneOnOne ? "User" : "Users"} size={12} className="mr-1" />
         {type}
@@ -37,7 +42,7 @@ const ClassDetails = ({ classData, type = "enroll" }) => {
         <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
           <div className="relative">
             <Image
-              src={classData?.teacher?.profileImage}
+              src={teacher?.profileImage || courseData?.teacher?.profileImage}
               alt={"No Image"}
               className="w-12 h-12 rounded-full object-cover"
             />
@@ -45,28 +50,28 @@ const ClassDetails = ({ classData, type = "enroll" }) => {
           </div>
           <div className="flex-1">
             <p className="font-medium text-foreground">
-              {classData?.teacher?.name}
+              {teacher?.name || courseData?.teacher?.name}
             </p>
             <p className="text-sm text-text-secondary">Instructor</p>
           </div>
           <div className="space-y-1 flex flex-col items-end gap-2">
-            {getClassTypeBadge(classData?.type)}
-            <div className="flex items-center">
+            {getClassTypeBadge(courseData?.mode)}
+            {courseData?.ownerType === 'school' && <div className="flex items-center">
               <Icon name="SchoolIcon" size={22} className="mr-2" />
               <span className="text-body2 text-text-secondary">
-                {classData?.teacher?.school}
+                {teacher?.school || courseData?.teacher?.school}
               </span>
-            </div>
+            </div>}
           </div>
         </div>
 
         {/* Class Title & Type */}
         <div className="space-y-2">
           <h1 className="text-h5 font-semibold text-foreground">
-            {classData?.title}
+            {courseData?.title}
           </h1>
           <p className="text-text-secondary text-body2 leading-relaxed">
-            {classData?.description}
+            {courseData?.description}
           </p>
         </div>
 
@@ -78,7 +83,10 @@ const ClassDetails = ({ classData, type = "enroll" }) => {
               Duration
             </div>
             <p className="font-medium text-foreground">
-              {formatDuration(classData?.duration)}
+              <span>
+                ({courseData?.startDate && formatLessonDate(courseData?.startDate?.slice(0, 10))}){" "}
+                {courseData?.endDate && `to (${formatLessonDate(courseData?.endDate?.slice(0, 10))})`}
+              </span>
             </p>
           </div>
 
@@ -88,11 +96,11 @@ const ClassDetails = ({ classData, type = "enroll" }) => {
                 <Icon name="DollarSign" size={16} className="mr-2" />
                 Price
               </div>
-              <p className="font-medium text-foreground">${classData?.price}</p>
+              <p className="font-medium text-foreground">${courseData?.price}</p>
             </div>
           )}
 
-          {classData?.type === "Group" && (
+          {courseData?.type === "Group" && (
             <>
               <div className="space-y-1">
                 <div className="flex items-center text-text-secondary text-sm">
@@ -100,7 +108,7 @@ const ClassDetails = ({ classData, type = "enroll" }) => {
                   Location
                 </div>
                 <p className="font-medium text-foreground text-sm">
-                  {classData?.location}
+                  {courseData?.location}
                 </p>
               </div>
 
@@ -110,7 +118,7 @@ const ClassDetails = ({ classData, type = "enroll" }) => {
                   Enrollment
                 </div>
                 <p className="font-medium text-foreground">
-                  {classData?.enrolledStudents}/{classData?.maxStudents}{" "}
+                  {courseData?.enrolledStudents}/{courseData?.maxStudents}{" "}
                   students
                 </p>
               </div>
@@ -126,14 +134,14 @@ const ClassDetails = ({ classData, type = "enroll" }) => {
             </div>
           )}
 
-          {classData?.type === "1-on-1" && (
+          {courseData?.type === "1-on-1" && (
             <div className="col-span-2 space-y-1">
               <div className="flex items-center text-text-secondary text-sm">
                 <Icon name="Globe" size={16} className="mr-2" />
                 Teacher Timezone
               </div>
               <p className="font-medium text-foreground">
-                {classData?.teacher?.timezone
+                {(teacher?.timezone || courseData?.teacher?.timezone)
                   ?.replace("_", " ")
                   ?.replace("America/", "")}
               </p>
@@ -142,7 +150,7 @@ const ClassDetails = ({ classData, type = "enroll" }) => {
         </div>
 
         {/* Group Class Schedule */}
-        {classData?.type === "Group" && classData?.groupSchedule && (
+        {courseData?.type === "Group" && courseData?.groupSchedule && (
           <div className="border-t border-border pt-4">
             <h3 className="font-medium text-foreground mb-3">Class Schedule</h3>
             <div className="space-y-2">
@@ -154,10 +162,10 @@ const ClassDetails = ({ classData, type = "enroll" }) => {
                 />
                 <div>
                   <p className="font-medium text-foreground">
-                    {classData?.groupSchedule?.days?.join(", ")}
+                    {courseData?.groupSchedule?.days?.join(", ")}
                   </p>
                   <p className="text-sm text-text-secondary">
-                    {classData?.groupSchedule?.time}
+                    {courseData?.groupSchedule?.time}
                   </p>
                 </div>
               </div>
@@ -170,7 +178,7 @@ const ClassDetails = ({ classData, type = "enroll" }) => {
                 <div>
                   <p className="text-sm text-text-secondary">Next Session</p>
                   <p className="font-medium text-foreground">
-                    {classData?.groupSchedule?.nextSession}
+                    {courseData?.groupSchedule?.nextSession}
                   </p>
                 </div>
               </div>
@@ -179,12 +187,12 @@ const ClassDetails = ({ classData, type = "enroll" }) => {
         )}
 
         {/* Enrollment Status for Group Classes */}
-        {classData?.type === "Group" && (
+        {courseData?.type === "Group" && (
           <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
             <div className="flex items-center space-x-2">
               <Icon name="Users" size={16} className="text-primary" />
               <span className="text-sm font-medium text-primary">
-                {classData?.maxStudents - classData?.enrolledStudents} spots
+                {courseData?.maxStudents - courseData?.enrolledStudents} spots
                 remaining
               </span>
             </div>

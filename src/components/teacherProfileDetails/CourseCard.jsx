@@ -23,7 +23,7 @@ const CourseCard = ({ courseItem, teacherId }) => {
     // });
 
     const params = new URLSearchParams({
-      classId: courseItem.id,
+      courseId: courseItem.id,
       teacherId: teacherId,
       classType: courseItem.type,
       className: courseItem.title,
@@ -40,6 +40,13 @@ const CourseCard = ({ courseItem, teacherId }) => {
 
   const getTypeIcon = () =>
     courseItem?.lessonType === "1-on-1" ? "User" : "Users";
+
+  const formatted = (date) => new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",   // ← update time zone here
+  }).format(date);
 
   return (
     <div className="bg-card border border-border rounded-lg p-6 hover:shadow-interactive transition-smooth flex flex-col justify-between">
@@ -58,13 +65,12 @@ const CourseCard = ({ courseItem, teacherId }) => {
         </div>
 
         <div className="space-y-3 mb-4">
-          <div className="flex items-center gap-2 text-sm text-text-secondary">
-            <Icon name="Clock" size={16} />
+          {courseItem?.startDate && <div className="flex items-center gap-2 text-sm text-text-secondary">
+            <Icon name="Calendar" size={16} />
             <span>
-              {courseItem?.startDate.slice(0, 10)}{" "}
-              {courseItem?.endDate && `- ${courseItem?.endDate.slice(0, 10)}`}
+              Start Date - {formatted(new Date(courseItem?.startDate))}
             </span>
-          </div>
+          </div>}
           {courseItem?.lessonType === "group" && courseItem?.location && (
             <div className="flex items-center gap-2 text-sm text-text-secondary">
               <Icon name="MapPin" size={16} />
@@ -90,23 +96,23 @@ const CourseCard = ({ courseItem, teacherId }) => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {courseItem?.lessonType === "group" &&
-            courseItem?.enrolledCount &&
-            courseItem?.studentCapacity &&
-            courseItem.enrolledCount >= courseItem.studentCapacity ? (
-              <Button variant="secondary" disabled>
-                Class Full
-              </Button>
-            ) : (
-              <Button
-                variant="default"
-                iconName="Calendar"
-                iconPosition="left"
-                onClick={handleBookNow}
-              >
-                Book Now
-              </Button>
-            )}
+            {
+              courseItem?.enrolledCount &&
+                courseItem?.studentCapacity &&
+                courseItem.enrolledCount >= courseItem.studentCapacity ? (
+                <Button variant="secondary" disabled>
+                  Class Full
+                </Button>
+              ) : (
+                <Button
+                  variant="default"
+                  iconName="Calendar"
+                  iconPosition="left"
+                  onClick={handleBookNow}
+                >
+                  Book Now
+                </Button>
+              )}
           </div>
         </div>
 

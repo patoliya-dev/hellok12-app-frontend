@@ -22,28 +22,26 @@ const ClassesTab = ({ courses, teacherId }) => {
   ];
 
   const filteredAndSortedClasses = () => {
-    let filtered = courses;
+    // Defensive copy to avoid mutating incoming props / frozen redux state
+    const base = Array.isArray(courses) ? [...courses] : [];
 
-    // Filter by type
-    if (filterType !== "all") {
-      filtered = filtered?.filter((cls) => cls?.lessonType === filterType);
+    let result = base;
+
+    if (filterType && filterType !== "all") {
+      result = result.filter((c) => c?.lessonType === filterType);
     }
 
-    // Sort courses
-    return filtered?.sort((a, b) => {
-      switch (sortBy) {
-        case "price-low":
-          return a?.price - b?.price;
-        case "price-high":
-          return b?.price - a?.price;
-        case "duration":
-          return a?.duration - b?.duration;
-        case "popularity":
-          return (b?.enrolledCount || 0) - (a?.enrolledCount || 0);
-        default:
-          return 0;
-      }
-    });
+    // Sort the copied array (no in-place mutation of original)
+    if (sortBy === "price-low") {
+      result = result.sort((a, b) => (a?.price || 0) - (b?.price || 0));
+    } else if (sortBy === "price-high") {
+      result = result.sort((a, b) => (b?.price || 0) - (a?.price || 0));
+    } else if (sortBy === "duration") {
+      result = result.sort((a, b) => (a?.duration || 0) - (b?.duration || 0));
+    } else if (sortBy === "popularity") {
+      result = result.sort((a, b) => (b?.enrolledCount || 0) - (a?.enrolledCount || 0));
+    }
+    return result;
   };
 
   const processedClasses = filteredAndSortedClasses();
