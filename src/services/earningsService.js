@@ -33,8 +33,21 @@ export async function fetchEarningsList(filters = {}) {
   return response.data;
 }
 
+/**
+ * Fetch earnings commission/invoice data
+ * @param {Object} filters - Filter parameters (startDate, endDate)
+ * @returns {Promise} Promise resolving to earnings commission data
+ */
+export async function fetchEarningsCommission(filters = {}) {
+  const response = await api.get("/earnings/earnings-commission", {
+    params: filters,
+  });
+  return response.data;
+}
+
 export default {
   fetchEarningsSummary,
   fetchEarningsTrend,
   fetchEarningsList,
+  fetchEarningsCommission,
 };

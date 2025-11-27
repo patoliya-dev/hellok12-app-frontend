@@ -12,6 +12,7 @@ import DateRangePicker from "components/ui/DateRangePicker";
 import {
   fetchEarningsTrend,
   fetchEarningsList,
+  fetchEarningsCommission,
 } from "../../../services/earningsService";
 
 const Earnings = () => {
@@ -40,6 +41,13 @@ const Earnings = () => {
     total: 0,
     page: 1,
     limit: 10,
+    totalPages: 1,
+  });
+
+  const [invoiceData, setInvoiceData] = useState([]);
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
+  const [invoicePagination, setInvoicePagination] = useState({
+    total: 0,
     totalPages: 1,
   });
 
@@ -136,6 +144,54 @@ const Earnings = () => {
     loadEarningsData();
   }, [filters, currentPage]);
 
+  useEffect(() => {
+    const loadInvoiceData = async () => {
+      setIsLoadingInvoices(true);
+      try {
+        // Build query params from filters
+        const queryParams = {
+          page: currentPageForInvoices,
+          limit: itemsPerPage,
+        };
+
+        // Add date range filter
+        if (filtersForInvoices.startDate && filtersForInvoices.endDate) {
+          queryParams.startDate = filtersForInvoices.startDate;
+          queryParams.endDate = filtersForInvoices.endDate;
+        }
+
+        const response = await fetchEarningsCommission(queryParams);
+
+        // Transform API response to match component format
+        const transformedData = response.data.payouts.map((item) => ({
+          invoiceId: item.invoiceNumber,
+          date: item.date,
+          amount: item.amount / 100, // Convert from cents to dollars
+          status: item.status.charAt(0) + item.status.slice(1).toLowerCase(), // Convert PAID to Paid
+          downloadUrl: item.downloadUrl,
+        }));
+
+        setInvoiceData(transformedData);
+        setInvoicePagination({
+          total: response.data.total,
+          totalPages: Math.ceil(response.data.total / itemsPerPage),
+        });
+      } catch (error) {
+        console.error("Failed to fetch invoice data:", error);
+        // Fallback to empty array on error
+        setInvoiceData([]);
+        setInvoicePagination({
+          total: 0,
+          totalPages: 1,
+        });
+      } finally {
+        setIsLoadingInvoices(false);
+      }
+    };
+
+    loadInvoiceData();
+  }, [filtersForInvoices, currentPageForInvoices]);
+
   const handleSelectedPeriodChange = (period) => {
     setSelectedPeriod(period);
   };
@@ -150,30 +206,6 @@ const Earnings = () => {
   };
 
   const currentData = mockEarningsData?.[selectedPeriod];
-
-  // Filter invoice data based on active filters
-  const filteredInvoiceData = currentData?.invoiceData?.filter((item) => {
-    if (
-      filtersForInvoices?.startDate !== "" &&
-      filtersForInvoices?.endDate !== ""
-    ) {
-      const date = new Date(item?.date);
-      const startDate = new Date(filtersForInvoices?.startDate);
-      const endDate = new Date(filtersForInvoices?.endDate);
-      if (date < startDate || date > endDate) return false;
-    }
-
-    return true;
-  });
-
-  // Pagination for invoices
-  const totalPagesForInvoices = Math.ceil(
-    filteredInvoiceData?.length / itemsPerPage
-  );
-  const paginatedDataForInvoices = filteredInvoiceData?.slice(
-    (currentPageForInvoices - 1) * itemsPerPage,
-    currentPageForInvoices * itemsPerPage
-  );
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -223,12 +255,12 @@ const Earnings = () => {
                 onChange={(values) => handleFiltersChangeForInvoices(values)}
               />
             </div>
-            <InvoiceTable data={paginatedDataForInvoices} />
+            <InvoiceTable data={invoiceData} isLoading={isLoadingInvoices} />
           </div>
           <Pagination
             currentPage={currentPageForInvoices}
-            totalPages={totalPagesForInvoices}
-            totalItems={filteredInvoiceData?.length}
+            totalPages={invoicePagination.totalPages}
+            totalItems={invoicePagination.total}
             onPageChange={handlePageChangeForInvoices}
           />
         </section>
