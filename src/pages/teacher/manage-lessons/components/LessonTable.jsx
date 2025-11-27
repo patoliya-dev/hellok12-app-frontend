@@ -110,13 +110,13 @@ const LessonTable = ({ sessions, onSort, sortConfig, onShowModal }) => {
                 </td>
                 <td className="px-6 py-4">
                   {session?.courseType !== "group" ? (
-                    session?.student?.name ? (
+                    session?.students?.name ? (
                       <div>
                         <div className="font-medium text-foreground">
-                          {session?.student.name}
+                          {session?.students.name}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {session?.studentAge} years old
+                          {session?.students.age} years old
                         </div>
                       </div>
                     ) : (
