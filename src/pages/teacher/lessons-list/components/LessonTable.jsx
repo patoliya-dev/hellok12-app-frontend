@@ -189,14 +189,14 @@ const LessonsTable = ({
                 </td>
                 <td className="px-6 py-4">
                   {(() => {
-                    const { date, time } = formatDateTime(lesson?.createdAt);
+                    const { date } = formatDateTime(lesson?.schedule?.date);
                     return (
                       <div className="md:w-[150px] xl:w-auto">
                         <div className="font-medium text-foreground">
                           {date}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {time}
+                          {lesson?.schedule?.time}
                         </div>
                       </div>
                     );

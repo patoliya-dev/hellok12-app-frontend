@@ -6,6 +6,7 @@ import LessonPagination from "./components/LessonPagination";
 import Icon from "components/AppIcon";
 import GroupedStudents from "./components/GroupedStudents";
 import { getManageLessons } from "../../../services/lessons/lesson.service";
+import PageLoaderOverlay from "components/ui/PageLoaderOverlay";
 
 const ManageLessons = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -130,6 +131,8 @@ const ManageLessons = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Page loader */}
+      <PageLoaderOverlay show={loading} label="Loading lessons…" />
       {/* Header */}
       <RoleBasedHeader />
       <main className="max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
@@ -170,31 +173,24 @@ const ManageLessons = () => {
           onFiltersChange={handleFiltersChange}
         />
 
-        {/* Loading State */}
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <>
-            {/* Lessons Table */}
-            <LessonTable
-              sessions={lessons}
-              onSort={handleSort}
-              sortConfig={sortConfig}
-              onShowModal={handleShowModal}
-            />
+        <>
+          {/* Lessons Table */}
+          <LessonTable
+            sessions={lessons}
+            onSort={handleSort}
+            sortConfig={sortConfig}
+            onShowModal={handleShowModal}
+          />
 
-            {/* Pagination */}
-            <LessonPagination
-              currentPage={currentPage}
-              totalPages={pagination.totalPages}
-              totalItems={pagination.total}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-            />
-          </>
-        )}
+          {/* Pagination */}
+          <LessonPagination
+            currentPage={currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.total}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+          />
+        </>
       </main>
 
       {showModal && (

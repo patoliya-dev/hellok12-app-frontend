@@ -490,7 +490,7 @@ const paymentStatusOptions = [
   { value: "all", label: "All Payments" },
   { value: "SENT", label: "Sent" },
   { value: "PENDING", label: "Pending" },
-  { value: "SETTLED", label: "Settled" },
+  { value: "PAID", label: "Paid" },
 ];
 
 const amountRangeOptions = [

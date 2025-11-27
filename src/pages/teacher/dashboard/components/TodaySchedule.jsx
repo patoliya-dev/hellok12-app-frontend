@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
+import LessonDetailsModal from "./LessonDetailsModal";
 
 const TodaySchedule = ({
   sessions,
@@ -10,8 +11,10 @@ const TodaySchedule = ({
   onViewAllSchedules,
   onMessage,
 }) => {
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const getSessionStatus = (session) => {
-    console.log(session.startTime, 'start Time')
     // Remove 'Z' to treat as local time instead of UTC
     const localTimeString = session.startTime.replace('Z', '');
     const sessionTime = new Date(localTimeString);
@@ -22,7 +25,6 @@ const TodaySchedule = ({
       const minutesUntil = Math.floor((sessionTime - now) / (1000 * 60));
       if (minutesUntil <= 15)
         return { status: "starting-soon", text: `Starts in ${minutesUntil}m` };
-      console.log(sessionTime)
       return {
         status: "upcoming",
         text: sessionTime.toLocaleTimeString([], {
@@ -39,11 +41,11 @@ const TodaySchedule = ({
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "starting-soon":
+      case "SCHEDULED":
         return "text-warning";
-      case "ongoing":
+      case "ONGOING":
         return "text-success";
-      case "completed":
+      case "COMPLETED":
         return "text-muted-foreground";
       default:
         return "text-primary";
@@ -52,11 +54,11 @@ const TodaySchedule = ({
 
   const getStatusBgColor = (status) => {
     switch (status) {
-      case "starting-soon":
+      case "SCHEDULED":
         return "bg-warning/10";
-      case "ongoing":
+      case "ONGOING":
         return "bg-success/10";
-      case "completed":
+      case "COMPLETED":
         return "bg-muted/50";
       default:
         return "bg-primary/10";
@@ -122,10 +124,10 @@ const TodaySchedule = ({
                   <div className="text-right">
                     <div
                       className={`text-sm font-medium ${getStatusColor(
-                        sessionStatus.status
+                        session.status
                       )}`}
                     >
-                      {sessionStatus.text}
+                      {session?.status?.charAt(0).toUpperCase() + session?.status?.slice(1).toLowerCase()}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {session.lesson.schedule.duration} minutes
@@ -236,7 +238,30 @@ const TodaySchedule = ({
                       iconSize={16}
                       className="flex-1"
                       onClick={() => {
-                        alert("Session details");
+                        // Transform session data to match LessonDetailsModal format
+                        const lessonData = {
+                          id: session?.id,
+                          subject: session?.lesson?.title || "N/A",
+                          title: session?.lesson?.title || "N/A",
+                          description: session?.course?.description || "N/A",
+                          teacher: {
+                            name: session?.course.title || "N/A",
+                            avatar: session?.course.introImageRef.url || "",
+                          },
+                          startTime: session?.lesson?.schedule?.time,
+                          date: session?.lesson?.schedule?.date,
+                          duration: session?.lesson?.schedule?.duration || 0,
+                          status: session?.status?.toLowerCase() || "pending",
+                          lessonDescription: session?.lesson?.description || "",
+                          tags: [
+                            ...(session?.course?.mode ? [session.course.mode.charAt(0).toUpperCase() + session.course.mode.slice(1)] : []),
+                            ...(session?.lesson?.isTrialAvailable ? ['Trial Session'] : []),
+                            ...(session?.course?.lessonType ? [session.course.lessonType.charAt(0).toUpperCase() + session.course.lessonType.slice(1)] : [])
+                          ],
+                          address: session?.lesson?.address || null,
+                        };
+                        setSelectedSession(lessonData);
+                        setIsModalOpen(true);
                       }}
                     >
                       View Details
@@ -247,6 +272,17 @@ const TodaySchedule = ({
             );
           })}
         </div>
+      )}
+
+      {/* Lesson Details Modal */}
+      {isModalOpen && selectedSession && (
+        <LessonDetailsModal
+          lesson={selectedSession}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedSession(null);
+          }}
+        />
       )}
     </div>
   );
