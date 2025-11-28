@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import Icon from "components/AppIcon";
 import Image from "components/AppImage";
 import Button from "components/ui/Button";
-import api from "../../../../utils/axiosInstance";
 
 const ProfileImageSection = ({ isEditing, profileImage, onFileSelected }) => {
   const [imagePreview, setImagePreview] = useState(profileImage?.url || "");
@@ -18,9 +17,8 @@ const ProfileImageSection = ({ isEditing, profileImage, onFileSelected }) => {
       onFileSelected({ type: "init", file: null });
       return;
     }
-    profileImage = null;
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // ✅ reset input value
+      fileInputRef.current.value = ""; // reset input value
     }
     if (onFileSelected) onFileSelected({ type: "delete", file: null });
   };

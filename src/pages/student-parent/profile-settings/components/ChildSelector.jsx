@@ -14,9 +14,9 @@ const ChildSelector = () => {
   useEffect(() => {
     if (
       students.length > 0 &&
-      (!selectedChildId || !students.some((s) => s.id === selectedChildId))
+      (!selectedChildId || !students.some((s) => s._id === selectedChildId))
     ) {
-      dispatch(selectStudent(students[0].id));
+      dispatch(selectStudent(students[0]._id));
     }
   }, [selectedChildId, students, dispatch]);
 
@@ -34,7 +34,7 @@ const ChildSelector = () => {
     };
   }, [isDropdownOpen]);
 
-  const selectedStudent = students.find((s) => s.id === selectedChildId);
+  const selectedStudent = students.find((s) => s._id === selectedChildId);
   const studentName = selectedStudent?.fullName || selectedStudent?.name || "";
   const initials =
     studentName
@@ -62,9 +62,9 @@ const ChildSelector = () => {
         tabIndex={0}
       >
         <div className="flex items-center space-x-3">
-          {selectedStudent?.profileImage ? (
+          {selectedStudent?.profileImage?.url ? (
             <img
-              src={selectedStudent.profileImage}
+              src={selectedStudent.profileImage?.url}
               alt={initials}
               className="w-10 h-10 rounded-full object-cover"
             />
@@ -84,9 +84,8 @@ const ChildSelector = () => {
           </div>
         </div>
         <ChevronDown
-          className={`text-muted-foreground transition-transform ${
-            isDropdownOpen ? "rotate-180" : ""
-          }`}
+          className={`text-muted-foreground transition-transform ${isDropdownOpen ? "rotate-180" : ""
+            }`}
           size={20}
         />
         {/* Dropdown menu */}
@@ -100,20 +99,19 @@ const ChildSelector = () => {
                 .toUpperCase();
               return (
                 <div
-                  key={student.id}
-                  className={`flex items-center space-x-3 px-4 py-2 cursor-pointer hover:bg-pink-50 ${
-                    selectedChildId === student.id ? "bg-pink-100" : ""
-                  }`}
+                  key={student._id}
+                  className={`flex items-center space-x-3 px-4 py-2 cursor-pointer hover:bg-pink-50 ${selectedChildId === student._id ? "bg-pink-100" : ""
+                    }`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    dispatch(selectStudent(student.id));
+                    dispatch(selectStudent(student._id));
                     setDropdownOpen(false);
                     successToast("Student selected successfully!");
                   }}
                 >
-                  {student?.profileImage ? (
+                  {student?.profileImage?.url ? (
                     <img
-                      src={student?.profileImage}
+                      src={student?.profileImage?.url}
                       alt={menuInitials}
                       className="w-8 h-8 rounded-full object-cover"
                     />

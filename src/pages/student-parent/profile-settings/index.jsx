@@ -17,8 +17,6 @@ const ProfileAccountSettings = () => {
   const authUser = useSelector(selectAuthUser);
   const isParent = authUser?.role === "parent";
   const isStudent = authUser?.role === "student";
-  const [parentData, setParentData] = useState(null);
-  const [studentData, setStudentData] = useState(null);
   const students = useSelector((state) => state.profile.students);
   const [currentLanguage, setCurrentLanguage] = useState("en");
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -31,15 +29,7 @@ const ProfileAccountSettings = () => {
   useEffect(() => {
     async function getData() {
       setIsLoading(true);
-      const result = await dispatch(fetchCurrentUser());
-      if (fetchCurrentUser.fulfilled.match(result)) {
-        const user = result.payload;
-        if (user?.role === "parent") {
-          setParentData(user);
-        } else if (user?.role === "student") {
-          setStudentData(user);
-        }
-      }
+      await dispatch(fetchCurrentUser());
       setIsLoading(false);
     }
     getData();
@@ -58,7 +48,6 @@ const ProfileAccountSettings = () => {
     const result = await dispatch(updateProfileThunk(updatedData));
     if (updateProfileThunk.fulfilled.match(result)) {
       const refreshed = result.payload;
-      if (refreshed) setParentData(refreshed);
       return refreshed;
     }
     throw new Error(result.payload?.error);
@@ -105,54 +94,14 @@ const ProfileAccountSettings = () => {
                 <ParentInfoSection
                   isExpanded={expandedSections.personal}
                   onToggle={() => handleSectionToggle("personal")}
-                  profileData={parentData}
+                  profileData={authUser}
                   onSave={handleProfileSave}
                   onChangePasswordClick={() => setShowChangePassword(true)}
                 />
                 <StudentInfoSection
-                  studentData={parentData?.profile?.children}
+                  studentData={students}
                   isExpanded={expandedSections.student}
                   onToggle={() => handleSectionToggle("student")}
-                  onChildAdded={(child) =>
-                    setParentData((prev) => {
-                      if (!prev) return prev;
-                      const children = Array.isArray(
-                        child?.parentProfile?.children
-                      )
-                        ? [...child.parentProfile.children]
-                        : [child];
-                      return {
-                        ...prev,
-                        profile: { ...prev.profile, children },
-                      };
-                    })
-                  }
-                  onChildUpdated={(updated) =>
-                    setParentData((prev) => {
-                      if (!prev) return prev;
-                      const children = Array.isArray(prev?.profile?.children)
-                        ? prev.profile.children.map((c) =>
-                            c?._id === updated?._id ? updated : c
-                          )
-                        : [];
-                      return {
-                        ...prev,
-                        profile: { ...prev.profile, children },
-                      };
-                    })
-                  }
-                  onChildDeleted={(id) =>
-                    setParentData((prev) => {
-                      if (!prev) return prev;
-                      const children = Array.isArray(prev?.profile?.children)
-                        ? prev.profile.children.filter((c) => c?._id !== id)
-                        : [];
-                      return {
-                        ...prev,
-                        profile: { ...prev.profile, children },
-                      };
-                    })
-                  }
                 />
               </>
             )}

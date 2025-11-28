@@ -37,7 +37,7 @@ const ChildProfileCard = ({ child, childIndex, onUpdate, onDelete }) => {
 
   useEffect(() => {
     if (!isEditing) {
-      setFormData(child), [child];
+      setFormData(child);
     }
   }, [child, isEditing]);
 

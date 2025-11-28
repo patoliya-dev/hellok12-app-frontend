@@ -4,11 +4,6 @@ import { useDispatch } from "react-redux";
 import ChildProfileCard from "./ChildProfileCard";
 import AddChildForm from "./AddChildForm";
 import Button from "components/ui/Button";
-import {
-  updateStudent,
-  deleteStudent,
-  addStudent,
-} from "reducers/profile/profileSlice";
 import { errorToast, successToast } from "../../../../utils/utils";
 import {
   updateProfile as updateProfileThunk,
@@ -20,17 +15,9 @@ const StudentInfoSection = ({
   isExpanded,
   onToggle,
   studentData,
-  onChildAdded,
-  onChildUpdated,
-  onChildDeleted,
 }) => {
   const dispatch = useDispatch();
-  const [students, setStudents] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
-
-  useEffect(() => {
-    setStudents(studentData);
-  }, [studentData]);
 
   const handleUpdate = async (id, data) => {
     try {
@@ -40,15 +27,7 @@ const StudentInfoSection = ({
           result.payload?.error || "Failed to update student profile"
         );
       }
-      const updated = result.payload;
 
-      const updatedChildren = updated?.profile?.children;
-
-      if (updatedChildren && Array.isArray(updatedChildren)) {
-        setStudents(updatedChildren);
-        const updatedChild = updatedChildren.find((child) => child?._id === id);
-        if (onChildUpdated) onChildUpdated(updatedChild);
-      }
       successToast("Student profile updated successfully!");
     } catch (err) {
       errorToast(err.message);
@@ -61,8 +40,6 @@ const StudentInfoSection = ({
       if (!deleteStudentFromParent.fulfilled.match(result)) {
         throw new Error(result.payload || "Failed to delete student");
       }
-      dispatch(deleteStudent(id));
-      if (onChildDeleted) onChildDeleted(id);
       successToast("Student deleted successfully!");
     } catch (err) {
       errorToast(err?.response?.data?.message || "Failed to delete student");
@@ -94,11 +71,6 @@ const StudentInfoSection = ({
       if (!addStudentToParent.fulfilled.match(result)) {
         throw new Error(result.payload || "Failed to add student");
       }
-      const created = result.payload;
-      if (created?._id) {
-        dispatch(addStudent(created));
-        if (onChildAdded) onChildAdded(created);
-      }
       successToast("Student added successfully!");
     } catch (err) {
       errorToast(err?.response?.data?.error || "Failed to add student");
@@ -118,9 +90,8 @@ const StudentInfoSection = ({
           </h2>
         </div>
         <ChevronDown
-          className={`text-muted-foreground transition-transform duration-300 ${
-            isExpanded ? "rotate-180" : ""
-          }`}
+          className={`text-muted-foreground transition-transform duration-300 ${isExpanded ? "rotate-180" : ""
+            }`}
           size={20}
         />
       </button>
@@ -128,9 +99,9 @@ const StudentInfoSection = ({
       {isExpanded && (
         <div className="px-4 md:px-5 pb-5 border-t border-border pt-4">
           <div className="space-y-6">
-            {Array.isArray(students) &&
-              students.length > 0 &&
-              students.map((child, idx) => (
+            {Array.isArray(studentData) &&
+              studentData.length > 0 &&
+              studentData.map((child, idx) => (
                 <ChildProfileCard
                   key={child?._id}
                   child={child}
