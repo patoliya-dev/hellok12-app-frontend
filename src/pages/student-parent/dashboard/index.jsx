@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import NotificationCenter from "../../../components/ui/NotificationCenter";
 import UpcomingSessionsCard from "./components/UpcomingSessionsCard";
@@ -9,12 +9,29 @@ import ScheduleWidget from "./components/ScheduleWidget";
 import MobileBottomNavigation from "./components/MobileBottomNavigation";
 import Button from "../../../components/ui/Button";
 import { selectAuthUser } from "reducers/auth/authSelectors";
+import { selectStudent } from "reducers/profile/profileSlice";
 
 const StudentDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const authUser = useSelector(selectAuthUser);
+  const selectedChildId = useSelector((state) => state.profile.selectedChildId);
+  // Automatically select the first child when dashboard loads for parent users
+  useEffect(() => {
+    if (
+      authUser?.role === "parent" &&
+      authUser?.profile?.children?.length > 0
+    ) {
+      // Only set if no child is currently selected
+      if (!selectedChildId) {
+        const firstChildId =
+          authUser.profile.children[0]._id || authUser.profile.children[0].id;
+        dispatch(selectStudent(firstChildId));
+      }
+    }
+  }, [authUser, selectedChildId, dispatch]);
 
   useEffect(() => {
     // Update current time every minute
@@ -73,9 +90,12 @@ const StudentDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                    {getGreeting()}, <span className="capitalize">{authUser.name}</span>! 👋
+                    {getGreeting()},{" "}
+                    <span className="capitalize">{authUser.name}</span>! 👋
                   </h1>
-                  <div className="text-muted-foreground mb-4">{TodayDate()}</div>
+                  <div className="text-muted-foreground mb-4">
+                    {TodayDate()}
+                  </div>
                   <p className="text-muted-foreground mb-4">
                     Ready to continue your learning journey?
                   </p>

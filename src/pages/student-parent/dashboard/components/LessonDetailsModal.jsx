@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import Badge from '../../../../components/ui/Badge'; // Adjusted path to your Badge component
 import { VideoIcon } from 'components/icons';
+import Icon from 'components/ui/Icon';
 
 // Helper to format date and time as required by the design
 const formatDate = (date) => {
@@ -63,7 +64,7 @@ const LessonDetailsModal = ({ lesson, onClose }) => {
           {/* Section Title: Subject */}
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-brand-gray-800">
-              {lesson.subject}
+              {lesson.title}
             </h3>
             <Badge text={statusInfo.text} color={statusInfo.color} icon={statusInfo.icon} />
           </div>
@@ -80,14 +81,23 @@ const LessonDetailsModal = ({ lesson, onClose }) => {
                 {lesson.teacher.name}
               </h4>
               <div className="my-1 flex items-center">
-                <div className="flex text-yellow-400">
+                <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={20} fill="currentColor" />
+                    <Icon
+                      key={i}
+                      name="Star"
+                      size={14}
+                      className={
+                        i < Math.floor(lesson.averageRating)
+                          ? "text-accent fill-current"
+                          : "text-gray-300"
+                      }
+                    />
                   ))}
                 </div>
-                <span className="ml-2 text-sm text-brand-gray-600">(5.0)</span>
+                <span className="ml-2 text-sm text-brand-gray-600">({lesson.totalRating})</span>
               </div>
-              <p className="text-sm text-brand-gray-500">{lesson.title}</p>
+              <p className="text-sm text-brand-gray-500">{lesson.subject}</p>
             </div>
             <button className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-brand-gray-600 hover:bg-gray-200">
               <MessageSquare size={18} />

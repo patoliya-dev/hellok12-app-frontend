@@ -109,7 +109,7 @@ const ProfileAccountSettings = () => {
               <StudentProfileSection
                 isExpanded={expandedSections.personal}
                 onToggle={() => handleSectionToggle("personal")}
-                profileData={studentData}
+                profileData={students}
                 onSave={handleProfileSave}
                 onChangePasswordClick={() => setShowChangePassword(true)}
               />
