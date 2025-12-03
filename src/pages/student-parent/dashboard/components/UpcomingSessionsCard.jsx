@@ -60,17 +60,18 @@ const UpcomingSessionsCard = () => {
           if (minutesUntil <= 15 && minutesUntil > 0) {
             status = "starting-soon";
           }
-          
+
           const formattedTime = sessionTime.toLocaleTimeString("en-US", {
             hour: "numeric",
             minute: "2-digit",
             hour12: true,
           });
-          
+
           return {
             id: session._id,
             subject: session?.course?.title || "N/A",
             teacher: {
+              _id: session?.lesson?.teacherId?._id || "N/A",
               name: session?.lesson?.teacherId?.name || "N/A",
               avatar:
                 session?.teacher?.profileImageRef?.url ||
@@ -78,6 +79,11 @@ const UpcomingSessionsCard = () => {
                 "",
             },
             startTime: formattedTime,
+            date: sessionTime.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
             duration: session?.lesson?.schedule?.duration || 0,
             type: session?.course?.mode || "video-call",
             meetingLink: session?.joinUrl || "",
@@ -118,6 +124,84 @@ const UpcomingSessionsCard = () => {
 
     fetchLessons();
   }, [authUser, selectedChildId]);
+
+  // Separate function to refresh lessons data
+  const refreshLessons = async () => {
+    try {
+      setSelectedSession(null);
+      const isParent = authUser?.role === "parent";
+      const studentId = isParent ? selectedChildId : authUser?.id;
+
+      if (!studentId) return;
+
+      const response = await getLessonsForStudent({ studentId });
+
+      const transformedSessions = (response?.data || []).map((session) => {
+        const localTimeString = session?.start?.replace("Z", "");
+        const sessionTime = new Date(localTimeString);
+        const now = new Date();
+        const minutesUntil = Math.floor((sessionTime - now) / (1000 * 60));
+
+        let status = "scheduled";
+        if (minutesUntil <= 15 && minutesUntil > 0) {
+          status = "starting-soon";
+        }
+
+        const formattedTime = sessionTime.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+        return {
+          id: session._id,
+          subject: session?.course?.title || "N/A",
+          teacher: {
+            _id: session?.lesson?.teacherId?._id || "N/A",
+            name: session?.lesson?.teacherId?.name || "N/A",
+            avatar:
+              session?.teacher?.profileImageRef?.url ||
+              session?.course?.introImageRef?.url ||
+              "",
+          },
+          startTime: formattedTime,
+          date: sessionTime.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          duration: session?.lesson?.schedule?.duration || 0,
+          type: session?.course?.mode || "video-call",
+          meetingLink: session?.joinUrl || "",
+          status: status,
+          title: session?.lesson?.title || "N/A",
+          tags: [
+            ...(session?.course?.mode === "online"
+              ? ["Online Course"]
+              : ["In-Person"]),
+            ...(session?.lesson?.isTrialAvailable ? ["Trial Lessons"] : []),
+            ...(session?.course?.lessonType
+              ? [
+                  session.course.lessonType.charAt(0).toUpperCase() +
+                    session.course.lessonType.slice(1),
+                ]
+              : []),
+          ],
+          description:
+            session?.lesson?.description || session?.course?.description || "",
+          address: session?.lesson?.address || null,
+          averageRating: parseFloat(
+            session?.lesson?.teacherId?.rating?.averageRating || 0
+          ).toFixed(2),
+          totalRating: session?.lesson?.teacherId?.rating?.totalRatings || 0,
+        };
+      });
+
+      setUpcomingSessions(transformedSessions);
+    } catch (err) {
+      console.error("Failed to refresh student lessons:", err);
+    }
+  };
 
   const handleMessages = () => {
     navigate(getRolePath(authUser?.role || "student", "messages"));
@@ -342,6 +426,7 @@ const UpcomingSessionsCard = () => {
         <LessonDetailsModal
           lesson={selectedSession}
           onClose={() => setSelectedSession(null)}
+          onFeedbackSubmitted={refreshLessons}
         />
       )}
     </div>

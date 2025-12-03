@@ -27,7 +27,6 @@ const ReviewsTab = ({ reviews, overallRating, ratingDistribution }) => {
 
   const filteredAndSortedReviews = () => {
     let filtered = reviews;
-    console.log(reviews)
     if (filterRating !== "all") {
       filtered = filtered.filter(
         (review) => review.rating === parseInt(filterRating, 10)

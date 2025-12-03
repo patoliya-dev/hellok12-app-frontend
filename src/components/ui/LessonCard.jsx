@@ -95,7 +95,8 @@ const LessonCard = ({ lesson }) => {
         name: lesson.teacherName,
         avatar: lesson?.teacherImage?.url || "/default-avatar.png",
       },
-      startTime: new Date(lesson.startTime),
+      startTime: formatLessonTime(lesson.startTime),
+      date: formatLessonDate(lesson.startTime),
       duration: lesson.duration,
       status:
         lesson.status === "Upcoming"
@@ -110,9 +111,9 @@ const LessonCard = ({ lesson }) => {
     setSelectedLesson(modalLesson);
   };
 
-    const handleMessage = () => {
-      navigate(getRolePath(authUser?.role || "student", "messages"));
-    };
+  const handleMessage = () => {
+    navigate(getRolePath(authUser?.role || "student", "messages"));
+  };
 
   return (
     <>

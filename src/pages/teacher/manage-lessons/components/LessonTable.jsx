@@ -35,8 +35,6 @@ const LessonTable = ({ sessions, onSort, sortConfig, onShowModal }) => {
     );
   };
 
-  console.log(sessions)
-
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden">
       {/* Desktop Table */}

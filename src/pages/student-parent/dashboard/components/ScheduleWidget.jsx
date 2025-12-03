@@ -104,7 +104,6 @@ const ScheduleWidget = () => {
   const getUpcomingSessionsCount = () => {
     const now = new Date();
     let count = 0;
-    console.log(weeklySchedule);
     weeklySchedule.forEach((day) => {
       if (day.date >= now) {
         count += day.sessions.length;
@@ -117,8 +116,6 @@ const ScheduleWidget = () => {
   const handleViewFullSchedule = () => {
     navigate(getRolePath(authUser?.role || "student", "lesson-calendar"));
   };
-
-  console.log(weeklySchedule, "weeklySchedule");
 
   return (
     <div className="bg-card rounded-lg border border-border p-6">

@@ -30,4 +30,18 @@ export const feedbackRatingAPI = {
       throw error.response?.data || { error: error.message };
     }
   },
+
+  submitFeedback: async ({ teacherId, rating, comment, authorId }) => {
+    try {
+      const response = await api.post("/feedbacks", {
+        teacherId,
+        rating,
+        comment,
+        authorId,
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { error: error.message };
+    }
+  },
 };
