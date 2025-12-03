@@ -60,7 +60,7 @@ const InvoiceTable = ({ data, isLoading = false }) => {
       </div>
     );
   }
-  console.log(data)
+
   return (
     <div>
       <div>

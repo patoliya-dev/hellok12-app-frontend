@@ -12,6 +12,7 @@ const ScheduleWidget = () => {
   const [viewMode, setViewMode] = useState("week"); // 'week' or 'month'
   const [weeklySchedule, setWeeklySchedule] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [totalSessions, setTotalSessions] = useState(0);
   const navigate = useNavigate();
   const authUser = useSelector(selectAuthUser);
   const selectedChildId = useSelector((state) => state.profile.selectedChildId);
@@ -31,7 +32,8 @@ const ScheduleWidget = () => {
 
   // Format time from ISO string to readable format
   const formatTime = (isoString) => {
-    const date = new Date(isoString);
+    const localTimeString = isoString.replace("Z", "");
+    const date = new Date(localTimeString);
     return date.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
@@ -56,7 +58,7 @@ const ScheduleWidget = () => {
         const response = await studentService.getWeeklySchedule({ studentId });
 
         if (response.success && response.data) {
-          // Transform API data to component format
+          setTotalSessions(response.data.totalSessions);
           const transformedSchedule = response.data.days.map(
             (day, dayIndex) => ({
               id: dayIndex + 1,
@@ -102,7 +104,7 @@ const ScheduleWidget = () => {
   const getUpcomingSessionsCount = () => {
     const now = new Date();
     let count = 0;
-
+    console.log(weeklySchedule);
     weeklySchedule.forEach((day) => {
       if (day.date >= now) {
         count += day.sessions.length;
@@ -115,6 +117,8 @@ const ScheduleWidget = () => {
   const handleViewFullSchedule = () => {
     navigate(getRolePath(authUser?.role || "student", "lesson-calendar"));
   };
+
+  console.log(weeklySchedule, "weeklySchedule");
 
   return (
     <div className="bg-card rounded-lg border border-border p-6">
@@ -135,7 +139,7 @@ const ScheduleWidget = () => {
           </div>
           <div className="bg-muted/50 rounded-lg p-4 flex items-center space-x-3">
             <div className="text-2xl font-bold text-success">
-              {getUpcomingSessionsCount()}
+              {totalSessions}
             </div>
             <div className="text-sm text-muted-foreground">This Week</div>
           </div>

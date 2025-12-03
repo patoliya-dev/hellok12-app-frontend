@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import {
   formatLessonTime,
   getCountdown,
@@ -16,8 +18,14 @@ import {
 import Badge from "./Badge";
 import { CourseIcon, VideoIcon } from "components/icons";
 import Button from "./Button";
+import LessonDetailsModal from "../../pages/student-parent/dashboard/components/LessonDetailsModal";
+import { getRolePath } from "../../utils/rolePath";
 
 const LessonCard = ({ lesson }) => {
+  const [selectedLesson, setSelectedLesson] = useState(null);
+  const navigate = useNavigate();
+  const authUser = useSelector((state) => state.auth.user);
+
   const renderTimeInfo = () => {
     if (lesson.status === "Upcoming") {
       // If the date is far in the future, show the date. Otherwise, show countdown.
@@ -72,86 +80,144 @@ const LessonCard = ({ lesson }) => {
     );
   };
 
+  const handleViewDetails = () => {
+    const tags = [
+      ...(lesson.modality ? [lesson.modality] : []),
+      ...(lesson.tags?.includes("Trial Lesson") ? ["Trial Lessons"] : []),
+      ...(lesson.type ? [lesson.type] : []),
+    ];
+
+    const modalLesson = {
+      id: lesson._id,
+      title: lesson.title,
+      subject: lesson.courseTitle,
+      teacher: {
+        name: lesson.teacherName,
+        avatar: lesson?.teacherImage?.url || "/default-avatar.png",
+      },
+      startTime: new Date(lesson.startTime),
+      duration: lesson.duration,
+      status:
+        lesson.status === "Upcoming"
+          ? "scheduled"
+          : lesson.status.toLowerCase(),
+      tags: tags,
+      description: lesson.description || "",
+      address: lesson.address || null,
+      averageRating: lesson.ratings.averageRating || 0,
+      totalRating: lesson.ratings.totalRatings || 0,
+    };
+    setSelectedLesson(modalLesson);
+  };
+
+    const handleMessage = () => {
+      navigate(getRolePath(authUser?.role || "student", "messages"));
+    };
+
   return (
-    <div className="p-5 rounded-lg border border-gray-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-      <div>
-        <div className="flex gap-4 w-full md:w-auto">
-          <img
-            src={lesson.teacherImage}
-            alt={lesson.teacherName}
-            className="w-16 h-16 rounded-full object-cover"
-          />
-          <div className="flex-grow">
-            <h3 className="text-lg font-semibold text-brand-gray-800">
-              {lesson.title}
-            </h3>
-            <p className="text-sm text-brand-gray-600">{lesson.teacherName}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 mt-2 text-sm text-brand-gray-400">
-          <span className="flex items-center gap-1.5">
-            <Clock size={14} /> {lesson.duration} min
-          </span>
-          <div className="flex items-center space-x-1">
-            <CourseIcon selected={false} />
-            <span className="text-muted-foreground">{lesson.title}</span>
-          </div>
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          {lesson.type && (
-            <Badge
-              text={lesson.type}
-              icon={
-                lesson.type === "Group" ? (
-                  <Users size={14} />
-                ) : (
-                  <User size={14} />
-                )
-              }
-              color="blue"
+    <>
+      <div className="p-5 rounded-lg border border-gray-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div className="flex gap-4 w-full md:w-auto">
+            <img
+              src={lesson?.teacherImage?.url || "/default-avatar.png"}
+              alt={lesson.teacherName}
+              className="w-16 h-16 rounded-full object-cover"
             />
-          )}
-          <Badge
-            text={lesson.modality}
-            icon={
-              <VideoIcon
-                size={14}
-                className="w-[12px] h-[10px]"
-                selected={true}
+            <div className="flex-grow">
+              <h3 className="text-lg font-semibold text-brand-gray-800">
+                {lesson.title}
+              </h3>
+              <p className="text-sm text-brand-gray-600">
+                {lesson.teacherName}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 mt-2 text-sm text-brand-gray-400">
+            <span className="flex items-center gap-1.5">
+              <Clock size={14} /> {lesson.duration} min
+            </span>
+            <div className="flex items-center space-x-1">
+              <CourseIcon selected={false} />
+              <span className="text-muted-foreground">
+                {lesson.courseTitle}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {lesson.type && (
+              <Badge
+                text={lesson.type}
+                icon={
+                  lesson.type === "Group" ? (
+                    <Users size={14} />
+                  ) : (
+                    <User size={14} />
+                  )
+                }
+                color="blue"
               />
-            }
-            color="green"
-          />
-          {lesson.tags.map((tag) => (
+            )}
             <Badge
-              key={tag}
-              text={tag}
+              text={lesson.modality}
               icon={
-                tag.includes("Trial") ? (
-                  <Gift size={14} />
-                ) : (
-                  <Gamepad2 size={14} />
-                )
+                <VideoIcon
+                  size={14}
+                  className="w-[12px] h-[10px]"
+                  selected={true}
+                />
               }
-              color={tag.includes("Trial") ? "sky" : "orange"}
+              color="green"
             />
-          ))}
+            {lesson.tags.map((tag) => (
+              <Badge
+                key={tag}
+                text={tag}
+                icon={
+                  tag.includes("Trial") ? (
+                    <Gift size={14} />
+                  ) : (
+                    <Gamepad2 size={14} />
+                  )
+                }
+                color={tag.includes("Trial") ? "sky" : "orange"}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-col justify-between self-stretch w-full md:w-auto mt-4 md:mt-0">
+          {renderTimeInfo()}
+          <div className="flex items-center gap-6 text-sm text-brand-gray-600 self-start md:self-end mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              iconName="FileText"
+              onClick={handleViewDetails}
+            >
+              View Details
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              iconName="MessageSquare"
+              onClick={handleMessage}
+            >
+              Message
+            </Button>
+          </div>
         </div>
       </div>
-      <div className="flex flex-col justify-between self-stretch w-full md:w-auto mt-4 md:mt-0">
-        {renderTimeInfo()}
-        <div className="flex items-center gap-6 text-sm text-brand-gray-600 self-start md:self-end mt-2">
-          <Button variant="outline" size="sm" iconName="FileText">
-            View Details
-          </Button>
-          <Button variant="outline" size="sm" iconName="MessageSquare">
-            Message
-          </Button>
-        </div>
-      </div>
-    </div>
+
+      {/* Lesson Details Modal */}
+      {selectedLesson && (
+        <LessonDetailsModal
+          lesson={selectedLesson}
+          onClose={() => setSelectedLesson(null)}
+        />
+      )}
+    </>
   );
 };
 

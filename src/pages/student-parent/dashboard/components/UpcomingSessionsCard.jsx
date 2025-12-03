@@ -35,11 +35,11 @@ const UpcomingSessionsCard = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Determine which student ID to use based on role
         const isParent = authUser?.role === "parent";
         const studentId = isParent ? selectedChildId : authUser?.id;
-        
+
         // Don't fetch if we don't have a valid student ID
         if (!studentId) {
           setUpcomingSessions([]);
@@ -50,37 +50,59 @@ const UpcomingSessionsCard = () => {
         const response = await getLessonsForStudent({ studentId });
 
         // Transform API response to match component's expected format
-        const transformedSessions = (response?.data || []).map(session => {
-          const localTimeString = session?.start?.replace('Z', '');
+        const transformedSessions = (response?.data || []).map((session) => {
+          const localTimeString = session?.start?.replace("Z", "");
           const sessionTime = new Date(localTimeString);
           const now = new Date();
           const minutesUntil = Math.floor((sessionTime - now) / (1000 * 60));
 
-          let status = 'scheduled';
+          let status = "scheduled";
           if (minutesUntil <= 15 && minutesUntil > 0) {
-            status = 'starting-soon';
+            status = "starting-soon";
           }
+          
+          const formattedTime = sessionTime.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          });
+          
           return {
             id: session._id,
             subject: session?.course?.title || "N/A",
             teacher: {
               name: session?.lesson?.teacherId?.name || "N/A",
-              avatar: session?.teacher?.profileImageRef?.url || session?.course?.introImageRef?.url || "",
+              avatar:
+                session?.teacher?.profileImageRef?.url ||
+                session?.course?.introImageRef?.url ||
+                "",
             },
-            startTime: sessionTime,
+            startTime: formattedTime,
             duration: session?.lesson?.schedule?.duration || 0,
             type: session?.course?.mode || "video-call",
             meetingLink: session?.joinUrl || "",
             status: status,
             title: session?.lesson?.title || "N/A",
             tags: [
-              ...(session?.course?.mode ? [session.course.mode.charAt(0).toUpperCase() + session.course.mode.slice(1)] : []),
-              ...(session?.lesson?.isTrialAvailable ? ['Trial Lessons'] : []),
-              ...(session?.course?.lessonType ? [session.course.lessonType.charAt(0).toUpperCase() + session.course.lessonType.slice(1)] : [])
+              ...(session?.course?.mode === "online"
+                ? ["Online Course"]
+                : ["In-Person"]),
+              ...(session?.lesson?.isTrialAvailable ? ["Trial Lessons"] : []),
+              ...(session?.course?.lessonType
+                ? [
+                    session.course.lessonType.charAt(0).toUpperCase() +
+                      session.course.lessonType.slice(1),
+                  ]
+                : []),
             ],
-            description: session?.lesson?.description || session?.course?.description || "",
+            description:
+              session?.lesson?.description ||
+              session?.course?.description ||
+              "",
             address: session?.lesson?.address || null,
-            averageRating: parseFloat(session?.lesson?.teacherId?.rating?.averageRating || 0).toFixed(2),
+            averageRating: parseFloat(
+              session?.lesson?.teacherId?.rating?.averageRating || 0
+            ).toFixed(2),
             totalRating: session?.lesson?.teacherId?.rating?.totalRatings || 0,
           };
         });
@@ -199,7 +221,7 @@ const UpcomingSessionsCard = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {upcomingSessions.slice(0, 3).map((session) => (
+          {upcomingSessions.map((session) => (
             <div
               key={session.id}
               className={`p-4 rounded-lg border transition-micro ${
@@ -235,14 +257,11 @@ const UpcomingSessionsCard = () => {
                         : "text-primary"
                     }`}
                   >
-                    {getTimeUntilSession(session.startTime, session.duration)}
+                    {session?.status?.charAt(0).toUpperCase() +
+                      session?.status?.slice(1).toLowerCase()}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {session.startTime.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}
+                    {session?.startTime}
                   </div>
                 </div>
               </div>

@@ -11,8 +11,10 @@ import PaymentBilling from "../pages/student-parent/payment-billing";
 import FindTeacher from "../pages/student-parent/find-teacher";
 import TeacherProfileDetail from "../pages/student-parent/teacher-profile-detail";
 import PublicCourseDetails from "../pages/student-parent/course-details";
+import useAutoSelectChild from "../hooks/useAutoSelectChild";
 
 const StudentParentRoutes = () => {
+  useAutoSelectChild();
   return (
     <Routes>
       <Route path="dashboard" element={<StudentDashboard />} />

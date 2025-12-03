@@ -1,50 +1,82 @@
-import React from 'react';
+import React from "react";
 import {
-  X, MessageSquare, Star, Calendar, Clock, Gamepad2, FlaskConical, User, Video, AlertCircle,
+  X,
+  MessageSquare,
+  Star,
+  Calendar,
+  Clock,
+  Gamepad2,
+  FlaskConical,
+  User,
+  Video,
+  AlertCircle,
   Gift,
   MapPin,
-} from 'lucide-react';
-import Badge from '../../../../components/ui/Badge'; // Adjusted path to your Badge component
-import { VideoIcon } from 'components/icons';
-import Icon from 'components/ui/Icon';
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import Badge from "../../../../components/ui/Badge";
+import { VideoIcon } from "components/icons";
+import Icon from "components/ui/Icon";
+import { getRolePath } from "../../../../utils/rolePath";
 
 // Helper to format date and time as required by the design
 const formatDate = (date) => {
-  if (!date) return { fullDate: '', time: '' };
+  if (!date) return { fullDate: "", time: "" };
   return {
-    fullDate: new Date(date).toLocaleDateString('en-US', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    fullDate: new Date(date).toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     }),
-    time: new Date(date).toLocaleTimeString('en-US', {
-      hour: 'numeric', minute: '2-digit', hour12: true,
+    time: new Date(date).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     }),
   };
 };
 
 // Map tag names to icons and colors for the Badge component
 const tagDetails = {
-  'Curriculum-Aligned Games': { icon: <Gamepad2 size={16} />, color: 'orange' },
-  'Trial Lessons': { icon: <Gift size={16} />, color: 'sky' },
-  '1-on-1': { icon: <User size={16} />, color: 'blue' }, // Assuming you add 'purple' to your Badge colors
-  'Online Course': { icon: <VideoIcon size={14} className="w-[12px] h-[10px]" selected={true} />, color: 'green' },
-
+  "Curriculum-Aligned Games": { icon: <Gamepad2 size={16} />, color: "orange" },
+  "Trial Lessons": { icon: <Gift size={16} />, color: "sky" },
+  "1-on-1": { icon: <User size={16} />, color: "blue" }, // Assuming you add 'purple' to your Badge colors
+  "Online Course": {
+    icon: <VideoIcon size={14} className="w-[12px] h-[10px]" selected={true} />,
+    color: "green",
+  },
+  "In-Person": { icon: <User size={16} />, color: "blue" },
+  Group: { icon: <User size={16} />, color: "blue" },
 };
 
 const statusDetails = {
-  'starting-soon': { color: 'orange', icon: <AlertCircle size={14} />, text: 'Starting Soon' },
-  'scheduled': { color: 'blue', icon: <Calendar size={14} />, text: 'Scheduled' },
-  'completed': { color: 'green', text: 'Completed' },
-  'pending': { color: 'sky', text: 'Pending' },
-  'cancelled': { color: 'error', text: 'Cancelled' }
-}
+  "starting-soon": {
+    color: "orange",
+    icon: <AlertCircle size={14} />,
+    text: "Starting Soon",
+  },
+  scheduled: { color: "blue", icon: <Calendar size={14} />, text: "Scheduled" },
+  completed: { color: "green", text: "Completed" },
+  pending: { color: "sky", text: "Pending" },
+  cancelled: { color: "error", text: "Cancelled" },
+};
 
 const LessonDetailsModal = ({ lesson, onClose }) => {
+  const navigate = useNavigate();
+  const authUser = useSelector((state) => state.auth.user);
+
   if (!lesson) {
     return null;
   }
 
   const { fullDate, time } = formatDate(lesson.startTime);
-  const statusInfo = statusDetails[lesson.status] || statusDetails['pending'];
+  const statusInfo = statusDetails[lesson.status] || statusDetails["pending"];
+
+  const handleMessage = () => {
+    navigate(getRolePath(authUser?.role || "student", "messages"));
+  };
 
   return (
     // Modal overlay
@@ -55,7 +87,10 @@ const LessonDetailsModal = ({ lesson, onClose }) => {
           <h2 className="text-2xl font-bold text-brand-gray-800">
             Lessons Details
           </h2>
-          <button className="text-brand-gray-500 hover:text-brand-gray-800" onClick={onClose}>
+          <button
+            className="text-brand-gray-500 hover:text-brand-gray-800"
+            onClick={onClose}
+          >
             <X size={24} />
           </button>
         </div>
@@ -66,7 +101,11 @@ const LessonDetailsModal = ({ lesson, onClose }) => {
             <h3 className="text-lg font-semibold text-brand-gray-800">
               {lesson.title}
             </h3>
-            <Badge text={statusInfo.text} color={statusInfo.color} icon={statusInfo.icon} />
+            <Badge
+              text={statusInfo.text}
+              color={statusInfo.color}
+              icon={statusInfo.icon}
+            />
           </div>
 
           {/* Tutor Information Card */}
@@ -95,11 +134,16 @@ const LessonDetailsModal = ({ lesson, onClose }) => {
                     />
                   ))}
                 </div>
-                <span className="ml-2 text-sm text-brand-gray-600">({lesson.totalRating})</span>
+                <span className="ml-2 text-sm text-brand-gray-600">
+                  ({lesson.totalRating})
+                </span>
               </div>
               <p className="text-sm text-brand-gray-500">{lesson.subject}</p>
             </div>
-            <button className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-brand-gray-600 hover:bg-gray-200">
+            <button
+              className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-brand-gray-600 hover:bg-gray-200"
+              onClick={handleMessage}
+            >
               <MessageSquare size={18} />
               <span>Message</span>
             </button>
@@ -115,20 +159,25 @@ const LessonDetailsModal = ({ lesson, onClose }) => {
               </div>
             </div>
             <div className="flex items-start gap-3">
-              {lesson.address && (<>
-                <MapPin className="mt-1 h-5 w-5 text-brand-gray-500" />
-                <div>
-                  <p className="text-sm text-brand-gray-500">Location</p>
-                  <p className="font-semibold text-brand-gray-800">{lesson.address}</p>
-                </div>
-              </>
+              {lesson.address && (
+                <>
+                  <MapPin className="mt-1 h-5 w-5 text-brand-gray-500" />
+                  <div>
+                    <p className="text-sm text-brand-gray-500">Location</p>
+                    <p className="font-semibold text-brand-gray-800">
+                      {lesson.address}
+                    </p>
+                  </div>
+                </>
               )}
             </div>
             <div className="flex items-start gap-3">
               <Clock className="mt-1 h-5 w-5 text-brand-gray-500" />
               <div>
                 <p className="text-sm text-brand-gray-500">Duration</p>
-                <p className="font-semibold text-brand-gray-800">{lesson.duration} min</p>
+                <p className="font-semibold text-brand-gray-800">
+                  {lesson.duration} min
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-3"></div>
@@ -148,7 +197,7 @@ const LessonDetailsModal = ({ lesson, onClose }) => {
                 <Badge
                   key={tag}
                   text={tag}
-                  color={tagDetails[tag]?.color || 'sky'}
+                  color={tagDetails[tag]?.color || "sky"}
                   icon={tagDetails[tag]?.icon}
                 />
               ))}

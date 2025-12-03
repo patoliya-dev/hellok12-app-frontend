@@ -63,3 +63,25 @@ export const getStudentCalendarData = async (studentId, month, year) => {
     );
   }
 };
+
+export const getCoursesForStudent = async (studentId) => {
+  try {
+    const response = await api.get(`/lessons/courses/${studentId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Get courses for student error:", error);
+    throw new Error(error.response?.data?.message || "Failed to load courses");
+  }
+};
+
+export const getStudentLessons = async (studentId, params = {}) => {
+  try {
+    const response = await api.get(`/lessons/studentLessons/${studentId}`, {
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Get student lessons error:", error);
+    throw new Error(error.response?.data?.message || "Failed to load lessons");
+  }
+};
