@@ -21,7 +21,7 @@ import Button from "./Button";
 import LessonDetailsModal from "../../pages/student-parent/dashboard/components/LessonDetailsModal";
 import { getRolePath } from "../../utils/rolePath";
 
-const LessonCard = ({ lesson }) => {
+const LessonCard = ({ lesson, onRefresh }) => {
   const [selectedLesson, setSelectedLesson] = useState(null);
   const navigate = useNavigate();
   const authUser = useSelector((state) => state.auth.user);
@@ -86,12 +86,13 @@ const LessonCard = ({ lesson }) => {
       ...(lesson.tags?.includes("Trial Lesson") ? ["Trial Lessons"] : []),
       ...(lesson.type ? [lesson.type] : []),
     ];
-
+    console.log(lesson);
     const modalLesson = {
       id: lesson._id,
       title: lesson.title,
       subject: lesson.courseTitle,
       teacher: {
+        _id: lesson.teacherId,
         name: lesson.teacherName,
         avatar: lesson?.teacherImage?.url || "/default-avatar.png",
       },
@@ -113,6 +114,13 @@ const LessonCard = ({ lesson }) => {
 
   const handleMessage = () => {
     navigate(getRolePath(authUser?.role || "student", "messages"));
+  };
+
+  const handleFeedbackSubmitted = () => {
+    setSelectedLesson(null);
+    if (onRefresh) {
+      onRefresh();
+    }
   };
 
   return (
@@ -216,6 +224,7 @@ const LessonCard = ({ lesson }) => {
         <LessonDetailsModal
           lesson={selectedLesson}
           onClose={() => setSelectedLesson(null)}
+          onFeedbackSubmitted={handleFeedbackSubmitted}
         />
       )}
     </>

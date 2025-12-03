@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import LessonCard from "components/ui/LessonCard";
 import { getStudentLessons } from "../../../../services/lessons/lesson.service";
 import { Loader2 } from "lucide-react";
@@ -9,66 +9,67 @@ const LessonsHistory = ({ studentId, selectedCourse }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchLessons = async () => {
-      if (!studentId) return;
+  const fetchLessons = useCallback(async () => {
+    if (!studentId) return;
 
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      try {
-        const params = {
-          view: "history",
-          page: 1,
-          limit: 100,
-        };
+    try {
+      const params = {
+        view: "history",
+        page: 1,
+        limit: 100,
+      };
 
-        if (selectedCourse) {
-          params.courseId = selectedCourse;
-        }
-
-        const response = await getStudentLessons(studentId, params);
-
-        if (response.success && response.data?.lessons) {
-          // Map API response to LessonCard format
-          const mappedLessons = response.data.lessons.map((lesson) => ({
-            _id: lesson.sessionId,
-            title: lesson.lessonTitle,
-            teacherName: lesson.teacher.name,
-            teacherImage: lesson.teacher.profileImage || "/default-avatar.png",
-            startTime: lesson.startTime,
-            endTime: lesson.endTime,
-            duration: lesson.duration,
-            status:
-              lesson.status === "completed"
-                ? "Completed"
-                : lesson.status === "cancelled"
-                ? "Cancelled"
-                : "Completed",
-            type: lesson.lessonType === "1-on-1" ? "1-on-1" : "Group",
-            modality:
-              lesson.courseMode === "online" ? "Online Course" : "In-Person",
-            tags: [
-              ...(lesson.isTrialLesson ? ["Trial Lesson"] : []),
-              ...(lesson.tags || []),
-            ],
-            courseTitle: lesson.courseTitle,
-            description: lesson.description,
-            ratings: lesson?.teacher?.rating,
-          }));
-
-          setLessons(mappedLessons);
-        }
-      } catch (err) {
-        setError(err.message || "Failed to load lessons");
-        console.error("Error fetching lesson history:", err);
-      } finally {
-        setLoading(false);
+      if (selectedCourse) {
+        params.courseId = selectedCourse;
       }
-    };
 
-    fetchLessons();
+      const response = await getStudentLessons(studentId, params);
+
+      if (response.success && response.data?.lessons) {
+        // Map API response to LessonCard format
+        const mappedLessons = response.data.lessons.map((lesson) => ({
+          _id: lesson.sessionId,
+          title: lesson.lessonTitle,
+          teacherId: lesson.teacher._id,
+          teacherName: lesson.teacher.name,
+          teacherImage: lesson.teacher.profileImage || "/default-avatar.png",
+          startTime: lesson.startTime,
+          endTime: lesson.endTime,
+          duration: lesson.duration,
+          status:
+            lesson.status === "completed"
+              ? "Completed"
+              : lesson.status === "cancelled"
+              ? "Cancelled"
+              : "Completed",
+          type: lesson.lessonType === "1-on-1" ? "1-on-1" : "Group",
+          modality:
+            lesson.courseMode === "online" ? "Online Course" : "In-Person",
+          tags: [
+            ...(lesson.isTrialLesson ? ["Trial Lesson"] : []),
+            ...(lesson.tags || []),
+          ],
+          courseTitle: lesson.courseTitle,
+          description: lesson.description,
+          ratings: lesson?.teacher?.rating,
+        }));
+
+        setLessons(mappedLessons);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to load lessons");
+      console.error("Error fetching lesson history:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [studentId, selectedCourse]);
+
+  useEffect(() => {
+    fetchLessons();
+  }, [fetchLessons]);
 
   const filteredLessons = useMemo(() => {
     if (activeFilter === "All Lessons") return lessons;
@@ -138,7 +139,11 @@ const LessonsHistory = ({ studentId, selectedCourse }) => {
       ) : (
         <div className="space-y-4">
           {filteredLessons.map((lesson) => (
-            <LessonCard key={lesson._id} lesson={lesson} />
+            <LessonCard
+              key={lesson._id}
+              lesson={lesson}
+              onRefresh={fetchLessons}
+            />
           ))}
         </div>
       )}
