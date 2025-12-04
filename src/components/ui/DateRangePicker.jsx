@@ -16,21 +16,37 @@ const DateRangePicker = ({ onChange, onClear = false }) => {
       key: "selection",
     },
   ]);
+  const [tempRange, setTempRange] = useState(range);
 
   const handleSelect = (ranges) => {
-    setRange([ranges.selection]);
-    onChange?.(ranges.selection);
+    setTempRange([ranges.selection]);
+  };
+
+  const handleDone = () => {
+    setRange(tempRange);
+    onChange?.(tempRange[0]);
+    setShowPicker(false);
+  };
+
+  const handleTogglePicker = () => {
+    if (!showPicker) {
+      // When opening, sync tempRange with current range
+      setTempRange(range);
+    }
+    setShowPicker(!showPicker);
   };
 
   useEffect(() => {
     if (onClear) {
-      setRange([
+      const defaultRange = [
         {
           startDate: new Date(),
           endDate: new Date(),
           key: "selection",
         },
-      ]);
+      ];
+      setRange(defaultRange);
+      setTempRange(defaultRange);
     }
   }, [onClear]);
 
@@ -38,7 +54,7 @@ const DateRangePicker = ({ onChange, onClear = false }) => {
     <div className="relative inline-block">
       {/* Display input box */}
       <button
-        onClick={() => setShowPicker(!showPicker)}
+        onClick={handleTogglePicker}
         className="flex items-center gap-2 border border-border bg-input rounded-md px-3 py-2"
       >
         <Icon name={"Calendar"} size={16} />
@@ -52,14 +68,14 @@ const DateRangePicker = ({ onChange, onClear = false }) => {
       {showPicker && (
         <div className="absolute mt-2 z-50 bg-white border rounded-lg shadow-lg">
           <DateRange
-            ranges={range}
+            ranges={tempRange}
             onChange={handleSelect}
             moveRangeOnFirstSelection={false}
             editableDateInputs={true}
           />
           <div className="flex justify-end p-2">
             <button
-              onClick={() => setShowPicker(false)}
+              onClick={handleDone}
               className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md"
             >
               Done

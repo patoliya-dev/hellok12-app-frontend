@@ -3,6 +3,7 @@ import Input from "./Input";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSlotsForDate } from "reducers/schedule/scheduleThunks";
 import { normalizeTime12h } from "../../utils/time12h";
+import { normalizeToHHMM24 } from "../../utils/time24h";
 
 const FieldError = ({ children }) =>
   children ? <p className="mt-1 text-sm text-destructive">{children}</p> : null;
@@ -88,11 +89,14 @@ export default function WeeklySchedule({ formData, handleInputChange, errors = {
 
   const onTimeClick = (slot) => {
     // slot may be string (legacy) or object { label, disabled }
-    const label = typeof slot === 'string' ? slot : slot.label;
+    const rawLabel = typeof slot === 'string' ? slot : slot.label;
     const disabled = typeof slot === 'string' ? false : !!slot.disabled;
     if (disabled) return;
-    handleInputChange("schedule.time", label);
-    setSelectedTime(label);
+    // Always store 24h "HH:MM" in formData.schedule.time
+    const hhmm24 = normalizeToHHMM24(rawLabel) || rawLabel;
+
+    handleInputChange("schedule.time", hhmm24);
+    setSelectedTime(hhmm24);
   };
 
   return (

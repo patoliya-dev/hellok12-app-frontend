@@ -21,3 +21,23 @@ export const fetchDetails = async (teacherId) => {
     throw error;
   }
 };
+
+export function parseAvailabilityValue(availability) {
+  if (!availability) return null;
+
+  const parts = availability.split(",");
+
+  if (parts.length === 1) {
+    return {
+      startDate: new Date(parts[0]),
+      endDate: new Date(parts[0]),
+    };
+  } else if (parts.length === 2) {
+    return {
+      startDate: new Date(parts[0]),
+      endDate: new Date(parts[1]),
+    };
+  }
+
+  return null;
+}

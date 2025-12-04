@@ -158,7 +158,7 @@ const TodaySchedule = ({
                         })}
                       </span>
                     </div>
-                    <div className="flex items-center space-x-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-blue-100 text-blue-700 border-blue-200">
+                    <div className="space-x-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-blue-100 text-blue-700 border-blue-200">
                       <Icon
                         name="Video"
                         size={14}

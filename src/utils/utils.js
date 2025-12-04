@@ -179,15 +179,16 @@ export const buildQueryParams = (filters, pagination) => {
   Object.entries(filters).forEach(([key, value]) => {
     if (value === "" || value === undefined || value === null) return;
 
-    // Handle arrays (like price)
     if (Array.isArray(value)) {
+      if (value.length === 0) return;
       params.append(key, JSON.stringify(value));
+    } else if (typeof value === "boolean") {
+      params.append(key, String(value));
     } else {
       params.append(key, value);
     }
   });
 
-  // Pagination
   params.append("limit", pagination.limit);
   params.append("offset", pagination.offset);
 

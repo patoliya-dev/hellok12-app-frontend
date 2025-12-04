@@ -4,113 +4,120 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { getRolePath } from "../../../../utils/rolePath";
+import { progressService } from "../../../../services/progress/progress.service";
 
 const ProgressTrackingSection = () => {
   const [progressData, setProgressData] = useState({});
   const [achievements, setAchievements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const authUser = useSelector(selectAuthUser);
+  const selectedChildId = useSelector((state) => state.profile.selectedChildId);
 
   useEffect(() => {
-    // Mock progress data
-    const mockProgress = {
-      currentLevel: 12,
-      xpPoints: 2450,
-      xpToNextLevel: 550,
-      learningStreak: 7,
-      completedLessons: 45,
-      totalLessons: 60,
-      weeklyGoal: 5,
-      weeklyCompleted: 3,
-      weeklyHours: 12.5,
-      subjects: [
-        {
-          name: "English",
-          progress: 85,
-          color: "bg-blue-500",
-          lessons: 18,
-          totalLessons: 20,
-        },
-        {
-          name: "Spanish",
-          progress: 72,
-          color: "bg-green-500",
-          lessons: 15,
-          totalLessons: 20,
-        },
-        {
-          name: "Japanese",
-          progress: 60,
-          color: "bg-purple-500",
-          lessons: 12,
-          totalLessons: 20,
-        },
-      ],
+    const fetchProgressData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Determine which student ID to use
+        const studentId = authUser?.role === "parent" 
+          ? selectedChildId 
+          : authUser?.id;
+
+        if (!studentId) {
+          setLoading(false);
+          return;
+        }
+
+        const response = await progressService.getProgressDashboard(studentId);
+        
+        // Map API response to component's expected format
+        if (response.data) {
+          const apiProgress = response.data.progress || {};
+          const apiWeeklyStats = response.data.weeklyStats || {};
+          
+          // Transform API data to match component structure
+          const transformedProgress = {
+            currentLevel: 0, // Not provided by API
+            xpPoints: apiProgress.overallProgress || 0,
+            xpToNextLevel: 100 - (apiProgress.overallProgress || 0), // Calculate remaining to 100%
+            learningStreak: apiProgress.upcomingLessons || 0,
+            completedLessons: apiProgress.completedLessons || 0,
+            totalLessons: apiProgress.totalLessons || 0,
+            weeklyGoal: 0, // Not provided by API
+            weeklyCompleted: apiProgress.lessonsDone || 0,
+            weeklyHours: apiWeeklyStats.totalHours || 0,
+            subjects: [], // Not provided by API
+          };
+          
+          setProgressData(transformedProgress);
+          setAchievements([]); // No achievements in current API response
+        }
+      } catch (err) {
+        console.error("Failed to fetch progress data:", err);
+        setError(err?.message || "Failed to load progress data");
+        // Set default empty data on error
+        setProgressData({
+          currentLevel: 0,
+          xpPoints: 0,
+          xpToNextLevel: 0,
+          learningStreak: 0,
+          completedLessons: 0,
+          totalLessons: 0,
+          weeklyGoal: 0,
+          weeklyCompleted: 0,
+          weeklyHours: 0,
+          subjects: [],
+        });
+        setAchievements([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const mockAchievements = [
-      {
-        id: 1,
-        title: "Reading Champion",
-        description: "Complete 10 reading exercises",
-        icon: "BookOpen",
-        color: "text-blue-500",
-        bgColor: "bg-blue-100",
-        earned: true,
-        earnedDate: "2025-07-28",
-      },
-      {
-        id: 2,
-        title: "Streak Master",
-        description: "7-day learning streak",
-        icon: "Flame",
-        color: "text-orange-500",
-        bgColor: "bg-orange-100",
-        earned: true,
-        earnedDate: "2025-07-30",
-      },
-      {
-        id: 3,
-        title: "Grammar Guru",
-        description: "Perfect score on 5 grammar tests",
-        icon: "Award",
-        color: "text-yellow-500",
-        bgColor: "bg-yellow-100",
-        earned: true,
-        earnedDate: "2025-07-25",
-      },
-      {
-        id: 4,
-        title: "Conversation King",
-        description: "Complete 20 speaking sessions",
-        icon: "MessageCircle",
-        color: "text-green-500",
-        bgColor: "bg-green-100",
-        earned: false,
-        progress: 15,
-        total: 20,
-      },
-      {
-        id: 5,
-        title: "Quiz Master",
-        description: "Score 90%+ on 10 quizzes",
-        icon: "Brain",
-        color: "text-purple-500",
-        bgColor: "bg-purple-100",
-        earned: false,
-        progress: 7,
-        total: 10,
-      },
-    ];
-
-    setProgressData(mockProgress);
-    setAchievements(mockAchievements);
-  }, []);
+    fetchProgressData();
+  }, [authUser, selectedChildId]);
 
   const getProgressPercentage = () => {
     const totalXP = progressData.xpPoints + progressData.xpToNextLevel;
-    return ((progressData.xpPoints / totalXP) * 100).toFixed(0);
+    return totalXP > 0 ? ((progressData.xpPoints / totalXP) * 100).toFixed(0) : 0;
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-card rounded-lg border border-border p-6">
+          <div className="animate-pulse">
+            <div className="h-6 bg-muted rounded w-32 mb-4"></div>
+            <div className="h-20 w-20 bg-muted rounded-full mx-auto mb-4"></div>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-24 bg-muted rounded-lg"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-card rounded-lg border border-destructive/50 p-6">
+          <div className="text-center">
+            <Icon name="AlertCircle" size={40} className="text-destructive mx-auto mb-3" />
+            <p className="text-destructive mb-2">Failed to load progress</p>
+            <p className="text-sm text-muted-foreground">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
