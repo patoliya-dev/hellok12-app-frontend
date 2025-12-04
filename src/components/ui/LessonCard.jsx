@@ -172,11 +172,15 @@ const LessonCard = ({ lesson, onRefresh }) => {
             <Badge
               text={lesson.modality}
               icon={
-                <VideoIcon
-                  size={14}
-                  className="w-[12px] h-[10px]"
-                  selected={true}
-                />
+                lesson.modality === "Online Course" ? (
+                  <VideoIcon
+                    size={14}
+                    className="w-[12px] h-[10px]"
+                    selected={true}
+                  />
+                ) : (
+                  <Users size={14} />
+                )
               }
               color="green"
             />

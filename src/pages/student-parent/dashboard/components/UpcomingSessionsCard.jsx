@@ -305,7 +305,7 @@ const UpcomingSessionsCard = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {upcomingSessions.map((session) => (
+          {upcomingSessions.slice(0, 3).map((session) => (
             <div
               key={session.id}
               className={`p-4 rounded-lg border transition-micro ${

@@ -6,9 +6,8 @@ import {
   Calendar,
   Clock,
   Gamepad2,
-  FlaskConical,
+  Users,
   User,
-  Video,
   AlertCircle,
   Gift,
   MapPin,
@@ -31,7 +30,7 @@ const tagDetails = {
     icon: <VideoIcon size={14} className="w-[12px] h-[10px]" selected={true} />,
     color: "green",
   },
-  "In-Person": { icon: <User size={16} />, color: "blue" },
+  "In-Person": { icon: <Users size={16} />, color: "green" },
   Group: { icon: <User size={16} />, color: "blue" },
 };
 
