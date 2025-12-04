@@ -86,7 +86,6 @@ const LessonCard = ({ lesson, onRefresh }) => {
       ...(lesson.tags?.includes("Trial Lesson") ? ["Trial Lessons"] : []),
       ...(lesson.type ? [lesson.type] : []),
     ];
-    console.log(lesson);
     const modalLesson = {
       id: lesson._id,
       title: lesson.title,
