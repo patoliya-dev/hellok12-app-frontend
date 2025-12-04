@@ -1,5 +1,6 @@
-// src/pages/teacher/create-course/mappers/lessons.js
+import { normalizeToHHMM24 } from "../../../../utils/time24h";
 import { normalizeTime12h } from "../../../../utils/time12h";
+import { formatDateForDateInput } from "../../../../utils/formatters";
 
 // Map BE -> UI
 export function mapLessonFromApi(l) {
@@ -20,6 +21,12 @@ export function mapLessonFromApi(l) {
 
 // Map UI -> BE (create)
 export function mapLessonToCreatePayload(l) {
+  // lesson.schedule.date expected already as "YYYY-MM-DD" string from Input[type=date]
+  const date = typeof l?.schedule?.date === 'string'
+    ? l.schedule.date
+    : (l.schedule?.date ? formatDateForDateInput(l.schedule.date) : undefined);
+
+  const time = normalizeToHHMM24(l.schedule?.time) || l.schedule?.time;
   return {
     title: l.title,
     description: l.description || undefined,
@@ -29,9 +36,9 @@ export function mapLessonToCreatePayload(l) {
       : undefined,
     order: typeof l.order === "number" ? l.order : undefined,
     schedule: {
-      date: l.schedule?.date ? new Date(l.schedule.date) : "",
-      time: l.schedule?.time ? normalizeTime12h(l.schedule?.time) : "",
-      duration: l.schedule?.duration ? Number(l.schedule?.duration) : 60,
+      date: date,
+      time:time,
+      duration: Number(l.schedule?.duration || 60),
     },
   };
 }

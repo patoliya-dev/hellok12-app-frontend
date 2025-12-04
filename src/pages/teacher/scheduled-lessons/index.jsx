@@ -40,11 +40,11 @@ const ScheduledLessons = () => {
         const transformedLessons = [];
         if (data.monthOverview) {
           Object.entries(data.monthOverview).forEach(([date, dateData]) => {
-            dateData.lessons.forEach((lesson) => {
+            (dateData.lessons || []).forEach((lesson) => {
               transformedLessons.push({
                 id: lesson.id,
                 title: lesson.title,
-                date: date,
+                date,
                 time: lesson.time,
                 color: "blue",
                 status: "pending",
@@ -66,19 +66,19 @@ const ScheduledLessons = () => {
     fetchCalendarData();
   }, [currentDate]);
 
-  const selectedDayLessons = useMemo(
-    () =>
-      lessons.filter((lesson) => {
-        const lessonDate = new Date(lesson.date);
-        lessonDate.setHours(0, 0, 0, 0);
+  // Helper: build local YYYY-MM-DD from a Date object using local components
+  const toLocalDateKey = (d) => {
+    if (!d) return "";
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
 
-        const selected = new Date(selectedDate);
-        selected.setHours(0, 0, 0, 0);
-
-        return lessonDate.getTime() === selected.getTime();
-      }),
-    [selectedDate, lessons]
-  );
+  const selectedDayLessons = useMemo(() => {
+    const selectedKey = toLocalDateKey(new Date(selectedDate));
+    return lessons.filter((lesson) => lesson.date === selectedKey);
+  }, [selectedDate, lessons]);
 
   return (
     <div className="min-h-screen bg-background">

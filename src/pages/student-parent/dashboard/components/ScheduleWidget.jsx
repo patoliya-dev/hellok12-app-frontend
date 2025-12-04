@@ -6,15 +6,17 @@ import Button from "../../../../components/ui/Button";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { getRolePath } from "../../../../utils/rolePath";
 import { studentService } from "../../../../services/students/student.service";
+import { formatUtcToLocal, isSameLocalDay, parseServerUtc } from "../../../../utils/datetime";
+import { formatTimeToTZ, getUserTimezone } from "../../../../utils/timezone";
 
 const ScheduleWidget = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState("week"); // 'week' or 'month'
   const [weeklySchedule, setWeeklySchedule] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalSessions, setTotalSessions] = useState(0);
   const navigate = useNavigate();
   const authUser = useSelector(selectAuthUser);
+  const userTimezone = getUserTimezone();
   const selectedChildId = useSelector((state) => state.profile.selectedChildId);
 
   // Color mapping for different sessions
@@ -32,13 +34,7 @@ const ScheduleWidget = () => {
 
   // Format time from ISO string to readable format
   const formatTime = (isoString) => {
-    const localTimeString = isoString.replace("Z", "");
-    const date = new Date(localTimeString);
-    return date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    return formatTimeToTZ(isoString, userTimezone, { hour: 'numeric', minute: '2-digit', hour12: true });
   };
 
   useEffect(() => {
@@ -59,23 +55,25 @@ const ScheduleWidget = () => {
 
         if (response.success && response.data) {
           setTotalSessions(response.data.totalSessions);
-          const transformedSchedule = response.data.days.map(
-            (day, dayIndex) => ({
+          const transformedSchedule = response.data.days.map((day, dayIndex) => {
+            const utcDayDate = parseServerUtc(day.date) || new Date();
+            return {
               id: dayIndex + 1,
               day: day.dayName,
-              date: new Date(day.date),
-              sessions: day.sessions.map((session, sessionIndex) => ({
+              date: utcDayDate,
+              sessions: (day.sessions || []).map((session, sessionIndex) => ({
                 id: session.sessionId,
                 subject: session.lessonName,
+                startTime: parseServerUtc(session.startTime),
                 time: formatTime(session.startTime),
                 duration: session.duration,
                 teacher: session.teacherName,
                 type: "video-call",
                 color: getSessionColor(sessionIndex),
                 status: session.status,
-              })),
-            })
-          );
+              }))
+            };
+          });
 
           setWeeklySchedule(transformedSchedule);
         }
@@ -92,8 +90,7 @@ const ScheduleWidget = () => {
   }, [authUser, selectedChildId]);
 
   const isToday = (date) => {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
+    return isSameLocalDay(date, new Date());
   };
 
   const getTotalSessionsToday = () => {
@@ -178,20 +175,18 @@ const ScheduleWidget = () => {
         {weeklySchedule.map((day) => (
           <div
             key={day.id}
-            className={`min-w-[230px] flex-shrink-0 p-4 rounded-lg border transition-micro ${
-              isToday(day.date)
-                ? "border-primary bg-primary/5"
-                : "border-border bg-muted/30"
-            }`}
+            className={`min-w-[230px] flex-shrink-0 p-4 rounded-lg border transition-micro ${isToday(day.date)
+              ? "border-primary bg-primary/5"
+              : "border-border bg-muted/30"
+              }`}
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-3">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    isToday(day.date)
-                      ? "bg-primary text-white"
-                      : "bg-muted text-muted-foreground"
-                  }`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${isToday(day.date)
+                    ? "bg-primary text-white"
+                    : "bg-muted text-muted-foreground"
+                    }`}
                 >
                   <span className="text-sm font-medium">
                     {day.date.getDate()}
@@ -199,17 +194,13 @@ const ScheduleWidget = () => {
                 </div>
                 <div>
                   <h3
-                    className={`font-medium ${
-                      isToday(day.date) ? "text-primary" : "text-foreground"
-                    }`}
+                    className={`font-medium ${isToday(day.date) ? "text-primary" : "text-foreground"
+                      }`}
                   >
                     {day.day}
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    {day.date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {formatUtcToLocal(day.date, { month: 'short', day: 'numeric' })}
                   </p>
                 </div>
               </div>

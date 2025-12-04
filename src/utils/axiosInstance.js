@@ -1,4 +1,3 @@
-// api.js
 import axios from "axios";
 import {
   getAccessToken,
@@ -32,6 +31,18 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // 2. Attach user's timezone (always up-to-date, real-time)
+  try {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone; // e.g., "Asia/Kolkata"
+    if (timezone) {
+      config.headers["x-timezone"] = timezone;
+    }
+  } catch (e) {
+    // Safari incognito or rare cases - safe fallback
+    config.headers["x-timezone"] = "UTC";
+  }
+  
   return config;
 });
 
