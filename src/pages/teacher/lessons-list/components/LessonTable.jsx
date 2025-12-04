@@ -319,7 +319,8 @@ const LessonsTable = ({
               dispatch(updateLocalLessons(next));
               successToast("Lesson deleted successfully!");
             } catch (e) {
-              errorToast(e?.error || "Failed to delete lesson");
+              console.log(e)
+              errorToast(e?.message || "Failed to delete lesson");
             } finally {
               setDeleteLessonId(null);
               handleDeleteModal();

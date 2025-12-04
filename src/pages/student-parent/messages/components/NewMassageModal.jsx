@@ -62,7 +62,7 @@ const NewMessageModal = ({ onClose, onNewConversation, currentUser, conversation
           <Loader />
         </div>
       ) : (
-        <div className="flex flex-col gap-4 h-[350px] overflow-y-scroll p-4">
+        <div className="flex flex-col gap-4 h-[350px] overflow-y-auto p-4">
           {users.length === 0 ? (
             <div className="flex justify-center items-center h-full text-muted-foreground">
               No teachers available
@@ -89,7 +89,7 @@ const NewMessageModal = ({ onClose, onNewConversation, currentUser, conversation
                       {user?.name}
                     </h4>
                     {user?.email && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="w-72 truncate text-sm text-muted-foreground">
                         {user?.email}
                       </p>
                     )}
