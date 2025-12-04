@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
@@ -14,6 +14,7 @@ import { errorToast, successToast } from "../../../../utils/utils";
 import { toast } from "react-toastify";
 
 const MAX_ATTACHMENT_BYTES = 100 * 1024 * 1024; // 100MB limit per file
+const MESSAGES_PER_PAGE = 30;
 
 const getAttachmentType = (mime = "", name = "") => {
   const normalizedMime = mime?.toLowerCase?.() || "";
@@ -59,10 +60,15 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
   });
   const [hasLeftGroup, setHasLeftGroup] = useState(false);
   const [leftAt, setLeftAt] = useState(null);
-
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const isLoadingMoreRef = useRef(false);
+  const initialLoadRef = useRef(true);
 
   const { sendMessage, socket, sendTyping, markAsRead } = useSocket();
 
@@ -81,26 +87,104 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
     "💯",
   ];
 
-  // Load messages when conversation changes
   useEffect(() => {
     if (!conversation?._id) return;
 
-    const loadMessages = async () => {
+    const loadInitialMessages = async () => {
       setLoading(true);
+      setPage(0);
+      setHasMore(true);
+      initialLoadRef.current = true;
+
       try {
-        const data = await listChats(conversation._id);
+        const data = await listChats(conversation._id, MESSAGES_PER_PAGE, 0);
         setMessages(data);
         setHasLeftGroup(conversation.hasLeft || false);
         setLeftAt(conversation.leftAt || null);
+        if (data.length < MESSAGES_PER_PAGE) {
+          setHasMore(false);
+        }
       } catch (err) {
         console.error("Message fetching failed:", err);
+        errorToast("Failed to load messages");
       } finally {
         setLoading(false);
       }
     };
 
-    loadMessages();
+    loadInitialMessages();
   }, [conversation?._id]);
+
+  const loadMoreMessages = useCallback(async () => {
+    if (
+      !conversation?._id ||
+      loadingMore ||
+      !hasMore ||
+      isLoadingMoreRef.current
+    ) {
+      return;
+    }
+    isLoadingMoreRef.current = true;
+    setLoadingMore(true);
+
+    try {
+      const nextPage = page + 1;
+      const skip = nextPage * MESSAGES_PER_PAGE;
+
+      const container = messagesContainerRef.current;
+      const previousScrollHeight = container?.scrollHeight || 0;
+      const data = await listChats(conversation._id, MESSAGES_PER_PAGE, skip);
+
+      if (data.length > 0) {
+        setMessages((prev) => {
+          const newMessages = [...data, ...prev];
+          requestAnimationFrame(() => {
+            const container = messagesContainerRef.current;
+            if (container && previousScrollHeight > 0) {
+              const newScrollHeight = container.scrollHeight;
+              const heightDifference = newScrollHeight - previousScrollHeight;
+              container.scrollTop = heightDifference;
+            }
+          });
+
+          return newMessages;
+        });
+        setPage(nextPage);
+
+        if (data.length < MESSAGES_PER_PAGE) {
+          setHasMore(false);
+        }
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error("Failed to load more messages:", err);
+      errorToast("Failed to load more messages");
+    } finally {
+      setLoadingMore(false);
+      isLoadingMoreRef.current = false;
+    }
+  }, [conversation?._id, page, loadingMore, hasMore]);
+
+  const handleScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) {
+      return;
+    }
+    const scrollInfo = {
+      scrollTop: container.scrollTop,
+      scrollHeight: container.scrollHeight,
+      clientHeight: container.clientHeight,
+      isAtTop: container.scrollTop < 200,
+      hasMore,
+      loadingMore,
+      isLoadingMoreRef: isLoadingMoreRef.current,
+    };
+    const isAtTop = container.scrollTop < 200;
+    if (isAtTop && hasMore && !loadingMore && !isLoadingMoreRef.current) {
+      loadMoreMessages();
+    }
+  }, [hasMore, loadingMore, loadMoreMessages]);
 
   useEffect(() => {
     if (!socket || !conversation?._id) return;
@@ -108,7 +192,6 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
     const handleNewMessage = (message) => {
       if (message.thread === conversation._id) {
         setMessages((prev) => {
-          // Check if this is replacing an optimistic message
           const optimisticIndex = prev.findIndex(
             (m) =>
               m._id?.startsWith("temp-") &&
@@ -168,7 +251,6 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
       }
     };
 
-    // Handle message status updates (when all participants have read)
     const handleMessageStatusUpdated = (data) => {
       if (data.threadId === conversation._id) {
         setMessages((prev) =>
@@ -192,9 +274,26 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
     };
   }, [socket, conversation?._id, currentUser, markAsRead]);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom only on initial load or when user sends a message
   useEffect(() => {
-    messagesEndRef?.current?.scrollIntoView({ behavior: "smooth" });
+    if (initialLoadRef.current && messages.length > 0) {
+      messagesEndRef?.current?.scrollIntoView({ behavior: "auto" });
+      initialLoadRef.current = false;
+    } else if (messages.length > 0) {
+      // Only auto-scroll if user is near the bottom
+      const container = messagesContainerRef.current;
+      if (container) {
+        const isNearBottom =
+          container.scrollHeight -
+            container.scrollTop -
+            container.clientHeight <
+          200;
+
+        if (isNearBottom) {
+          messagesEndRef?.current?.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    }
   }, [messages]);
 
   const canSendMessages = !hasLeftGroup;
@@ -223,6 +322,11 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
     if (sent) {
       setMessageText("");
       sendTyping(conversation._id, currentUser.id, currentUser.name, false);
+
+      // Scroll to bottom after sending
+      setTimeout(() => {
+        messagesEndRef?.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
     }
   };
 
@@ -290,7 +394,6 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
 
     const files = incomingFiles.filter(Boolean);
 
-    // Validate file sizes
     const oversizedFile = files.find(
       (file) => file?.size > MAX_ATTACHMENT_BYTES
     );
@@ -310,7 +413,6 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
     try {
       const uploadedAttachments = [];
 
-      // Upload files one by one
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
@@ -344,6 +446,7 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
         errorToast("Unable to upload any files. Please try again.");
         return;
       }
+
       const distinctTypes = Array.from(
         new Set(uploadedAttachments.map((item) => item.type))
       );
@@ -354,7 +457,6 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
         (item) => item.attachmentId
       );
 
-      // Create optimistic message
       const tempMessageId = `temp-${Date.now()}-${Math.random()}`;
       const optimisticMessage = {
         _id: tempMessageId,
@@ -371,10 +473,8 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
         status: "sending",
       };
 
-      // Add to UI optimistically
       setMessages((prev) => [...prev, optimisticMessage]);
 
-      // Send via socket
       const sent = sendMessage(
         conversation._id,
         "",
@@ -389,9 +489,15 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
         setMessages((prev) => prev.filter((m) => m._id !== tempMessageId));
       } else {
         successToast(
-          `${uploadedAttachments.length} ${uploadedAttachments.length === 1 ? "file" : "files"
+          `${uploadedAttachments.length} ${
+            uploadedAttachments.length === 1 ? "file" : "files"
           } sent successfully`
         );
+
+        // Scroll to bottom after sending attachment
+        setTimeout(() => {
+          messagesEndRef?.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
       }
     } catch (err) {
       console.error("Attachment upload failed:", err);
@@ -524,8 +630,9 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
               <div
                 className="bg-primary h-full transition-all duration-300 ease-out"
                 style={{
-                  width: `${(uploadProgress.current / uploadProgress.total) * 100
-                    }%`,
+                  width: `${
+                    (uploadProgress.current / uploadProgress.total) * 100
+                  }%`,
                 }}
               ></div>
             </div>
@@ -570,23 +677,23 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
               <p className="text-sm text-muted-foreground">
                 {conversation?.threadType?.toLowerCase() === "direct"
                   ? (() => {
-                    const other = conversation.participants.find(
-                      (p) => p._id !== currentUser.id
-                    );
+                      const other = conversation.participants.find(
+                        (p) => p._id !== currentUser.id
+                      );
 
-                    if (other?.availabilityStatus === "online") {
-                      return "Online";
-                    }
+                      if (other?.availabilityStatus === "online") {
+                        return "Online";
+                      }
 
-                    return other?.lastSeen
-                      ? `Last seen ${new Date(
-                        other.lastSeen
-                      ).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}`
-                      : "Offline";
-                  })()
+                      return other?.lastSeen
+                        ? `Last seen ${new Date(
+                            other.lastSeen
+                          ).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}`
+                        : "Offline";
+                    })()
                   : `${conversation?.participants?.length} participants`}
               </p>
             </div>
@@ -601,8 +708,8 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
             <Icon name="AlertCircle" size={18} />
             <p className="text-sm">
               You left this group on{" "}
-              {leftAt && new Date(leftAt).toLocaleDateString()}.
-              You can view old messages but cannot send new ones.
+              {leftAt && new Date(leftAt).toLocaleDateString()}. You can view
+              old messages but cannot send new ones.
             </p>
           </div>
         </div>
@@ -610,12 +717,34 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
 
       {/* Messages Area */}
       <div
-        className={`flex-1 min-h-0 overflow-y-auto p-4 space-y-4 ${dragOver ? "bg-primary/5 border-2 border-dashed border-primary" : ""
-          }`}
+        ref={messagesContainerRef}
+        className={`flex-1 min-h-0 overflow-y-auto p-4 space-y-4 ${
+          dragOver ? "bg-primary/5 border-2 border-dashed border-primary" : ""
+        }`}
+        onScroll={handleScroll}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
+        {/* Loading More Indicator */}
+        {loadingMore && (
+          <div className="flex justify-center py-4">
+            <div className="flex items-center space-x-2 text-muted-foreground">
+              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm">Loading more messages...</span>
+            </div>
+          </div>
+        )}
+
+        {/* No More Messages Indicator */}
+        {!hasMore && messages.length > 0 && (
+          <div className="flex justify-center py-4">
+            <div className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
+              No more messages
+            </div>
+          </div>
+        )}
+
         {dragOver && (
           <div className="absolute inset-0 flex items-center justify-center bg-primary/10 z-10 pointer-events-none">
             <div className="text-center">
@@ -641,12 +770,14 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
           return (
             <div
               key={message?._id}
-              className={`flex ${isCurrentUser ? "justify-end" : "justify-start"
-                }`}
+              className={`flex ${
+                isCurrentUser ? "justify-end" : "justify-start"
+              }`}
             >
               <div
-                className={`flex max-w-[85%] sm:max-w-[70%] ${isCurrentUser ? "flex-row-reverse" : "flex-row"
-                  }`}
+                className={`flex max-w-[85%] sm:max-w-[70%] ${
+                  isCurrentUser ? "flex-row-reverse" : "flex-row"
+                }`}
               >
                 {/* Avatar */}
                 {showAvatar && !isCurrentUser && (
@@ -665,8 +796,9 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
 
                 {/* Message Content */}
                 <div
-                  className={`group relative ${isCurrentUser ? "ml-2" : "mr-2"
-                    }`}
+                  className={`group relative ${
+                    isCurrentUser ? "ml-2" : "mr-2"
+                  }`}
                 >
                   {/* Sender Name */}
                   {!isCurrentUser && showAvatar && (
@@ -677,17 +809,19 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
 
                   {/* Message Bubble */}
                   <div
-                    className={`relative px-4 py-2 rounded-2xl ${isCurrentUser
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-card border border-border text-foreground"
-                      }`}
+                    className={`relative px-4 py-2 rounded-2xl ${
+                      isCurrentUser
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-card border border-border text-foreground"
+                    }`}
                   >
                     {/* Attachments */}
                     {Array.isArray(message?.attachments) &&
                       message.attachments.length > 0 && (
                         <div
-                          className={`space-y-2 ${message?.body?.trim?.() ? "mb-2" : ""
-                            }`}
+                          className={`space-y-2 ${
+                            message?.body?.trim?.() ? "mb-2" : ""
+                          }`}
                         >
                           {message.attachments.map((attachment, idx) => {
                             const attachmentType = getAttachmentType(
@@ -780,10 +914,11 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
                                       e.stopPropagation();
                                       handleDownload(url, displayName);
                                     }}
-                                    className={`flex items-center justify-center space-x-2 text-xs font-medium p-2 rounded-lg w-full transition-colors ${isCurrentUser
-                                      ? "bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
-                                      : "bg-muted hover:bg-muted/80 text-foreground"
-                                      }`}
+                                    className={`flex items-center justify-center space-x-2 text-xs font-medium p-2 rounded-lg w-full transition-colors ${
+                                      isCurrentUser
+                                        ? "bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
+                                        : "bg-muted hover:bg-muted/80 text-foreground"
+                                    }`}
                                   >
                                     <Icon name="Download" size={12} />
                                     <span>Download Audio</span>
@@ -795,10 +930,11 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
                             return (
                               <div
                                 key={key}
-                                className={`flex items-center justify-between space-x-2 text-sm font-medium p-3 rounded-lg transition-colors ${isCurrentUser
-                                  ? "bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
-                                  : "bg-muted hover:bg-muted/80 text-foreground"
-                                  }`}
+                                className={`flex items-center justify-between space-x-2 text-sm font-medium p-3 rounded-lg transition-colors ${
+                                  isCurrentUser
+                                    ? "bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
+                                    : "bg-muted hover:bg-muted/80 text-foreground"
+                                }`}
                               >
                                 <div className="flex items-center space-x-2 flex-1 min-w-0">
                                   <Icon
@@ -810,10 +946,11 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
                                     <p className="truncate">{displayName}</p>
                                     {attachment?.size && (
                                       <p
-                                        className={`text-xs ${isCurrentUser
-                                          ? "text-primary-foreground/60"
-                                          : "text-muted-foreground"
-                                          }`}
+                                        className={`text-xs ${
+                                          isCurrentUser
+                                            ? "text-primary-foreground/60"
+                                            : "text-muted-foreground"
+                                        }`}
                                       >
                                         {formatFileSize(attachment.size)}
                                       </p>
@@ -822,29 +959,29 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
                                 </div>
 
                                 <div className="flex items-center space-x-1 flex-shrink-0">
-                                  {/* Preview/Open button */}
                                   <button
                                     onClick={() => window.open(url, "_blank")}
-                                    className={`p-1.5 rounded hover:bg-background/50 transition-colors ${isCurrentUser
-                                      ? "text-primary-foreground"
-                                      : "text-foreground"
-                                      }`}
+                                    className={`p-1.5 rounded hover:bg-background/50 transition-colors ${
+                                      isCurrentUser
+                                        ? "text-primary-foreground"
+                                        : "text-foreground"
+                                    }`}
                                     title="Open in new tab"
                                   >
                                     <Icon name="ExternalLink" size={14} />
                                   </button>
 
-                                  {/* Download button */}
                                   <button
                                     onClick={(e) => {
                                       e.preventDefault();
                                       e.stopPropagation();
                                       handleDownload(url, displayName);
                                     }}
-                                    className={`p-1.5 rounded hover:bg-background/50 transition-colors ${isCurrentUser
-                                      ? "text-primary-foreground"
-                                      : "text-foreground"
-                                      }`}
+                                    className={`p-1.5 rounded hover:bg-background/50 transition-colors ${
+                                      isCurrentUser
+                                        ? "text-primary-foreground"
+                                        : "text-foreground"
+                                    }`}
                                     title="Download"
                                   >
                                     <Icon name="Download" size={14} />
@@ -865,10 +1002,11 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
 
                     {/* Message Time */}
                     <div
-                      className={`text-xs mt-1 ${isCurrentUser
-                        ? "text-primary-foreground/70"
-                        : "text-muted-foreground"
-                        }`}
+                      className={`text-xs mt-1 ${
+                        isCurrentUser
+                          ? "text-primary-foreground/70"
+                          : "text-muted-foreground"
+                      }`}
                     >
                       {formatTime(message?.sentAt)}
                       {isCurrentUser && (
@@ -877,8 +1015,9 @@ const ChatArea = ({ conversation, currentUser, onBack }) => {
                             message?.status === "read" ? "CheckCheck" : "Check"
                           }
                           size={12}
-                          className={`inline ml-1 ${message?.status === "read" ? "text-success" : ""
-                            }`}
+                          className={`inline ml-1 ${
+                            message?.status === "read" ? "text-success" : ""
+                          }`}
                         />
                       )}
                     </div>

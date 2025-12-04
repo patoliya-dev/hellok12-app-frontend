@@ -6,6 +6,7 @@ import DateRangePicker from "components/ui/DateRangePicker";
 import Select from "components/ui/Select";
 import RangeSlider from "react-range-slider-input";
 import "react-range-slider-input/dist/style.css";
+import { parseAvailabilityValue } from "../../../../services/teachers/findTeachers.service";
 
 export default function TeacherFilters({
   filters,
@@ -39,8 +40,34 @@ export default function TeacherFilters({
     onFiltersChange(clearedFilters);
   };
 
+  const handleAvailabilityChange = (dateRange) => {
+    if (!dateRange || (!dateRange.startDate && !dateRange.endDate)) {
+      handleChange("availability", "");
+      return;
+    }
+
+    const { startDate, endDate } = dateRange;
+
+    const formatDate = (date) => {
+      if (!date) return null;
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    const formattedStart = formatDate(startDate);
+    const formattedEnd = formatDate(endDate);
+
+    if (formattedStart && formattedEnd && formattedStart !== formattedEnd) {
+      handleChange("availability", `${formattedStart},${formattedEnd}`);
+    } else if (formattedStart) {
+      handleChange("availability", formattedStart);
+    }
+  };
+
   const handlePriceInputChange = (index, rawValue) => {
-    // Update local state immediately for free typing
     if (index === 0) {
       setPriceInputs((prev) => ({ ...prev, min: rawValue }));
     } else {
@@ -53,7 +80,6 @@ export default function TeacherFilters({
     const maxBound = 500;
     const [filterMin, filterMax] = filters.price || [minBound, maxBound];
 
-    // Don’t update filters until user entered both
     if (priceInputs.min === "" && priceInputs.max === "") return;
 
     const parsedMin = Number(priceInputs.min);
@@ -128,15 +154,16 @@ export default function TeacherFilters({
           onChange={(val) => handleChange("experience", val)}
           options={experienceOptions}
         />
-
-        {/* Availability */}
         <div className="mb-2">
           <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block text-foreground">
             Availability
           </label>
-          <DateRangePicker className="w-full border rounded-lg" />
+          <DateRangePicker
+            className="w-full border rounded-lg"
+            onChange={handleAvailabilityChange}
+            value={parseAvailabilityValue(filters.availability)}
+          />
         </div>
-
         {/* Students Age Range */}
         <Select
           label="Students Age Range"
