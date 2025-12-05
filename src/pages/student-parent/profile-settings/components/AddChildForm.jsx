@@ -1,22 +1,45 @@
-import React, { useState } from 'react';
-import Input from 'components/ui/Input';
-import Button from 'components/ui/Button';
+import React, { useState } from "react";
+import Input from "components/ui/Input";
+import Button from "components/ui/Button";
+import Select from "components/ui/Select";
+import { languageOptions } from "../../../../utils/utils";
+import { cloneDeep, set } from "lodash";
+
+const GENDER_OPTIONS = [
+  { label: "Male", value: "male" },
+  { label: "Female", value: "female" },
+  { label: "Other", value: "other" },
+];
 
 const AddChildForm = ({ onAdd, onCancel }) => {
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    address: '',
-    age: '',
-    gender: '',
-    language: '',
-    grade: '',
-    profileImage: 'https://via.placeholder.com/150',
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
+    age: "",
+    gender: "",
+    languages: [],
   });
+
+  const languagesArray = formData?.languages ? formData.languages : [];
+
+  const handleGenderChange = (value) =>
+    setFormData((prev) => ({ ...prev, gender: value }));
+  const handleLanguagesChange = (values) => {
+    setFormData((prev) => ({
+      ...prev,
+      languages: [...values],
+    }));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = cloneDeep(prev);
+      set(updated, name, value);
+      return updated;
+    });
   };
 
   const handleSubmit = () => {
@@ -42,7 +65,6 @@ const AddChildForm = ({ onAdd, onCancel }) => {
           placeholder="Email Address"
           value={formData.email}
           onChange={handleChange}
-          required
           type="email"
         />
         <Input
@@ -61,32 +83,32 @@ const AddChildForm = ({ onAdd, onCancel }) => {
           onChange={handleChange}
           type="number"
           min={1}
+          required
         />
-        <Input
-          name="gender"
+        <Select
           label="Gender"
-          placeholder="Gender"
           value={formData.gender}
-          onChange={handleChange}
+          options={GENDER_OPTIONS}
+          onChange={handleGenderChange}
+          required
         />
-        <Input
-          name="language"
+        <Select
           label="Languages"
-          placeholder="Languages"
-          value={formData.language}
-          onChange={handleChange}
-        />
-        <Input
-          name="grade"
-          label="Grade"
-          placeholder="Grade"
-          value={formData.grade}
-          onChange={handleChange}
+          multiple
+          value={languagesArray}
+          options={languageOptions}
+          onChange={handleLanguagesChange}
+          searchable
+          required
         />
       </div>
       <div className="flex justify-end space-x-3 mt-4">
-        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
-        <Button variant="default" onClick={handleSubmit}>Add Student</Button>
+        <Button variant="ghost" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button variant="default" onClick={handleSubmit}>
+          Add Student
+        </Button>
       </div>
     </div>
   );

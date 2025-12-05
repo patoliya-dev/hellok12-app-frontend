@@ -1,135 +1,96 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Icon from "../../../../components/AppIcon";
 import Button from "../../../../components/ui/Button";
+import { selectAuthUser } from "reducers/auth/authSelectors";
+import { getRolePath } from "../../../../utils/rolePath";
+import { studentService } from "../../../../services/students/student.service";
+import { formatUtcToLocal, isSameLocalDay, parseServerUtc } from "../../../../utils/datetime";
+import { formatTimeToTZ, getUserTimezone } from "../../../../utils/timezone";
 
 const ScheduleWidget = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState("week"); // 'week' or 'month'
   const [weeklySchedule, setWeeklySchedule] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [totalSessions, setTotalSessions] = useState(0);
   const navigate = useNavigate();
+  const authUser = useSelector(selectAuthUser);
+  const userTimezone = getUserTimezone();
+  const selectedChildId = useSelector((state) => state.profile.selectedChildId);
+
+  // Color mapping for different sessions
+  const getSessionColor = (index) => {
+    const colors = [
+      "bg-blue-500",
+      "bg-green-500",
+      "bg-purple-500",
+      "bg-orange-500",
+      "bg-pink-500",
+      "bg-indigo-500",
+    ];
+    return colors[index % colors.length];
+  };
+
+  // Format time from ISO string to readable format
+  const formatTime = (isoString) => {
+    return formatTimeToTZ(isoString, userTimezone, { hour: 'numeric', minute: '2-digit', hour12: true });
+  };
 
   useEffect(() => {
-    // Mock weekly schedule data
-    const mockSchedule = [
-      {
-        id: 1,
-        day: "Monday",
-        date: new Date(2025, 6, 28), // July 28, 2025
-        sessions: [
-          {
-            id: 1,
-            subject: "English Literature",
-            time: "10:00 AM",
-            duration: 60,
-            teacher: "Ms. Johnson",
-            type: "video-call",
-            color: "bg-blue-500",
-          },
-          {
-            id: 2,
-            subject: "Spanish Conversation",
-            time: "2:00 PM",
-            duration: 45,
-            teacher: "Mr. Rodriguez",
-            type: "video-call",
-            color: "bg-green-500",
-          },
-        ],
-      },
-      {
-        id: 2,
-        day: "Tuesday",
-        date: new Date(2025, 6, 29), // July 29, 2025
-        sessions: [
-          {
-            id: 3,
-            subject: "Japanese Writing",
-            time: "11:00 AM",
-            duration: 90,
-            teacher: "Ms. Tanaka",
-            type: "video-call",
-            color: "bg-purple-500",
-          },
-        ],
-      },
-      {
-        id: 3,
-        day: "Wednesday",
-        date: new Date(2025, 6, 30), // July 30, 2025 (today)
-        sessions: [
-          {
-            id: 4,
-            subject: "English Grammar",
-            time: "9:00 AM",
-            duration: 60,
-            teacher: "Ms. Johnson",
-            type: "video-call",
-            color: "bg-blue-500",
-          },
-          {
-            id: 5,
-            subject: "Spanish Reading",
-            time: "3:00 PM",
-            duration: 45,
-            teacher: "Mr. Rodriguez",
-            type: "video-call",
-            color: "bg-green-500",
-          },
-        ],
-      },
-      {
-        id: 4,
-        day: "Thursday",
-        date: new Date(2025, 6, 31), // July 31, 2025
-        sessions: [
-          {
-            id: 6,
-            subject: "Japanese Speaking",
-            time: "10:30 AM",
-            duration: 60,
-            teacher: "Ms. Tanaka",
-            type: "video-call",
-            color: "bg-purple-500",
-          },
-        ],
-      },
-      {
-        id: 5,
-        day: "Friday",
-        date: new Date(2025, 7, 1), // August 1, 2025
-        sessions: [
-          {
-            id: 7,
-            subject: "English Literature",
-            time: "10:00 AM",
-            duration: 60,
-            teacher: "Ms. Johnson",
-            type: "video-call",
-            color: "bg-blue-500",
-          },
-        ],
-      },
-      // {
-      //   id: 6,
-      //   day: 'Saturday',
-      //   date: new Date(2025, 7, 2), // August 2, 2025
-      //   sessions: []
-      // },
-      // {
-      //   id: 7,
-      //   day: 'Sunday',
-      //   date: new Date(2025, 7, 3), // August 3, 2025
-      //   sessions: []
-      // }
-    ];
+    const fetchWeeklySchedule = async () => {
+      try {
+        setLoading(true);
+        // Determine which student ID to use based on role
+        const isParent = authUser?.role === "parent";
+        const studentId = isParent ? selectedChildId : authUser?.id;
+        // Don't fetch if we don't have a valid student ID
+        if (!studentId) {
+          setWeeklySchedule([]);
+          setLoading(false);
+          return;
+        }
 
-    setWeeklySchedule(mockSchedule);
-  }, []);
+        const response = await studentService.getWeeklySchedule({ studentId });
+
+        if (response.success && response.data) {
+          setTotalSessions(response.data.totalSessions);
+          const transformedSchedule = response.data.days.map((day, dayIndex) => {
+            const utcDayDate = parseServerUtc(day.date) || new Date();
+            return {
+              id: dayIndex + 1,
+              day: day.dayName,
+              date: utcDayDate,
+              sessions: (day.sessions || []).map((session, sessionIndex) => ({
+                id: session.sessionId,
+                subject: session.lessonName,
+                startTime: parseServerUtc(session.startTime),
+                time: formatTime(session.startTime),
+                duration: session.duration,
+                teacher: session.teacherName,
+                type: "video-call",
+                color: getSessionColor(sessionIndex),
+                status: session.status,
+              }))
+            };
+          });
+
+          setWeeklySchedule(transformedSchedule);
+        }
+      } catch (error) {
+        console.error("Error fetching weekly schedule:", error);
+        // Keep empty schedule on error
+        setWeeklySchedule([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWeeklySchedule();
+  }, [authUser, selectedChildId]);
 
   const isToday = (date) => {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
+    return isSameLocalDay(date, new Date());
   };
 
   const getTotalSessionsToday = () => {
@@ -140,7 +101,6 @@ const ScheduleWidget = () => {
   const getUpcomingSessionsCount = () => {
     const now = new Date();
     let count = 0;
-
     weeklySchedule.forEach((day) => {
       if (day.date >= now) {
         count += day.sessions.length;
@@ -151,7 +111,7 @@ const ScheduleWidget = () => {
   };
 
   const handleViewFullSchedule = () => {
-    navigate("/student-parent/lesson-calendar");
+    navigate(getRolePath(authUser?.role || "student", "lesson-calendar"));
   };
 
   return (
@@ -173,7 +133,7 @@ const ScheduleWidget = () => {
           </div>
           <div className="bg-muted/50 rounded-lg p-4 flex items-center space-x-3">
             <div className="text-2xl font-bold text-success">
-              {getUpcomingSessionsCount()}
+              {totalSessions}
             </div>
             <div className="text-sm text-muted-foreground">This Week</div>
           </div>
@@ -240,10 +200,7 @@ const ScheduleWidget = () => {
                     {day.day}
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    {day.date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {formatUtcToLocal(day.date, { month: 'short', day: 'numeric' })}
                   </p>
                 </div>
               </div>
@@ -272,10 +229,10 @@ const ScheduleWidget = () => {
                         className={`w-3 h-3 rounded-full ${session.color}`}
                       />
                       <div>
-                        <div className="font-medium text-foreground text-sm">
+                        <div className="w-[130px] font-medium text-foreground text-sm truncate">
                           {session.subject}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="w-[130px] text-xs text-muted-foreground truncate">
                           {session.teacher}
                         </div>
                       </div>
@@ -293,7 +250,7 @@ const ScheduleWidget = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-4">
+              <div className="flex flex-col items-center justify-center py-4">
                 <Icon
                   name="Calendar"
                   size={32}

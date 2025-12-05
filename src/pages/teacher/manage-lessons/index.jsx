@@ -5,7 +5,8 @@ import LessonTable from "./components/LessonTable";
 import LessonPagination from "./components/LessonPagination";
 import Icon from "components/AppIcon";
 import GroupedStudents from "./components/GroupedStudents";
-import mockLessons from "./data";
+import { getManageLessons } from "../../../services/lessons/lesson.service";
+import PageLoaderOverlay from "components/ui/PageLoaderOverlay";
 
 const ManageLessons = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,80 +21,88 @@ const ManageLessons = () => {
   });
   const [showModal, setShowModal] = useState(false);
   const [lesson, setLesson] = useState(null);
+  const [lessons, setLessons] = useState([]);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+  });
+  const [pendingCount, setPendingCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const itemsPerPage = 10;
 
-  const handleFiltersChange = (newFilters) => {
-    setFilters(newFilters);
+  const transformLessonData = (apiLesson) => {
+    return {
+      id: apiLesson?._id,
+      date: apiLesson?.dateTime?.date,
+      time: apiLesson?.dateTime?.time,
+      studentName: apiLesson?.student?.name,
+      studentAge: apiLesson?.student?.age,
+      subject: apiLesson?.subject?.name,
+      duration: apiLesson?.duration,
+      status: apiLesson?.status.toLowerCase(),
+      type: apiLesson?.subject?.mode,
+      courseType: apiLesson?.courseType,
+      students: apiLesson?.student || [],
+    };
   };
 
-  // Reset to first page when filters change
+  const fetchLessons = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+      };
+
+      if (filters.status !== "all") {
+        params.status = filters.status.toUpperCase();
+      }
+      if (filters.studentName) {
+        params.studentName = filters.studentName;
+      }
+      if (filters.dateRange.start) {
+        params.startDate = filters.dateRange.start;
+      }
+      if (filters.dateRange.end) {
+        params.endDate = filters.dateRange.end;
+      }
+
+      if (sortConfig.key === "date") {
+        params.sortBy = "dateTime";
+      } else {
+        params.sortBy = sortConfig.key;
+      }
+      params.sortOrder = sortConfig.direction;
+
+      const response = await getManageLessons(params);
+      if (response.success) {
+        const transformedLessons = response.data.lessons.map(transformLessonData);
+        setLessons(transformedLessons);
+        setPagination(response.data.pagination);
+        setPendingCount(response.data.pendingCount || 0);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to load lessons");
+      console.error("Error fetching lessons:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch lessons on mount and when dependencies change
   useEffect(() => {
-    setCurrentPage(1);
-  }, [filters]);
+    fetchLessons();
+  }, [currentPage, sortConfig, filters]);
 
-  // Filter and sort sessions
-  const filteredAndSortedSessions = useMemo(() => {
-    let filtered = mockLessons?.filter((session) => {
-      // Status filter
-      if (filters?.status !== "all" && session?.status !== filters?.status) {
-        return false;
-      }
-
-      // Student name filter
-      if (
-        filters?.studentName &&
-        !session?.studentName
-          ?.toLowerCase()
-          ?.includes(filters?.studentName?.toLowerCase())
-      ) {
-        return false;
-      }
-
-      // Date range filter
-      if (
-        filters?.dateRange?.start &&
-        session?.date < filters?.dateRange?.start
-      ) {
-        return false;
-      }
-      if (filters?.dateRange?.end && session?.date > filters?.dateRange?.end) {
-        return false;
-      }
-
-      return true;
-    });
-
-    // Sort sessions
-    filtered?.sort((a, b) => {
-      let aValue = a?.[sortConfig?.key];
-      let bValue = b?.[sortConfig?.key];
-
-      if (sortConfig?.key === "date") {
-        aValue = new Date(`${a.date}T${a.time}`);
-        bValue = new Date(`${b.date}T${b.time}`);
-      }
-
-      if (aValue < bValue) {
-        return sortConfig?.direction === "asc" ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return sortConfig?.direction === "asc" ? 1 : -1;
-      }
-      return 0;
-    });
-
-    return filtered;
-  }, [filters, sortConfig]);
-
-  // Pagination
-  const totalPages = Math.ceil(
-    filteredAndSortedSessions?.length / itemsPerPage
-  );
-  const paginatedSessions = filteredAndSortedSessions?.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const handleFiltersChange = (newFilters) => {
+    setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when filters change
+  };
 
   const handleSort = (key) => {
     setSortConfig((prevConfig) => ({
@@ -109,13 +118,9 @@ const ManageLessons = () => {
     setCurrentPage(page);
   };
 
-  const pendingLessonsCount = mockLessons?.filter(
-    (s) => s?.status === "pending"
-  )?.length;
-
   const handleShowModal = (id) => {
-    const lesson = mockLessons?.find((s) => s?.id === id);
-    setLesson(lesson);
+    const foundLesson = lessons?.find((s) => s?.id === id);
+    setLesson(foundLesson);
     setShowModal(true);
   };
 
@@ -126,6 +131,8 @@ const ManageLessons = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Page loader */}
+      <PageLoaderOverlay show={loading} label="Loading lessons…" />
       {/* Header */}
       <RoleBasedHeader />
       <main className="max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
@@ -141,39 +148,49 @@ const ManageLessons = () => {
             </div>
 
             {/* Pending Sessions Alert */}
-            {pendingLessonsCount > 0 && (
+            {pendingCount > 0 && (
               <div className="flex items-center gap-2 px-4 py-2 bg-warning/10 text-warning border border-warning/20 rounded-lg mt-4 sm:mt-0">
                 <Icon name="Clock" size={16} />
                 <span className="text-sm font-medium">
-                  {pendingLessonsCount} lesson
-                  {pendingLessonsCount > 1 ? "s" : ""} pending
+                  {pendingCount} lesson
+                  {pendingCount > 1 ? "s" : ""} pending
                 </span>
               </div>
             )}
           </div>
         </section>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-destructive/10 text-destructive border border-destructive/20 rounded-lg">
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+        )}
+
         {/* Filters */}
         <LessonFilters
           filters={filters}
           onFiltersChange={handleFiltersChange}
         />
 
-        {/* Lessons Table */}
-        <LessonTable
-          sessions={paginatedSessions}
-          onSort={handleSort}
-          sortConfig={sortConfig}
-          onShowModal={handleShowModal}
-        />
+        <>
+          {/* Lessons Table */}
+          <LessonTable
+            sessions={lessons}
+            onSort={handleSort}
+            sortConfig={sortConfig}
+            onShowModal={handleShowModal}
+          />
 
-        {/* Pagination */}
-        <LessonPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredAndSortedSessions?.length}
-          itemsPerPage={itemsPerPage}
-          onPageChange={handlePageChange}
-        />
+          {/* Pagination */}
+          <LessonPagination
+            currentPage={currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.total}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+          />
+        </>
       </main>
 
       {showModal && (

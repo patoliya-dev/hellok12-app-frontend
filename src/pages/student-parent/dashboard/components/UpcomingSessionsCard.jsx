@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
-import { CourseIcon } from 'components/icons';
+import { CourseIcon } from "components/icons";
 import LessonDetailsModal from "./LessonDetailsModal";
+import { selectAuthUser } from "reducers/auth/authSelectors";
+import { getRolePath } from "../../../../utils/rolePath";
+import { getLessonsForStudent } from "../../../../services/lessons/lesson.service";
+import Loader from "components/ui/Loader";
+import { formatTimeToTZ, getUserTimezone } from "../../../../utils/timezone";
 
 const UpcomingSessionsCard = () => {
   const [upcomingSessions, setUpcomingSessions] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedSession, setSelectedSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const authUser = useSelector(selectAuthUser);
+  const userTimezone = getUserTimezone();
+  const selectedChildId = useSelector((state) => state.profile.selectedChildId);
 
   useEffect(() => {
     // Update current time every minute
@@ -22,75 +33,211 @@ const UpcomingSessionsCard = () => {
   }, []);
 
   useEffect(() => {
-    // Mock upcoming sessions data
-    const mockSessions = [
-      {
-        id: 1,
-        subject: "English Literature",
-        teacher: {
-          name: "Ms. Sarah Johnson",
-          avatar:
-            "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-        },
-        startTime: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes from now
-        duration: 60,
-        type: "video-call",
-        meetingLink: "https://meet.google.com/abc-defg-hij",
-        status: "starting-soon",
-        courseName: "English 101",
-        tags: ["1-on-1", "Online Course"],
-        description: "A deep dive into Shakespeare's sonnets and their impact on modern literature.",
-        address: "19 Washington Square N, New York, NY 10011, USA"
-      },
-      {
-        id: 2,
-        subject: "Spanish Conversation",
-        teacher: {
-          name: "Mr. Carlos Rodriguez",
-          avatar:
-            "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-        },
-        startTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
-        duration: 45,
-        type: "video-call",
-        meetingLink: "https://meet.google.com/xyz-uvwx-yz",
-        status: "scheduled",
-        courseName: "Spanish Basics",
-        tags: ["Trial Lessons", "1-on-1"],
-        description: "Practice conversational Spanish with a native speaker. Focus on pronunciation and common phrases.",
-      },
-      {
-        id: 3,
-        subject: "Japanese Writing",
-        teacher: {
-          name: "Ms. Yuki Tanaka",
-          avatar:
-            "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-        },
-        startTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-        duration: 90,
-        type: "video-call",
-        meetingLink: "https://meet.google.com/def-ghij-klm",
-        status: "scheduled",
-        courseName: "Japanese Advanced",
-        tags: ["Curriculum-Aligned Games", "Online Course"],
-        description: "Learn advanced Kanji and writing techniques through interactive exercises.",
+    const fetchLessons = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Determine which student ID to use based on role
+        const isParent = authUser?.role === "parent";
+        const studentId = isParent ? selectedChildId : authUser?.id;
+
+        // Don't fetch if we don't have a valid student ID
+        if (!studentId) {
+          setUpcomingSessions([]);
+          setLoading(false);
+          return;
+        }
+
+        const response = await getLessonsForStudent({ studentId });
+
+        // Transform API response to match component's expected format
+        const transformedSessions = (response?.data || []).map(session => {
+          // session.start is expected to be an ISO UTC string from API, e.g. "2025-12-03T11:30:00.000Z"
+          const sessionIso = session?.start || session?.startAt || session?.startTime || session?.start; // defensive
+          const sessionTime = sessionIso ? new Date(sessionIso) : null;
+
+          // compute minutesUntil using instants (no timezone math) — Date.getTime() is epoch ms
+          const now = Date.now();
+          const minutesUntil = sessionTime ? Math.floor((sessionTime.getTime() - now) / (1000 * 60)) : null;
+
+          let status = 'scheduled';
+          if (minutesUntil !== null && minutesUntil <= 15 && minutesUntil > 0) {
+            status = 'starting-soon';
+          }
+
+          const formattedTime = sessionTime.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          });
+
+          return {
+            id: session._id,
+            subject: session?.course?.title || "N/A",
+            teacher: {
+              _id: session?.lesson?.teacherId?._id || "N/A",
+              name: session?.lesson?.teacherId?.name || "N/A",
+              avatar:
+                session?.teacher?.profileImageRef?.url ||
+                session?.course?.introImageRef?.url ||
+                "",
+            },
+            startTime: formattedTime,
+            date: sessionTime.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            startTimeIso: sessionIso,
+            duration: session?.lesson?.schedule?.duration || 0,
+            type: session?.course?.mode || "video-call",
+            meetingLink: session?.joinUrl || "",
+            status: status,
+            title: session?.lesson?.title || "N/A",
+            tags: [
+              ...(session?.course?.mode === "online"
+                ? ["Online Course"]
+                : ["In-Person"]),
+              ...(session?.lesson?.isTrialAvailable ? ["Trial Lessons"] : []),
+              ...(session?.course?.lessonType
+                ? [
+                  session.course.lessonType.charAt(0).toUpperCase() +
+                  session.course.lessonType.slice(1),
+                ]
+                : []),
+            ],
+            description:
+              session?.lesson?.description ||
+              session?.course?.description ||
+              "",
+            address: session?.lesson?.address || null,
+            averageRating: parseFloat(
+              session?.lesson?.teacherId?.rating?.averageRating || 0
+            ).toFixed(2),
+            totalRating: session?.lesson?.teacherId?.rating?.totalRatings || 0
+          };
+        });
+
+        setUpcomingSessions(transformedSessions);
+      } catch (err) {
+        console.error("Failed to fetch student lessons:", err);
+        setError(err.message || "Failed to load upcoming lessons");
+      } finally {
+        setLoading(false);
       }
-    ];
+    };
 
-    setUpcomingSessions(mockSessions);
-  }, []);
+    fetchLessons();
+  }, [authUser, selectedChildId]);
 
-  const getTimeUntilSession = (startTime) => {
-    const diff = startTime.getTime() - currentTime.getTime();
+  // Separate function to refresh lessons data
+  const refreshLessons = async () => {
+    try {
+      setSelectedSession(null);
+      const isParent = authUser?.role === "parent";
+      const studentId = isParent ? selectedChildId : authUser?.id;
+
+      if (!studentId) return;
+
+      const response = await getLessonsForStudent({ studentId });
+
+      const transformedSessions = (response?.data || []).map((session) => {
+        const localTimeString = session?.start?.replace("Z", "");
+        const sessionTime = new Date(localTimeString);
+        const now = new Date();
+        const minutesUntil = Math.floor((sessionTime - now) / (1000 * 60));
+
+        let status = "scheduled";
+        if (minutesUntil <= 15 && minutesUntil > 0) {
+          status = "starting-soon";
+        }
+
+        const formattedTime = sessionTime.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+        return {
+          id: session._id,
+          subject: session?.course?.title || "N/A",
+          teacher: {
+            _id: session?.lesson?.teacherId?._id || "N/A",
+            name: session?.lesson?.teacherId?.name || "N/A",
+            avatar:
+              session?.teacher?.profileImageRef?.url ||
+              session?.course?.introImageRef?.url ||
+              "",
+          },
+          startTime: formattedTime,
+          date: sessionTime.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          duration: session?.lesson?.schedule?.duration || 0,
+          type: session?.course?.mode || "video-call",
+          meetingLink: session?.joinUrl || "",
+          status: status,
+          title: session?.lesson?.title || "N/A",
+          tags: [
+            ...(session?.course?.mode === "online"
+              ? ["Online Course"]
+              : ["In-Person"]),
+            ...(session?.lesson?.isTrialAvailable ? ["Trial Lessons"] : []),
+            ...(session?.course?.lessonType
+              ? [
+                session.course.lessonType.charAt(0).toUpperCase() +
+                session.course.lessonType.slice(1),
+              ]
+              : []),
+          ],
+          description:
+            session?.lesson?.description || session?.course?.description || "",
+          address: session?.lesson?.address || null,
+          averageRating: parseFloat(
+            session?.lesson?.teacherId?.rating?.averageRating || 0
+          ).toFixed(2),
+          totalRating: session?.lesson?.teacherId?.rating?.totalRatings || 0,
+        };
+      });
+
+      setUpcomingSessions(transformedSessions);
+    } catch (err) {
+      console.error("Failed to refresh student lessons:", err);
+    }
+  };
+
+  const handleMessages = () => {
+    navigate(getRolePath(authUser?.role || "student", "messages"));
+  };
+
+  const getTimeUntilSession = (startTime, duration) => {
+    const now = currentTime.getTime();
+    const sessionStart = startTime.getTime();
+    const sessionEnd = sessionStart + duration * 60 * 1000; // duration is in minutes
+    // If session has ended, show "Completed"
+    if (now > sessionEnd) {
+      return "Completed";
+    }
+
+    // If session is currently ongoing
+    if (now >= sessionStart && now <= sessionEnd) {
+      return "In Progress";
+    }
+
+    // Calculate time difference from now to session start
+    const diff = sessionStart - now;
     const minutes = Math.floor(diff / (1000 * 60));
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
+    // Show countdown for upcoming sessions
     if (days > 0) return `${days}d ${hours % 24}h`;
     if (hours > 0) return `${hours}h ${minutes % 60}m`;
     if (minutes > 0) return `${minutes}m`;
-    return "Starting now";
+    return "Starting Soon";
   };
 
   const handleJoinSession = (session) => {
@@ -100,7 +247,7 @@ const UpcomingSessionsCard = () => {
   };
 
   const handleViewSchedule = () => {
-    navigate("/student-parent/lessons");
+    navigate(getRolePath(authUser?.role || "student", "lessons"));
   };
 
   const handleSessionClick = (session) => {
@@ -111,7 +258,7 @@ const UpcomingSessionsCard = () => {
     <div className="bg-card rounded-lg border border-border p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-2">
-          <Icon name="CalendarClock" size={24} color="var(--color-primary)" />
+          <Icon name="CalendarClock" size={24} color="var(--color-primary) " />
           <h2 className="text-xl font-semibold text-foreground">
             Upcoming Lessons
           </h2>
@@ -128,13 +275,24 @@ const UpcomingSessionsCard = () => {
         </Button>
       </div>
 
-      {upcomingSessions.length === 0 ? (
+      {loading ? (
+        <Loader />
+      ) : error ? (
+        <div className="bg-card rounded-lg border border-destructive/50 p-8 text-center">
+          <p className="text-destructive mb-2">
+            Failed to load upcoming lessons
+          </p>
+          <p className="text-sm text-muted-foreground">{error}</p>
+        </div>
+      ) : upcomingSessions.length === 0 ? (
         <div className="text-center py-8">
-          <Icon
-            name="Calendar"
-            size={48}
-            color="var(--color-muted-foreground)"
-          />
+          <div className="flex items-center justify-center">
+            <Icon
+              name="Calendar"
+              size={48}
+              color="var(--color-muted-foreground)"
+            />
+          </div>
           <p className="text-muted-foreground mt-4">No upcoming sessions</p>
           <p className="text-sm text-muted-foreground">
             Book a session to get started!
@@ -156,7 +314,9 @@ const UpcomingSessionsCard = () => {
           {upcomingSessions.slice(0, 3).map((session) => (
             <div
               key={session.id}
-              className={`p-4 rounded-lg border transition-micro ${session.status === 'starting-soon' ? 'border-warning bg-warning/5' : 'border-border bg-muted/30'
+              className={`p-4 rounded-lg border transition-micro ${session.status === "starting-soon"
+                ? "border-warning bg-warning/5"
+                : "border-border bg-muted/30"
                 }`}
             >
               <div className="flex items-center justify-between mb-3">
@@ -170,7 +330,7 @@ const UpcomingSessionsCard = () => {
                   </div>
                   <div>
                     <h3 className="font-medium text-foreground">
-                      {session.subject}
+                      {session.title}
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       {session.teacher.name}
@@ -179,16 +339,17 @@ const UpcomingSessionsCard = () => {
                 </div>
 
                 <div className="text-right">
-                  <div className={`text-sm font-medium ${session.status === 'starting-soon' ? 'text-warning' : 'text-primary'
-                    }`}>
-                    {getTimeUntilSession(session.startTime)}
+                  <div
+                    className={`text-sm font-medium ${session.status === "starting-soon"
+                      ? "text-warning"
+                      : "text-primary"
+                      }`}
+                  >
+                    {session?.status?.charAt(0).toUpperCase() +
+                      session?.status?.slice(1).toLowerCase()}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {session.startTime.toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
-                    })}
+                    {(session.startTimeIso ? formatTimeToTZ(session.startTimeIso, userTimezone) : '')}
                   </div>
                 </div>
               </div>
@@ -207,11 +368,13 @@ const UpcomingSessionsCard = () => {
                   </div>
                   <div className="flex items-center space-x-1">
                     <CourseIcon selected={false} />
-                    <span className="text-muted-foreground">{session.courseName}</span>
+                    <span className="text-muted-foreground">
+                      {session.subject}
+                    </span>
                   </div>
                 </div>
 
-                {session.status === 'starting-soon' && (
+                {session.status === "starting-soon" && (
                   <div className="flex items-center space-x-1 text-warning">
                     <Icon name="AlertCircle" size={14} />
                     <span className="text-xs font-medium">Starting Soon</span>
@@ -232,7 +395,9 @@ const UpcomingSessionsCard = () => {
                   >
                     Join Now
                   </Button>
-                ) : (<div className="flex-1"></div>)}
+                ) : (
+                  <div className="flex-1"></div>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -250,6 +415,7 @@ const UpcomingSessionsCard = () => {
                   iconName="MessageCircle"
                   iconPosition="left"
                   iconSize={16}
+                  onClick={handleMessages}
                 >
                   Message
                 </Button>
@@ -264,6 +430,7 @@ const UpcomingSessionsCard = () => {
         <LessonDetailsModal
           lesson={selectedSession}
           onClose={() => setSelectedSession(null)}
+          onFeedbackSubmitted={refreshLessons}
         />
       )}
     </div>

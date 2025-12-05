@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import {
+  Navigate,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import BookingSteps from "./components/BookingSteps";
 import Breadcrumb from "../../../components/ui/Breadcrumb";
@@ -13,6 +20,17 @@ import PaymentMethodSelector from "./components/PaymentMethodSelector";
 import BookingConfirmation from "./components/BookingConfirmation";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { copyToClipboard } from "../../../utils/utils";
+import { getRolePath } from "../../../utils/rolePath";
+import { successToast, errorToast } from "../../../utils/utils";
+import { fetchCurrentUser } from "reducers/auth/authThunks";
+import {
+  createPaymentIntent,
+  fetchPaymentMethods,
+  createCustomer
+} from "../../../reducers/payments/paymentsThunks";
+import { getCourseDetails } from "../../../services/courses/course.service";
+import { createBooking } from "reducers/bookings/bookingsThunks";
+import { selectSelectedTeacher } from "reducers/teachers/teachersSlice";
 
 // Steps for enrollment
 const stepsForEntrollment = [
@@ -27,117 +45,128 @@ const stepsForTrial = [
   { id: 2, title: "Confirm", icon: "CheckCircle" },
 ];
 
-const breadCrumbData = [
-  { label: "Find Teachers", path: "#" },
-  { label: "Teacher Details", path: "#" },
-  { label: "Book Lessons", path: "#", current: true },
-];
-
-const mockStudents = [
-  {
-    id: "student-001",
-    name: "Emma Johnson",
-    profileImage:
-      "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face",
-    age: 12,
-    email: "fake_email1@example.com",
-    phone: "1234567890",
-  },
-  {
-    id: "student-002",
-    name: "Alex Johnson",
-    profileImage:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face",
-    age: 15,
-    email: "fake_email2@example.com",
-    phone: "1234567890",
-  },
-];
-
-// Mock data - In real app, this would come from props/context/API
-const classData = {
-  id: "class-001",
-  title: "Conversational English Mastery",
-  description:
-    "Improve your speaking confidence through engaging conversations about daily topics, current events, and personal interests. Perfect for intermediate to advanced learners.",
-  type: "1-on-1", // or "Group"
-  courseType: "Online Course",
-  duration: 60,
-  price: 45,
-  teacher: {
-    id: "teacher-001",
-    name: "Sarah Martinez",
-    profileImage:
-      "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
-    timezone: "America/New_York",
-    school: "Adrian High School",
-  },
-  // For group classes
-  maxStudents: 8,
-  enrolledStudents: 6,
-  location: "Downtown Learning Center, Room 204",
-  groupSchedule: {
-    days: ["Monday", "Wednesday", "Friday"],
-    time: "6:00 PM - 7:15 PM",
-    nextSession: "Monday, January 8th at 6:00 PM",
-  },
-};
-
-// Mock data for saved payment methods
-const savedCards = [
-  {
-    id: "card_1",
-    last4: "4242",
-    brand: "Visa",
-    expiry: "12/26",
-    isDefault: true,
-  },
-  {
-    id: "card_2",
-    last4: "5555",
-    brand: "Mastercard",
-    expiry: "08/27",
-    isDefault: false,
-  },
-];
-
 const BookLesson = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams(); // enroll && trial
+  const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const action = searchParams.get("action");
 
-  // ✅ Validate both path param and query param
+  // grab lessonId query param (may be present for trial flow)
+  const lessonIdParam = searchParams.get("lessonId") || null;
+
+  // Validate action
   if (!["enroll", "trial"].includes(action)) {
+    return <Navigate to="/404" replace />;
+  }
+  if (!id) {
     return <Navigate to="/404" replace />;
   }
 
   const currentUser = useSelector(selectAuthUser);
+  const selectedTeacher = useSelector(selectSelectedTeacher);
   const isStudent = currentUser?.role === "student";
   const isParent = currentUser?.role === "parent";
 
   const [type, setType] = useState(action);
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(currentUser?.profile?.children?.[0] || null);
   const [address, setAddress] = useState("");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [courseData, setCourseData] = useState({}); // initially empty
+  const stripePromise = loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY);
 
+  // NEW: read payment methods & parent students from payments slice
+  const paymentMethods = useSelector((s) => s.payments?.methods || []);
   const steps = type === "trial" ? stepsForTrial : stepsForEntrollment;
 
+  // Load parent's students and saved cards on mount (if parent)
   useEffect(() => {
-    if (isStudent) {
-      setSelectedStudent(currentUser);
-    }
-  });
+    (async () => {
+      if (isParent && currentUser?.id) {
+        dispatch(fetchCurrentUser());
+      }
+      // always fetch saved cards
+      dispatch(fetchPaymentMethods());
+    })();
+  }, [isParent, currentUser?.id, dispatch]);
 
   useEffect(() => {
-    // Set default payment method
-    if (savedCards?.length > 0) {
-      const defaultCard =
-        savedCards?.find((card) => card?.isDefault) || savedCards?.[0];
-      setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
+    const fetchCourse = async () => {
+      try {
+        const { data } = await getCourseDetails(id);
+        setCourseData(data);
+      } catch (error) {
+        errorToast(error.response?.data || error.message);
+      }
+    };
+    fetchCourse();
+  }, [id]);
+
+  // make sure selectedStudent has _id (if currentUser is a student)
+  useEffect(() => {
+    if (isStudent && currentUser) {
+      // if currentUser is the student (profile stored differently), normalize to object with _id
+      if (typeof currentUser?._id === 'undefined' && currentUser?.id) {
+        setSelectedStudent({ ...currentUser, _id: currentUser.id });
+      } else {
+        setSelectedStudent(currentUser);
+      }
     }
-  }, []);
+  }, [isStudent, currentUser]);
+
+  // Set default payment method when fetched
+  useEffect(() => {
+    if (paymentMethods?.length > 0) {
+      const defaultCard = paymentMethods.find((c) => c?.isDefault) || paymentMethods[0];
+      if (defaultCard) {
+        setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
+      }
+    }
+  }, [paymentMethods]);
+
+  // Set default student when parent students loaded
+  useEffect(() => {
+    if (isParent && currentUser?.profile?.children?.length > 0) {
+      // default to first student if none selected
+      if (!selectedStudent) {
+        setSelectedStudent(currentUser?.profile?.children[0]);
+      }
+    }
+  }, [isParent, currentUser, selectedStudent]);
+
+  const goBackOne = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(getRolePath(currentUser?.role || "student", "find-teacher"));
+    }
+  };
+
+  const goBackTwo = () => {
+    if (window.history.length > 2) {
+      navigate(-2);
+    } else {
+      navigate(getRolePath(currentUser?.role || "student", "find-teacher"));
+    }
+  };
+
+  const breadCrumbData = [
+    {
+      label: "Find Teachers",
+      path: getRolePath(currentUser?.role || "student", "find-teacher"),
+    },
+    {
+      label: "Teacher Details",
+      onClick: goBackTwo,
+    },
+    {
+      label: "Course Details",
+      onClick: goBackOne,
+    },
+    { label: "Book Lessons", path: "#", current: true },
+  ];
 
   const handleNextStep = () => {
     if (currentStep < steps?.length) {
@@ -156,7 +185,7 @@ const BookLesson = () => {
   };
 
   const calculateTotal = () => {
-    return classData?.price || 0;
+    return courseData?.price || 0;
   };
 
   const isFormValid = () => {
@@ -172,20 +201,152 @@ const BookLesson = () => {
     setSelectedPaymentMethod(method);
   };
 
-  const handleSubmit = () => {
-    setShowSuccessModal(true);
+  const mapBackendErrorToMessage = (err) => {
+    const code = err?.code || err?.statusCode || err?.error?.code || err?.data?.code;
+    switch (code) {
+      case 'COURSE_FULL':
+        return 'This course is full. Please choose another or contact support.';
+      case 'TRIAL_CAPACITY_EXHAUSTED':
+        return 'Trial capacity for this lesson is exhausted.';
+      case 'ALREADY_TAKEN_TRIAL':
+        return 'Selected student has already used a trial for this course.';
+      case 'STUDENT_REQUIRED':
+      case 'INVALID_STUDENT':
+        return 'Please select a valid student.';
+      default:
+        return err?.message || 'Something went wrong. Please try again.';
+    }
   };
 
-  const handleAddPaymentMethod = (data) => {
-    const updateData = {
-      id: `card_${savedCards?.length + 1}`,
-      last4: data?.cardNumber?.slice(-4),
-      brand: "Card",
-      expiry: data?.expiryDate,
-      isDefault: false,
-    };
-    savedCards.push(updateData);
-    setSelectedPaymentMethod({ type: "new_card", data: updateData });
+  // New: use real createPaymentIntent thunk and confirm via stripe
+  const handleSubmit = async () => {
+    try {
+      if (!selectedStudent || !selectedStudent._id) {
+        return errorToast('Please select a student before continuing.');
+      }
+
+      // generate idempotency key
+      const idempotencyKey = `booking-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
+      // Ensure Stripe customer exists
+      if (!currentUser?.stripeCustomerId) {
+        try {
+          await dispatch(createCustomer({})).unwrap();
+        } catch (err) {
+          console.warn('createCustomer failed (non-fatal)', err);
+        }
+      }
+
+      // 2) Create booking on server BEFORE payment so bookingId is available
+      const bookingPayload = {
+        courseId: courseData?._id || courseData?.id,
+        studentId: selectedStudent?._id || selectedStudent?.id,
+        teacherId: selectedTeacher?._id || selectedTeacher?.id,
+        amount: Math.round((courseData?.price || 0) * 100),
+        isTrial: type === 'trial',
+        lessonId: type === 'trial' ? (lessonIdParam || (courseData?.lessons?.[0]?._id)) : undefined
+      };
+
+      let bookingRes;
+      try {
+        bookingRes = await dispatch(createBooking(bookingPayload)).unwrap();
+        bookingRes = bookingRes?.data
+      } catch (err) {
+        const message = mapBackendErrorToMessage(err);
+        return errorToast(message);
+      }
+
+      // If this is a trial booking and payment not required, bookingRes.booking already created and may be PAID
+      if (bookingRes?.booking?.isTrial) {
+        successToast('Trial booked successfully');
+        setShowSuccessModal(true);
+        return;
+      }
+
+      // 3) Create PaymentIntent
+      const piPayload = {
+        bookingId: bookingRes?.booking?._id,
+        teacherId: selectedTeacher?._id || selectedTeacher?.id,
+        amount: Math.round((courseData?.price || 0) * 100),
+        currency: 'usd',
+        paymentMethodId: selectedPaymentMethod?.type === 'saved_card' ? (selectedPaymentMethod?.data?.stripePaymentMethodId || selectedPaymentMethod?.data?.id) : undefined,
+        savePaymentMethod: selectedPaymentMethod?.type !== 'saved_card',
+        idempotencyKey,
+        metadata: {
+          courseId: courseData?._id || courseData?.id,
+          studentId: selectedStudent?._id || selectedStudent?.id,
+          lessonId: type === 'trial' ? (lessonIdParam || (courseData?.lessons?.[0]?._id)) : undefined,
+          bookingId: bookingRes?.booking?._id
+        }
+      };
+
+      const paymentIntentRes = await dispatch(createPaymentIntent(piPayload)).unwrap();
+      const clientSecret = paymentIntentRes?.client_secret || paymentIntentRes?.raw?.client_secret;
+      if (!clientSecret) throw new Error('Missing client secret from server');
+
+      // 4) Confirm via Stripe (if using saved PM provide it)
+      const stripe = await loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY);
+      if (!stripe) throw new Error('Stripe failed to load');
+
+      let confirmResult;
+      if (selectedPaymentMethod?.type === 'saved_card' && (selectedPaymentMethod?.data?.stripePaymentMethodId || selectedPaymentMethod?.data?.id)) {
+        confirmResult = await stripe.confirmCardPayment(clientSecret, {
+          payment_method: selectedPaymentMethod.data.stripePaymentMethodId || selectedPaymentMethod.data.id
+        });
+      } else {
+        // If the FE used a SetupIntent to save card, the backend may accept paymentMethodId
+        confirmResult = await stripe.confirmCardPayment(clientSecret);
+      }
+
+      if (confirmResult.error) {
+        throw confirmResult.error;
+      }
+
+      const pi = confirmResult.paymentIntent;
+      if (pi && (pi.status === 'succeeded' || pi.status === 'processing' || pi.status === 'requires_capture')) {
+        successToast('Payment initiated — confirmation will be finalised shortly.');
+        setShowSuccessModal(true);
+      } else {
+        throw new Error('Payment not completed: ' + (pi?.status || 'unknown'));
+      }
+    } catch (err) {
+      console.error('Payment error', err);
+      const msg = err?.message || 'Payment failed. Please try again.';
+      errorToast(msg);
+    }
+  };
+
+  // PaymentMethodSelector will confirm SetupIntent and return { paymentMethodId, pm } on success.
+  const handleAddPaymentMethod = async (result = {}) => {
+    try {
+      // result: { paymentMethodId, pm } where pm is optional local metadata
+      const { paymentMethodId, pm } = result;
+      // Refresh saved methods
+      await dispatch(fetchPaymentMethods()).unwrap();
+      // Find the newly saved payment method in the refreshed list (best-effort)
+      const refreshed = (store => store?.payments?.methods || [])( /* access via selector is preferred but keep minimal here */);
+      // If parent expects a shape with stripePaymentMethodId, map accordingly
+      let newCard = null;
+      try {
+        const methods = (paymentMethods) || [];
+        newCard = methods.find((m) => m?.stripePaymentMethodId === paymentMethodId || m?.id === paymentMethodId) || null;
+      } catch (e) {
+        newCard = null;
+      }
+      // Prefer the explicit pm returned by child (if provided)
+      if (pm) {
+        setSelectedPaymentMethod({ type: "saved_card", data: pm });
+      } else if (newCard) {
+        setSelectedPaymentMethod({ type: "saved_card", data: newCard });
+      } else if (paymentMethodId) {
+        // fallback create a minimal object
+        setSelectedPaymentMethod({ type: "saved_card", data: { id: paymentMethodId, stripePaymentMethodId: paymentMethodId, last4: "****" } });
+      }
+      // successToast("Card saved");
+    } catch (err) {
+      console.error("Failed to process added payment method", err);
+      errorToast(err?.message || "Failed to save payment method");
+    }
   };
 
   const onCloseSuccessModal = () => {
@@ -194,11 +355,12 @@ const BookLesson = () => {
     setSelectedStudent(null);
     if (type === "enroll") {
       setCurrentStep(1);
-      const defaultCard =
-        savedCards?.find((card) => card?.isDefault) || savedCards?.[0];
-      setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
+      if (paymentMethods?.length > 0) {
+        const defaultCard = paymentMethods.find((c) => c?.isDefault) || paymentMethods[0];
+        setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
+      }
     }
-    navigate(`/student-parent/dashboard`);
+    navigate(getRolePath(currentUser?.role || "student", "dashboard"));
   };
 
   const getButtonText = () => {
@@ -217,6 +379,7 @@ const BookLesson = () => {
     return texts[type]?.[currentStep] ?? texts[type]?.default ?? "Next";
   };
 
+  // Below: pass dynamic parentStudents and paymentMethods (keeps UI markup unchanged)
   const getCurrentStepComponent = () => {
     switch (type) {
       case "enroll":
@@ -231,7 +394,7 @@ const BookLesson = () => {
                     <div className="col-span-6 space-y-6">
                       {isParent && (
                         <StudentSelector
-                          students={mockStudents}
+                          students={currentUser?.profile?.children}
                           selectedStudent={selectedStudent}
                           onStudentSelect={handleStudentSelect}
                           address={address}
@@ -240,7 +403,7 @@ const BookLesson = () => {
                       )}
 
                       <BookingSummary
-                        classData={classData}
+                        courseData={courseData}
                         selectedStudent={selectedStudent}
                         total={calculateTotal()}
                       />
@@ -249,7 +412,7 @@ const BookLesson = () => {
                     {/* Right Panel - Class Details */}
                     <div className="col-span-6">
                       <div className="sticky top-24">
-                        <ClassDetails classData={classData} />
+                        <ClassDetails courseData={courseData} />
                         <div className="mt-6 flex justify-end">
                           <Button
                             onClick={handleNextStep}
@@ -269,11 +432,11 @@ const BookLesson = () => {
                 </div>
                 {/* Mobile View */}
                 <div className="lg:hidden space-y-6">
-                  <ClassDetails classData={classData} />
+                  <ClassDetails courseData={courseData} />
 
                   {isParent && (
                     <StudentSelector
-                      students={mockStudents}
+                      students={currentUser?.profile?.children}
                       selectedStudent={selectedStudent}
                       onStudentSelect={handleStudentSelect}
                       address={address}
@@ -282,7 +445,7 @@ const BookLesson = () => {
                   )}
 
                   <BookingSummary
-                    classData={classData}
+                    courseData={courseData}
                     selectedStudent={selectedStudent}
                     total={calculateTotal()}
                   />
@@ -315,20 +478,22 @@ const BookLesson = () => {
                     {/* Left Panel - Booking Form */}
                     {currentStep === 2 && (
                       <div className="col-span-6 space-y-6">
-                        <PaymentMethodSelector
-                          savedCards={savedCards}
-                          onPaymentMethodSelect={handlePaymentMethodSelect}
-                          selectedMethod={selectedPaymentMethod}
-                          onAddPaymentMethod={handleAddPaymentMethod}
-                        />
+                        <Elements stripe={stripePromise}>
+                          <PaymentMethodSelector
+                            savedCards={paymentMethods}
+                            onPaymentMethodSelect={handlePaymentMethodSelect}
+                            selectedMethod={selectedPaymentMethod}
+                            onAddPaymentMethod={handleAddPaymentMethod}
+                          />
+                        </Elements>
                       </div>
                     )}
                     {currentStep === 3 && (
                       <div className="col-span-6 space-y-6">
                         <BookingConfirmation
-                          classData={classData}
+                          courseData={courseData}
                           selectedPaymentMethod={selectedPaymentMethod}
-                          teacherData={classData?.teacher}
+                          teacherData={courseData?.teacher}
                           selectedStudent={selectedStudent}
                         />
                       </div>
@@ -336,14 +501,13 @@ const BookLesson = () => {
                     <div className="col-span-6">
                       <div className="sticky top-24">
                         <BookingSummary
-                          classData={classData}
+                          courseData={courseData}
                           selectedStudent={selectedStudent}
                           total={calculateTotal()}
                         />
                         <div
-                          className={`mt-6 flex justify-end ${
-                            currentStep === 3 && "gap-10"
-                          }`}
+                          className={`mt-6 flex justify-end ${currentStep === 3 && "gap-10"
+                            }`}
                         >
                           {currentStep === 3 && (
                             <Button
@@ -360,9 +524,8 @@ const BookLesson = () => {
                               currentStep === 3 ? handleSubmit : handleNextStep
                             }
                             disabled={selectedPaymentMethod === null}
-                            className={`h-12 ${
-                              currentStep === 3 ? "w-72" : "w-56"
-                            }`}
+                            className={`h-12 ${currentStep === 3 ? "w-72" : "w-56"
+                              }`}
                             size="lg"
                             iconName="ChevronRight"
                             iconPosition="right"
@@ -378,33 +541,34 @@ const BookLesson = () => {
                 {/* Mobile View */}
                 <div className="lg:hidden space-y-6">
                   {currentStep === 2 && (
-                    <PaymentMethodSelector
-                      savedCards={savedCards}
-                      onPaymentMethodSelect={handlePaymentMethodSelect}
-                      selectedMethod={selectedPaymentMethod}
-                      onAddPaymentMethod={handleAddPaymentMethod}
-                    />
+                    <Elements stripe={stripePromise}>
+                      <PaymentMethodSelector
+                        savedCards={paymentMethods}
+                        onPaymentMethodSelect={handlePaymentMethodSelect}
+                        selectedMethod={selectedPaymentMethod}
+                        onAddPaymentMethod={handleAddPaymentMethod}
+                      />
+                    </Elements>
                   )}
                   {currentStep === 3 && (
                     <BookingConfirmation
-                      classData={classData}
+                      courseData={courseData}
                       selectedPaymentMethod={selectedPaymentMethod}
-                      teacherData={classData?.teacher}
+                      teacherData={courseData?.teacher}
                       selectedStudent={selectedStudent}
                     />
                   )}
                   <BookingSummary
-                    classData={classData}
+                    courseData={courseData}
                     selectedStudent={selectedStudent}
                     total={calculateTotal()}
                   />
                   <div className="sticky bottom-4">
                     <div
-                      className={`mt-6 flex ${
-                        currentStep === 3
-                          ? "flex-col items-center gap-4"
-                          : "justify-center"
-                      }`}
+                      className={`mt-6 flex ${currentStep === 3
+                        ? "flex-col items-center gap-4"
+                        : "justify-center"
+                        }`}
                     >
                       {currentStep === 3 && (
                         <Button
@@ -421,9 +585,8 @@ const BookLesson = () => {
                           currentStep === 3 ? handleSubmit : handleNextStep
                         }
                         disabled={selectedPaymentMethod === null}
-                        className={`h-12 ${
-                          currentStep === 3 ? "w-72" : "w-56"
-                        }`}
+                        className={`h-12 ${currentStep === 3 ? "w-72" : "w-56"
+                          }`}
                         size="lg"
                         iconName="ChevronRight"
                         iconPosition="right"
@@ -450,7 +613,7 @@ const BookLesson = () => {
                     {isParent && (
                       <div className="col-span-6 space-y-6">
                         <StudentSelector
-                          students={mockStudents}
+                          students={currentUser?.profile?.children}
                           selectedStudent={selectedStudent}
                           onStudentSelect={handleStudentSelect}
                           address={address}
@@ -462,7 +625,7 @@ const BookLesson = () => {
                     {/* Right Panel - Class Details */}
                     <div className="col-span-6">
                       <div className="sticky top-24">
-                        <ClassDetails classData={classData} type="trial" />
+                        <ClassDetails courseData={courseData} type="trial" />
                         <div className="mt-6 flex justify-end">
                           <Button
                             onClick={handleNextStep}
@@ -482,11 +645,11 @@ const BookLesson = () => {
                 </div>
                 {/* Mobile View */}
                 <div className="lg:hidden space-y-6">
-                  <ClassDetails classData={classData} type="trial" />
+                  <ClassDetails courseData={courseData} type="trial" />
 
                   {isParent && (
                     <StudentSelector
-                      students={mockStudents}
+                      students={currentUser?.profile?.children}
                       selectedStudent={selectedStudent}
                       onStudentSelect={handleStudentSelect}
                       address={address}
@@ -520,20 +683,19 @@ const BookLesson = () => {
                   <div className="grid grid-cols-12 gap-8">
                     <div className="col-span-6 space-y-6">
                       <BookingConfirmation
-                        classData={classData}
+                        courseData={courseData}
                         selectedPaymentMethod={selectedPaymentMethod}
-                        teacherData={classData?.teacher}
+                        teacherData={courseData?.teacher}
                         selectedStudent={selectedStudent}
                         type="trial"
                       />
                     </div>
                     <div className="col-span-6">
                       <div className="sticky top-24">
-                        <ClassDetails classData={classData} type="trial" />
+                        <ClassDetails courseData={courseData} type="trial" />
                         <div
-                          className={`mt-6 flex justify-end ${
-                            currentStep === 2 && "gap-10"
-                          }`}
+                          className={`mt-6 flex justify-end ${currentStep === 2 && "gap-10"
+                            }`}
                         >
                           {currentStep === 2 && (
                             <Button
@@ -550,9 +712,8 @@ const BookLesson = () => {
                               currentStep === 2 ? handleSubmit : handleNextStep
                             }
                             disabled={selectedPaymentMethod === null}
-                            className={`h-12 ${
-                              currentStep === 2 ? "w-72" : "w-56"
-                            }`}
+                            className={`h-12 ${currentStep === 2 ? "w-72" : "w-56"
+                              }`}
                             size="lg"
                             iconName="ChevronRight"
                             iconPosition="right"
@@ -569,20 +730,19 @@ const BookLesson = () => {
                 {/* Mobile View */}
                 <div className="lg:hidden space-y-6">
                   <BookingConfirmation
-                    classData={classData}
+                    courseData={courseData}
                     selectedPaymentMethod={selectedPaymentMethod}
-                    teacherData={classData?.teacher}
+                    teacherData={courseData?.teacher}
                     selectedStudent={selectedStudent}
                     type="trial"
                   />
-                  <ClassDetails classData={classData} type="trial" />
+                  <ClassDetails courseData={courseData} type="trial" />
                   <div className="sticky bottom-4">
                     <div
-                      className={`mt-6 flex ${
-                        currentStep === 2
-                          ? "flex-col items-center gap-4"
-                          : "justify-center"
-                      }`}
+                      className={`mt-6 flex ${currentStep === 2
+                        ? "flex-col items-center gap-4"
+                        : "justify-center"
+                        }`}
                     >
                       {currentStep === 2 && (
                         <Button
@@ -599,9 +759,8 @@ const BookLesson = () => {
                           currentStep === 2 ? handleSubmit : handleNextStep
                         }
                         disabled={selectedPaymentMethod === null}
-                        className={`h-12 ${
-                          currentStep === 2 ? "w-72" : "w-56"
-                        }`}
+                        className={`h-12 ${currentStep === 2 ? "w-72" : "w-56"
+                          }`}
                         size="lg"
                         iconName="ChevronRight"
                         iconPosition="right"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import ParentInfoSection from "./components/ParentInfoSection";
 import StudentInfoSection from "./components/StudentInfoSection";
 import StudentProfileSection from "./components/StudentProfileSection";
@@ -8,21 +8,32 @@ import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import ChangePasswordModal from "./components/ChangePasswordModal";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { capitalize } from "../../../utils/utils";
+import { updateProfile as updateProfileThunk } from "reducers/profile/profileThunks";
+import Loader from "components/ui/Loader";
+import { fetchCurrentUser } from "reducers/auth/authThunks";
 
 const ProfileAccountSettings = () => {
+  const dispatch = useDispatch();
   const authUser = useSelector(selectAuthUser);
   const isParent = authUser?.role === "parent";
   const isStudent = authUser?.role === "student";
-
-  const parentData = useSelector((state) => state.profile.parent);
   const students = useSelector((state) => state.profile.students);
-
   const [currentLanguage, setCurrentLanguage] = useState("en");
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     personal: true,
     student: isParent,
   });
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    async function getData() {
+      setIsLoading(true);
+      await dispatch(fetchCurrentUser());
+      setIsLoading(false);
+    }
+    getData();
+  }, [dispatch]);
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem("selectedLanguage") || "en";
@@ -33,16 +44,22 @@ const ProfileAccountSettings = () => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const handleProfileSave = (updatedData) => {
-    // Dispatch your action or API call here to save profile updates
-    console.log("Profile saved:", updatedData);
+  const handleProfileSave = async (updatedData) => {
+    const result = await dispatch(updateProfileThunk(updatedData));
+    if (updateProfileThunk.fulfilled.match(result)) {
+      const refreshed = result.payload;
+      return refreshed;
+    }
+    throw new Error(result.payload?.error);
   };
 
   const studentProfile = isStudent
     ? students.find((s) => s.email === authUser.email) || authUser
     : authUser;
 
-  return (
+  return isLoading ? (
+    <Loader />
+  ) : (
     <div className="min-h-screen bg-background">
       <RoleBasedHeader />
       <main className="pt-16 pb-20 lg:pb-8">
@@ -77,11 +94,12 @@ const ProfileAccountSettings = () => {
                 <ParentInfoSection
                   isExpanded={expandedSections.personal}
                   onToggle={() => handleSectionToggle("personal")}
-                  profileData={parentData}
+                  profileData={authUser}
                   onSave={handleProfileSave}
                   onChangePasswordClick={() => setShowChangePassword(true)}
                 />
                 <StudentInfoSection
+                  studentData={students}
                   isExpanded={expandedSections.student}
                   onToggle={() => handleSectionToggle("student")}
                 />
@@ -91,7 +109,7 @@ const ProfileAccountSettings = () => {
               <StudentProfileSection
                 isExpanded={expandedSections.personal}
                 onToggle={() => handleSectionToggle("personal")}
-                profileData={studentProfile}
+                profileData={students}
                 onSave={handleProfileSave}
                 onChangePasswordClick={() => setShowChangePassword(true)}
               />

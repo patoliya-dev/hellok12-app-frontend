@@ -9,6 +9,7 @@ import ScheduleWidget from "./components/ScheduleWidget";
 import MobileBottomNavigation from "./components/MobileBottomNavigation";
 import Button from "../../../components/ui/Button";
 import { selectAuthUser } from "reducers/auth/authSelectors";
+import { formatUtcToLocal } from "../../../utils/datetime";
 
 const StudentDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
@@ -26,15 +27,14 @@ const StudentDashboard = () => {
   }, []);
 
   const TodayDate = () => {
-    const today = new Date();
-    const formattedDate = today.toLocaleString("en-US", {
-      weekday: "long", // Thursday
-      year: "numeric", // 2025
-      month: "long", // July
-      day: "numeric", // 31
-      hour: "numeric", // 5
-      minute: "2-digit", // 42
-      hour12: true, // AM/PM
+    const formattedDate = formatUtcToLocal(currentTime, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
     });
 
     return <div>{formattedDate}</div>;
@@ -73,9 +73,12 @@ const StudentDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl lg:text-3xl font-bold text-foreground mb-2">
-                    {getGreeting()}, <span className="capitalize">{authUser.name}</span>! 👋
+                    {getGreeting()},{" "}
+                    <span className="capitalize">{authUser.name}</span>! 👋
                   </h1>
-                  <div className="text-muted-foreground mb-4">{TodayDate()}</div>
+                  <div className="text-muted-foreground mb-4">
+                    {TodayDate()}
+                  </div>
                   <p className="text-muted-foreground mb-4">
                     Ready to continue your learning journey?
                   </p>

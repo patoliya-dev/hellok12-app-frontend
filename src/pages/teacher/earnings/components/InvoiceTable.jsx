@@ -3,7 +3,7 @@ import Icon from "../../../../components/AppIcon";
 import Button from "../../../../components/ui/Button";
 import { successToast } from "../../../../utils/utils";
 
-const InvoiceTable = ({ data }) => {
+const InvoiceTable = ({ data, isLoading = false }) => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -31,9 +31,8 @@ const InvoiceTable = ({ data }) => {
 
     return (
       <span
-        className={`text-xs font-medium ${
-          statusClasses[status] || "text-error"
-        }`}
+        className={`text-xs font-medium ${statusClasses[status] || "text-error"
+          }`}
       >
         {status}
       </span>
@@ -41,9 +40,26 @@ const InvoiceTable = ({ data }) => {
   };
 
   const handleDownloadInvoice = (invoice) => {
-    console.log("Downloading invoice:", invoice?.id);
-    successToast("Invoice downloaded successfully!");
+    if (invoice?.downloadUrl) {
+      // Open the download URL in a new tab
+      window.open(invoice.downloadUrl, "_blank");
+      successToast("Invoice downloaded successfully!");
+    } else {
+      console.error("No download URL available for invoice:", invoice?.invoiceId);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-8 text-center">
+        <div className="animate-pulse space-y-4">
+          <div className="h-16 bg-muted rounded"></div>
+          <div className="h-16 bg-muted rounded"></div>
+          <div className="h-16 bg-muted rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

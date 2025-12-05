@@ -22,7 +22,10 @@ const Breadcrumb = ({ customPath = null, className = "" }) => {
     >
       <ol className="flex items-center space-x-2">
         {breadcrumbs?.map((crumb, index) => (
-          <li key={crumb?.path} className="flex items-center">
+          <li
+            key={`${crumb?.path ?? crumb?.label}-${index}`}
+            className="flex items-center"
+          >
             {index > 0 && (
               <Icon
                 name="ChevronRight"
@@ -34,6 +37,14 @@ const Breadcrumb = ({ customPath = null, className = "" }) => {
               <span className="text-foreground font-medium" aria-current="page">
                 {crumb?.label}
               </span>
+            ) : crumb?.onClick ? (
+              <button
+                type="button"
+                onClick={crumb?.onClick}
+                className="hover:text-foreground transition-smooth"
+              >
+                {crumb?.label}
+              </button>
             ) : (
               <Link
                 to={crumb?.path}

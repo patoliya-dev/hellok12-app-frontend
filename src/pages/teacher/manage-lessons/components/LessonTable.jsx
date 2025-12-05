@@ -102,22 +102,26 @@ const LessonTable = ({ sessions, onSort, sortConfig, onShowModal }) => {
                       {formatDate(session?.date)}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {formatTime(session?.time)}
+                      {session?.time}
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  {session?.courseType !== "Group" && (
-                    <div>
-                      <div className="font-medium text-foreground">
-                        {session?.studentName}
+                  {session?.courseType !== "group" ? (
+                    session?.students?.name ? (
+                      <div>
+                        <div className="font-medium text-foreground">
+                          {session?.students.name}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {session?.students.age} years old
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        {session?.studentAge} years old
-                      </div>
-                    </div>
-                  )}
-                  {session?.courseType === "Group" && (
+                    ) : (
+                      <span className="text-sm text-muted-foreground">N/A</span>
+                    )
+                  ) : null}
+                  {session?.courseType === "group" && (
                     <div>
                       <Button
                         variant="link"

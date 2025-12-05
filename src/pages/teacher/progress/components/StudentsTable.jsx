@@ -3,6 +3,7 @@ import Icon from "components/AppIcon";
 import Image from "components/AppImage";
 import Button from "components/ui/Button";
 import Pagination from "components/ui/Pagination";
+import { errorToast } from "../../../../utils/utils";
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
@@ -50,7 +51,7 @@ const StudentTable = ({
     if (type === "message") {
       navigate("/teacher/messages");
     } else {
-      alert("Under development");
+      errorToast("Under development");
     }
   };
 
@@ -118,7 +119,7 @@ const StudentTable = ({
                 </td>
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
-                    {stud?.courseName}
+                    {stud?.title}
                   </span>
                 </td>
                 <td className="px-6 py-4">
@@ -176,6 +177,7 @@ const StudentTable = ({
         totalPages={totalPages}
         totalItems={totalItems}
         onPageChange={onPageChange}
+        listType="students"
       />
     </section>
   );

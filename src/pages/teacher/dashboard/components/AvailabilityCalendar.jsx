@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import Icon from "../../../../components/AppIcon";
-import Button from "../../../../components/ui/Button";
+import { useNavigate } from "react-router-dom";
+import Button from "components/ui/Button";
 
-const AvailabilityCalendar = ({ availability, onUpdateAvailability }) => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [isEditing, setIsEditing] = useState(false);
-
+const AvailabilityCalendar = ({ availability }) => {
+  const navigate = useNavigate();
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const timeSlots = [
     "08:00",
@@ -43,24 +42,9 @@ const AvailabilityCalendar = ({ availability, onUpdateAvailability }) => {
     return availability[dayName]?.includes(timeSlot) || false;
   };
 
-  const toggleTimeSlot = (dayIndex, timeSlot) => {
-    if (!isEditing) return;
-
-    const dayName = daysOfWeek[dayIndex].toLowerCase();
-    const currentSlots = availability[dayName] || [];
-    const updatedSlots = currentSlots.includes(timeSlot)
-      ? currentSlots.filter((slot) => slot !== timeSlot)
-      : [...currentSlots, timeSlot];
-
-    onUpdateAvailability({
-      ...availability,
-      [dayName]: updatedSlots,
-    });
-  };
-
-  const handleSaveAvailability = () => {
-    setIsEditing(false);
-    // Here you would typically save to backend
+  const isToday = (date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
   };
 
   return (
@@ -70,7 +54,7 @@ const AvailabilityCalendar = ({ availability, onUpdateAvailability }) => {
           Weekly Availability
         </h3>
         <div className="flex space-x-2">
-          {isEditing ? (
+          {/* {isEditing ? (
             <>
               <Button
                 variant="outline"
@@ -87,18 +71,18 @@ const AvailabilityCalendar = ({ availability, onUpdateAvailability }) => {
                 Save
               </Button>
             </>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              iconName="Edit"
-              iconPosition="left"
-              iconSize={16}
-              onClick={() => setIsEditing(true)}
-            >
-              Edit Schedule
-            </Button>
-          )}
+          ) : ( */}
+          <Button
+            variant="outline"
+            size="sm"
+            iconName="Edit"
+            iconPosition="left"
+            iconSize={16}
+            onClick={() => navigate("/teacher/manage-schedule")}
+          >
+            Edit Schedule
+          </Button>
+          {/* )} */}
         </div>
       </div>
 
@@ -110,7 +94,11 @@ const AvailabilityCalendar = ({ availability, onUpdateAvailability }) => {
               Time
             </div>
             {daysOfWeek.map((day, index) => (
-              <div key={day} className="p-2 text-center">
+              <div
+                key={day}
+                className={`p-2 text-center ${isToday(weekDates[index]) ? "bg-muted" : ""
+                  }`}
+              >
                 <div className="text-xs font-medium text-foreground">{day}</div>
                 <div className="text-xs text-muted-foreground">
                   {weekDates[index].getDate()}
@@ -129,13 +117,10 @@ const AvailabilityCalendar = ({ availability, onUpdateAvailability }) => {
                 {daysOfWeek.map((_, dayIndex) => (
                   <button
                     key={`${dayIndex}-${timeSlot}`}
-                    onClick={() => toggleTimeSlot(dayIndex, timeSlot)}
-                    disabled={!isEditing}
-                    className={`p-2 rounded text-xs transition-micro flex items-center justify-center ${
-                      isTimeSlotAvailable(dayIndex, timeSlot)
-                        ? "bg-success text-success-foreground"
-                        : "bg-muted hover:bg-muted/80"
-                    } ${isEditing ? "cursor-pointer" : "cursor-default"}`}
+                    className={`p-2 rounded text-xs transition-micro flex items-center justify-center ${isTimeSlotAvailable(dayIndex, timeSlot)
+                      ? "bg-success text-success-foreground"
+                      : "bg-muted hover:bg-muted/80"
+                      }`}
                   >
                     {isTimeSlotAvailable(dayIndex, timeSlot) ? (
                       <Icon name="Check" size={12} />
@@ -154,9 +139,8 @@ const AvailabilityCalendar = ({ availability, onUpdateAvailability }) => {
         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
           <Icon name="Info" size={16} />
           <span>
-            {isEditing
-              ? "Click time slots to toggle availability. Green = Available, Gray = Unavailable"
-              : "Your current weekly schedule. Students can book sessions during green time slots."}
+            Your current weekly schedule. Students can book sessions during
+            green time slots.
           </span>
         </div>
       </div>

@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import Input from "../../../../components/ui/Input";
 import Select from "../../../../components/ui/Select";
 import Button from "../../../../components/ui/Button";
-import { ageGroupOptions, languageOptions } from "../data";
+import { ageGroupOptions } from "../data";
+import { languageOptions } from "../../../../utils/utils";
 
 const BioSpecializationsTab = ({
   formData,
@@ -16,15 +17,14 @@ const BioSpecializationsTab = ({
   const maxBioLength = 500;
 
   const handleInputChange = (field, value) => {
-    const updatedData = { ...formData, [field]: value };
-    onFormChange(updatedData);
+    onFormChange(field, value);
   };
 
   const handleBioChange = (e) => {
     const value = e?.target?.value;
     if (value?.length <= maxBioLength) {
       setBioLength(value?.length);
-      handleInputChange("bio", value);
+      handleInputChange("profile.aboutYou", value);
     }
   };
 
@@ -46,7 +46,7 @@ const BioSpecializationsTab = ({
                 "border-destructive focus-visible:ring-destructive"
               }`}
               placeholder="Tell students about your teaching experience, methodology, and what makes you unique as a language instructor..."
-              value={formData?.bio || ""}
+              value={formData?.profile?.aboutYou || ""}
               onChange={handleBioChange}
               required
               disabled={!isEdit}
@@ -80,9 +80,9 @@ const BioSpecializationsTab = ({
                 "border-destructive focus-visible:ring-destructive"
               }`}
               placeholder="Tell students about your teaching experience, methodology, and what makes you unique as a language instructor..."
-              value={formData?.teachingStyle || ""}
+              value={formData?.profile?.teachingStyle || ""}
               onChange={(e) =>
-                handleInputChange("teachingStyle", e.target.value)
+                handleInputChange("profile.teachingStyle", e.target.value)
               }
               required
               disabled={!isEdit}
@@ -101,9 +101,9 @@ const BioSpecializationsTab = ({
                 "border-destructive focus-visible:ring-destructive"
               }`}
               placeholder="Tell students about your teaching experience, methodology, and what makes you unique as a language instructor..."
-              value={formData?.whyLoveTeaching || ""}
+              value={formData?.profile?.whyTeaching || ""}
               onChange={(e) =>
-                handleInputChange("whyLoveTeaching", e.target.value)
+                handleInputChange("profile.whyTeaching", e.target.value)
               }
               required
               disabled={!isEdit}
@@ -129,21 +129,26 @@ const BioSpecializationsTab = ({
             searchable
             clearable
             options={languageOptions}
-            value={formData?.languagesTaught || []}
-            onChange={(value) => handleInputChange("languagesTaught", value)}
+            value={formData?.profile?.teachingLanguages || []}
+            onChange={(value) =>
+              handleInputChange("profile.teachingLanguages", value)
+            }
             placeholder="Select languages..."
             required
             disabled={!isEdit}
-            error={errors?.languagesTaught}
+            error={errors?.teachingLanguages}
           />
           <Select
             label="Native Language"
             description="Your mother tongue"
             options={languageOptions}
-            value={formData?.nativeLanguage || ""}
-            onChange={(value) => handleInputChange("nativeLanguage", value)}
+            value={formData?.profile?.nativeLanguage || ""}
+            onChange={(value) =>
+              handleInputChange("profile.nativeLanguage", value)
+            }
             placeholder="Select your native language"
             required
+            searchable
             disabled={!isEdit}
             error={errors?.nativeLanguage}
           />
@@ -160,12 +165,14 @@ const BioSpecializationsTab = ({
             description="Select all age groups you're comfortable teaching"
             multiple
             options={ageGroupOptions}
-            value={formData?.ageGroups || []}
-            onChange={(value) => handleInputChange("ageGroups", value)}
+            value={formData?.profile?.ageGroupTeach || []}
+            onChange={(value) =>
+              handleInputChange("profile.ageGroupTeach", value)
+            }
             placeholder="Select age groups..."
             required
             disabled={!isEdit}
-            error={errors?.ageGroups}
+            error={errors?.ageGroupTeach}
           />
 
           <Input
@@ -173,8 +180,10 @@ const BioSpecializationsTab = ({
             type="text"
             placeholder="e.g., Business English, Conversational Spanish, IELTS Preparation"
             description="Comma-separated list of your teaching specialties"
-            value={formData?.specialties || ""}
-            onChange={(e) => handleInputChange("specialties", e?.target?.value)}
+            value={formData?.profile?.teachingSpecialties || ""}
+            onChange={(e) =>
+              handleInputChange("profile.teachingSpecialties", e?.target?.value)
+            }
             disabled={!isEdit}
           />
         </div>

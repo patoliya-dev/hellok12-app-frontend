@@ -9,10 +9,10 @@ const LessonFilters = ({ filters, onFiltersChange }) => {
 
   const statusOptions = [
     { value: "all", label: "All Sessions" },
-    { value: "pending", label: "Pending" },
-    { value: "confirmed", label: "Confirmed" },
-    { value: "completed", label: "Completed" },
-    { value: "cancelled", label: "Cancelled" },
+    { value: "SCHEDULED", label: "Scheduled" },
+    { value: "IN_PROGRESS", label: "In Progress" },
+    { value: "COMPLETED", label: "Completed" },
+    { value: "CANCELLED", label: "Cancelled" },
   ];
 
   const handleFilterChange = (key, value) => {
@@ -103,49 +103,49 @@ const LessonFilters = ({ filters, onFiltersChange }) => {
         localFilters?.studentName ||
         localFilters?.dateRange?.start ||
         localFilters?.dateRange?.end) && (
-        <div className="mt-4 pt-4 border-t border-border">
-          <div className="flex flex-wrap gap-2">
-            <span className="text-sm text-muted-foreground">
-              Active filters:
-            </span>
-            {localFilters?.status !== "all" && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                Status:{" "}
-                {
-                  statusOptions?.find(
-                    (opt) => opt?.value === localFilters?.status
-                  )?.label
-                }
-                <button onClick={() => handleFilterChange("status", "all")}>
-                  <Icon name="X" size={12} />
-                </button>
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm text-muted-foreground">
+                Active filters:
               </span>
-            )}
-            {localFilters?.studentName && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                Student: {localFilters?.studentName}
-                <button onClick={() => handleFilterChange("studentName", "")}>
-                  <Icon name="X" size={12} />
-                </button>
-              </span>
-            )}
-            {(localFilters?.dateRange?.start ||
-              localFilters?.dateRange?.end) && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                Date Range
-                <button
-                  onClick={() =>
-                    handleDateRangeChange("start", "") ||
-                    handleDateRangeChange("end", "")
+              {localFilters?.status !== "all" && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                  Status:{" "}
+                  {
+                    statusOptions?.find(
+                      (opt) => opt?.value === localFilters?.status
+                    )?.label
                   }
-                >
-                  <Icon name="X" size={12} />
-                </button>
-              </span>
-            )}
+                  <button onClick={() => handleFilterChange("status", "all")}>
+                    <Icon name="X" size={12} />
+                  </button>
+                </span>
+              )}
+              {localFilters?.studentName && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                  Student: {localFilters?.studentName}
+                  <button onClick={() => handleFilterChange("studentName", "")}>
+                    <Icon name="X" size={12} />
+                  </button>
+                </span>
+              )}
+              {(localFilters?.dateRange?.start ||
+                localFilters?.dateRange?.end) && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                    Date Range
+                    <button
+                      onClick={() =>
+                        handleDateRangeChange("start", "") ||
+                        handleDateRangeChange("end", "")
+                      }
+                    >
+                      <Icon name="X" size={12} />
+                    </button>
+                  </span>
+                )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 };

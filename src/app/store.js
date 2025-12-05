@@ -3,7 +3,14 @@ import authReducer from '../reducers/auth/authSlice';
 import progressReducer from '../reducers/progress/progressSlice';
 import lessonsReducer from '../reducers/lessons/lessonsSlice';
 import profileReducer from '../reducers/profile/profileSlice';
-
+import attachmentReducer from '../reducers/attachments/attachmentSlice';
+import courseReducers from '../reducers/courses/courseSlice';
+import pageLoaderReducer from '../reducers/ui/pageLoaderSlice';
+import scheduleReducer from '../reducers/schedule/scheduleSlice'
+import paymentReducer from '../reducers/payments/paymentsSlice';
+import teachersReducer from '../reducers/teachers/teachersSlice';
+import stripeReducer from "../reducers/stripe/stripeSlice";
+import messagesReducer from "../reducers/messages/messageSlice";
 // In reducer:
 
 const store = configureStore({
@@ -12,6 +19,15 @@ const store = configureStore({
     progress: progressReducer,
     lessons: lessonsReducer,
     profile: profileReducer,
+    attachments: attachmentReducer,
+    courseList: courseReducers.courseList,
+    courseDetail: courseReducers.courseDetail,
+    pageLoader: pageLoaderReducer,
+    schedule: scheduleReducer,
+    payments: paymentReducer,
+    teachers: teachersReducer,
+    stripe: stripeReducer,
+    messages: messagesReducer,
   },
 });
 

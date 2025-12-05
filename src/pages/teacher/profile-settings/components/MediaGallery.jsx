@@ -5,15 +5,14 @@ import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
 import MediaModal from "./MediaModal";
 import DeleteModal from "components/ui/DeleteModal";
-import { successToast } from "../../../../utils/utils";
+import { errorToast } from "../../../../utils/utils";
 
 const MediaGallery = ({
   mediaItems,
   selectedItems,
   onItemSelect,
   onItemDelete,
-  onItemReplace,
-  showBulkActions,
+  onIntroChange,
 }) => {
   const [modalItem, setModalItem] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -41,11 +40,15 @@ const MediaGallery = ({
   };
 
   const getFileIcon = (type) => {
-    return type === "video" ? "Video" : "Image";
+    return type.startsWith("video") ? "Video" : "Image";
   };
 
   const handleItemClick = (item) => {
-    setModalItem(item);
+    setModalItem({
+      ...item,
+      name: item?.name.substring(item?.name.indexOf("_") + 1),
+      type: item?.mime,
+    });
   };
 
   const handleModalClose = () => {
@@ -57,17 +60,26 @@ const MediaGallery = ({
   };
 
   const handleIntroChange = (item) => {
-    const updatedItems = items.map((mediaItems) => {
-      if (mediaItems.id === item.id) {
-        mediaItems.isIntro = !mediaItems.isIntro;
+    if (!item?.mime.startsWith("video")) {
+      errorToast("Only video can be set as intro highlight");
+      return;
+    }
+    const updatedItems = items.map((mediaItem) => {
+      const itemId = mediaItem.id || mediaItem._id;
+      const clickedItemId = item?.id || item?._id;
+
+      if (itemId === clickedItemId) {
+        return { ...mediaItem, isIntro: true };
       } else {
-        mediaItems.isIntro = false;
+        return { ...mediaItem, isIntro: false };
       }
-      return mediaItems;
     });
     setItems(updatedItems);
 
-    return successToast("Intro highlight updated successfully.");
+    // Notify parent component of the change (parent will handle the toast)
+    if (onIntroChange) {
+      onIntroChange(updatedItems);
+    }
   };
 
   if (items?.length === 0) {
@@ -103,15 +115,15 @@ const MediaGallery = ({
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {items?.map((item) => (
           <div
-            key={item?.id}
+            key={item?._id}
             className="relative bg-card rounded-lg border border-border overflow-hidden shadow-card hover:shadow-modal transition-all duration-200 hover-scale"
           >
             {/* Selection Checkbox */}
             <div className="absolute top-2 left-2 z-10">
               <input
                 type="checkbox"
-                checked={selectedItems?.includes(item?.id)}
-                onChange={() => onItemSelect(item?.id)}
+                checked={selectedItems?.includes(item?._id)}
+                onChange={() => onItemSelect(item?._id)}
                 className="w-4 h-4 text-primary bg-card border-border rounded focus:ring-primary focus:ring-2"
               />
             </div>
@@ -121,7 +133,7 @@ const MediaGallery = ({
               className="relative aspect-video bg-muted cursor-pointer"
               onClick={() => handleItemClick(item)}
             >
-              {item?.type === "video" ? (
+              {item?.mime.startsWith("video") ? (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
                     <Icon name="Play" size={24} className="text-primary ml-1" />
@@ -146,18 +158,18 @@ const MediaGallery = ({
                   className={`
                   px-2 py-1 rounded-full text-xs font-medium
                   ${
-                    item?.type === "video"
-                      ? "bg-primary/90 text-primary-foreground"
-                      : "bg-secondary/90 text-secondary-foreground"
+                    item?.mime.startsWith("video")
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-accent text-accent-foreground"
                   }
                 `}
                 >
                   <Icon
-                    name={getFileIcon(item?.type)}
+                    name={getFileIcon(item?.mime)}
                     size={12}
                     className="inline mr-1"
                   />
-                  {item?.type?.toUpperCase()}
+                  {item?.mime?.split("/")[0]?.toUpperCase()}
                 </div>
               </div>
             </div>
@@ -167,26 +179,26 @@ const MediaGallery = ({
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-medium text-foreground truncate">
-                    {item?.name}
+                    {item?.name?.substring(item?.name?.indexOf("_") + 1)}
                   </h4>
                   <div className="flex items-center space-x-2 mt-1 text-xs text-muted-foreground">
                     <span>{formatFileSize(item?.size)}</span>
                     <span>•</span>
-                    <span>{formatDate(item?.uploadDate)}</span>
+                    <span>{formatDate(item?.createdAt)}</span>
                   </div>
                 </div>
 
                 <input
                   type="checkbox"
-                  data-tooltip-id={`intro-tooltip-${item.id}`}
-                  disabled={item?.isIntro}
-                  checked={item?.isIntro}
+                  data-tooltip-id={`intro-tooltip-${item?._id || item?.id}`}
+                  disabled={item?.isIntro || false}
+                  checked={item?.isIntro || false}
                   onChange={() => handleIntroChange(item)}
                   className="absolute bottom-1 right-3.5 h-5 w-5 rounded-full bg-[#E8E8E8] border-none cursor-pointer appearance-none checked:bg-primary checked:border-primary checked:before:text-white checked:before:flex checked:before:items-center checked:before:justify-center outline-none focus:outline-none focus:ring-0"
                 />
 
                 <ReactTooltip
-                  id={`intro-tooltip-${item.id}`}
+                  id={`intro-tooltip-${item?._id || item?.id}`}
                   place="top"
                   content="Select to set the intro video"
                 />
@@ -207,16 +219,16 @@ const MediaGallery = ({
                         <Icon name="Eye" size={14} />
                         <span>View</span>
                       </button>
-                      <button
-                        onClick={() => onItemReplace(item?.id)}
+                      {/* <button
+                        onClick={() => onItemReplace(item?._id)}
                         className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center space-x-2"
                       >
                         <Icon name="RefreshCw" size={14} />
                         <span>Replace</span>
-                      </button>
+                      </button> */}
                       <button
                         onClick={() => {
-                          setDeleteItemId(item?.id);
+                          setDeleteItemId(item?._id);
                           handleDeleteModalVisibility();
                         }}
                         className="w-full px-3 py-2 text-left text-sm text-error hover:bg-error/10 transition-colors flex items-center space-x-2"
@@ -238,13 +250,13 @@ const MediaGallery = ({
           item={modalItem}
           onClose={handleModalClose}
           onDelete={() => {
-            onItemDelete(modalItem?.id);
+            onItemDelete(modalItem?._id);
             handleModalClose();
           }}
-          onReplace={() => {
-            onItemReplace(modalItem?.id);
-            handleModalClose();
-          }}
+          // onReplace={() => {
+          //   onItemReplace(modalItem?._id);
+          //   handleModalClose();
+          // }}
         />
       )}
 

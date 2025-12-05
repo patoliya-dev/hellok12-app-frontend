@@ -40,7 +40,6 @@ const UploadZone = ({ onFileUpload, isUploading, uploadProgress }) => {
         extension
       );
     });
-
     if (validFiles?.length > 0) {
       onFileUpload(validFiles);
     }
@@ -139,7 +138,7 @@ const UploadZone = ({ onFileUpload, isUploading, uploadProgress }) => {
           onChange={handleFileSelect}
           className="hidden"
         />
-      </div>
+      </div>  
 
       <div className="mt-4 text-center">
         <p className="text-sm text-muted-foreground">

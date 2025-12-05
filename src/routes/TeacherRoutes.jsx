@@ -12,6 +12,7 @@ import ManageCourses from "../pages/teacher/manage-courses";
 import CreateCourse from "../pages/teacher/create-course";
 import LessonsList from "../pages/teacher/lessons-list";
 import Earnings from "../pages/teacher/earnings";
+import BillingDashboard from "../pages/billing/BillingDashboard";
 
 const TeacherRoutes = () => {
   return (
@@ -24,6 +25,7 @@ const TeacherRoutes = () => {
       <Route path="/messages" element={<Messages />} />
       <Route path="/progress" element={<Progress />} />
       <Route path="/profile-settings" element={<ProfileAccountSettings />} />
+      <Route path="/billing" element={<BillingDashboard />} />
       <Route path="/manage-courses" element={<ManageCourses />} />
       <Route path="/create-course" element={<CreateCourse />} />
       <Route path="/edit-course/:courseId" element={<CreateCourse />} />

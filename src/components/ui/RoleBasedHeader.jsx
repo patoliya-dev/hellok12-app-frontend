@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, use } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Icon from "../AppIcon";
@@ -10,6 +10,12 @@ import Image from "components/AppImage";
 import ManageCourseIcon from "components/icons/ManageCourseIcon";
 import NotificationModal from "./NotificationModal";
 import { getNotificationByRole } from "./data";
+import { getRolePath } from "../../utils/rolePath";
+import {
+  selectUnreadCount,
+  selectMessagesLoading,
+  fetchUnreadCount,
+} from "../../reducers/messages/messageSlice";
 
 const RoleBasedHeader = () => {
   const authUser = useSelector(selectAuthUser);
@@ -24,6 +30,10 @@ const RoleBasedHeader = () => {
   const [hoveredPath, setHoveredPath] = useState(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
+  // Get unread count from Redux
+  const messageUnreadCount = useSelector(selectUnreadCount);
+  const messagesLoading = useSelector(selectMessagesLoading);
+
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
 
@@ -37,56 +47,86 @@ const RoleBasedHeader = () => {
     } else {
       setUserRole("guest");
     }
-  }, [location.pathname]);
+  }, [authUser]);
 
   useEffect(() => {
     const notifications = getNotificationByRole(userRole);
     setNotifications(notifications);
   }, [userRole]);
 
+  // Fetch initial unread count when user logs in
+  useEffect(() => {
+    if (authUser && userRole !== "guest") {
+      dispatch(fetchUnreadCount());
+    }
+  }, [authUser, userRole, dispatch]);
+
   const getNavigationItems = () => {
+    const currentRole =
+      userRole === "student" || userRole === "parent" ? userRole : "student";
+
     const baseItems = {
       student: [
         {
           label: "Dashboard",
-          path: "/student-parent/dashboard",
+          path: getRolePath("student", "dashboard"),
           icon: "House",
           children: [
-            "/student-parent/lesson-calendar",
-            "/student-parent/progress-analytics",
-            "/student-parent/profile-settings",
-            "/student-parent/payment-billing",
+            getRolePath("student", "lesson-calendar"),
+            getRolePath("student", "progress-analytics"),
+            getRolePath("student", "profile-settings"),
+            getRolePath("student", "payment-billing"),
           ],
         },
-        { label: "Find Teacher", path: "/teachers", icon: "Search" },
-        // { label: "Schedule", path: "/booking-system", icon: "Calendar" },
-        { label: "Lessons", path: "/student-parent/lessons", icon: "Book" },
-        // { label: "Progress",  path: "/student-parent/progress", icon: "TrendingUp" },
-        { label: "Practice", path: "/student-parent/games", icon: "Gamepad2" },
+        {
+          label: "Find Teacher",
+          path: getRolePath("student", "find-teacher"),
+          icon: "Search",
+        },
+        {
+          label: "Lessons",
+          path: getRolePath("student", "lessons"),
+          icon: "Book",
+        },
+        {
+          label: "Practice",
+          path: getRolePath("student", "games"),
+          icon: "Gamepad2",
+        },
         {
           label: "Messages",
-          path: "/student-parent/messages",
+          path: getRolePath("student", "messages"),
           icon: "MessageCircle",
         },
       ],
       parent: [
         {
           label: "Dashboard",
-          path: "/student-parent/dashboard",
+          path: getRolePath("parent", "dashboard"),
           icon: "Home",
           children: [
-            "/student-parent/profile-settings",
-            "/student-parent/payment-billing",
+            getRolePath("parent", "profile-settings"),
+            getRolePath("parent", "payment-billing"),
           ],
         },
-        { label: "Find Teacher", path: "/teachers", icon: "Search" },
-        // { label: "Schedule", path: "/booking-system", icon: "Calendar" },
-        { label: "Lessons", path: "/student-parent/lessons", icon: "Book" },
-        // { label: "Progress",  path: "/student-parent/progress", icon: "TrendingUp" },
-        { label: "Practice", path: "/student-parent/games", icon: "Gamepad2" },
+        {
+          label: "Find Teacher",
+          path: getRolePath("parent", "find-teacher"),
+          icon: "Search",
+        },
+        {
+          label: "Lessons",
+          path: getRolePath("parent", "lessons"),
+          icon: "Book",
+        },
+        {
+          label: "Practice",
+          path: getRolePath("parent", "games"),
+          icon: "Gamepad2",
+        },
         {
           label: "Messages",
-          path: "/student-parent/messages",
+          path: getRolePath("parent", "messages"),
           icon: "MessageCircle",
         },
       ],
@@ -202,7 +242,6 @@ const RoleBasedHeader = () => {
   };
 
   const handleNotificationClick = (notificationId) => {
-    // Mark as read logic would go here
     console.log("Notification clicked:", notificationId);
   };
 
@@ -229,17 +268,31 @@ const RoleBasedHeader = () => {
   const navigationItems = getNavigationItems();
   const unreadCount = notifications.filter((n) => n.unread).length;
 
+  const renderNavLabel = (item) => {
+    const showUnreadBadge =
+      typeof item.path === "string" &&
+      item.path.includes("messages") &&
+      messageUnreadCount > 0;
+
+    return (
+      <span className="relative inline-flex items-center gap-1">
+        {item.label}
+        {showUnreadBadge && (
+          <span className="ml-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
+            {messageUnreadCount > 99 ? "99+" : messageUnreadCount}
+          </span>
+        )}
+      </span>
+    );
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 bg-card border-b border-border z-50">
       <div className="flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Logo Section */}
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
-            {/* <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Icon name="GraduationCap" size={20} color="white" />
-            </div> */}
             <div className="flex flex-col">
-              {/* <span className="text-lg font-semibold text-foreground">HelloK12</span> */}
               <Image
                 src={logo}
                 alt="Company Logo"
@@ -271,19 +324,19 @@ const RoleBasedHeader = () => {
                 size="sm"
                 onClick={() => handleNavigation(item.path)}
                 className="transition-micro"
-                children={item.label}
                 iconName={item.icon}
                 iconPosition="left"
                 iconSize={16}
-              />
+              >
+                {renderNavLabel(item)}
+              </Button>
             ) : (
               <button
                 key={item.path}
-                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-9 px-3 gap-2 ${
-                  isActive
+                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-9 px-3 gap-2 ${isActive
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                     : "hover:bg-accent hover:text-accent-foreground"
-                }`}
+                  }`}
                 onClick={() => handleNavigation(item.path)}
                 onMouseEnter={() => setHoveredPath(item.path)}
                 onMouseLeave={() => setHoveredPath(null)}
@@ -291,7 +344,7 @@ const RoleBasedHeader = () => {
                 <item.iconComponent
                   selected={isActive || hoveredPath === item.path}
                 />
-                {item.label}
+                {renderNavLabel(item)}
               </button>
             );
           })}
@@ -356,11 +409,7 @@ const RoleBasedHeader = () => {
                         className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
                         onClick={() =>
                           navigate(
-                            `/${
-                              ["student", "parent"].includes(authUser.role)
-                                ? "student-parent"
-                                : authUser.role
-                            }/profile-settings`
+                            getRolePath(authUser.role, "profile-settings")
                           )
                         }
                       >
@@ -372,11 +421,7 @@ const RoleBasedHeader = () => {
                           className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
                           onClick={() =>
                             navigate(
-                              `/${
-                                ["student", "parent"].includes(authUser.role)
-                                  ? "student-parent"
-                                  : authUser.role
-                              }/payment-billing`
+                              getRolePath(authUser.role, "payment-billing")
                             )
                           }
                         >
@@ -384,6 +429,14 @@ const RoleBasedHeader = () => {
                           Payment & Billing
                         </button>
                       )}
+                      {/* {((authUser.role === "teacher" && !authUser.school)) && <button
+                        className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
+                        onClick={() => navigate(getRolePath(authUser.role, "billing"))}
+                      >
+                        <Icon name="CreditCard" size={16} className="mr-3" />
+                        Billing
+                      </button>
+                      } */}
                       {/* <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth">
                         <Icon name="HelpCircle" size={16} className="mr-3" />
                         Help & Support
@@ -403,16 +456,6 @@ const RoleBasedHeader = () => {
               </div>
             </>
           )}
-
-          {/* Mobile Menu Button */}
-          {/* <Button
-            variant="ghost"
-            size="icon"
-            iconName={isMenuOpen ? "X" : "Menu"}
-            iconSize={20}
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden"
-          /> */}
         </div>
       </div>
 
@@ -431,7 +474,7 @@ const RoleBasedHeader = () => {
                 onClick={() => handleNavigation(item.path)}
                 className="w-full justify-start"
               >
-                {item.label}
+                {renderNavLabel(item)}
               </Button>
             ))}
 

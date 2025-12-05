@@ -1,6 +1,6 @@
 const DEFAULT_ROUTES = {
-  student: "/student-parent/dashboard",
-  parent: "/student-parent/dashboard",
+  student: "/student/dashboard",
+  parent: "/parent/dashboard",
   teacher: "/teacher/dashboard",
   school: "/school/dashboard",
 };

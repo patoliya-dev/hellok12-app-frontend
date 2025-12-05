@@ -75,7 +75,7 @@ const LessonCard = ({ lesson }) => {
           </div>
           <div>
             <h3 className="font-medium text-brand-gray-800 text-h5">
-              {lesson.courseName}
+              {lesson.title}
             </h3>
             <p className="text-body1 text-brand-gray-500">
               {lesson.teacher.name}
