@@ -35,7 +35,7 @@ const SearchBar = ({ onSearch }) => {
         placeholder="Search"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="pl-10 pr-10 h-12 border-muted-1"
+        className="pl-10 pr-10 h-12 border-muted-1 bg-white"
       />
 
       {searchTerm && (

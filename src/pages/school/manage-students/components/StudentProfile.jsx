@@ -3,7 +3,7 @@ import Image from "components/AppImage";
 import Button from "components/ui/Button";
 import { capitalize, getLanguageName } from "../../../../utils/utils";
 
-const TeacherProfile = ({ teacher, onClose }) => {
+const StudentProfile = ({ student, onClose }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case "active":
@@ -18,31 +18,31 @@ const TeacherProfile = ({ teacher, onClose }) => {
   };
 
   const contactInfo = [
-    { label: "Full Name", value: teacher?.name },
-    { label: "Email", value: teacher?.email },
-    { label: "Phone", value: teacher?.phone },
-    { label: "Address", value: teacher?.address },
+    { label: "Full Name", value: student?.name },
+    { label: "Email", value: student?.email },
+    { label: "Phone", value: student?.phone },
+    { label: "Address", value: student?.address },
   ];
 
   const statistics = [
     {
       label: "Total Lessons",
-      value: teacher?.stats?.totalLessons,
+      value: student?.stats?.totalLessons,
       color: "text-primary",
     },
     {
       label: "Students Taught",
-      value: teacher?.stats?.totalStudents,
+      value: student?.stats?.totalStudents,
       color: "text-secondary",
     },
     {
       label: "Average Rating",
-      value: teacher?.stats?.rating,
+      value: student?.stats?.rating,
       color: "text-warning",
     },
   ];
 
-  if (!teacher) {
+  if (!student) {
     return (
       <div className="h-full flex items-center justify-center text-center">
         <div>
@@ -52,10 +52,10 @@ const TeacherProfile = ({ teacher, onClose }) => {
             className="mx-auto text-muted-foreground mb-4"
           />
           <h3 className="text-lg font-medium text-card-foreground mb-2">
-            Select a Teacher
+            Select a student
           </h3>
           <p className="text-muted-foreground">
-            Choose a teacher from the list to view their profile
+            Choose a student from the list to view their profile
           </p>
         </div>
       </div>
@@ -63,30 +63,30 @@ const TeacherProfile = ({ teacher, onClose }) => {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b border-border">
         <h2 className="text-xl font-semibold text-card-foreground">
-          Teacher Profile
+          Student Profile
         </h2>
         <Button variant="ghost" size="icon" onClick={onClose}>
           <Icon name="X" size={16} />
         </Button>
       </div>
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="p-6">
         <div className="space-y-6">
           {/* Basic Info */}
           <div className="flex flex-col sm:flex-row items-start sm:space-x-6">
             <div className="relative">
               <Image
-                src={teacher?.avatar}
-                alt={teacher?.name}
+                src={student?.avatar}
+                alt={student?.name}
                 className="w-24 h-24 rounded-full object-cover"
               />
               <div
                 className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-card ${
-                  teacher?.isOnline ? "bg-success" : "bg-muted"
+                  student?.isOnline ? "bg-success" : "bg-muted"
                 }`}
               ></div>
             </div>
@@ -95,36 +95,36 @@ const TeacherProfile = ({ teacher, onClose }) => {
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <h3 className="text-2xl font-semibold text-brand-gray-800">
-                    {teacher?.name}
+                    {student?.name}
                   </h3>
                   <p className="text-[16px] text-brand-gray-500">
-                    {teacher?.email}
+                    {student?.email}
                   </p>
                 </div>
 
                 <span
                   className={`inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(
-                    teacher?.status
+                    student?.status
                   )}`}
                 >
-                  {capitalize(teacher?.status)}
+                  {capitalize(student?.status)}
                 </span>
               </div>
 
               <div className="flex items-center space-x-2 mt-3">
-                {teacher?.availability?.onsite && (
+                {student?.availability?.onsite && (
                   <span className="px-2 py-1 text-xs bg-accent text-accent-foreground rounded">
                     Onsite
                   </span>
                 )}
-                {teacher?.availability?.online && (
+                {student?.availability?.online && (
                   <span className="px-2 py-1 text-xs bg-accent text-accent-foreground rounded">
                     Online
                   </span>
                 )}
-                {teacher?.availability?.onsite && (
+                {student?.availability?.onsite && (
                   <span className="px-2 py-1 text-xs bg-muted text-muted-foreground rounded">
-                    {teacher?.travelDistance}km radius
+                    {student?.travelDistance}km radius
                   </span>
                 )}
               </div>
@@ -150,54 +150,34 @@ const TeacherProfile = ({ teacher, onClose }) => {
             </div>
           </div>
 
-          {/* Languages & Specialization */}
+          {/* Student Details */}
           <div className="bg-muted rounded-lg p-4">
-            <h4 className="font-medium text-card-foreground mb-4">
-              Languages & Specialization
-            </h4>
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2 mt-2">
-                {teacher?.languages?.map((language, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-full"
-                  >
-                    {getLanguageName(language)}
-                  </span>
-                ))}
-              </div>
-
+            <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
-                  Bio
+                  Age
                 </label>
-                <p className="text-card-foreground mt-2">{teacher?.bio}</p>
+                <p className="text-card-foreground mt-2 text-base">
+                  {student?.age || "N/A"}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
-                  Experience
+                  Gender
                 </label>
-                <p className="text-card-foreground mt-2">
-                  {teacher?.experience} years
+                <p className="text-card-foreground mt-2 text-base">
+                  {student?.gender || "Male"}
                 </p>
               </div>
             </div>
-          </div>
 
-          {/* Statistics */}
-          <div className="bg-muted rounded-lg p-4">
-            <h4 className="font-medium text-card-foreground mb-4">
-              Teaching Statistics
-            </h4>
-            <div className="flex flex-wrap justify-around items-center gap-2">
-              {statistics.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <h6 className={`text-2xl font-bold ${stat.color}`}>
-                    {stat.value}
-                  </h6>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                </div>
-              ))}
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">
+                Languages
+              </label>
+              <p className="text-card-foreground mt-2 text-base">
+                {student?.languages?.join(", ") || "English"}
+              </p>
             </div>
           </div>
         </div>
@@ -206,4 +186,4 @@ const TeacherProfile = ({ teacher, onClose }) => {
   );
 };
 
-export default TeacherProfile;
+export default StudentProfile;

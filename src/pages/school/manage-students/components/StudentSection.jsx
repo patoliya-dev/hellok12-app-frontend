@@ -1,15 +1,15 @@
-import TeacherCard from "./TeacherCard";
+import StudentCard from "./StudentCard";
 import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
 import Pagination from "components/ui/Pagination";
 
-const TeacherSection = ({
-  teacherData,
-  teacherCount,
-  selectedTeacher,
+const StudentSection = ({
+  studentData,
+  studentCount,
+  selectedStudent,
   onSelect,
   onStatusChange,
-  onInviteTeacher,
+  onInviteStudent,
   onProfileRequest,
   ...props
 }) => {
@@ -19,21 +19,21 @@ const TeacherSection = ({
       <div className="flex items-center justify-between p-6 border-b border-border">
         <div>
           <h3 className="font-medium text-card-foreground">
-            Teachers ({teacherCount})
+            Students ({studentCount})
           </h3>
         </div>
       </div>
 
-      {/* Teacher Cards */}
+      {/* Student Cards */}
       <div className="p-4">
-        {teacherData?.length > 0 ? (
+        {studentData?.length > 0 ? (
           <div className="space-y-4">
-            {teacherData?.map((teacher) => (
-              <TeacherCard
-                key={teacher?.id}
-                teacher={teacher}
+            {studentData?.map((student) => (
+              <StudentCard
+                key={student?.id}
+                student={student}
                 onSelect={onSelect}
-                isSelected={selectedTeacher?.id === teacher?.id}
+                isSelected={selectedStudent?.id === student?.id}
                 onStatusChange={onStatusChange}
                 onProfileRequest={onProfileRequest}
               />
@@ -47,18 +47,18 @@ const TeacherSection = ({
               className="mx-auto text-muted-foreground mb-4"
             />
             <h3 className="text-lg font-medium text-card-foreground mb-2">
-              No teachers found
+              No students found
             </h3>
             <p className="text-muted-foreground mb-4">
-              Try adjusting your filters or invite new teachers
+              Try adjusting your filters or invite new students
             </p>
             <Button
               variant="default"
-              onClick={onInviteTeacher}
+              onClick={onInviteStudent}
               iconName="UserPlus"
               iconPosition="left"
             >
-              Invite Teacher
+              Invite Student
             </Button>
           </div>
         )}
@@ -68,4 +68,4 @@ const TeacherSection = ({
   );
 };
 
-export default TeacherSection;
+export default StudentSection;

@@ -180,13 +180,13 @@ const RoleBasedHeader = () => {
         },
         {
           label: "Manage Courses",
-          path: "/teacher/manage-courses",
+          path: "/school/manage-courses",
           iconComponent: ManageCourseIcon,
           children: [],
         },
         {
           label: "Earnings",
-          path: "/teacher/earnings",
+          path: "/school/earnings",
           icon: "DollarSign",
         },
       ],
@@ -333,10 +333,11 @@ const RoleBasedHeader = () => {
             ) : (
               <button
                 key={item.path}
-                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-9 px-3 gap-2 ${isActive
+                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-9 px-3 gap-2 ${
+                  isActive
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                     : "hover:bg-accent hover:text-accent-foreground"
-                  }`}
+                }`}
                 onClick={() => handleNavigation(item.path)}
                 onMouseEnter={() => setHoveredPath(item.path)}
                 onMouseLeave={() => setHoveredPath(null)}

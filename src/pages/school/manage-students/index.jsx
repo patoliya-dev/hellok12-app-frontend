@@ -1,105 +1,77 @@
 import { useEffect, useState } from "react";
-import Button from "components/ui/Button";
-import RoleBasedHeader from "components/ui/RoleBasedHeader";
+import Button from "../../../components/ui/Button";
+import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import Card from "../dashboard/components/Card";
-import { cardData, mockTeachers, teachersPerPage } from "./data";
-import PageHeader from "components/ui/PageHeader";
+import { cardData, mockStudents } from "./data";
+import PageHeader from "../../../components/ui/PageHeader";
 import Filters from "./components/Filters";
-import TeacherSection from "./components/TeacherSection";
-import TeacherProfile from "./components/TeacherProfile";
-import Icon from "components/AppIcon";
+import Studentsection from "./components/StudentSection";
+import StudentProfile from "./components/StudentProfile";
+import Icon from "../../../components/AppIcon";
 import ProfileRequestModal from "./components/ProfileRequestModal";
 import { successToast } from "../../../utils/utils";
 import InviteStudentModal from "./components/InviteStudentModal";
+import SearchBar from "../../../components/ui/SearchBar";
 
 const ManageStudents = () => {
-  const [teachers, setTeachers] = useState(mockTeachers);
+  const [students, setStudents] = useState(mockStudents);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showProfileRequestModal, setShowProfileRequestModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilter, setActiveFilter] = useState("all");
   const [filters, setFilters] = useState({
     status: "all",
-    language: "",
-    availability: "all",
-    experience: "all",
   });
+  const studentsPerPage = 10;
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters]);
+  }, [searchTerm]);
 
-  const handleFilterChange = (field, value) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [field]: value,
-    }));
+  const handleSearch = (term) => {
+    setSearchTerm(term);
     setCurrentPage(1);
   };
 
-  const handleClearFilters = () => {
-    setFilters({
-      status: "all",
-      language: "",
-      availability: "all",
-      experience: "all",
-    });
+  const handleFilterChange = (filter) => {
+    setActiveFilter(filter);
     setCurrentPage(1);
   };
 
-  // Filter teachers based on current filters
-  const filteredTeachers = teachers?.filter((teacher) => {
+  // Filter students based on current filters and search term
+  const filteredStudents = students?.filter((student) => {
+    // Search filter
+    const matchesSearch =
+      searchTerm === "" ||
+      student?.name?.toLowerCase()?.includes(searchTerm?.toLowerCase()) ||
+      student?.email?.toLowerCase()?.includes(searchTerm?.toLowerCase());
+
     const matchesStatus =
-      filters?.status === "all" || teacher?.status === filters?.status;
+      filters?.status === "all" || student?.status === filters?.status;
 
-    const matchesLanguage =
-      filters?.language === "" ||
-      teacher?.languages?.some((lang) =>
-        lang?.toLowerCase()?.includes(filters?.language?.toLowerCase())
-      );
+    // Filter type (all or school students)
+    const matchesFilter =
+      activeFilter === "all" ||
+      (activeFilter === "school" && student?.isSchoolStudent);
 
-    const matchesTeachingMethod =
-      filters?.availability === "all" ||
-      (filters?.availability === "onsite" &&
-        teacher?.availability?.onsite &&
-        !teacher?.availability?.online) ||
-      (filters?.availability === "online" &&
-        teacher?.availability?.online &&
-        !teacher?.availability?.onsite) ||
-      (filters?.availability === "both" &&
-        teacher?.availability?.onsite &&
-        teacher?.availability?.online);
-
-    const matchesExperience =
-      filters?.experience === "all" ||
-      (filters?.experience === "0-2" && teacher?.experience <= 2) ||
-      (filters?.experience === "3-5" &&
-        teacher?.experience >= 3 &&
-        teacher?.experience <= 5) ||
-      (filters?.experience === "5+" && teacher?.experience > 5);
-
-    return (
-      matchesStatus &&
-      matchesLanguage &&
-      matchesTeachingMethod &&
-      matchesExperience
-    );
+    return matchesSearch && matchesStatus && matchesFilter;
   });
 
   // Pagination
-  const totalPages = Math.ceil(filteredTeachers?.length / teachersPerPage);
-  const startIndex = (currentPage - 1) * teachersPerPage;
-  const paginatedTeachers = filteredTeachers?.slice(
+  const totalPages = Math.ceil(filteredStudents?.length / studentsPerPage);
+  const startIndex = (currentPage - 1) * studentsPerPage;
+  const paginatedStudents = filteredStudents?.slice(
     startIndex,
-    startIndex + teachersPerPage
+    startIndex + studentsPerPage
   );
-
-  const handleTeacherSelect = (teacher) => {
-    setSelectedTeacher(teacher);
+  const handleStudentselect = (student) => {
+    setSelectedStudent(student);
   };
 
-  const handleStatusChange = (teacherId, action) => {
+  const handleStatusChange = (studentId, action) => {
     let newStatus;
     switch (action) {
       case "approve":
@@ -112,22 +84,22 @@ const ManageStudents = () => {
         return;
     }
 
-    setTeachers((prev) =>
-      prev?.map((teacher) =>
-        teacher?.id === teacherId ? { ...teacher, status: newStatus } : teacher
+    setStudents((prev) =>
+      prev?.map((student) =>
+        student?.id === studentId ? { ...student, status: newStatus } : student
       )
     );
 
-    successToast("Teacher status updated successfully!");
+    successToast("Student status updated successfully!");
   };
 
   const handleInviteModalOpen = () => {
     setShowInviteModal(!showInviteModal);
   };
 
-  const handleInviteTeacher = (inviteData) => {
-    const newTeacher = {
-      id: teachers?.length + 1,
+  const handleInviteStudent = (inviteData) => {
+    const newStudent = {
+      id: students?.length + 1,
       name: inviteData?.name,
       email: inviteData?.email,
       phone: "",
@@ -145,7 +117,7 @@ const ManageStudents = () => {
         onsite: false,
         online: false,
       },
-      bio: "New teacher - profile setup pending",
+      bio: "New student - profile setup pending",
       stats: {
         totalLessons: 0,
         totalStudents: 0,
@@ -155,7 +127,7 @@ const ManageStudents = () => {
       joinedDate: new Date()?.toISOString()?.split("T")?.[0],
     };
 
-    setTeachers((prev) => [newTeacher, ...prev]);
+    setStudents((prev) => [newStudent, ...prev]);
   };
 
   const handleSuccessModal = () => {
@@ -180,32 +152,53 @@ const ManageStudents = () => {
           iconName="UserPlus"
           buttonTitle="Invite Student"
           onButtonClick={handleInviteModalOpen}
-          studentCount={filteredTeachers?.length}
+          studentCount={filteredStudents?.length}
         />
+        <div className="flex items-center justify-between gap-4 mb-10">
+          <div className="w-[59%]">
+            <SearchBar onSearch={handleSearch} />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={activeFilter === "all" ? "default" : "outline"}
+              onClick={() => handleFilterChange("all")}
+              className="px-6"
+            >
+              All
+            </Button>
+            <Button
+              variant={activeFilter === "school" ? "default" : "outline"}
+              onClick={() => handleFilterChange("school")}
+              className="px-6"
+            >
+              School Students
+            </Button>
+          </div>
+        </div>
         <section className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-6">
-          {/* Left Section - Teacher List */}
+          {/* Left Section - Student List */}
           <div className="">
-            <TeacherSection
-              teacherData={paginatedTeachers}
-              teacherCount={filteredTeachers?.length}
-              selectedTeacher={selectedTeacher}
-              onSelect={handleTeacherSelect}
+            <Studentsection
+              studentData={paginatedStudents}
+              studentCount={filteredStudents?.length}
+              selectedStudent={selectedStudent}
+              onSelect={handleStudentselect}
               onStatusChange={handleStatusChange}
               currentPage={currentPage}
               totalPages={totalPages}
-              totalItems={filteredTeachers?.length}
+              totalItems={filteredStudents?.length}
               onPageChange={(page) => setCurrentPage(page)}
-              pageSize={teachersPerPage}
-              onInviteTeacher={handleInviteModalOpen}
+              pageSize={studentsPerPage}
+              onInviteStudent={handleInviteModalOpen}
               onProfileRequest={handleProfileRequestModal}
             />
           </div>
-          {/* Right Section - Teacher Profile */}
+          {/* Right Section - Student Profile */}
           <div>
-            <div className="bg-card border border-border rounded-lg h-[800px]">
-              <TeacherProfile
-                teacher={selectedTeacher}
-                onClose={() => setSelectedTeacher(null)}
+            <div className="bg-card border border-border rounded-lg h-[600px]">
+              <StudentProfile
+                student={selectedStudent}
+                onClose={() => setSelectedStudent(null)}
               />
             </div>
           </div>
@@ -215,7 +208,7 @@ const ManageStudents = () => {
       <InviteStudentModal
         isOpen={showInviteModal}
         onClose={handleInviteModalOpen}
-        onInvite={handleInviteTeacher}
+        onInvite={handleInviteStudent}
         onSuccess={handleSuccessModal}
       />
 
