@@ -35,7 +35,7 @@ import {
   buildPartialUpdate,
   mapLessonFromApi,
   mapLessonToCreatePayload,
-} from "../../teacher/create-course/mappers/lessons";
+} from "./mappers/lessons";
 import { buildLessonMutations } from "../../teacher/create-course/mappers/diff";
 import {
   applyLessonApiErrorsToForm,
@@ -74,7 +74,7 @@ const CreateCourse = () => {
     price: "",
     startDate: "",
     endDate: "",
-    teachers: [user.id],
+    teachers: user.role === "teacher" ? [user.id] : [],
 
     // Step 2
     lessons: [
@@ -106,7 +106,7 @@ const CreateCourse = () => {
   const defaultLesson = {
     title: "",
     description: "",
-    assignedTeacher: "",
+    teachers: [],
     isTrialAvailable: false,
     trialCapacity: 0,
     schedule: { duration: 60 },
@@ -151,7 +151,7 @@ const CreateCourse = () => {
     }
   }, [currentStep, lessonsError, fieldErrors, dispatch]);
 
-  // If you were previously reading from mock, this keeps the “add extra lesson” UX intact in edit/lesson route.
+  // If you were previously reading from mock, this keeps the "add extra lesson" UX intact in edit/lesson route.
   useEffect(() => {
     if (courseId) {
       (async () => {
@@ -159,68 +159,21 @@ const CreateCourse = () => {
         setBreadCrumbData(commonBreadCrumbData?.edit);
         isLesson && setCurrentStep(2);
 
-        // API CALL BLOCKED - Using mock data instead
-        console.log("📚 [BLOCKED API] Fetch Course:", { courseId });
-        console.log("📦 Loading mock course data...");
-
-        // Get mock course data
-        const course = mockCourses[courseId];
-
-        if (course) {
-          console.log("✅ Mock course found:", course.title);
-
-          // Map lessons from mock data (simulating mapLessonFromApi)
-          const lessons = (course?.lessons || []).map((lesson) => ({
-            ...lesson,
-            // Ensure schedule has all required fields
-            schedule: {
-              date: lesson.schedule?.date || "",
-              time: lesson.schedule?.time || "",
-              duration: lesson.schedule?.duration || 60,
-            },
-          }));
-
-          originalLessonsRef.current = course.lessons;
-
-          setFormData((prev) => ({
-            ...prev,
-            title: course.title,
-            languageCode: course.languageCode,
-            description: course.description,
-            lessonType: course.lessonType,
-            mode: course.mode,
-            studentCapacity: course.studentCapacity,
-            price: course.price,
-            ageGroups: course.ageGroups || [],
-            startDate: course.startDate,
-            endDate: course.endDate,
-            introImage: course.introImageRef?.url ? "course-intro.jpg" : "",
-            introImageRef: course.introImageRef || null,
-            teachers: course.teachers || [user.id],
-            lessons: lessons?.length ? lessons : prev.lessons,
-          }));
-
-          console.log("📝 Form populated with mock data");
-        } else {
-          console.warn("⚠️ Mock course not found for ID:", courseId);
-          console.log("Available mock course IDs:", Object.keys(mockCourses));
-        }
-
-        // const course = await dispatch(fetchCourseThunk(courseId)).unwrap();
-        // const lessons = (course?.lessons || []).map(mapLessonFromApi);
-        // originalLessonsRef.current = course.lessons;
-        // setFormData((prev) => ({
-        //   ...prev,
-        //   ...course,
-        //   startDate: formatDateForDateInput(course.startDate),
-        //   endDate: formatDateForDateInput(course.endDate),
-        //   lessons: lessons?.length ? lessons : prev.lessons,
-        // }));
+        const course = await dispatch(fetchCourseThunk(courseId)).unwrap();
+        const lessons = (course?.lessons || []).map(mapLessonFromApi);
+        originalLessonsRef.current = course.lessons;
+        setFormData((prev) => ({
+          ...prev,
+          ...course,
+          teachers: course.teachers || [],
+          startDate: formatDateForDateInput(course.startDate),
+          endDate: formatDateForDateInput(course.endDate),
+          lessons: lessons?.length ? lessons : prev.lessons,
+        }));
       })();
     } else {
       setMode("add");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
   const handleStepClick = (stepId) => {
@@ -298,7 +251,6 @@ const CreateCourse = () => {
    */
   const handleInputChange = async (field, value, lessonIndex = null) => {
     let error = null;
-
     // Special case: intro image file -> upload now
     if (
       lessonIndex === null &&
@@ -333,36 +285,23 @@ const CreateCourse = () => {
       try {
         setIntroUpload({ loading: true, progress: 1, error: null });
 
-        // API CALL BLOCKED - Logging file upload instead
-        console.log("🖼️ [BLOCKED API] Upload Intro Image:", {
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-          entityType: "Course",
-          scope: "intro",
-        });
-
-        // Simulate successful upload with mock data
-        const mockAttachmentId = `mock_attachment_${Date.now()}`;
-        const mockUrl = URL.createObjectURL(file);
-
-        // const finalized = await dispatch(
-        //   uploadAttachmentFlow({
-        //     file,
-        //     entityType: "Course",
-        //     entityId: "",
-        //     scope: "intro",
-        //     onProgress: (pct) =>
-        //       setIntroUpload((s) => ({ ...s, progress: pct })),
-        //   })
-        // ).unwrap();
+        const finalized = await dispatch(
+          uploadAttachmentFlow({
+            file,
+            entityType: "Course",
+            entityId: "",
+            scope: "intro",
+            onProgress: (pct) =>
+              setIntroUpload((s) => ({ ...s, progress: pct })),
+          })
+        ).unwrap();
 
         setFormData((prev) => ({
           ...prev,
           introImage: file.name,
           introImageRef: {
-            attachmentId: mockAttachmentId,
-            url: mockUrl,
+            attachmentId: finalized.attachmentId,
+            url: finalized.url,
           },
         }));
         setErrors((prev) => ({ ...prev, introImage: null }));
@@ -391,7 +330,23 @@ const CreateCourse = () => {
       lessonIndex !== null ? `lessons[${lessonIndex}].${field}` : field;
 
     // Write value immutably
-    setFormData((prev) => setIn(prev || {}, targetPath, value));
+    setFormData((prev) => {
+      let updated = setIn(prev || {}, targetPath, value);
+
+      // If updating lesson-level assignedTeacher, also update course-level teachers
+      // Collect all unique assignedTeacher values from all lessons
+      if (lessonIndex !== null && field === "assignedTeacher") {
+        const allTeacherIds = new Set();
+        (updated.lessons || []).forEach((lesson) => {
+          if (lesson.assignedTeacher) {
+            allTeacherIds.add(lesson.assignedTeacher);
+          }
+        });
+        updated = { ...updated, teachers: Array.from(allTeacherIds) };
+      }
+
+      return updated;
+    });
 
     // Mirror errors shape
     setErrors((prev) => setIn(prev || {}, targetPath, error));
@@ -421,7 +376,6 @@ const CreateCourse = () => {
 
   const handleSubmit = async () => {
     if (!validateStep(currentStep)) return;
-
     // Build course payload (align to BE contracts)
     const coursePayload = {
       title: formData.title,
@@ -440,164 +394,111 @@ const CreateCourse = () => {
       introImage: formData.introImageRef
         ? { attachmentId: formData.introImageRef.attachmentId }
         : undefined,
-      introImageRef: formData.introImageRef.attachmentId,
+      introImageRef: formData.introImageRef?.attachmentId,
       teachers: formData.teachers,
     };
 
     try {
-      // API CALLS BLOCKED - Logging submitted data instead
-      console.log("\n" + "=".repeat(80));
-      console.log("📝 [BLOCKED API] Course Submission Data:");
-      console.log("=".repeat(80));
-      console.log("\n🎯 Mode:", isEdit ? "EDIT" : "CREATE");
-      console.log("🆔 Course ID:", courseId || "N/A (new course)");
-      console.log("\n📋 Course Payload:");
-      console.log(JSON.stringify(coursePayload, null, 2));
+      let savedCourse;
+      if (isEdit && courseId) {
+        const r = await dispatch(
+          updateCourseThunk({ id: courseId, patch: coursePayload })
+        ).unwrap();
+        savedCourse = r;
+      } else {
+        const r = await dispatch(createCourseThunk(coursePayload)).unwrap();
+        savedCourse = r;
+      }
 
-      const currentLessons = formData.lessons || [];
-      console.log("\n📚 Lessons Data (" + currentLessons.length + " lessons):");
-      console.log(JSON.stringify(currentLessons, null, 2));
-
-      if (isEdit) {
-        console.log("\n🔄 Edit Mode - Diff Analysis:");
-        const {
-          creates,
-          updates: _updates,
-          deletes,
-        } = buildLessonMutations(originalLessonsRef.current, currentLessons);
-
-        console.log("  ➕ New Lessons to Create:", creates.length);
-        console.log("  ✏️  Lessons to Update:", _updates.length);
-        console.log("  ❌ Lessons to Delete:", deletes.length);
-
-        if (creates.length) {
-          console.log("\n  New Lessons:", JSON.stringify(creates, null, 2));
-        }
-        if (_updates.length) {
-          console.log(
-            "\n  Updated Lessons:",
-            JSON.stringify(_updates, null, 2)
-          );
-        }
-        if (deletes.length) {
-          console.log("\n  Deleted Lesson IDs:", deletes);
+      // Claim the intro image to the created/updated course (if present)
+      if (savedCourse?._id && formData?.introImageRef?.attachmentId) {
+        try {
+          const claimed = await dispatch(
+            claimAttachment({
+              attachmentId: formData.introImageRef?.attachmentId,
+              entityType: "Course",
+              entityId: savedCourse._id,
+              moveToEntityPrefix: true,
+              scope: "intro",
+            })
+          ).unwrap();
+          if (claimed?.url) {
+            setFormData((prev) => ({
+              ...prev,
+              introImageRef: { ...prev.introImageRef, url: claimed.url },
+            }));
+          }
+        } catch (e) {
+          console.warn("Attachment claim failed:", e);
         }
       }
 
-      console.log("\n" + "=".repeat(80));
-      console.log("✅ Data logged successfully (API calls blocked)");
-      console.log("=".repeat(80) + "\n");
+      if (savedCourse?._id) {
+        const currentLessons = formData.lessons || [];
 
-      // Mock successful response
-      const mockCourseId = courseId || `mock_course_${Date.now()}`;
+        if (!isEdit) {
+          const createPayload = currentLessons.map(mapLessonToCreatePayload);
+          if (createPayload.length) {
+            await dispatch(
+              createLessonsThunk({
+                courseId: savedCourse._id,
+                payload: { lessons: createPayload },
+              })
+            ).unwrap();
+          }
+        } else {
+          const {
+            creates,
+            updates: _updates,
+            deletes,
+          } = buildLessonMutations(originalLessonsRef.current, currentLessons);
 
-      // let savedCourse;
-      // if (isEdit && courseId) {
-      //   const r = await dispatch(
-      //     updateCourseThunk({ id: courseId, patch: coursePayload })
-      //   ).unwrap();
-      //   savedCourse = r;
-      // } else {
-      //   const r = await dispatch(createCourseThunk(coursePayload)).unwrap();
-      //   savedCourse = r;
-      // }
+          const createPayload = creates.map(mapLessonToCreatePayload);
+          const updates = [];
+          const byId = new Map(
+            originalLessonsRef.current.map((x) => [x._id, x])
+          );
+          for (const n of currentLessons) {
+            if (n._id && byId.has(n._id)) {
+              const patch = buildPartialUpdate(byId.get(n._id), n);
+              if (patch) updates.push(patch);
+            }
+          }
 
-      // // Claim the intro image to the created/updated course (if present)
-      // if (savedCourse?._id && formData?.introImageRef?.attachmentId) {
-      //   try {
-      //     const claimed = await dispatch(
-      //       claimAttachment({
-      //         attachmentId: formData.introImageRef.attachmentId,
-      //         entityType: "Course",
-      //         entityId: savedCourse._id,
-      //         moveToEntityPrefix: true,
-      //         scope: "intro",
-      //       })
-      //     ).unwrap();
-      //     if (claimed?.url) {
-      //       setFormData((prev) => ({
-      //         ...prev,
-      //         introImageRef: { ...prev.introImageRef, url: claimed.url },
-      //       }));
-      //     }
-      //   } catch (e) {
-      //     console.warn("Attachment claim failed:", e);
-      //   }
-      // }
+          if (createPayload.length) {
+            lastActionRef.current = "create";
+            lastSubmittedUpdatesRef.current = null;
+            await dispatch(
+              createLessonsThunk({
+                courseId: savedCourse._id,
+                payload: { lessons: createPayload },
+              })
+            ).unwrap();
+          }
 
-      // if (savedCourse?._id) {
-      //   const currentLessons = formData.lessons || [];
+          if (updates.length || deletes.length) {
+            lastActionRef.current = "update";
+            lastSubmittedUpdatesRef.current = updates;
+            await dispatch(
+              updateLessonsThunk({
+                courseId: savedCourse._id,
+                payload: { updates, deletes },
+              })
+            ).unwrap();
+          }
 
-      //   if (!isEdit) {
-      //     const createPayload = currentLessons.map(mapLessonToCreatePayload);
-      //     if (createPayload.length) {
-      //       await dispatch(
-      //         createLessonsThunk({
-      //           courseId: savedCourse._id,
-      //           payload: { lessons: createPayload },
-      //         })
-      //       ).unwrap();
-      //     }
-      //   } else {
-      //     const {
-      //       creates,
-      //       updates: _updates,
-      //       deletes,
-      //     } = buildLessonMutations(originalLessonsRef.current, currentLessons);
-
-      //     const createPayload = creates.map(mapLessonToCreatePayload);
-      //     const updates = [];
-      //     const byId = new Map(
-      //       originalLessonsRef.current.map((x) => [x._id, x])
-      //     );
-      //     for (const n of currentLessons) {
-      //       if (n._id && byId.has(n._id)) {
-      //         const patch = buildPartialUpdate(byId.get(n._id), n);
-      //         if (patch) updates.push(patch);
-      //       }
-      //     }
-
-      //     if (createPayload.length) {
-      //       lastActionRef.current = "create";
-      //       lastSubmittedUpdatesRef.current = null;
-      //       await dispatch(
-      //         createLessonsThunk({
-      //           courseId: savedCourse._id,
-      //           payload: { lessons: createPayload },
-      //         })
-      //       ).unwrap();
-      //     }
-
-      //     if (updates.length || deletes.length) {
-      //       lastActionRef.current = "update";
-      //       lastSubmittedUpdatesRef.current = updates;
-      //       await dispatch(
-      //         updateLessonsThunk({
-      //           courseId: savedCourse._id,
-      //           payload: { updates, deletes },
-      //         })
-      //       ).unwrap();
-      //     }
-
-      //     originalLessonsRef.current = currentLessons.map((l) => ({ ...l }));
-      //   }
-      // }
+          originalLessonsRef.current = currentLessons.map((l) => ({ ...l }));
+        }
+      }
 
       successToast(
-        `${
-          isEdit ? "Course updated" : "Course created"
-        } successfully! (API blocked - check console)`
+        `${isEdit ? "Course updated" : "Course created"} successfully!`
       );
 
       if (isLesson || isCreateLesson) {
-        console.log(
-          "🔄 Would navigate to:",
-          `/teacher/lessons/${mockCourseId}`
-        );
-        // navigate(`/teacher/lessons/${mockCourseId}`);
+        navigate(`/teacher/lessons/${savedCourse._id}`);
       } else if (isEdit) {
-        console.log("🔄 Would navigate to: /teacher/manage-courses");
-        // navigate("/teacher/manage-courses");
+        navigate("/teacher/manage-courses");
       } else {
         setShowModal(true);
       }
@@ -640,8 +541,7 @@ const CreateCourse = () => {
 
   const onCloseSuccessModal = () => {
     setShowModal(false);
-    console.log("🔄 Would navigate to: /school/manage-courses");
-    // navigate("/school/manage-courses");
+    navigate("/school/manage-courses");
   };
 
   const getCurrentStepComponent = () => {

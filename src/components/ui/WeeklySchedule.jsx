@@ -8,14 +8,23 @@ import { normalizeToHHMM24 } from "../../utils/time24h";
 const FieldError = ({ children }) =>
   children ? <p className="mt-1 text-sm text-destructive">{children}</p> : null;
 
-export default function WeeklySchedule({ formData, handleInputChange, errors = {} }) {
+export default function WeeklySchedule({
+  formData,
+  handleInputChange,
+  errors = {},
+  teacherId: externalTeacherId, // Optional: override the auth user's teacherId
+  onTeacherRequired, // Optional: callback when teacher is required but not provided
+}) {
   const dispatch = useDispatch();
-  const auth = useSelector(s => s.auth);
-  const teacherId = auth?.user?._id || auth?.user?.id;
+  const auth = useSelector((s) => s.auth);
+  // Use external teacherId if provided, otherwise fall back to auth user's ID
+  const teacherId = externalTeacherId || auth?.user?._id || auth?.user?.id;
 
   const [availableSlots, setAvailableSlots] = useState([]); // array of { label, minutes, disabled? } OR legacy string[]
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [selectedTime, setSelectedTime] = useState(formData?.schedule?.time || "");
+  const [selectedTime, setSelectedTime] = useState(
+    formData?.schedule?.time || ""
+  );
 
   // fetch slots whenever date changes
   useEffect(() => {
@@ -48,25 +57,31 @@ export default function WeeklySchedule({ formData, handleInputChange, errors = {
         }
 
         // normalize: convert legacy strings into objects { label, minutes, disabled }
-        const normalized = items.map((it) => {
-          if (typeof it === 'string') {
-            // assume HH:MM string (24h)
-            const [h, m] = it.split(':').map(Number);
-            const minutes = h * 60 + (m || 0);
-            return { label: it, minutes, disabled: false };
-          }
-          // If item already has label/minutes, respect it.
-          // If only label in 12h format exists, we still use it unchanged.
-          if (it && typeof it === 'object' && it.label) {
-            // ensure minutes exist
-            if (!('minutes' in it) && typeof it.label === 'string' && /^\d{2}:\d{2}$/.test(it.label)) {
-              const [h, m] = it.label.split(':').map(Number);
-              return { ...it, minutes: h * 60 + (m || 0) };
+        const normalized = items
+          .map((it) => {
+            if (typeof it === "string") {
+              // assume HH:MM string (24h)
+              const [h, m] = it.split(":").map(Number);
+              const minutes = h * 60 + (m || 0);
+              return { label: it, minutes, disabled: false };
             }
-            return it;
-          }
-          return null;
-        }).filter(Boolean);
+            // If item already has label/minutes, respect it.
+            // If only label in 12h format exists, we still use it unchanged.
+            if (it && typeof it === "object" && it.label) {
+              // ensure minutes exist
+              if (
+                !("minutes" in it) &&
+                typeof it.label === "string" &&
+                /^\d{2}:\d{2}$/.test(it.label)
+              ) {
+                const [h, m] = it.label.split(":").map(Number);
+                return { ...it, minutes: h * 60 + (m || 0) };
+              }
+              return it;
+            }
+            return null;
+          })
+          .filter(Boolean);
 
         if (!mounted) return;
         setAvailableSlots(normalized);
@@ -80,7 +95,9 @@ export default function WeeklySchedule({ formData, handleInputChange, errors = {
         setLoadingSlots(false);
       });
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [formData?.schedule?.date, teacherId, dispatch]);
 
   useEffect(() => {
@@ -89,8 +106,8 @@ export default function WeeklySchedule({ formData, handleInputChange, errors = {
 
   const onTimeClick = (slot) => {
     // slot may be string (legacy) or object { label, disabled }
-    const rawLabel = typeof slot === 'string' ? slot : slot.label;
-    const disabled = typeof slot === 'string' ? false : !!slot.disabled;
+    const rawLabel = typeof slot === "string" ? slot : slot.label;
+    const disabled = typeof slot === "string" ? false : !!slot.disabled;
     if (disabled) return;
     // Always store 24h "HH:MM" in formData.schedule.time
     const hhmm24 = normalizeToHHMM24(rawLabel) || rawLabel;
@@ -113,7 +130,13 @@ export default function WeeklySchedule({ formData, handleInputChange, errors = {
             value={formData?.schedule?.date || ""}
             required
             onChange={(e) => {
-              handleInputChange("schedule.date", e.target.value)
+              const newDate = e.target.value;
+              // If onTeacherRequired is provided and no teacherId, call the callback
+              if (onTeacherRequired && !teacherId && newDate) {
+                onTeacherRequired();
+                return;
+              }
+              handleInputChange("schedule.date", newDate);
             }}
             className=""
             error={errors.date}
@@ -124,23 +147,33 @@ export default function WeeklySchedule({ formData, handleInputChange, errors = {
         <div className="space-y-2">
           <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-2 sm:px-4">
             {loadingSlots ? (
-              <div className="text-sm text-muted-foreground px-4 py-2">Loading slots…</div>
+              <div className="text-sm text-muted-foreground px-4 py-2">
+                Loading slots…
+              </div>
             ) : (
               <>
                 {availableSlots.length > 0 ? (
                   availableSlots.map((slotItem) => {
-                    const label = typeof slotItem === 'string' ? slotItem : slotItem.label;
-                    const disabled = typeof slotItem === 'string' ? false : !!slotItem.disabled;
-                    const displayLabel = /^\d{2}:\d{2}$/.test(label) ? normalizeTime12h(label) : label;
+                    const label =
+                      typeof slotItem === "string" ? slotItem : slotItem.label;
+                    const disabled =
+                      typeof slotItem === "string"
+                        ? false
+                        : !!slotItem.disabled;
+                    const displayLabel = /^\d{2}:\d{2}$/.test(label)
+                      ? normalizeTime12h(label)
+                      : label;
                     return (
                       <button
                         key={label}
                         disabled={disabled}
                         onClick={() => onTimeClick(slotItem)}
                         className={`px-4 py-1.5 text-sm rounded-md border transition
-                          ${disabled
-                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                            : (selectedTime === label || formData?.schedule?.time == label)
+                          ${
+                            disabled
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              : selectedTime === label ||
+                                formData?.schedule?.time == label
                               ? "bg-blue-600 text-white border-blue-600"
                               : "bg-white text-gray-700 hover:bg-gray-50 border-gray-300"
                           }`}
@@ -150,7 +183,9 @@ export default function WeeklySchedule({ formData, handleInputChange, errors = {
                     );
                   })
                 ) : (
-                  <div className="text-sm text-muted-foreground px-4">No slots available for selected date</div>
+                  <div className="text-sm text-muted-foreground px-4">
+                    No slots available for selected date
+                  </div>
                 )}
               </>
             )}

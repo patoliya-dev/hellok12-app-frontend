@@ -92,7 +92,6 @@ const SchoolDashboard = () => {
       <InviteTeacherModal
         isOpen={showInviteModal}
         onClose={handleInviteModalOpen}
-        onInvite={handleInviteTeacher}
       />
     </div>
   );

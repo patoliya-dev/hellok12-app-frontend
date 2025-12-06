@@ -84,11 +84,6 @@ const StudentProfile = ({ student, onClose }) => {
                 alt={student?.name}
                 className="w-24 h-24 rounded-full object-cover"
               />
-              <div
-                className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-card ${
-                  student?.isOnline ? "bg-success" : "bg-muted"
-                }`}
-              ></div>
             </div>
 
             <div className="flex-1">
@@ -166,7 +161,7 @@ const StudentProfile = ({ student, onClose }) => {
                   Gender
                 </label>
                 <p className="text-card-foreground mt-2 text-base">
-                  {student?.gender || "Male"}
+                  {capitalize(student?.gender) || "Male"}
                 </p>
               </div>
             </div>
@@ -176,7 +171,8 @@ const StudentProfile = ({ student, onClose }) => {
                 Languages
               </label>
               <p className="text-card-foreground mt-2 text-base">
-                {student?.languages?.join(", ") || "English"}
+                {student?.languages?.map(getLanguageName)?.join(", ") ||
+                  "English"}
               </p>
             </div>
           </div>

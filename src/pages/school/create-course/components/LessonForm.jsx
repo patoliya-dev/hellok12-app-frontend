@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
 import { Checkbox } from "components/ui/Checkbox";
 import Input from "components/ui/Input";
 import Select from "components/ui/Select";
 import DeleteModal from "components/ui/DeleteModal";
-import { successToast } from "../../../../utils/utils";
+import { successToast, errorToast } from "../../../../utils/utils";
 import WeeklySchedule from "../../../../components/ui/WeeklySchedule";
 import DurationRange from "components/ui/DurationRange";
-import { mockTeachers } from "../data";
+import { schoolService } from "../../../../services/school/school.service";
 
 const LessonFormInstance = ({
   index,
@@ -19,6 +20,7 @@ const LessonFormInstance = ({
   onAddLesson,
   onDeleteLesson,
   mode,
+  teachers,
 }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   return (
@@ -59,11 +61,9 @@ const LessonFormInstance = ({
           <Select
             label="Assign Teacher"
             placeholder="Select a teacher"
-            options={mockTeachers}
+            options={teachers}
             value={formData?.assignedTeacher || ""}
-            onChange={(e) =>
-              handleInputChange("assignedTeacher", e?.target?.value)
-            }
+            onChange={(value) => handleInputChange("assignedTeacher", value)}
             error={errors?.assignedTeacher}
           />
         </div>
@@ -91,6 +91,8 @@ const LessonFormInstance = ({
           formData={formData}
           handleInputChange={(field, value) => handleInputChange(field, value)}
           errors={errors?.schedule || {}}
+          teacherId={formData?.assignedTeacher}
+          onTeacherRequired={() => errorToast("Please select a teacher first")}
         />
 
         <DurationRange
@@ -166,6 +168,32 @@ export default function LessonForm({
   removeLesson,
   mode,
 }) {
+  const { user } = useSelector((s) => s.auth);
+  const [teachers, setTeachers] = useState([]);
+
+  // Fetch teachers from API on mount
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      if (!user?.id) return;
+      try {
+        const response = await schoolService.getTeachers(user.id);
+        // Map API response to { value, label } format for Select component
+        const teacherOptions = (response.teachers || []).map((teacher) => ({
+          value: teacher._id || teacher.id,
+          label:
+            teacher.name ||
+            `${teacher.firstName || ""} ${teacher.lastName || ""}`.trim(),
+        }));
+        setTeachers(teacherOptions);
+      } catch (error) {
+        console.error("Failed to fetch teachers:", error);
+        setTeachers([]);
+      }
+    };
+
+    fetchTeachers();
+  }, [user?.id]);
+
   return formData?.lessons.map((lesson, index) => (
     <div key={index}>
       <LessonFormInstance
@@ -179,6 +207,7 @@ export default function LessonForm({
         onDeleteLesson={() => removeLesson(index)}
         showAddButton={index === formData.lessons.length - 1}
         mode={mode}
+        teachers={teachers}
       />
       {index !== formData?.lessons.length - 1 && <hr className="!my-8" />}
     </div>

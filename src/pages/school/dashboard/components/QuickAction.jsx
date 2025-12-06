@@ -1,7 +1,10 @@
 import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
+import { useNavigate } from "react-router-dom";
 
 const QuickAction = ({ onInviteTeacher }) => {
+  const navigate = useNavigate();
+
   const quickActions = [
     {
       id: 1,
@@ -19,7 +22,7 @@ const QuickAction = ({ onInviteTeacher }) => {
       icon: "Calendar",
       color: "text-accent",
       bgColor: "bg-accent/10",
-      action: () => console.log("Create class"),
+      action: () => navigate("/school/create-course"),
     },
     {
       id: 3,
@@ -28,7 +31,7 @@ const QuickAction = ({ onInviteTeacher }) => {
       icon: "CreditCard",
       color: "text-warning",
       bgColor: "bg-warning/10",
-      action: () => console.log("Manage payments"),
+      action: () => navigate("/school/earnings"),
     },
   ];
 

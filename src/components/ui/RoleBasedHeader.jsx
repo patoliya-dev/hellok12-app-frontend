@@ -56,7 +56,7 @@ const RoleBasedHeader = () => {
 
   // Fetch initial unread count when user logs in
   useEffect(() => {
-    if (authUser && userRole !== "guest") {
+    if (authUser && userRole !== "school") {
       dispatch(fetchUnreadCount());
     }
   }, [authUser, userRole, dispatch]);

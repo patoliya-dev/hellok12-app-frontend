@@ -9,11 +9,18 @@ import EarningsTable from "./components/EarningsTable";
 import Pagination from "components/ui/Pagination";
 import InvoiceTable from "./components/InvoiceTable";
 import DateRangePicker from "components/ui/DateRangePicker";
+import {
+  fetchEarningsTrend,
+  fetchEarningsList,
+  fetchEarningsCommission,
+} from "../../../services/earningsService";
 
 const Earnings = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("weekly");
   const [currentPage, setCurrentPage] = useState(1);
   const [currentPageForInvoices, setCurrentPageForInvoices] = useState(1);
+  const [chartData, setChartData] = useState([]);
+  const [isLoadingChart, setIsLoadingChart] = useState(false);
   const [filters, setFilters] = useState({
     lessonType: "all",
     paymentStatus: "all",
@@ -27,112 +34,171 @@ const Earnings = () => {
     startDate: "",
     endDate: "",
   });
+  // State for earnings data from API
+  const [earningsData, setEarningsData] = useState([]);
+  const [isLoadingEarnings, setIsLoadingEarnings] = useState(false);
+  const [earningsPagination, setEarningsPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+  });
 
-  // Get current period data from mock data
-  const currentData = mockEarningsData?.[selectedPeriod];
+  const [invoiceData, setInvoiceData] = useState([]);
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
+  const [invoicePagination, setInvoicePagination] = useState({
+    total: 0,
+    totalPages: 1,
+  });
 
-  // Get chart data for selected period
-  const chartData = currentData?.chartData || [];
-
-  // Filter earnings table data based on filters
-  const getFilteredEarningsData = () => {
-    let data = currentData?.tableData || [];
-
-    // Apply lesson type filter
-    if (filters.lessonType !== "all") {
-      data = data.filter((item) => {
-        if (filters.lessonType === "1-on-1") {
-          return !item.description.includes("Group") && !item.description.includes("Workshop");
-        } else if (filters.lessonType === "group") {
-          return item.description.includes("Group") || item.description.includes("Workshop");
-        }
-        return true;
-      });
-    }
-
-    // Apply payment status filter
-    if (filters.paymentStatus !== "all") {
-      data = data.filter((item) => item.status === filters.paymentStatus.toLowerCase());
-    }
-
-    // Apply amount range filter
-    if (filters.amountRange !== "all") {
-      data = data.filter((item) => {
-        const [min, max] = filters.amountRange.split("-");
-        if (max === "+") {
-          return item.amount >= parseInt(min);
-        } else {
-          return item.amount >= parseInt(min) && item.amount <= parseInt(max);
-        }
-      });
-    }
-
-    // Apply date range filter
-    if (filters.dateRange.startDate && filters.dateRange.endDate) {
-      data = data.filter((item) => {
-        const itemDate = new Date(item.date);
-        const startDate = new Date(filters.dateRange.startDate);
-        const endDate = new Date(filters.dateRange.endDate);
-        return itemDate >= startDate && itemDate <= endDate;
-      });
-    }
-
-    return data;
-  };
-
-  // Filter invoice data based on date range
-  const getFilteredInvoiceData = () => {
-    let data = currentData?.invoiceData || [];
-
-    // Apply date range filter
-    if (filtersForInvoices.startDate && filtersForInvoices.endDate) {
-      data = data.filter((item) => {
-        const itemDate = new Date(item.date);
-        const startDate = new Date(filtersForInvoices.startDate);
-        const endDate = new Date(filtersForInvoices.endDate);
-        return itemDate >= startDate && itemDate <= endDate;
-      });
-    }
-
-    return data;
-  };
-
-  const filteredEarningsData = getFilteredEarningsData();
-  const filteredInvoiceData = getFilteredInvoiceData();
-
-  // Pagination for earnings table
-  const totalEarningsPages = Math.ceil(filteredEarningsData.length / itemsPerPage);
-  const startEarningsIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedEarningsData = filteredEarningsData.slice(
-    startEarningsIndex,
-    startEarningsIndex + itemsPerPage
-  );
-
-  // Pagination for invoice table
-  const totalInvoicePages = Math.ceil(filteredInvoiceData.length / itemsPerPage);
-  const startInvoiceIndex = (currentPageForInvoices - 1) * itemsPerPage;
-  const paginatedInvoiceData = filteredInvoiceData.slice(
-    startInvoiceIndex,
-    startInvoiceIndex + itemsPerPage
-  );
-
-  // Reset to first page when filters change
+  // Fetch earnings trend data when period changes
   useEffect(() => {
-    setCurrentPage(1);
-  }, [filters]);
+    const loadTrendData = async () => {
+      setIsLoadingChart(true);
+      try {
+        const data = await fetchEarningsTrend(selectedPeriod);
+        // Transform API response to match chart format
+        const transformedData = data.dataPoints.map((point) => ({
+          period: point.label,
+          earnings: point.amount,
+        }));
+        setChartData(transformedData);
+      } catch (error) {
+        console.error("Failed to fetch earnings trend:", error);
+        // Fallback to mock data on error
+        setChartData(mockEarningsData?.[selectedPeriod]?.chartData || []);
+      } finally {
+        setIsLoadingChart(false);
+      }
+    };
+
+    loadTrendData();
+  }, [selectedPeriod]);
+
+  // Fetch earnings list data when filters or page changes
+  useEffect(() => {
+    const loadEarningsData = async () => {
+      setIsLoadingEarnings(true);
+      try {
+        // Build query params from filters
+        const queryParams = {
+          page: currentPage,
+          limit: itemsPerPage,
+        };
+
+        // Add lesson type filter
+        if (filters.lessonType !== "all") {
+          queryParams.lessonType = filters.lessonType;
+        }
+
+        // Add payment status filter
+        if (filters.paymentStatus !== "all") {
+          queryParams.status = filters.paymentStatus.toUpperCase();
+        }
+
+        // Add amount range filter
+        if (filters.amountRange !== "all") {
+          const [min, max] = filters.amountRange.split("-");
+          if (max === "+") {
+            queryParams.minAmount = parseInt(min);
+          } else {
+            queryParams.minAmount = parseInt(min);
+            queryParams.maxAmount = parseInt(max);
+          }
+        }
+
+        // Add date range filter
+        if (filters.dateRange.startDate && filters.dateRange.endDate) {
+          queryParams.startDate = filters.dateRange.startDate;
+          queryParams.endDate = filters.dateRange.endDate;
+        }
+
+        const response = await fetchEarningsList(queryParams);
+
+        // Transform API response to match component format
+        const transformedData = response.data.map((item) => ({
+          date: item.date,
+          description: item.lessonService,
+          amount: item.amount,
+          status: item.status.toLowerCase(),
+          lessonType: item.lessonType,
+        }));
+
+        setEarningsData(transformedData);
+        setEarningsPagination(response.pagination);
+      } catch (error) {
+        console.error("Failed to fetch earnings list:", error);
+        // Fallback to empty array on error
+        setEarningsData([]);
+        setEarningsPagination({
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 1,
+        });
+      } finally {
+        setIsLoadingEarnings(false);
+      }
+    };
+
+    loadEarningsData();
+  }, [filters, currentPage]);
 
   useEffect(() => {
-    setCurrentPageForInvoices(1);
-  }, [filtersForInvoices]);
+    const loadInvoiceData = async () => {
+      setIsLoadingInvoices(true);
+      try {
+        // Build query params from filters
+        const queryParams = {
+          page: currentPageForInvoices,
+          limit: itemsPerPage,
+        };
+
+        // Add date range filter
+        if (filtersForInvoices.startDate && filtersForInvoices.endDate) {
+          queryParams.startDate = filtersForInvoices.startDate;
+          queryParams.endDate = filtersForInvoices.endDate;
+        }
+
+        const response = await fetchEarningsCommission(queryParams);
+
+        // Transform API response to match component format
+        const transformedData = response.data.payouts.map((item) => ({
+          invoiceId: item.invoiceNumber,
+          date: item.date,
+          amount: item.amount / 100, // Convert from cents to dollars
+          status: item.status.charAt(0) + item.status.slice(1).toLowerCase(), // Convert PAID to Paid
+          downloadUrl: item.downloadUrl,
+        }));
+
+        setInvoiceData(transformedData);
+        setInvoicePagination({
+          total: response.data.total,
+          totalPages: Math.ceil(response.data.total / itemsPerPage),
+        });
+      } catch (error) {
+        console.error("Failed to fetch invoice data:", error);
+        // Fallback to empty array on error
+        setInvoiceData([]);
+        setInvoicePagination({
+          total: 0,
+          totalPages: 1,
+        });
+      } finally {
+        setIsLoadingInvoices(false);
+      }
+    };
+
+    loadInvoiceData();
+  }, [filtersForInvoices, currentPageForInvoices]);
 
   const handleSelectedPeriodChange = (period) => {
     setSelectedPeriod(period);
-    setCurrentPage(1);
-    setCurrentPageForInvoices(1);
   };
 
   const handleFiltersChange = (newFilters) => {
     setFilters(newFilters);
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const handleFiltersChangeForInvoices = (newFilters) => {
@@ -161,18 +227,18 @@ const Earnings = () => {
           data={chartData}
           selectedPeriod={selectedPeriod}
           onPeriodChange={handleSelectedPeriodChange}
-          isLoading={false}
+          isLoading={isLoadingChart}
         />
         <section className="bg-card rounded-lg p-4 shadow-card border border-border mb-8">
           <FilterPanel
             filters={filters}
             onFiltersChange={handleFiltersChange}
           />
-          <EarningsTable data={paginatedEarningsData} />
+          <EarningsTable data={earningsData} isLoading={isLoadingEarnings} />
           <Pagination
-            currentPage={currentPage}
-            totalPages={totalEarningsPages}
-            totalItems={filteredEarningsData.length}
+            currentPage={earningsPagination.page}
+            totalPages={earningsPagination.totalPages}
+            totalItems={earningsPagination.total}
             onPageChange={handlePageChange}
             isBorderTop={false}
           />
@@ -187,12 +253,12 @@ const Earnings = () => {
                 onChange={(values) => handleFiltersChangeForInvoices(values)}
               />
             </div>
-            <InvoiceTable data={paginatedInvoiceData} isLoading={false} />
+            <InvoiceTable data={invoiceData} isLoading={isLoadingInvoices} />
           </div>
           <Pagination
             currentPage={currentPageForInvoices}
-            totalPages={totalInvoicePages}
-            totalItems={filteredInvoiceData.length}
+            totalPages={invoicePagination.totalPages}
+            totalItems={invoicePagination.total}
             onPageChange={handlePageChangeForInvoices}
           />
         </section>

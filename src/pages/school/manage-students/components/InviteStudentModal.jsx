@@ -1,10 +1,13 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
 import Input from "components/ui/Input";
-import { successToast } from "../../../../utils/utils";
+import { successToast, errorToast } from "../../../../utils/utils";
+import { schoolService } from "../../../../services/school/school.service";
 
-const InviteStudentModal = ({ isOpen, onClose, onInvite, onSuccess }) => {
+const InviteStudentModal = ({ isOpen, onClose, onSuccess }) => {
+  const { user } = useSelector((s) => s.auth);
   const [formData, setFormData] = useState({
     email: "",
     name: "Test Test",
@@ -15,6 +18,7 @@ const InviteStudentModal = ({ isOpen, onClose, onInvite, onSuccess }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -44,11 +48,21 @@ const InviteStudentModal = ({ isOpen, onClose, onInvite, onSuccess }) => {
     return Object.keys(newErrors)?.length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e?.preventDefault();
 
-    if (validateForm()) {
-      onInvite(formData);
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      const schoolId = user?.id || user?._id;
+
+      await schoolService.inviteStudent({
+        email: formData.email,
+        message: formData.message,
+        schoolId: schoolId,
+      });
+
       // Reset form
       setFormData({
         email: "",
@@ -60,8 +74,12 @@ const InviteStudentModal = ({ isOpen, onClose, onInvite, onSuccess }) => {
       });
       setErrors({});
       onClose();
-      successToast("Student invited successfully!");
+      successToast("Invitation sent successfully!");
       onSuccess && onSuccess();
+    } catch (error) {
+      errorToast(error?.message || error?.error || "Failed to send invitation");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -146,8 +164,10 @@ const InviteStudentModal = ({ isOpen, onClose, onInvite, onSuccess }) => {
               variant="default"
               iconName="Send"
               iconPosition="left"
+              loading={loading}
+              disabled={loading}
             >
-              Send Invitation
+              {loading ? "Sending..." : "Send Invitation"}
             </Button>
           </div>
         </form>

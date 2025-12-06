@@ -229,7 +229,6 @@ const ManageTeachers = () => {
       <InviteTeacherModal
         isOpen={showInviteModal}
         onClose={handleInviteModalOpen}
-        onInvite={handleInviteTeacher}
         onSuccess={handleSuccessModal}
       />
 

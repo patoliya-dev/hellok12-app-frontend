@@ -10,6 +10,7 @@ import Earnings from "../pages/school/earnings";
 import ManageCourses from "../pages/school/manage-courses";
 import CreateCourse from "../pages/school/create-course";
 import ProfileAccountSettings from "../pages/school/profile-settings";
+import LessonsList from "../pages/school/lessons-list";
 
 const SchoolRoutes = () => {
   return (
@@ -24,7 +25,7 @@ const SchoolRoutes = () => {
       <Route path="/edit-course/:courseId" element={<CreateCourse />} />
       <Route path="/edit-lesson/:courseId" element={<CreateCourse />} />
       <Route path="/create-lesson/:courseId" element={<CreateCourse />} />
-      {/* <Route path="/lessons/:courseId" element={<LessonsList />} /> */}
+      <Route path="/lessons/:courseId" element={<LessonsList />} />
       <Route path="/earnings" element={<Earnings />} />
       <Route path="/profile-settings" element={<ProfileAccountSettings />} />
 

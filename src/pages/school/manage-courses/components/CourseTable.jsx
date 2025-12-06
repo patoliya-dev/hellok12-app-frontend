@@ -24,7 +24,7 @@ const CourseTable = ({
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [openMenuId, setOpenMenuId] = useState(null);
-  const [menuAnchor, setMenuAnchor] = useState(null);   // DOMRect of the icon
+  const [menuAnchor, setMenuAnchor] = useState(null); // DOMRect of the icon
   const [menuAnchorEl, setMenuAnchorEl] = useState(null); // actual icon element
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteCourseId, setDeleteCourseId] = useState(null);
@@ -99,17 +99,26 @@ const CourseTable = ({
 
   const handleActiveCourse = async (course) => {
     await dispatch(
-      updateCourseThunk({ id: course?._id, patch: { status: course?.status === 'active' ? 'draft' : 'active' } })
+      updateCourseThunk({
+        id: course?._id,
+        patch: { status: course?.status === "active" ? "draft" : "active" },
+      })
     ).unwrap();
     const next = data.map((x) =>
-      x._id === course._id ? { ...x, status: course.status === 'active' ? 'draft' : 'active' } : x
+      x._id === course._id
+        ? { ...x, status: course.status === "active" ? "draft" : "active" }
+        : x
     );
     dispatch(updateLocalCourse(next));
-    successToast(`Course ${course?.status === 'active' ? 'moved to draft' : 'activated'} successfully!`);
-  }
+    successToast(
+      `Course ${
+        course?.status === "active" ? "moved to draft" : "activated"
+      } successfully!`
+    );
+  };
 
   const handleNavigate = (id) => {
-    navigate(`/teacher/lessons/${id}`);
+    navigate(`/school/lessons/${id}`);
     setOpenMenuId(null);
   };
 
