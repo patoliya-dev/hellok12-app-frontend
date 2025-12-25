@@ -14,6 +14,7 @@ import {
   User,
   Gift,
   Gamepad2,
+  MapPin,
 } from "lucide-react";
 import Badge from "./Badge";
 import { CourseIcon, VideoIcon } from "components/icons";
@@ -59,7 +60,7 @@ const LessonCard = ({ lesson, onRefresh }) => {
     return (
       <div className="text-right">
         <div
-          className={`flex items-center justify-end gap-2 mb-1 font-semibold ${
+          className={`flex items-end gap-2 mb-1 font-semibold md:justify-end ${
             lesson.status === "Completed" ? "text-green-600" : "text-red-600"
           }`}
         >
@@ -102,11 +103,11 @@ const LessonCard = ({ lesson, onRefresh }) => {
         lesson.status === "Upcoming"
           ? "scheduled"
           : lesson.status.toLowerCase(),
-      tags: tags,
+      tags,
       description: lesson.description || "",
       address: lesson.address || null,
-      averageRating: lesson.ratings.averageRating || 0,
-      totalRating: lesson.ratings.totalRatings || 0,
+      averageRating: lesson.ratings?.averageRating || 0,
+      totalRating: lesson.ratings?.totalRatings || 0,
     };
     setSelectedLesson(modalLesson);
   };
@@ -117,43 +118,47 @@ const LessonCard = ({ lesson, onRefresh }) => {
 
   const handleFeedbackSubmitted = () => {
     setSelectedLesson(null);
-    if (onRefresh) {
-      onRefresh();
-    }
+    onRefresh?.();
   };
 
   return (
     <>
-      <div className="p-5 rounded-lg border border-gray-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <div className="flex gap-4 w-full md:w-auto">
+      {/* Card container */}
+      <div className="p-5 rounded-lg border border-gray-200 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {/* LEFT */}
+        <div className="min-w-0 flex-1">
+          {/* Header row: avatar + name */}
+          <div className="flex gap-4 w-full">
             <img
               src={lesson?.teacherImage?.url || "/default-avatar.png"}
               alt={lesson.teacherName}
-              className="w-16 h-16 rounded-full object-cover"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover flex-shrink-0"
             />
-            <div className="flex-grow">
-              <h3 className="text-lg font-semibold text-brand-gray-800">
+
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg font-semibold text-brand-gray-800 break-words">
                 {lesson.title}
               </h3>
-              <p className="text-sm text-brand-gray-600">
+              <p className="text-sm text-brand-gray-600 truncate">
                 {lesson.teacherName}
               </p>
             </div>
           </div>
-
-          <div className="flex items-center gap-4 mt-2 text-sm text-brand-gray-400">
-            <span className="flex items-center gap-1.5">
+          {/* Meta row: duration + course */}
+          <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-2 text-sm text-brand-gray-400">
+            <span className="flex items-center gap-1.5 whitespace-nowrap">
               <Clock size={14} /> {lesson.duration} min
             </span>
-            <div className="flex items-center space-x-1">
+
+            <div className="flex items-center space-x-1 min-w-0">
               <CourseIcon selected={false} />
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground truncate">
                 {lesson.courseTitle}
               </span>
             </div>
           </div>
 
+          {/* Badges */}
           <div className="mt-3 flex flex-wrap gap-2">
             {lesson.type && (
               <Badge
@@ -168,22 +173,26 @@ const LessonCard = ({ lesson, onRefresh }) => {
                 color="blue"
               />
             )}
-            <Badge
-              text={lesson.modality}
-              icon={
-                lesson.modality === "Online Course" ? (
-                  <VideoIcon
-                    size={14}
-                    className="w-[12px] h-[10px]"
-                    selected={true}
-                  />
-                ) : (
-                  <Users size={14} />
-                )
-              }
-              color="green"
-            />
-            {lesson.tags.map((tag) => (
+
+            {lesson.modality && (
+              <Badge
+                text={lesson.modality}
+                icon={
+                  lesson.modality === "Online Course" ? (
+                    <VideoIcon
+                      size={14}
+                      className="w-[12px] h-[10px]"
+                      selected={true}
+                    />
+                  ) : (
+                    <MapPin size={14} />
+                  )
+                }
+                color="green"
+              />
+            )}
+
+            {(lesson.tags || []).map((tag) => (
               <Badge
                 key={tag}
                 text={tag}
@@ -198,15 +207,31 @@ const LessonCard = ({ lesson, onRefresh }) => {
               />
             ))}
           </div>
+
+          {/* Address line (mobile/laptop safe) */}
+          {lesson.address && (
+            <div className="mt-3 text-sm text-brand-gray-400">
+              <div className="flex items-start space-x-2">
+                <MapPin size={14} className="mt-0.5 flex-shrink-0" />
+                <span className="text-muted-foreground break-words">
+                  {lesson.address}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="flex flex-col justify-between self-stretch w-full md:w-auto mt-4 md:mt-0">
+
+        {/* RIGHT */}
+        <div className="w-full md:w-auto flex flex-col items-end md:items-end md:justify-between">
           {renderTimeInfo()}
-          <div className="flex items-center gap-6 text-sm text-brand-gray-600 self-start md:self-end mt-2">
+
+          <div className="mt-3 flex flex-col sm:flex-row sm:items-end gap-2 sm:gap-3 md:gap-6 md:justify-end w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               iconName="FileText"
               onClick={handleViewDetails}
+              className="w-full sm:w-auto"
             >
               View Details
             </Button>
@@ -215,6 +240,7 @@ const LessonCard = ({ lesson, onRefresh }) => {
               size="sm"
               iconName="MessageSquare"
               onClick={handleMessage}
+              className="w-full sm:w-auto"
             >
               Message
             </Button>

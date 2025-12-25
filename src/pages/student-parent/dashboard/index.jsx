@@ -1,20 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import NotificationCenter from "../../../components/ui/NotificationCenter";
 import UpcomingSessionsCard from "./components/UpcomingSessionsCard";
 import ProgressTrackingSection from "./components/ProgressTrackingSection";
 import ScheduleWidget from "./components/ScheduleWidget";
-import MobileBottomNavigation from "./components/MobileBottomNavigation";
-import Button from "../../../components/ui/Button";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 import { formatUtcToLocal } from "../../../utils/datetime";
 
 const StudentDashboard = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const navigate = useNavigate();
   const authUser = useSelector(selectAuthUser);
 
   useEffect(() => {
@@ -28,12 +24,12 @@ const StudentDashboard = () => {
 
   const TodayDate = () => {
     const formattedDate = formatUtcToLocal(currentTime, {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
       hour12: true,
     });
 
@@ -45,11 +41,6 @@ const StudentDashboard = () => {
     if (hour < 12) return "Good morning";
     if (hour < 17) return "Good afternoon";
     return "Good evening";
-  };
-
-  const handleEmergencyHelp = () => {
-    // Mock emergency help action
-    console.log("Emergency help requested");
   };
 
   return (
@@ -118,35 +109,8 @@ const StudentDashboard = () => {
             {/* Progress Tracking */}
             <ProgressTrackingSection />
           </div>
-
-          {/* Floating Action Button (Mobile) */}
-          <div className="fixed bottom-24 right-4 lg:hidden z-50">
-            <Button
-              variant="default"
-              size="icon"
-              iconName="Plus"
-              iconSize={24}
-              onClick={() => navigate("/booking-system")}
-              className="w-14 h-14 rounded-full shadow-modal"
-            ></Button>
-          </div>
-
-          {/* Emergency Help (Mobile) */}
-          <div className="fixed bottom-24 left-4 lg:hidden z-50">
-            <Button
-              variant="outline"
-              size="icon"
-              iconName="HelpCircle"
-              iconSize={20}
-              onClick={handleEmergencyHelp}
-              className="w-12 h-12 rounded-full shadow-modal bg-card"
-            ></Button>
-          </div>
         </div>
       </main>
-
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNavigation />
     </div>
   );
 };

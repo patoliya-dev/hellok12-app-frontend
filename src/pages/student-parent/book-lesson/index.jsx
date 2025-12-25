@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
@@ -26,7 +26,7 @@ import { fetchCurrentUser } from "reducers/auth/authThunks";
 import {
   createPaymentIntent,
   fetchPaymentMethods,
-  createCustomer
+  createCustomer,
 } from "../../../reducers/payments/paymentsThunks";
 import { getCourseDetails } from "../../../services/courses/course.service";
 import { createBooking } from "reducers/bookings/bookingsThunks";
@@ -70,16 +70,110 @@ const BookLesson = () => {
 
   const [type, setType] = useState(action);
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedStudent, setSelectedStudent] = useState(currentUser?.profile?.children?.[0] || null);
-  const [address, setAddress] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState(
+    currentUser?.profile?.children?.[0] || null
+  );
+
+  /**
+   * IMPORTANT:
+   * address come as:
+   *  - structured object
+   */
+  const [address, setAddress] = useState(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [courseData, setCourseData] = useState({}); // initially empty
-  const stripePromise = loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY);
+  const stripePromise = loadStripe(
+    import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY
+  );
 
   // NEW: read payment methods & parent students from payments slice
   const paymentMethods = useSelector((s) => s.payments?.methods || []);
   const steps = type === "trial" ? stepsForTrial : stepsForEntrollment;
+
+  const isInPersonOneOnOne = useMemo(() => {
+    return (
+      courseData?.mode === "in-person" && courseData?.lessonType === "1-on-1"
+    );
+  }, [courseData?.mode, courseData?.lessonType]);
+
+  const parentChildren = useMemo(() => {
+    return currentUser?.profile?.children || [];
+  }, [currentUser]);
+
+  const isSelectedStudentValidForParent = useMemo(() => {
+    if (!isParent) return true;
+    const sid = selectedStudent?._id || selectedStudent?.id;
+    if (!sid) return false;
+    return parentChildren.some((c) => (c?._id || c?.id) === sid);
+  }, [isParent, selectedStudent, parentChildren]);
+
+  // Normalize address into backend expected structure
+  const normalizedAddress = useMemo(() => {
+    if (!isInPersonOneOnOne) return undefined;
+
+    if (!address) return undefined;
+
+    // If StudentSelector sends string, convert -> { line1: string }
+    if (typeof address === "string") {
+      const line1 = address.trim();
+      return line1 ? { line1 } : undefined;
+    }
+
+    // If it sends object
+    if (typeof address === "object") {
+      const line1 = String(address?.line1 || "").trim();
+      if (!line1) return undefined;
+
+      return {
+        line1,
+        line2: address?.line2 || "",
+        city: address?.city || "",
+        state: address?.state || "",
+        postalCode: address?.postalCode || "",
+        country: address?.country || "",
+      };
+    }
+
+    return undefined;
+  }, [address, isInPersonOneOnOne]);
+
+  const validateStep = () => {
+    // Student validation
+    if (!selectedStudent || !(selectedStudent?._id || selectedStudent?.id)) {
+      return {
+        ok: false,
+        message: "Please select a student before continuing.",
+      };
+    }
+
+    // Parent must pick valid child
+    if (isParent && !isSelectedStudentValidForParent) {
+      return {
+        ok: false,
+        message: "Please select a valid child from your account.",
+      };
+    }
+
+    // Address validation (in-person 1-on-1 only)
+    if (isInPersonOneOnOne) {
+      if (!normalizedAddress?.line1) {
+        return {
+          ok: false,
+          message: "Address is required for in-person 1-on-1 booking.",
+        };
+      }
+      // Optional: enforce minimum quality
+      if (String(normalizedAddress.line1).trim().length < 5) {
+        return {
+          ok: false,
+          message: "Please enter a more complete address (building/street).",
+        };
+      }
+    }
+
+    return { ok: true };
+  };
 
   // Load parent's students and saved cards on mount (if parent)
   useEffect(() => {
@@ -107,8 +201,7 @@ const BookLesson = () => {
   // make sure selectedStudent has _id (if currentUser is a student)
   useEffect(() => {
     if (isStudent && currentUser) {
-      // if currentUser is the student (profile stored differently), normalize to object with _id
-      if (typeof currentUser?._id === 'undefined' && currentUser?.id) {
+      if (typeof currentUser?._id === "undefined" && currentUser?.id) {
         setSelectedStudent({ ...currentUser, _id: currentUser.id });
       } else {
         setSelectedStudent(currentUser);
@@ -119,7 +212,8 @@ const BookLesson = () => {
   // Set default payment method when fetched
   useEffect(() => {
     if (paymentMethods?.length > 0) {
-      const defaultCard = paymentMethods.find((c) => c?.isDefault) || paymentMethods[0];
+      const defaultCard =
+        paymentMethods.find((c) => c?.isDefault) || paymentMethods[0];
       if (defaultCard) {
         setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
       }
@@ -169,6 +263,12 @@ const BookLesson = () => {
   ];
 
   const handleNextStep = () => {
+    // Validate Step 1 only
+    if (currentStep === 1) {
+      const v = validateStep();
+      if (!v.ok) return errorToast(v.message);
+    }
+
     if (currentStep < steps?.length) {
       setCurrentStep(currentStep + 1);
     }
@@ -188,13 +288,14 @@ const BookLesson = () => {
     return courseData?.price || 0;
   };
 
+  // Used only for Step 1 "Next" button
   const isFormValid = () => {
-    const hasSelectedStudent = selectedStudent !== null;
-    return !!hasSelectedStudent;
+    const v = validateStep();
+    return !!v.ok;
   };
 
-  const handleAddressChange = (event) => {
-    setAddress(event.target.value);
+  const handleAddressChange = (value) => {
+    setAddress(value);
   };
 
   const handlePaymentMethodSelect = (method) => {
@@ -202,38 +303,43 @@ const BookLesson = () => {
   };
 
   const mapBackendErrorToMessage = (err) => {
-    const code = err?.code || err?.statusCode || err?.error?.code || err?.data?.code;
+    const code =
+      err?.code || err?.statusCode || err?.error?.code || err?.data?.code;
     switch (code) {
-      case 'COURSE_FULL':
-        return 'This course is full. Please choose another or contact support.';
-      case 'TRIAL_CAPACITY_EXHAUSTED':
-        return 'Trial capacity for this lesson is exhausted.';
-      case 'ALREADY_TAKEN_TRIAL':
-        return 'Selected student has already used a trial for this course.';
-      case 'STUDENT_REQUIRED':
-      case 'INVALID_STUDENT':
-        return 'Please select a valid student.';
+      case "COURSE_FULL":
+        return "This course is full. Please choose another or contact support.";
+      case "TRIAL_CAPACITY_EXHAUSTED":
+        return "Trial capacity for this lesson is exhausted.";
+      case "ALREADY_TAKEN_TRIAL":
+        return "Selected student has already used a trial for this course.";
+      case "STUDENT_REQUIRED":
+      case "INVALID_STUDENT":
+        return "Please select a valid student.";
+      case "ADDRESS_REQUIRED":
+        return "Address is required for in-person 1-on-1 bookings.";
       default:
-        return err?.message || 'Something went wrong. Please try again.';
+        return err?.message || "Something went wrong. Please try again.";
     }
   };
 
   // New: use real createPaymentIntent thunk and confirm via stripe
   const handleSubmit = async () => {
     try {
-      if (!selectedStudent || !selectedStudent._id) {
-        return errorToast('Please select a student before continuing.');
-      }
+      // Validate again before submit (critical)
+      const v = validateStep();
+      if (!v.ok) return errorToast(v.message);
 
       // generate idempotency key
-      const idempotencyKey = `booking-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const idempotencyKey = `booking-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 9)}`;
 
       // Ensure Stripe customer exists
       if (!currentUser?.stripeCustomerId) {
         try {
           await dispatch(createCustomer({})).unwrap();
         } catch (err) {
-          console.warn('createCustomer failed (non-fatal)', err);
+          console.warn("createCustomer failed (non-fatal)", err);
         }
       }
 
@@ -243,14 +349,18 @@ const BookLesson = () => {
         studentId: selectedStudent?._id || selectedStudent?.id,
         teacherId: selectedTeacher?._id || selectedTeacher?.id,
         amount: Math.round((courseData?.price || 0) * 100),
-        isTrial: type === 'trial',
-        lessonId: type === 'trial' ? (lessonIdParam || (courseData?.lessons?.[0]?._id)) : undefined
+        isTrial: type === "trial",
+        lessonId:
+          type === "trial"
+            ? lessonIdParam || courseData?.lessons?.[0]?._id
+            : undefined,
+        address: isInPersonOneOnOne ? normalizedAddress : undefined,
       };
 
       let bookingRes;
       try {
         bookingRes = await dispatch(createBooking(bookingPayload)).unwrap();
-        bookingRes = bookingRes?.data
+        bookingRes = bookingRes?.data;
       } catch (err) {
         const message = mapBackendErrorToMessage(err);
         return errorToast(message);
@@ -258,7 +368,7 @@ const BookLesson = () => {
 
       // If this is a trial booking and payment not required, bookingRes.booking already created and may be PAID
       if (bookingRes?.booking?.isTrial) {
-        successToast('Trial booked successfully');
+        successToast("Trial booked successfully");
         setShowSuccessModal(true);
         return;
       }
@@ -268,33 +378,50 @@ const BookLesson = () => {
         bookingId: bookingRes?.booking?._id,
         teacherId: selectedTeacher?._id || selectedTeacher?.id,
         amount: Math.round((courseData?.price || 0) * 100),
-        currency: 'usd',
-        paymentMethodId: selectedPaymentMethod?.type === 'saved_card' ? (selectedPaymentMethod?.data?.stripePaymentMethodId || selectedPaymentMethod?.data?.id) : undefined,
-        savePaymentMethod: selectedPaymentMethod?.type !== 'saved_card',
+        currency: "usd",
+        paymentMethodId:
+          selectedPaymentMethod?.type === "saved_card"
+            ? selectedPaymentMethod?.data?.stripePaymentMethodId ||
+              selectedPaymentMethod?.data?.id
+            : undefined,
+        savePaymentMethod: selectedPaymentMethod?.type !== "saved_card",
         idempotencyKey,
         metadata: {
           courseId: courseData?._id || courseData?.id,
           studentId: selectedStudent?._id || selectedStudent?.id,
-          lessonId: type === 'trial' ? (lessonIdParam || (courseData?.lessons?.[0]?._id)) : undefined,
-          bookingId: bookingRes?.booking?._id
-        }
+          lessonId:
+            type === "trial"
+              ? lessonIdParam || courseData?.lessons?.[0]?._id
+              : undefined,
+          bookingId: bookingRes?.booking?._id,
+        },
       };
 
-      const paymentIntentRes = await dispatch(createPaymentIntent(piPayload)).unwrap();
-      const clientSecret = paymentIntentRes?.client_secret || paymentIntentRes?.raw?.client_secret;
-      if (!clientSecret) throw new Error('Missing client secret from server');
+      const paymentIntentRes = await dispatch(
+        createPaymentIntent(piPayload)
+      ).unwrap();
+      const clientSecret =
+        paymentIntentRes?.client_secret || paymentIntentRes?.raw?.client_secret;
+      if (!clientSecret) throw new Error("Missing client secret from server");
 
       // 4) Confirm via Stripe (if using saved PM provide it)
-      const stripe = await loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY);
-      if (!stripe) throw new Error('Stripe failed to load');
+      const stripe = await loadStripe(
+        import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY
+      );
+      if (!stripe) throw new Error("Stripe failed to load");
 
       let confirmResult;
-      if (selectedPaymentMethod?.type === 'saved_card' && (selectedPaymentMethod?.data?.stripePaymentMethodId || selectedPaymentMethod?.data?.id)) {
+      if (
+        selectedPaymentMethod?.type === "saved_card" &&
+        (selectedPaymentMethod?.data?.stripePaymentMethodId ||
+          selectedPaymentMethod?.data?.id)
+      ) {
         confirmResult = await stripe.confirmCardPayment(clientSecret, {
-          payment_method: selectedPaymentMethod.data.stripePaymentMethodId || selectedPaymentMethod.data.id
+          payment_method:
+            selectedPaymentMethod.data.stripePaymentMethodId ||
+            selectedPaymentMethod.data.id,
         });
       } else {
-        // If the FE used a SetupIntent to save card, the backend may accept paymentMethodId
         confirmResult = await stripe.confirmCardPayment(clientSecret);
       }
 
@@ -303,15 +430,22 @@ const BookLesson = () => {
       }
 
       const pi = confirmResult.paymentIntent;
-      if (pi && (pi.status === 'succeeded' || pi.status === 'processing' || pi.status === 'requires_capture')) {
-        successToast('Payment initiated — confirmation will be finalised shortly.');
+      if (
+        pi &&
+        (pi.status === "succeeded" ||
+          pi.status === "processing" ||
+          pi.status === "requires_capture")
+      ) {
+        successToast(
+          "Payment initiated — confirmation will be finalised shortly."
+        );
         setShowSuccessModal(true);
       } else {
-        throw new Error('Payment not completed: ' + (pi?.status || 'unknown'));
+        throw new Error("Payment not completed: " + (pi?.status || "unknown"));
       }
     } catch (err) {
-      console.error('Payment error', err);
-      const msg = err?.message || 'Payment failed. Please try again.';
+      console.error("Payment error", err);
+      const msg = err?.message || "Payment failed. Please try again.";
       errorToast(msg);
     }
   };
@@ -319,30 +453,37 @@ const BookLesson = () => {
   // PaymentMethodSelector will confirm SetupIntent and return { paymentMethodId, pm } on success.
   const handleAddPaymentMethod = async (result = {}) => {
     try {
-      // result: { paymentMethodId, pm } where pm is optional local metadata
       const { paymentMethodId, pm } = result;
       // Refresh saved methods
       await dispatch(fetchPaymentMethods()).unwrap();
-      // Find the newly saved payment method in the refreshed list (best-effort)
-      const refreshed = (store => store?.payments?.methods || [])( /* access via selector is preferred but keep minimal here */);
-      // If parent expects a shape with stripePaymentMethodId, map accordingly
+
       let newCard = null;
       try {
-        const methods = (paymentMethods) || [];
-        newCard = methods.find((m) => m?.stripePaymentMethodId === paymentMethodId || m?.id === paymentMethodId) || null;
+        const methods = paymentMethods || [];
+        newCard =
+          methods.find(
+            (m) =>
+              m?.stripePaymentMethodId === paymentMethodId ||
+              m?.id === paymentMethodId
+          ) || null;
       } catch (e) {
         newCard = null;
       }
-      // Prefer the explicit pm returned by child (if provided)
+
       if (pm) {
         setSelectedPaymentMethod({ type: "saved_card", data: pm });
       } else if (newCard) {
         setSelectedPaymentMethod({ type: "saved_card", data: newCard });
       } else if (paymentMethodId) {
-        // fallback create a minimal object
-        setSelectedPaymentMethod({ type: "saved_card", data: { id: paymentMethodId, stripePaymentMethodId: paymentMethodId, last4: "****" } });
+        setSelectedPaymentMethod({
+          type: "saved_card",
+          data: {
+            id: paymentMethodId,
+            stripePaymentMethodId: paymentMethodId,
+            last4: "****",
+          },
+        });
       }
-      // successToast("Card saved");
     } catch (err) {
       console.error("Failed to process added payment method", err);
       errorToast(err?.message || "Failed to save payment method");
@@ -351,12 +492,16 @@ const BookLesson = () => {
 
   const onCloseSuccessModal = () => {
     setShowSuccessModal(false);
-    setAddress("");
-    setSelectedStudent(null);
+    setAddress(null);
+
+    // keep student selection stable for parent; only reset for student flow if you want
+    if (isStudent) setSelectedStudent(null);
+
     if (type === "enroll") {
       setCurrentStep(1);
       if (paymentMethods?.length > 0) {
-        const defaultCard = paymentMethods.find((c) => c?.isDefault) || paymentMethods[0];
+        const defaultCard =
+          paymentMethods.find((c) => c?.isDefault) || paymentMethods[0];
         setSelectedPaymentMethod({ type: "saved_card", data: defaultCard });
       }
     }
@@ -379,7 +524,6 @@ const BookLesson = () => {
     return texts[type]?.[currentStep] ?? texts[type]?.default ?? "Next";
   };
 
-  // Below: pass dynamic parentStudents and paymentMethods (keeps UI markup unchanged)
   const getCurrentStepComponent = () => {
     switch (type) {
       case "enroll":
@@ -394,6 +538,7 @@ const BookLesson = () => {
                     <div className="col-span-6 space-y-6">
                       {isParent && (
                         <StudentSelector
+                          course={courseData}
                           students={currentUser?.profile?.children}
                           selectedStudent={selectedStudent}
                           onStudentSelect={handleStudentSelect}
@@ -412,7 +557,10 @@ const BookLesson = () => {
                     {/* Right Panel - Class Details */}
                     <div className="col-span-6">
                       <div className="sticky top-24">
-                        <ClassDetails courseData={courseData} />
+                        <ClassDetails
+                          courseData={courseData}
+                          address={address}
+                        />
                         <div className="mt-6 flex justify-end">
                           <Button
                             onClick={handleNextStep}
@@ -430,12 +578,14 @@ const BookLesson = () => {
                     </div>
                   </div>
                 </div>
+
                 {/* Mobile View */}
                 <div className="lg:hidden space-y-6">
-                  <ClassDetails courseData={courseData} />
+                  <ClassDetails courseData={courseData} address={address} />
 
                   {isParent && (
                     <StudentSelector
+                      course={courseData}
                       students={currentUser?.profile?.children}
                       selectedStudent={selectedStudent}
                       onStudentSelect={handleStudentSelect}
@@ -506,8 +656,9 @@ const BookLesson = () => {
                           total={calculateTotal()}
                         />
                         <div
-                          className={`mt-6 flex justify-end ${currentStep === 3 && "gap-10"
-                            }`}
+                          className={`mt-6 flex justify-end ${
+                            currentStep === 3 && "gap-10"
+                          }`}
                         >
                           {currentStep === 3 && (
                             <Button
@@ -524,8 +675,9 @@ const BookLesson = () => {
                               currentStep === 3 ? handleSubmit : handleNextStep
                             }
                             disabled={selectedPaymentMethod === null}
-                            className={`h-12 ${currentStep === 3 ? "w-72" : "w-56"
-                              }`}
+                            className={`h-12 ${
+                              currentStep === 3 ? "w-72" : "w-56"
+                            }`}
                             size="lg"
                             iconName="ChevronRight"
                             iconPosition="right"
@@ -538,6 +690,7 @@ const BookLesson = () => {
                     </div>
                   </div>
                 </div>
+
                 {/* Mobile View */}
                 <div className="lg:hidden space-y-6">
                   {currentStep === 2 && (
@@ -565,10 +718,11 @@ const BookLesson = () => {
                   />
                   <div className="sticky bottom-4">
                     <div
-                      className={`mt-6 flex ${currentStep === 3
-                        ? "flex-col items-center gap-4"
-                        : "justify-center"
-                        }`}
+                      className={`mt-6 flex ${
+                        currentStep === 3
+                          ? "flex-col items-center gap-4"
+                          : "justify-center"
+                      }`}
                     >
                       {currentStep === 3 && (
                         <Button
@@ -585,8 +739,9 @@ const BookLesson = () => {
                           currentStep === 3 ? handleSubmit : handleNextStep
                         }
                         disabled={selectedPaymentMethod === null}
-                        className={`h-12 ${currentStep === 3 ? "w-72" : "w-56"
-                          }`}
+                        className={`h-12 ${
+                          currentStep === 3 ? "w-72" : "w-56"
+                        }`}
                         size="lg"
                         iconName="ChevronRight"
                         iconPosition="right"
@@ -601,6 +756,7 @@ const BookLesson = () => {
             );
         }
         break;
+
       case "trial":
         switch (currentStep) {
           case 1:
@@ -613,6 +769,7 @@ const BookLesson = () => {
                     {isParent && (
                       <div className="col-span-6 space-y-6">
                         <StudentSelector
+                          course={courseData}
                           students={currentUser?.profile?.children}
                           selectedStudent={selectedStudent}
                           onStudentSelect={handleStudentSelect}
@@ -625,7 +782,11 @@ const BookLesson = () => {
                     {/* Right Panel - Class Details */}
                     <div className="col-span-6">
                       <div className="sticky top-24">
-                        <ClassDetails courseData={courseData} type="trial" />
+                        <ClassDetails
+                          courseData={courseData}
+                          type="trial"
+                          address={address}
+                        />
                         <div className="mt-6 flex justify-end">
                           <Button
                             onClick={handleNextStep}
@@ -643,12 +804,18 @@ const BookLesson = () => {
                     </div>
                   </div>
                 </div>
+
                 {/* Mobile View */}
                 <div className="lg:hidden space-y-6">
-                  <ClassDetails courseData={courseData} type="trial" />
+                  <ClassDetails
+                    courseData={courseData}
+                    type="trial"
+                    address={address}
+                  />
 
                   {isParent && (
                     <StudentSelector
+                      course={courseData}
                       students={currentUser?.profile?.children}
                       selectedStudent={selectedStudent}
                       onStudentSelect={handleStudentSelect}
@@ -692,10 +859,15 @@ const BookLesson = () => {
                     </div>
                     <div className="col-span-6">
                       <div className="sticky top-24">
-                        <ClassDetails courseData={courseData} type="trial" />
+                        <ClassDetails
+                          courseData={courseData}
+                          type="trial"
+                          address={address}
+                        />
                         <div
-                          className={`mt-6 flex justify-end ${currentStep === 2 && "gap-10"
-                            }`}
+                          className={`mt-6 flex justify-end ${
+                            currentStep === 2 && "gap-10"
+                          }`}
                         >
                           {currentStep === 2 && (
                             <Button
@@ -712,8 +884,9 @@ const BookLesson = () => {
                               currentStep === 2 ? handleSubmit : handleNextStep
                             }
                             disabled={selectedPaymentMethod === null}
-                            className={`h-12 ${currentStep === 2 ? "w-72" : "w-56"
-                              }`}
+                            className={`h-12 ${
+                              currentStep === 2 ? "w-72" : "w-56"
+                            }`}
                             size="lg"
                             iconName="ChevronRight"
                             iconPosition="right"
@@ -736,13 +909,18 @@ const BookLesson = () => {
                     selectedStudent={selectedStudent}
                     type="trial"
                   />
-                  <ClassDetails courseData={courseData} type="trial" />
+                  <ClassDetails
+                    courseData={courseData}
+                    type="trial"
+                    address={address}
+                  />
                   <div className="sticky bottom-4">
                     <div
-                      className={`mt-6 flex ${currentStep === 2
-                        ? "flex-col items-center gap-4"
-                        : "justify-center"
-                        }`}
+                      className={`mt-6 flex ${
+                        currentStep === 2
+                          ? "flex-col items-center gap-4"
+                          : "justify-center"
+                      }`}
                     >
                       {currentStep === 2 && (
                         <Button
@@ -759,8 +937,9 @@ const BookLesson = () => {
                           currentStep === 2 ? handleSubmit : handleNextStep
                         }
                         disabled={selectedPaymentMethod === null}
-                        className={`h-12 ${currentStep === 2 ? "w-72" : "w-56"
-                          }`}
+                        className={`h-12 ${
+                          currentStep === 2 ? "w-72" : "w-56"
+                        }`}
                         size="lg"
                         iconName="ChevronRight"
                         iconPosition="right"
@@ -792,6 +971,7 @@ const BookLesson = () => {
             * are required.
           </p>
         </section>
+
         {/* Booking Steps */}
         <BookingSteps
           steps={steps}
@@ -846,7 +1026,7 @@ const BookLesson = () => {
             ) : (
               <Button
                 size="xl"
-                onClick={() => navigate(`/student-parent/dashboard`)}
+                onClick={() => navigate(`/${currentUser?.role}/dashboard`)}
                 className="mb-6"
               >
                 Start learning

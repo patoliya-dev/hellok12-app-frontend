@@ -1,16 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import Select from "../../../../components/ui/Select";
 import Icon from "../../../../components/AppIcon";
-import Input from "../../../../components/ui/Input";
 import Image from "../../../../components/AppImage";
+import AddressFields from "components/address/AddressFields";
 
 const StudentSelector = ({
   students,
   selectedStudent,
   onStudentSelect,
+  course,
   address,
   onAddressChange,
+  errors = "",
 }) => {
+  const [bookingAddress, setBookingAddress] = useState(null);
+  const isInPersonOneOnOne =
+    course?.mode === "in-person" && course?.lessonType === "1-on-1";
+
   const studentOptions = students?.map((student) => ({
     value: student?._id,
     label: student?.name,
@@ -65,7 +71,11 @@ const StudentSelector = ({
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
             <div className="flex items-center space-x-3">
               <Image
-                src={selectedStudent?.profileImage?.url || selectedStudent?.profileImage || null}
+                src={
+                  selectedStudent?.profileImage?.url ||
+                  selectedStudent?.profileImage ||
+                  null
+                }
                 alt={"No Image"}
                 className="w-12 h-12 rounded-full object-cover"
               />
@@ -84,19 +94,24 @@ const StudentSelector = ({
           </div>
         )}
 
-        <div className="pb-4">
-          <h3 className="font-medium text-foreground mb-4">Address</h3>
-          <Input
-            // label="Email Address"
-            type="email"
-            placeholder="19 Washington Square N, New York, NY 10011, USA"
-            value={address}
-            onChange={(e) => onAddressChange(e)}
-            // error={fieldErrors.email}
-            required
-          // disabled={isLoading}
-          />
-        </div>
+        {/* Previously used Input for address – replace with AddressAutocomplete */}
+        {isInPersonOneOnOne && (
+          <div className="mt-4 pb-4">
+            <h3 className="text-sm font-medium text-foreground mb-2">
+              Your Address (For In-person 1-on-1 course){" "}
+              <span className="text-error">*</span>
+            </h3>
+
+            <AddressFields
+              value={address || bookingAddress}
+              onChange={(val) => {
+                setBookingAddress(val);
+                onAddressChange(val);
+              }}
+              errors={errors?.address || {}}
+            />
+          </div>
+        )}
 
         {/* Info Note */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
