@@ -1,36 +1,76 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import { useSelector } from "react-redux";
 import { selectSelectedTeacher } from "../../../../reducers/teachers/teachersSlice";
 import { formatLessonDate } from "../../../../utils/formatters";
+import { formatAddressOneLine } from "../../../../utils/utils";
 
-const ClassDetails = ({ courseData, type = "enroll" }) => {
+const ClassDetails = ({ courseData, type = "enroll", address = "" }) => {
   // Always read current teacher from Redux (selectedTeacher) per your requirements
   const teacher = useSelector(selectSelectedTeacher) || {};
 
-  const formatDuration = (minutes) => {
-    if (minutes < 60) {
-      return `${minutes} min`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0
-      ? `${hours}h ${remainingMinutes}m`
-      : `${hours}h`;
-  };
+  // --- Derived values (stable, readable, no logic changes) ---
+  const lessonType = courseData?.lessonType; // "1-on-1" | "group"
+  const mode = courseData?.mode; // "online" | "in-person"
+  const isGroup = lessonType === "group";
+  const isOneOnOne = lessonType === "1-on-1";
+  const isInPerson = mode === "in-person";
+  const isOnline = mode === "online";
 
-  const getClassTypeBadge = (type) => {
-    const isOneOnOne = type === "1-on-1";
+  const isInPersonOneOnOne = useMemo(
+    () => isInPerson && isOneOnOne,
+    [isInPerson, isOneOnOne]
+  );
+
+  const teacherName = teacher?.name || courseData?.teacher?.name;
+  const teacherImage =
+    teacher?.profileImage || courseData?.teacher?.profileImage;
+  const teacherSchool = teacher?.school || courseData?.teacher?.school;
+
+  const startDateLabel = courseData?.startDate
+    ? formatLessonDate(courseData.startDate.slice(0, 10))
+    : "";
+  const endDateLabel = courseData?.endDate
+    ? formatLessonDate(courseData.endDate.slice(0, 10))
+    : "";
+
+  const durationText =
+    startDateLabel && endDateLabel
+      ? `(${startDateLabel}) to (${endDateLabel})`
+      : startDateLabel
+      ? `(${startDateLabel})`
+      : endDateLabel
+      ? `(${endDateLabel})`
+      : "";
+
+  const hasEnrollNumbers =
+    (courseData?.enrolledCount === 0 || courseData?.enrolledCount) &&
+    courseData?.studentCapacity;
+
+  const enrollmentText = hasEnrollNumbers
+    ? `${courseData.enrolledCount / courseData.studentCapacity} students`
+    : "";
+
+  const remainingSpots =
+    typeof courseData?.studentCapacity === "number" &&
+    typeof courseData?.enrolledCount === "number"
+      ? courseData.studentCapacity - courseData.enrolledCount
+      : null;
+
+  // Location display rules (keep existing behaviour)
+  const showOneOnOneLocation = isInPersonOneOnOne && address?.line1;
+  const showGroupLocation = isGroup && isInPerson;
+
+  const resolvedGroupAddress =
+    formatAddressOneLine(courseData?.address) || formatAddressOneLine(address);
+
+  const getClassTypeBadge = (value) => {
+    const oneOnOne = value === "1-on-1";
     return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isOneOnOne
-          ? "bg-blue-100 text-blue-800"
-          : "bg-green-100 text-green-800"
-          }`}
-      >
-        <Icon name={isOneOnOne ? "User" : "Users"} size={12} className="mr-1" />
-        {type}
+      <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+        <Icon name={oneOnOne ? "User" : "Users"} size={12} className="mr-1" />
+        {value}
       </span>
     );
   };
@@ -42,26 +82,30 @@ const ClassDetails = ({ courseData, type = "enroll" }) => {
         <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
           <div className="relative">
             <Image
-              src={teacher?.profileImage || courseData?.teacher?.profileImage}
-              alt={"No Image"}
+              src={teacherImage}
+              alt="No Image"
               className="w-12 h-12 rounded-full object-cover"
             />
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
           </div>
-          <div className="flex-1">
-            <p className="font-medium text-foreground">
-              {teacher?.name || courseData?.teacher?.name}
+
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-foreground truncate">
+              {teacherName}
             </p>
             <p className="text-sm text-text-secondary">Instructor</p>
           </div>
+
           <div className="space-y-1 flex flex-col items-end gap-2">
-            {getClassTypeBadge(courseData?.mode)}
-            {courseData?.ownerType === 'school' && <div className="flex items-center">
-              <Icon name="SchoolIcon" size={22} className="mr-2" />
-              <span className="text-body2 text-text-secondary">
-                {teacher?.school || courseData?.teacher?.school}
-              </span>
-            </div>}
+            {getClassTypeBadge(lessonType)}
+            {courseData?.ownerType === "school" && (
+              <div className="flex items-center">
+                <Icon name="SchoolIcon" size={22} className="mr-2" />
+                <span className="text-body2 text-text-secondary truncate max-w-[180px]">
+                  {teacherSchool}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -77,80 +121,102 @@ const ClassDetails = ({ courseData, type = "enroll" }) => {
 
         {/* Class Details Grid */}
         <div className="grid grid-cols-2 gap-4">
+          {/* Duration */}
           <div className="space-y-1">
             <div className="flex items-center text-text-secondary text-sm">
               <Icon name="Clock" size={16} className="mr-2" />
               Duration
             </div>
             <p className="font-medium text-foreground">
-              <span>
-                ({courseData?.startDate && formatLessonDate(courseData?.startDate?.slice(0, 10))}){" "}
-                {courseData?.endDate && `to (${formatLessonDate(courseData?.endDate?.slice(0, 10))})`}
-              </span>
+              <span>{durationText}</span>
             </p>
           </div>
 
+          {/* Price */}
           {type === "enroll" && (
             <div className="space-y-1">
               <div className="flex items-center text-text-secondary text-sm">
                 <Icon name="DollarSign" size={16} className="mr-2" />
                 Price
               </div>
-              <p className="font-medium text-foreground">${courseData?.price}</p>
+              <p className="font-medium text-foreground">
+                ${courseData?.price}
+              </p>
             </div>
           )}
 
-          {courseData?.type === "Group" && (
-            <>
-              <div className="space-y-1">
-                <div className="flex items-center text-text-secondary text-sm">
-                  <Icon name="MapPin" size={16} className="mr-2" />
-                  Location
-                </div>
-                <p className="font-medium text-foreground text-sm">
-                  {courseData?.location}
-                </p>
+          {/* Location for in-person 1-on-1 (address prop) */}
+          {showOneOnOneLocation && (
+            <div className="space-y-1">
+              <div className="flex items-center text-text-secondary text-sm">
+                <Icon name="MapPin" size={16} className="mr-2" />
+                Location
               </div>
+              <p className="font-medium text-foreground text-sm">
+                {formatAddressOneLine(address)}
+              </p>
+            </div>
+          )}
 
+          {/* Group mode blocks */}
+          {isGroup && (
+            <>
+              {/* Location for in-person group */}
+              {showGroupLocation && (
+                <div className="space-y-1">
+                  <div className="flex items-center text-text-secondary text-sm">
+                    <Icon name="MapPin" size={16} className="mr-2" />
+                    Location
+                  </div>
+                  <p className="font-medium text-foreground text-sm">
+                    {resolvedGroupAddress}
+                  </p>
+                </div>
+              )}
+
+              {/* Enrollment */}
               <div className="space-y-1">
                 <div className="flex items-center text-text-secondary text-sm">
                   <Icon name="Users" size={16} className="mr-2" />
                   Enrollment
                 </div>
-                <p className="font-medium text-foreground">
-                  {courseData?.enrolledStudents}/{courseData?.maxStudents}{" "}
-                  students
-                </p>
+                <p className="font-medium text-foreground">{enrollmentText}</p>
               </div>
             </>
           )}
 
-          {type === "trial" && (
-            <div className="space-y-1">
-              <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium bg-[#DDF2FF] text-[#009DFF]">
-                <Icon name={"Gift"} size={16} className="mr-1" />
-                Trial Lessons
+          {/* Mode badge */}
+          {isOnline && (
+            <div>
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#10b981]/5 text-[#10b981]">
+                <Icon name="Video" size={12} />
+                Online
               </span>
             </div>
           )}
 
-          {courseData?.type === "1-on-1" && (
-            <div className="col-span-2 space-y-1">
-              <div className="flex items-center text-text-secondary text-sm">
-                <Icon name="Globe" size={16} className="mr-2" />
-                Teacher Timezone
-              </div>
-              <p className="font-medium text-foreground">
-                {(teacher?.timezone || courseData?.teacher?.timezone)
-                  ?.replace("_", " ")
-                  ?.replace("America/", "")}
-              </p>
+          {isInPerson && (
+            <div>
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#10b981]/5 text-[#10b981]">
+                <Icon name="MapPin" size={12} />
+                In-Person
+              </span>
+            </div>
+          )}
+
+          {/* Trial */}
+          {type === "trial" && (
+            <div className="space-y-1">
+              <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium bg-[#DDF2FF] text-[#009DFF]">
+                <Icon name="Gift" size={16} className="mr-1" />
+                Trial Lessons
+              </span>
             </div>
           )}
         </div>
 
         {/* Group Class Schedule */}
-        {courseData?.type === "Group" && courseData?.groupSchedule && (
+        {isGroup && courseData?.groupSchedule && (
           <div className="border-t border-border pt-4">
             <h3 className="font-medium text-foreground mb-3">Class Schedule</h3>
             <div className="space-y-2">
@@ -187,13 +253,12 @@ const ClassDetails = ({ courseData, type = "enroll" }) => {
         )}
 
         {/* Enrollment Status for Group Classes */}
-        {courseData?.type === "Group" && (
+        {isGroup && remainingSpots !== null && (
           <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
             <div className="flex items-center space-x-2">
               <Icon name="Users" size={16} className="text-primary" />
               <span className="text-sm font-medium text-primary">
-                {courseData?.maxStudents - courseData?.enrolledStudents} spots
-                remaining
+                {remainingSpots} spots remaining
               </span>
             </div>
           </div>

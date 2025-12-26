@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import LessonCard from "components/ui/LessonCard";
 import { getStudentLessons } from "../../../../services/lessons/lesson.service";
 import { Loader2 } from "lucide-react";
+import { formatAddressOneLine } from "../../../../utils/utils";
 
 const LessonsHistory = ({ studentId, selectedCourse }) => {
   const [activeFilter, setActiveFilter] = useState("All Lessons");
@@ -55,6 +56,7 @@ const LessonsHistory = ({ studentId, selectedCourse }) => {
           courseTitle: lesson.courseTitle,
           description: lesson.description,
           ratings: lesson?.teacher?.rating,
+          address: lesson?.address ? formatAddressOneLine(lesson?.address) : null
         }));
 
         setLessons(mappedLessons);

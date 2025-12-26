@@ -470,9 +470,6 @@ const Messages = () => {
         </div>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNavigation />
-
       {/* Mobile Chat Overlay */}
       {activeConversation && (
         <div className="lg:hidden fixed inset-0 bg-background z-40 pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))]">

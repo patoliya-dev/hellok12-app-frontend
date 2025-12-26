@@ -169,12 +169,10 @@ export default function WeeklySchedule({
                         disabled={disabled}
                         onClick={() => onTimeClick(slotItem)}
                         className={`px-4 py-1.5 text-sm rounded-md border transition
-                          ${
-                            disabled
+                          ${(selectedTime === label || formData?.schedule?.time == label)
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : disabled
                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                              : selectedTime === label ||
-                                formData?.schedule?.time == label
-                              ? "bg-blue-600 text-white border-blue-600"
                               : "bg-white text-gray-700 hover:bg-gray-50 border-gray-300"
                           }`}
                       >

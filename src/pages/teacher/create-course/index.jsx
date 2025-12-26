@@ -59,6 +59,7 @@ const CreateCourse = () => {
   const pageLoading = useSelector(selectPageLoading);
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [createdCourseId, setCreatedCourseId] = useState(null);
   const [mode, setMode] = useState("add");
   const [formData, setFormData] = useState({
     // Step 1
@@ -75,7 +76,7 @@ const CreateCourse = () => {
     startDate: "",
     endDate: "",
     teachers: [user.id],
-
+    address: null,
     // Step 2
     lessons: [
       {
@@ -199,6 +200,15 @@ const CreateCourse = () => {
         newErrors.studentCapacity = "Capacity must be at least 1";
       if (!formData?.startDate) newErrors.startDate = "Start date is required";
       if (!formData?.mode) newErrors.mode = "Lesson mode is required";
+      if (!formData?.lessonType) newErrors.lessonType = "Lesson type is required";
+      if (!formData?.price) newErrors.price = "Price is required";
+      if (!formData?.ageGroups?.length) newErrors.ageGroups = "Age Groups are required";
+      const isInpersonGroup = formData.mode === 'in-person' && formData.lessonType === 'group';
+      if (isInpersonGroup && !formData?.address?.line1) {
+        newErrors.address ??= {};
+        newErrors.address.line1 = "Address Line 1 is required";
+      }
+      
     }
 
     if (step === 2) {
@@ -356,8 +366,12 @@ const CreateCourse = () => {
     });
   };
 
+  const existingCourseId = courseId || createdCourseId;
+
   const handleSubmit = async () => {
     if (!validateStep(currentStep)) return;
+
+    const isInPersonGroup = formData.mode === "in-person" && formData.lessonType === "group";
 
     // Build course payload (align to BE contracts)
     const coursePayload = {
@@ -377,30 +391,50 @@ const CreateCourse = () => {
       introImage: formData.introImageRef
         ? { attachmentId: formData.introImageRef.attachmentId }
         : undefined,
+      address: isInPersonGroup ? formData.address : undefined,
       introImageRef: formData.introImageRef.attachmentId,
       teachers: formData.teachers,
     };
 
     try {
       let savedCourse;
-      if (isEdit && courseId) {
+
+      // Prefer route param courseId (true "edit" page)
+      if (courseId) {
         const r = await dispatch(
           updateCourseThunk({ id: courseId, patch: coursePayload })
         ).unwrap();
         savedCourse = r;
-      } else {
-        const r = await dispatch(createCourseThunk(coursePayload)).unwrap();
+      }
+      // If no courseId in URL but we already created one in this session
+      else if (createdCourseId) {
+        const r = await dispatch(
+          updateCourseThunk({ id: createdCourseId, patch: coursePayload })
+        ).unwrap();
         savedCourse = r;
       }
+      // First time ever: create a new course
+      else {
+        const r = await dispatch(createCourseThunk(coursePayload)).unwrap();
+        savedCourse = r;
+
+        if (r?._id) {
+          // Remember this id for all subsequent submits in this session
+          setCreatedCourseId(r._id);
+        }
+      }
+
+      const targetCourseId = savedCourse?._id || existingCourseId;
+
 
       // Claim the intro image to the created/updated course (if present)
-      if (savedCourse?._id && formData?.introImageRef?.attachmentId) {
+      if (targetCourseId && formData?.introImageRef?.attachmentId) {
         try {
           const claimed = await dispatch(
             claimAttachment({
               attachmentId: formData.introImageRef.attachmentId,
               entityType: "Course",
-              entityId: savedCourse._id,
+              entityId: targetCourseId,
               moveToEntityPrefix: true, // moves S3 object under courses/<courseId>/intro/
               scope: "intro",
             })
@@ -417,7 +451,7 @@ const CreateCourse = () => {
           console.warn("Attachment claim failed:", e);
         }
       }
-      if (savedCourse?._id) {
+      if (targetCourseId) {
         const currentLessons = formData.lessons || [];
 
         if (!isEdit) {
@@ -426,7 +460,7 @@ const CreateCourse = () => {
           if (createPayload.length) {
             await dispatch(
               createLessonsThunk({
-                courseId: savedCourse._id,
+                courseId: targetCourseId,
                 payload: { lessons: createPayload },
               })
             ).unwrap();
@@ -458,7 +492,7 @@ const CreateCourse = () => {
             lastSubmittedUpdatesRef.current = null;
             await dispatch(
               createLessonsThunk({
-                courseId: savedCourse._id,
+                courseId: targetCourseId,
                 payload: { lessons: createPayload },
               })
             ).unwrap();
@@ -469,7 +503,7 @@ const CreateCourse = () => {
             lastSubmittedUpdatesRef.current = updates;
             await dispatch(
               updateLessonsThunk({
-                courseId: savedCourse._id,
+                courseId: targetCourseId,
                 payload: { updates, deletes },
               })
             ).unwrap();
@@ -483,8 +517,12 @@ const CreateCourse = () => {
         `${isEdit ? "Course updated" : "Course created"} successfully!`
       );
 
+      const finalCourseId = targetCourseId || courseId;
+
       if (isLesson || isCreateLesson) {
-        navigate(`/teacher/lessons/${savedCourse?._id || courseId}`);
+        if (finalCourseId) {
+          navigate(`/teacher/lessons/${finalCourseId}`);
+        }
       } else if (isEdit) {
         navigate("/teacher/manage-courses");
       } else {
@@ -625,9 +663,8 @@ const CreateCourse = () => {
           )}
 
           <div
-            className={`flex mt-8 pt-6 border-t border-border ${
-              currentStep < steps.length ? "justify-end" : "justify-between"
-            }`}
+            className={`flex mt-8 pt-6 border-t border-border ${currentStep < steps.length ? "justify-end" : "justify-between"
+              }`}
           >
             {currentStep === steps.length && (
               <Button

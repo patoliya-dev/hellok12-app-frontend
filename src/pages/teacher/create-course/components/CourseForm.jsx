@@ -4,8 +4,10 @@ import { lessonModeOptions, lessonTypeOptions } from "../data";
 import { languageOptions } from "../../../../utils/utils";
 import FileUploader from "components/ui/FileUploader";
 import { ageGroupOptions } from "../../profile-settings/data";
+import AddressFields from "components/address/AddressFields";
 
 const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
+  const isInPersonGroup = formData?.mode === "in-person" && formData?.lessonType === "group";
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 !mb-4">
@@ -56,6 +58,8 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           options={lessonTypeOptions}
           value={formData?.lessonType || ""}
           onChange={(value) => handleInputChange("lessonType", value)}
+          error={errors?.lessonType}
+          required
         />
         {formData?.lessonType === "group" && (
           <Input
@@ -106,6 +110,8 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           onChange={(e) =>
             handleInputChange("price", parseFloat(e?.target?.value))
           }
+          error={errors?.price}
+          required
         />
 
         <div className="space-y-2">
@@ -116,10 +122,29 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
             value={formData?.ageGroups || []}
             onChange={(value) => handleInputChange("ageGroups", value)}
             placeholder="Select age groups..."
+            error={errors?.ageGroups}
             required
           />
         </div>
       </div>
+
+      {isInPersonGroup && (
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+
+          <div className="mt-4">
+            <h3 className="text-sm font-medium text-foreground mb-2">
+              Course Address (In-person Group) <span className="text-error">*</span>
+            </h3>
+
+            <AddressFields
+              value={formData.address}
+              onChange={(addr) => handleInputChange("address", addr)}
+              errors={errors?.address || {}}
+              countryDefault="IN"
+            />
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Input

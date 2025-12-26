@@ -1,7 +1,13 @@
-// src/features/auth/authSelectors.js
+import { getUserTimezone } from "../../utils/timezone";
 
 export const selectAuthUser = (state) => state.auth.user;
 export const selectAuthToken = (state) => state.auth.accessToken;
+
+// New: derived selector for timezone
+export const selectUserTimezone = (state) => {
+  const user = selectAuthUser(state);
+  return getUserTimezone(user);
+};
 
 // generic request status/error selector
 export const selectRequestStatus = (key) => (state) =>

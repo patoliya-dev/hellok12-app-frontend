@@ -208,7 +208,7 @@ const TeacherDashboard = () => {
         const data = await getDashboardData();
         const sessionsWithDates = (data?.data?.lessons || []).map(session => ({
           ...session,
-          startTime: session.lesson.startAt
+          startTime: session?.lesson?.startAt
         }))
         setTodaySessions(sessionsWithDates)
       } catch (err) {
