@@ -10,6 +10,7 @@ const TeacherCard = ({
   isSelected,
   onStatusChange,
   onProfileRequest,
+  getFullLocationName,
 }) => {
   const getStatusColor = (status) => {
     switch (status) {
@@ -26,13 +27,14 @@ const TeacherCard = ({
 
   const handleQuickAction = (action, e) => {
     e?.stopPropagation();
-    onStatusChange(teacher?.id, action);
+    onStatusChange(teacher?._id, action);
   };
 
   const profileInComplete =
-    teacher?.languages?.length === 0 ||
-    teacher?.location === "" ||
-    teacher?.experience === 0;
+    !teacher?.teacherProfile ||
+    !teacher?.teacherProfile?.teachingLanguages?.length ||
+    !teacher?.teacherProfile?.location?.country ||
+    !teacher?.teacherProfile?.yearsOfExperience;
 
   if (profileInComplete) {
     return (
@@ -52,7 +54,9 @@ const TeacherCard = ({
               />
               <div
                 className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-card ${
-                  teacher?.isOnline ? "bg-success" : "bg-muted"
+                  teacher?.availabilityStatus === "online"
+                    ? "bg-success"
+                    : "bg-muted"
                 }`}
               ></div>
             </div>
@@ -87,7 +91,7 @@ const TeacherCard = ({
             iconSize="15"
             onClick={onProfileRequest}
           >
-            Request Teacher To Update
+            Request Teacher To Update Profile
           </Button>
           {teacher?.status === "pending" && (
             <div className="flex space-x-2 mt-3">
@@ -132,7 +136,9 @@ const TeacherCard = ({
           />
           <div
             className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-card ${
-              teacher?.isOnline ? "bg-success" : "bg-muted"
+              teacher?.availabilityStatus === "online"
+                ? "bg-success"
+                : "bg-muted"
             }`}
           ></div>
         </div>
@@ -163,42 +169,52 @@ const TeacherCard = ({
           </span>
 
           <div className="mt-2">
-            <div className="flex items-center space-x-2 text-sm text-brand-gray-500">
-              <Icon name="Languages" size={14} />
-              <span>
-                {/* {teacher?.languages?.join(", ")} */}
-                {teacher?.languages
-                  ?.map((language) => getLanguageName(language))
-                  .join(", ")}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-brand-gray-500 mt-1">
-              <Icon name="MapPin" size={14} />
-              <span className="text-brand-gray-500">{teacher?.location}</span>
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-brand-gray-500 mt-1">
-              <Icon name="Clock" size={14} />
-              <span>{teacher?.experience} years experience</span>
-            </div>
+            {teacher?.teacherProfile?.teachingLanguages?.length && (
+              <div className="flex items-center space-x-2 text-sm text-brand-gray-500">
+                <Icon name="Languages" size={14} />
+                <span>
+                  {teacher.teacherProfile.teachingLanguages
+                    .map((language) => getLanguageName(language))
+                    .join(", ")}
+                </span>
+              </div>
+            )}
+            {teacher?.teacherProfile?.location && (
+              <div className="flex items-center space-x-2 text-sm text-brand-gray-500 mt-1">
+                <Icon name="MapPin" size={14} />
+                <span className="text-brand-gray-500">
+                  {getFullLocationName(teacher.teacherProfile.location)}
+                </span>
+              </div>
+            )}
+            {(teacher?.teacherProfile?.yearsOfExperience ||
+              teacher?.teacherProfile?.yearsOfExperience === 0) && (
+              <div className="flex items-center space-x-2 text-sm text-brand-gray-500 mt-1">
+                <Icon name="Clock" size={14} />
+                <span>
+                  {teacher.teacherProfile.yearsOfExperience} years experience
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
             <div className="flex items-center space-x-2 mt-3">
-              {teacher?.availability?.onsite && (
+              {teacher?.teacherProfile?.teachingMode === "IN_PERSON" && (
                 <span className="px-2 py-1 text-xs bg-accent text-accent-foreground rounded">
                   Onsite
                 </span>
               )}
-              {teacher?.availability?.online && (
+              {teacher?.teacherProfile?.teachingMode === "ONLINE" && (
                 <span className="px-2 py-1 text-xs bg-accent text-accent-foreground rounded">
                   Online
                 </span>
               )}
-              {teacher?.availability?.onsite && (
+              {/* {teacher?.teacherProfile?.onsite && (
                 <span className="px-2 py-1 text-xs bg-muted text-muted-foreground rounded">
                   {teacher?.travelDistance}km radius
                 </span>
-              )}
+              )} */}
             </div>
             {teacher?.status === "pending" && (
               <div className="flex space-x-2 mt-3">

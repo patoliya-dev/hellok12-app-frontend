@@ -1,13 +1,16 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
 import Input from "components/ui/Input";
 import { successToast, errorToast } from "../../../../utils/utils";
-import { schoolService } from "../../../../services/school/school.service";
+import {
+  fetchSchoolTeachers,
+  inviteSchoolTeacher,
+} from "reducers/school/schoolThunks";
 
 const InviteTeacherModal = ({ isOpen, onClose, onSuccess }) => {
-  const { user } = useSelector((s) => s.auth);
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     email: "",
     name: "Test Test",
@@ -40,7 +43,7 @@ const InviteTeacherModal = ({ isOpen, onClose, onSuccess }) => {
 
     if (!formData?.email?.trim()) {
       newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/?.test(formData?.email)) {
+    } else if (!/\S+@\S+\.\S+/.test(formData?.email)) {
       newErrors.email = "Please enter a valid email address";
     }
 
@@ -55,13 +58,14 @@ const InviteTeacherModal = ({ isOpen, onClose, onSuccess }) => {
 
     setLoading(true);
     try {
-      const schoolId = user?.id || user?._id;
-
-      await schoolService.inviteTeacher({
-        email: formData.email,
-        message: formData.message,
-        schoolId: schoolId,
-      });
+      await dispatch(
+        inviteSchoolTeacher({
+          email: formData.email,
+          message: formData.message,
+          role: "teacher",
+        })
+      ).unwrap();
+      dispatch(fetchSchoolTeachers());
 
       // Reset form
       setFormData({

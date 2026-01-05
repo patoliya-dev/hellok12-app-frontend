@@ -16,6 +16,7 @@ import StudentParentRoutes from "./routes/StudentParentRoutes";
 import TeacherRoutes from "./routes/TeacherRoutes";
 import SchoolRoutes from "./routes/SchoolRoutes";
 import RootRedirect from "components/RootRedirect";
+import AcceptInvitation from "./pages/auth/accept-invitation";
 
 const Routes = () => {
   return (
@@ -29,6 +30,7 @@ const Routes = () => {
           <Route path="/user-registration" element={<UserRegistration />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/password-reset" element={<PasswordReset />} />
+          <Route path="/accept-invitation" element={<AcceptInvitation />} />
 
           {/* Protected Routes - Grouped by role */}
           <Route element={<ProtectedRoute allowedRoles={["teacher"]} />}>
