@@ -3,7 +3,7 @@ import Image from "components/AppImage";
 import Button from "components/ui/Button";
 import { capitalize, getLanguageName } from "../../../../utils/utils";
 
-const TeacherProfile = ({ teacher, onClose }) => {
+const TeacherProfile = ({ teacher, onClose, getFullLocationName }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case "active":
@@ -21,7 +21,10 @@ const TeacherProfile = ({ teacher, onClose }) => {
     { label: "Full Name", value: teacher?.name },
     { label: "Email", value: teacher?.email },
     { label: "Phone", value: teacher?.phone },
-    { label: "Address", value: teacher?.address },
+    {
+      label: "Address",
+      value: getFullLocationName(teacher?.teacherProfile?.location),
+    },
   ];
 
   const statistics = [
@@ -86,7 +89,9 @@ const TeacherProfile = ({ teacher, onClose }) => {
               />
               <div
                 className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-card ${
-                  teacher?.isOnline ? "bg-success" : "bg-muted"
+                  teacher?.availabilityStatus === "online"
+                    ? "bg-success"
+                    : "bg-muted"
                 }`}
               ></div>
             </div>
@@ -112,21 +117,21 @@ const TeacherProfile = ({ teacher, onClose }) => {
               </div>
 
               <div className="flex items-center space-x-2 mt-3">
-                {teacher?.availability?.onsite && (
+                {teacher?.teacherProfile?.teachingMode === "IN_PERSON" && (
                   <span className="px-2 py-1 text-xs bg-accent text-accent-foreground rounded">
                     Onsite
                   </span>
                 )}
-                {teacher?.availability?.online && (
+                {teacher?.teacherProfile?.teachingMode === "ONLINE" && (
                   <span className="px-2 py-1 text-xs bg-accent text-accent-foreground rounded">
                     Online
                   </span>
                 )}
-                {teacher?.availability?.onsite && (
+                {/* {teacher?.availability?.onsite && (
                   <span className="px-2 py-1 text-xs bg-muted text-muted-foreground rounded">
                     {teacher?.travelDistance}km radius
                   </span>
-                )}
+                )} */}
               </div>
             </div>
           </div>
@@ -157,28 +162,32 @@ const TeacherProfile = ({ teacher, onClose }) => {
             </h4>
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2 mt-2">
-                {teacher?.languages?.map((language, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-full"
-                  >
-                    {getLanguageName(language)}
-                  </span>
-                ))}
+                {teacher?.teacherProfile?.teachingLanguages?.map(
+                  (language, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1 bg-primary text-primary-foreground text-sm rounded-full"
+                    >
+                      {getLanguageName(language)}
+                    </span>
+                  )
+                )}
               </div>
 
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
                   Bio
                 </label>
-                <p className="text-card-foreground mt-2">{teacher?.bio}</p>
+                <p className="text-card-foreground mt-2">
+                  {teacher?.teacherProfile?.aboutYou}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
                   Experience
                 </label>
                 <p className="text-card-foreground mt-2">
-                  {teacher?.experience} years
+                  {teacher?.teacherProfile?.yearsOfExperience ?? "—"} years
                 </p>
               </div>
             </div>

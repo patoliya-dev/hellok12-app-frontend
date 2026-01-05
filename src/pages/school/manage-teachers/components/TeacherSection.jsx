@@ -11,29 +11,22 @@ const TeacherSection = ({
   onStatusChange,
   onInviteTeacher,
   onProfileRequest,
+  getFullLocationName,
   ...props
 }) => {
   return (
     <div className="bg-card border border-border rounded-lg">
-      {/* List Header */}
-      <div className="flex items-center justify-between p-6 border-b border-border">
-        <div>
-          <h3 className="font-medium text-card-foreground">
-            Teachers ({teacherCount})
-          </h3>
-        </div>
-      </div>
-
       {/* Teacher Cards */}
       <div className="p-4">
         {teacherData?.length > 0 ? (
           <div className="space-y-4">
             {teacherData?.map((teacher) => (
               <TeacherCard
-                key={teacher?.id}
+                key={teacher?._id}
                 teacher={teacher}
+                getFullLocationName={getFullLocationName}
                 onSelect={onSelect}
-                isSelected={selectedTeacher?.id === teacher?.id}
+                isSelected={selectedTeacher?._id === teacher?._id}
                 onStatusChange={onStatusChange}
                 onProfileRequest={onProfileRequest}
               />

@@ -72,6 +72,14 @@ const authSlice = createSlice({
         state.requests[key].error = null;
       }
     },
+    setAuthFromExternal: (state, action) => {
+      const payload = action.payload || {};
+      state.user = payload.user ?? state.user;
+      state.accessToken = payload.accessToken ?? state.accessToken;
+
+      if (payload.accessToken) setAccessToken(payload.accessToken);
+      if (payload.user) setCurrentUser(payload.user);
+    },
   },
   extraReducers: (builder) => {
     // Login & Signup store user/token
@@ -159,5 +167,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, clearError, setAuthFromExternal } = authSlice.actions;
 export default authSlice.reducer;

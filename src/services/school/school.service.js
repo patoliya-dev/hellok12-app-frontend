@@ -1,16 +1,13 @@
 import api from "../../utils/axiosInstance";
 
-/**
- * School service for school-related API calls
- */
 export const schoolService = {
   /**
    * Get all teachers for a school
    */
-  getTeachers: async (schoolId) => {
+  getTeachers: async (params = {}) => {
     try {
-      const { data } = await api.get(`/school/${schoolId}/teachers`);
-      return data?.data || data || [];
+      const { data } = await api.get(`/school/teachers`, { params });
+      return data?.data || data;
     } catch (error) {
       console.error("Failed to fetch teachers:", error);
       throw error.response?.data || { error: error.message };
@@ -21,12 +18,11 @@ export const schoolService = {
    * Invite a teacher to the school
    * @param {Object} inviteData - { email, schoolId, message }
    */
-  inviteTeacher: async (inviteData) => {
+  inviteTeacher: async ({ email, message }) => {
     try {
       const { data } = await api.post("/school/teacher/invite", {
-        email: inviteData.email,
-        schoolId: inviteData.schoolId,
-        message: inviteData.message,
+        email,
+        message,
       });
       return data?.data || data;
     } catch (error) {
@@ -35,20 +31,15 @@ export const schoolService = {
     }
   },
 
-  /**
-   * Invite a student to the school
-   * @param {Object} inviteData - { email, schoolId, message }
-   */
-  inviteStudent: async (inviteData) => {
+  approveRejectTeacher: async ({ teacherId, action }) => {
     try {
-      const { data } = await api.post("/school/student/invite", {
-        email: inviteData.email,
-        schoolId: inviteData.schoolId,
-        message: inviteData.message,
-      });
+      const { data } = await api.post(
+        `/school/teachers/${teacherId}/approval`,
+        { action }
+      );
       return data?.data || data;
     } catch (error) {
-      console.error("Failed to invite student:", error);
+      console.error("Failed to approve/reject teacher:", error);
       throw error.response?.data || { error: error.message };
     }
   },
@@ -59,17 +50,7 @@ export const schoolService = {
    */
   getStudents: async (params = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-      if (params.page) queryParams.append("page", params.page);
-      if (params.limit) queryParams.append("limit", params.limit);
-      if (params.search) queryParams.append("search", params.search);
-      if (params.status && params.status !== "all")
-        queryParams.append("status", params.status);
-
-      const queryString = queryParams.toString();
-      const url = `/school/students${queryString ? `?${queryString}` : ""}`;
-
-      const { data } = await api.get(url);
+      const { data } = await api.get(`/school/students`, { params });
       return data?.data?.data || data?.data || data;
     } catch (error) {
       console.error("Failed to fetch students:", error);
@@ -77,6 +58,21 @@ export const schoolService = {
     }
   },
 
+  /**
+   * Invite a student to the school
+   * @param {Object} inviteData - { email, schoolId, message }
+   */
+  inviteStudent: async ({ email, message }) => {
+    try {
+      const { data } = await api.post("/school/student/invite", {
+        email,
+        message,
+      });
+      return data?.data || data;
+    } catch (error) {
+      throw error.response?.data || { error: error.message };
+    }
+  },
   /**
    * Get upcoming lessons for a school
    * @param {Object} params - { limit }
@@ -95,6 +91,32 @@ export const schoolService = {
       return data?.data?.data || data?.data || data;
     } catch (error) {
       console.error("Failed to fetch upcoming lessons:", error);
+      throw error.response?.data || { error: error.message };
+    }
+  },
+
+  getInvitations: async ({ role, status } = {}) => {
+    try {
+      const params = {};
+      if (role) params.role = role; // "TEACHER" | "STUDENT"
+      if (status) params.status = status; // "PENDING" | "ACCEPTED" | ...
+      const { data } = await api.get("/school/invitations", { params });
+
+      return data?.data?.data || data?.data || data;
+    } catch (error) {
+      console.error("Failed to get invitations:", error);
+      throw error.response?.data || { error: error.message };
+    }
+  },
+
+  cancelInvitation: async (invitationId) => {
+    try {
+      const { data } = await api.post(
+        `/school/invitations/${invitationId}/cancel`
+      );
+      return data?.data?.data || data?.data || data;
+    } catch (error) {
+      console.error("Failed to cancel invitation:", error);
       throw error.response?.data || { error: error.message };
     }
   },

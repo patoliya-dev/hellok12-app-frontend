@@ -82,6 +82,7 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
       startSmoothProgress();
 
       let keys = [...(formData?.profile?.highlights || [])];
+      const newlyUploadedItems = [];
       for (const file of files) {
         const result = await dispatch(
           uploadAttachmentFlow({
@@ -91,7 +92,9 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
             scope: "highlights",
           })
         ).unwrap();
-        keys.push(result?.id || result._id);
+
+        keys.push(result); // Push the full object, not just the ID
+        newlyUploadedItems.push(result);
       }
 
       let updatedFormData = {
@@ -105,15 +108,18 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
       }
 
       const refreshed = result.payload;
+      clearInterval(intervalId);
+      setUploadProgress(100);
       if (refreshed) {
-        clearInterval(intervalId);
-        setUploadProgress(100);
-
         setFormData(refreshed);
-        // Refresh mediaItems with updated intro flag
-        const highlights = refreshed?.profile?.highlights || [];
-        const introId = refreshed?.profile?.intro?._id;
-        const itemsWithIntroFlag = highlights.map((item) => {
+      } else {
+        const updatedFormDataWithNewItems = {
+          ...formData,
+          profile: { ...formData.profile, highlights: keys },
+        };
+        setFormData(updatedFormDataWithNewItems);
+        const introId = formData?.profile?.intro?._id;
+        const itemsWithIntroFlag = keys.map((item) => {
           const itemId = item?._id || item?.id;
           return {
             ...item,
@@ -121,8 +127,8 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
           };
         });
         setMediaItems(itemsWithIntroFlag);
-        successToast("Highlights updated successfully");
       }
+      successToast("Highlights updated successfully");
     } catch (error) {
       clearInterval(intervalId);
       setUploadProgress(0);
@@ -198,9 +204,12 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
       // Get IDs of deleted items
       const deletedIds = itemsToDelete.map((item) => item?._id || item?.id);
 
-      // Remove deleted IDs from highlights array
+      // Remove deleted items from highlights array (now contains full objects)
       const updatedHighlights = (formData?.profile?.highlights || []).filter(
-        (highlightId) => !deletedIds.includes(highlightId)
+        (highlight) => {
+          const highlightId = highlight?._id || highlight?.id || highlight;
+          return !deletedIds.includes(highlightId);
+        }
       );
 
       // Update profile with new highlights array
@@ -217,14 +226,14 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
       const refreshed = result.payload;
       if (refreshed) {
         setFormData(refreshed);
-        // Refresh mediaItems with updated intro flag
-        const highlights = refreshed?.profile?.highlights || [];
-        const newIntroId = refreshed?.profile?.intro?._id;
-        const itemsWithIntroFlag = highlights.map((item) => {
+      } else {
+        setFormData(updatedFormData);
+        const introId = formData?.profile?.intro?._id;
+        const itemsWithIntroFlag = updatedHighlights.map((item) => {
           const itemId = item?._id || item?.id;
           return {
             ...item,
-            isIntro: itemId === newIntroId,
+            isIntro: itemId === introId,
           };
         });
         setMediaItems(itemsWithIntroFlag);
@@ -256,9 +265,12 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
       // Delete attachment from backend
       await dispatch(deleteAttachment(itemId)).unwrap();
 
-      // Remove ID from highlights array
+      // Remove item from highlights array (now contains full objects)
       const updatedHighlights = (formData?.profile?.highlights || []).filter(
-        (highlightId) => highlightId !== itemId
+        (highlight) => {
+          const highlightId = highlight?._id || highlight?.id || highlight;
+          return highlightId !== itemId;
+        }
       );
 
       // Update profile with new highlights array
@@ -275,14 +287,14 @@ const TeachingHighlightsTab = ({ formData, setFormData }) => {
       const refreshed = result.payload;
       if (refreshed) {
         setFormData(refreshed);
-        // Refresh mediaItems with updated intro flag
-        const highlights = refreshed?.profile?.highlights || [];
-        const newIntroId = refreshed?.profile?.intro?._id;
-        const itemsWithIntroFlag = highlights.map((item) => {
+      } else {
+        setFormData(updatedFormData);
+        const introId = formData?.profile?.intro?._id;
+        const itemsWithIntroFlag = updatedHighlights.map((item) => {
           const itemId = item?._id || item?.id;
           return {
             ...item,
-            isIntro: itemId === newIntroId,
+            isIntro: itemId === introId,
           };
         });
         setMediaItems(itemsWithIntroFlag);

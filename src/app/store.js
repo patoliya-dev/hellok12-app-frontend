@@ -11,7 +11,9 @@ import paymentReducer from '../reducers/payments/paymentsSlice';
 import teachersReducer from '../reducers/teachers/teachersSlice';
 import stripeReducer from "../reducers/stripe/stripeSlice";
 import messagesReducer from "../reducers/messages/messageSlice";
-// In reducer:
+import schoolReducer from "../reducers/school/schoolSlice";
+import invitationReducer from "../reducers/invitations/invitationSlice";
+import schoolInvitationsReducer from "../reducers/schoolInvitations/schoolInvitationsSlice"
 
 const store = configureStore({
   reducer: {
@@ -28,6 +30,9 @@ const store = configureStore({
     teachers: teachersReducer,
     stripe: stripeReducer,
     messages: messagesReducer,
+    school: schoolReducer,
+    invitations: invitationReducer,
+    schoolInvitations: schoolInvitationsReducer
   },
 });
 
