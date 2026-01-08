@@ -6,17 +6,18 @@ import { useNavigate } from "react-router-dom";
 import { formatDateForDateInput } from "../../../../utils/formatters";
 import { MapPin } from "lucide-react";
 
-const CourseDetails = ({ course, lessonCount }) => {
+const CourseDetails = ({ course, lessonCount, role }) => {
   const navigate = useNavigate();
   const getCourseModeBadge = (mode) => {
     const isInPerson = mode === "in-person";
     const isOnline = mode === "online";
     return (
       <span
-        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${isInPerson
+        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+          isInPerson
             ? "bg-blue-100 text-blue-800"
             : "bg-green-100 text-green-800"
-          }`}
+        }`}
       >
         {isOnline ? (
           <Image
@@ -39,7 +40,7 @@ const CourseDetails = ({ course, lessonCount }) => {
   );
 
   const handleEditCourse = () => {
-    navigate(`/teacher/edit-course/${course?._id}`);
+    navigate(`/${role}/edit-course/${course?._id}`);
   };
 
   return (
@@ -77,7 +78,9 @@ const CourseDetails = ({ course, lessonCount }) => {
               <h4 className="text-h4 font-bold text-brand-gray-800">
                 {index === 0 ? lessonCount : "$" + course?.price}
               </h4>
-              <p className="text-xs text-brand-gray-500">{index === 1 ? 'Course ' + item : item}</p>
+              <p className="text-xs text-brand-gray-500">
+                {index === 1 ? "Course " + item : item}
+              </p>
             </div>
           ))}
         </div>
@@ -85,8 +88,9 @@ const CourseDetails = ({ course, lessonCount }) => {
           {["Max Capacity", "Start Date", "End Date"].map((item, index) => (
             <div
               key={index}
-              className={`${index === 0 ? "pr-6 xl:pr-10 border-r border-[#CECECE]" : ""
-                }`}
+              className={`${
+                index === 0 ? "pr-6 xl:pr-10 border-r border-[#CECECE]" : ""
+              }`}
             >
               <h4 className="text-sm font-medium text-brand-gray-800">
                 {item}
@@ -95,8 +99,8 @@ const CourseDetails = ({ course, lessonCount }) => {
                 {index === 0
                   ? course?.studentCapacity + " students"
                   : index === 1
-                    ? formatDateForDateInput(course?.startDate)
-                    : formatDateForDateInput(course?.endDate)}
+                  ? formatDateForDateInput(course?.startDate)
+                  : formatDateForDateInput(course?.endDate)}
               </p>
             </div>
           ))}

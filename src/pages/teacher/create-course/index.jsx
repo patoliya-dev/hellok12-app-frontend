@@ -35,8 +35,8 @@ import {
   buildPartialUpdate,
   mapLessonFromApi,
   mapLessonToCreatePayload,
-} from "../../teacher/create-course/mappers/lessons";
-import { buildLessonMutations } from "../../teacher/create-course/mappers/diff";
+} from "./mappers/lessons";
+import { buildLessonMutations } from "./mappers/diff";
 import {
   applyLessonApiErrorsToForm,
   applyUpdateApiErrorsToForm,
@@ -82,6 +82,7 @@ const CreateCourse = () => {
       {
         title: "",
         description: "",
+        assignedTeacher: "",
         isTrialAvailable: false,
         trialCapacity: 1,
         schedule: {
@@ -192,7 +193,8 @@ const CreateCourse = () => {
         !formData?.introImageRef?.url
       )
         newErrors.introImage = "Intro image is required";
-      if (!formData?.languageCode) newErrors.languageCode = "Language is required";
+      if (!formData?.languageCode)
+        newErrors.languageCode = "Language is required";
       if (
         formData?.lessonType === "group" &&
         Number(formData?.studentCapacity) < 1
@@ -200,15 +202,17 @@ const CreateCourse = () => {
         newErrors.studentCapacity = "Capacity must be at least 1";
       if (!formData?.startDate) newErrors.startDate = "Start date is required";
       if (!formData?.mode) newErrors.mode = "Lesson mode is required";
-      if (!formData?.lessonType) newErrors.lessonType = "Lesson type is required";
+      if (!formData?.lessonType)
+        newErrors.lessonType = "Lesson type is required";
       if (!formData?.price) newErrors.price = "Price is required";
-      if (!formData?.ageGroups?.length) newErrors.ageGroups = "Age Groups are required";
-      const isInpersonGroup = formData.mode === 'in-person' && formData.lessonType === 'group';
+      if (!formData?.ageGroups?.length)
+        newErrors.ageGroups = "Age Groups are required";
+      const isInpersonGroup =
+        formData.mode === "in-person" && formData.lessonType === "group";
       if (isInpersonGroup && !formData?.address?.line1) {
         newErrors.address ??= {};
         newErrors.address.line1 = "Address Line 1 is required";
       }
-      
     }
 
     if (step === 2) {
@@ -304,14 +308,37 @@ const CreateCourse = () => {
           })
         ).unwrap();
 
-        setFormData((prev) => ({
-          ...prev,
+        // Compose the correct path
+        const targetPath =
+          lessonIndex !== null ? `lessons[${lessonIndex}].${field}` : field;
+        const updatedFormData = {
           introImage: file.name,
           introImageRef: {
             attachmentId: finalized?._id,
             url: finalized?.url || null,
           },
-        }));
+        };
+        setFormData((prev) => {
+          let updated = setIn(
+            { ...prev, ...updatedFormData },
+            targetPath,
+            value
+          );
+
+          // If updating lesson-level assignedTeacher, also update course-level teachers
+          // Collect all unique assignedTeacher values from all lessons
+          if (lessonIndex !== null && field === "assignedTeacher") {
+            const allTeacherIds = new Set();
+            (updated.lessons || []).forEach((lesson) => {
+              if (lesson.assignedTeacher) {
+                allTeacherIds.add(lesson.assignedTeacher);
+              }
+            });
+            updated = { ...updated, teachers: Array.from(allTeacherIds) };
+          }
+
+          return updated;
+        });
         setErrors((prev) => ({ ...prev, introImage: null }));
         setIntroUpload({ loading: false, progress: 100, error: null });
       } catch (e) {
@@ -371,7 +398,8 @@ const CreateCourse = () => {
   const handleSubmit = async () => {
     if (!validateStep(currentStep)) return;
 
-    const isInPersonGroup = formData.mode === "in-person" && formData.lessonType === "group";
+    const isInPersonGroup =
+      formData.mode === "in-person" && formData.lessonType === "group";
 
     // Build course payload (align to BE contracts)
     const coursePayload = {
@@ -425,7 +453,6 @@ const CreateCourse = () => {
       }
 
       const targetCourseId = savedCourse?._id || existingCourseId;
-
 
       // Claim the intro image to the created/updated course (if present)
       if (targetCourseId && formData?.introImageRef?.attachmentId) {
@@ -663,8 +690,9 @@ const CreateCourse = () => {
           )}
 
           <div
-            className={`flex mt-8 pt-6 border-t border-border ${currentStep < steps.length ? "justify-end" : "justify-between"
-              }`}
+            className={`flex mt-8 pt-6 border-t border-border ${
+              currentStep < steps.length ? "justify-end" : "justify-between"
+            }`}
           >
             {currentStep === steps.length && (
               <Button

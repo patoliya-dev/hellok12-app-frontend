@@ -2,10 +2,13 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Icon from "components/AppIcon";
 import Pagination from "components/ui/Pagination";
-import ActionMenu from "../../../../pages/teacher/manage-courses/components/ActionMenu";
+import ActionMenu from "../../manage-courses/components/ActionMenu";
 import { capitalize, errorToast, successToast } from "../../../../utils/utils";
 import DeleteModal from "components/ui/DeleteModal";
-import { updateLesson as updateLessonThunk, removeLesson as removeLessonThunk } from "reducers/lessons/lessonThunks";
+import {
+  updateLesson as updateLessonThunk,
+  removeLesson as removeLessonThunk,
+} from "reducers/lessons/lessonThunks";
 import { updateLocalLessons } from "reducers/courses/courseSlice";
 import SmartMenuPortal from "components/ui/SmartMenuPortal";
 
@@ -76,8 +79,9 @@ const LessonsTable = ({
           <Icon name="Clock" size={16} className="text-warning" />
         )}
         <span
-          className={`text-xs font-medium ${isActive ? "text-green-600" : "text-warning"
-            }`}
+          className={`text-xs font-medium ${
+            isActive ? "text-green-600" : "text-warning"
+          }`}
         >
           {capitalize(status)}
         </span>
@@ -110,14 +114,23 @@ const LessonsTable = ({
 
   const handleActiveLesson = async (lesson) => {
     await dispatch(
-      updateLessonThunk({ lessonId: lesson?._id, patch: { status: lesson?.status === 'active' ? 'draft' : 'active' } })
+      updateLessonThunk({
+        lessonId: lesson?._id,
+        patch: { status: lesson?.status === "active" ? "draft" : "active" },
+      })
     ).unwrap();
     const next = data.map((x) =>
-      x._id === lesson._id ? { ...x, status: lesson.status === 'active' ? 'draft' : 'active' } : x
+      x._id === lesson._id
+        ? { ...x, status: lesson.status === "active" ? "draft" : "active" }
+        : x
     );
     dispatch(updateLocalLessons(next));
-    successToast(`Lesson ${lesson?.status === 'active' ? 'moved to draft' : 'activated'} successfully!`);
-  }
+    successToast(
+      `Lesson ${
+        lesson?.status === "active" ? "moved to draft" : "activated"
+      } successfully!`
+    );
+  };
 
   return (
     <section className="bg-card border border-border rounded-lg overflow-hidden">
@@ -216,10 +229,21 @@ const LessonsTable = ({
           </tbody>
         </table>
         {openMenuId && menuAnchor && (
-          <SmartMenuPortal anchorRect={menuAnchor} anchorEl={menuAnchorEl} onClose={() => { setOpenMenuId(null); setMenuAnchor(null); setMenuAnchorEl(null); }}>
+          <SmartMenuPortal
+            anchorRect={menuAnchor}
+            anchorEl={menuAnchorEl}
+            onClose={() => {
+              setOpenMenuId(null);
+              setMenuAnchor(null);
+              setMenuAnchorEl(null);
+            }}
+          >
             <ActionMenu
-              data={data.find(d => d._id === openMenuId)}
-              setOpenMenuId={() => { setOpenMenuId(null); setMenuAnchor(null); }}
+              data={data.find((d) => d._id === openMenuId)}
+              setOpenMenuId={() => {
+                setOpenMenuId(null);
+                setMenuAnchor(null);
+              }}
               onEdit={onEdit}
               onDuplicate={onDuplicate}
               onDelete={() => {
@@ -313,7 +337,9 @@ const LessonsTable = ({
           type="lesson"
           onConfirm={async () => {
             try {
-              const res = await dispatch(removeLessonThunk(deleteLessonId)).unwrap();
+              const res = await dispatch(
+                removeLessonThunk(deleteLessonId)
+              ).unwrap();
               const removedId = res?.lessonId || res?.removed?._id;
               const next = data.filter((x) => x._id !== removedId);
               dispatch(updateLocalLessons(next));

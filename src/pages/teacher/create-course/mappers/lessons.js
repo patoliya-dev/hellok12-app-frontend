@@ -8,6 +8,7 @@ export function mapLessonFromApi(l) {
     _id: l._id,
     title: l.title || "",
     description: l.description || "",
+    assignedTeacher: l.teacherId || "",
     isTrialAvailable: !!l.isTrialAvailable,
     trialCapacity: l.trialCapacity ?? "",
     order: typeof l.order === "number" ? l.order : undefined,
@@ -22,9 +23,12 @@ export function mapLessonFromApi(l) {
 // Map UI -> BE (create)
 export function mapLessonToCreatePayload(l) {
   // lesson.schedule.date expected already as "YYYY-MM-DD" string from Input[type=date]
-  const date = typeof l?.schedule?.date === 'string'
-    ? l.schedule.date
-    : (l.schedule?.date ? formatDateForDateInput(l.schedule.date) : undefined);
+  const date =
+    typeof l?.schedule?.date === "string"
+      ? l.schedule.date
+      : l.schedule?.date
+      ? formatDateForDateInput(l.schedule.date)
+      : undefined;
 
   const time = normalizeToHHMM24(l.schedule?.time) || l.schedule?.time;
   return {
@@ -40,6 +44,7 @@ export function mapLessonToCreatePayload(l) {
       time: time,
       duration: Number(l.schedule?.duration || 60),
     },
+    teacherId: l.assignedTeacher || undefined,
   };
 }
 
@@ -60,8 +65,12 @@ export function buildPartialUpdate(oldL, newL) {
     patch.isTrialAvailable = !!newL.isTrialAvailable;
   }
 
-  const newCap = newL.isTrialAvailable ? Number(newL.trialCapacity || 0) : undefined;
-  const oldCap = oldL.isTrialAvailable ? Number(oldL.trialCapacity || 0) : undefined;
+  const newCap = newL.isTrialAvailable
+    ? Number(newL.trialCapacity || 0)
+    : undefined;
+  const oldCap = oldL.isTrialAvailable
+    ? Number(oldL.trialCapacity || 0)
+    : undefined;
   if (newCap !== oldCap) {
     patch.trialCapacity = newCap;
   }
