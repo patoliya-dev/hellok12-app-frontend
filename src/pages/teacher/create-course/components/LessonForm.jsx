@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
 import { Checkbox } from "components/ui/Checkbox";
@@ -7,6 +7,8 @@ import DeleteModal from "components/ui/DeleteModal";
 import { successToast } from "../../../../utils/utils";
 import WeeklySchedule from "../../../../components/ui/WeeklySchedule";
 import DurationRange from "components/ui/DurationRange";
+import { schoolService } from "../../../../services/school/school.service";
+import Select from "components/ui/Select";
 
 const LessonFormInstance = ({
   index,
@@ -17,6 +19,7 @@ const LessonFormInstance = ({
   onAddLesson,
   onDeleteLesson,
   mode,
+  teachers,
 }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   return (
@@ -32,8 +35,7 @@ const LessonFormInstance = ({
             className="text-error cursor-pointer"
             onClick={() => {
               const hasContent =
-                formData?.title?.trim() &&
-                formData?.description?.trim();
+                formData?.title?.trim() && formData?.description?.trim();
 
               if (mode === "edit" && hasContent) {
                 setShowDeleteModal(true);
@@ -45,7 +47,7 @@ const LessonFormInstance = ({
         )}
       </div>
       <div className="px-10">
-        <div className="mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <Input
             label="Lesson Title"
             type="text"
@@ -55,21 +57,28 @@ const LessonFormInstance = ({
             error={errors?.title}
             onChange={(e) => handleInputChange("title", e?.target?.value)}
           />
+          <Select
+            label="Assign Teacher"
+            placeholder="Select a teacher"
+            options={teachers}
+            value={formData?.assignedTeacher || ""}
+            onChange={(value) => handleInputChange("assignedTeacher", value)}
+            error={errors?.assignedTeacher}
+          />
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium text-foreground mb-2">
             Description <span className="text-error">*</span>
           </label>
           <textarea
-            className={`w-full px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50 ${errors?.description &&
+            className={`w-full px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50 ${
+              errors?.description &&
               "border-destructive focus-visible:ring-destructive"
-              }`}
+            }`}
             placeholder="Describe what students will learn in this lesson"
             value={formData?.description || ""}
             required
-            onChange={(e) =>
-              handleInputChange("description", e.target.value)
-            }
+            onChange={(e) => handleInputChange("description", e.target.value)}
           />
 
           {errors?.description && (
@@ -77,17 +86,17 @@ const LessonFormInstance = ({
           )}
         </div>
 
-        <WeeklySchedule formData={formData}
-          handleInputChange={(field, value) =>
-            handleInputChange(field, value)
-          }
+        <WeeklySchedule
+          formData={formData}
+          handleInputChange={(field, value) => handleInputChange(field, value)}
           errors={errors?.schedule || {}}
+          teacherId={formData?.assignedTeacher}
+          onTeacherRequired={() => errorToast("Please select a teacher first")}
         />
 
-        <DurationRange formData={formData}
-          handleInputChange={(field, value) =>
-            handleInputChange(field, value)
-          }
+        <DurationRange
+          formData={formData}
+          handleInputChange={(field, value) => handleInputChange(field, value)}
           error={errors?.schedule?.duration}
         />
 
@@ -158,7 +167,31 @@ export default function LessonForm({
   removeLesson,
   mode,
 }) {
-  return (formData?.lessons.map((lesson, index) => (
+  const [teachers, setTeachers] = useState([]);
+
+  // Fetch teachers from API on mount
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const response = await schoolService.getTeachers();
+        // Map API response to { value, label } format for Select component
+        const teacherOptions = (response.teachers || []).map((teacher) => ({
+          value: teacher._id || teacher.id,
+          label:
+            teacher.name ||
+            `${teacher.firstName || ""} ${teacher.lastName || ""}`.trim(),
+        }));
+        setTeachers(teacherOptions);
+      } catch (error) {
+        console.error("Failed to fetch teachers:", error);
+        setTeachers([]);
+      }
+    };
+
+    fetchTeachers();
+  }, []);
+
+  return formData?.lessons.map((lesson, index) => (
     <div key={index}>
       <LessonFormInstance
         index={index + 1}
@@ -170,10 +203,10 @@ export default function LessonForm({
         onAddLesson={() => addLesson(index)}
         onDeleteLesson={() => removeLesson(index)}
         showAddButton={index === formData.lessons.length - 1}
+        teachers={teachers}
         mode={mode}
       />
       {index !== formData?.lessons.length - 1 && <hr className="!my-8" />}
     </div>
-  ))
-  );
+  ));
 }

@@ -10,29 +10,44 @@ import DateRangePicker from "components/ui/DateRangePicker";
 import { itemsPerPage } from "./data";
 import LessonsTable from "./components/LessonTable";
 import { fetchCourseWithLessons as fetchCourseWithLessonsThunk } from "../../../reducers/courses/courseThunks";
-import { duplicateLesson as duplicateLessonThunk, removeLesson as removeLessonThunk } from "../../../reducers/lessons/lessonThunks";
-import PageLoaderOverlay from 'components/ui/PageLoaderOverlay';
-import { selectPageLoading } from '../../../reducers/ui/pageLoaderSlice';
-import { resetCourseDetail, updateLocalLessons } from "reducers/courses/courseSlice";
+import {
+  duplicateLesson as duplicateLessonThunk,
+  removeLesson as removeLessonThunk,
+} from "../../../reducers/lessons/lessonThunks";
+import PageLoaderOverlay from "components/ui/PageLoaderOverlay";
+import { selectPageLoading } from "../../../reducers/ui/pageLoaderSlice";
+import {
+  resetCourseDetail,
+  updateLocalLessons,
+} from "reducers/courses/courseSlice";
 import { errorToast, successToast } from "../../../utils/utils";
+import { selectAuthUser } from "reducers/auth/authSelectors";
 
 const LessonsList = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const authUser = useSelector(selectAuthUser);
+  const role = authUser.role;
   const { courseId } = useParams();
 
   // Redux state (centralized, used instead of local lessons list)
-  const { course = {}, items: lessons = [], pagination, loading } = useSelector(
-    (s) => s.courseDetail
-  );
+  const {
+    course = {},
+    items: lessons = [],
+    pagination,
+    loading,
+  } = useSelector((s) => s.courseDetail);
   const pageLoading = useSelector(selectPageLoading);
 
   // local UI states
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({ startDate: "", endDate: "" });
-  const [sortConfig, setSortConfig] = useState({ key: "title", direction: "desc" });
+  const [sortConfig, setSortConfig] = useState({
+    key: "title",
+    direction: "desc",
+  });
   const [breadCrumbData, setBreadCrumbData] = useState([
-    { label: "Manage Courses", path: "/teacher/manage-courses" },
+    { label: "Manage Courses", path: `/${role}/manage-courses` },
     { label: "Lessons List", path: "#", current: true },
   ]);
 
@@ -50,7 +65,9 @@ const LessonsList = () => {
         ...opts,
       };
 
-      await dispatch(fetchCourseWithLessonsThunk({ id: courseId, params })).unwrap();
+      await dispatch(
+        fetchCourseWithLessonsThunk({ id: courseId, params })
+      ).unwrap();
     },
     [dispatch, courseId, filters, searchTerm, sortConfig, pagination]
   );
@@ -67,7 +84,7 @@ const LessonsList = () => {
   useEffect(() => {
     if (course?.title) {
       setBreadCrumbData([
-        { label: "Manage Courses", path: "/teacher/manage-courses" },
+        { label: "Manage Courses", path: `/${role}/manage-courses` },
         { label: course.title, path: "#", current: true },
       ]);
     }
@@ -76,7 +93,7 @@ const LessonsList = () => {
   // Filters / search: refetch on change
   useEffect(() => {
     fetchLessons(1);
-  }, [filters, searchTerm, sortConfig])
+  }, [filters, searchTerm, sortConfig]);
 
   const handleFiltersChange = (newFilters) => setFilters(newFilters);
 
@@ -102,7 +119,9 @@ const LessonsList = () => {
 
   const handleDuplicateLesson = async (lesson) => {
     try {
-      const duplicated = await dispatch(duplicateLessonThunk(lesson._id)).unwrap();
+      const duplicated = await dispatch(
+        duplicateLessonThunk(lesson._id)
+      ).unwrap();
       // prepend into courseDetail.items for instant UI update
       dispatch(updateLocalLessons([duplicated, ...lessons]));
       successToast("Lesson duplicated successfully!");
@@ -111,9 +130,9 @@ const LessonsList = () => {
     }
   };
 
-
-  const handleCreateLesson = () => navigate(`/teacher/create-lesson/${courseId}`);
-  const handleEditLesson = () => navigate(`/teacher/edit-lesson/${courseId}`);
+  const handleCreateLesson = () =>
+    navigate(`/${role}/create-lesson/${courseId}`);
+  const handleEditLesson = () => navigate(`/${role}/edit-lesson/${courseId}`);
 
   return (
     <div className="min-h-screen bg-background">
@@ -131,7 +150,11 @@ const LessonsList = () => {
         </section>
 
         {/* Course summary */}
-        <CourseDetails course={course} lessonCount={lessons?.length} />
+        <CourseDetails
+          role={role}
+          course={course}
+          lessonCount={lessons?.length}
+        />
 
         {/* Search + Filters */}
         <section className="my-8">

@@ -22,6 +22,7 @@ import {
   selectUnreadCount,
   fetchUnreadCount,
 } from "../../reducers/messages/messageSlice";
+import { getManageCoursesRoute } from "../../utils/courseRoutes";
 
 const arraysEqual = (a = [], b = []) =>
   a.length === b.length && a.every((v, i) => v === b[i]);
@@ -32,21 +33,24 @@ const RoleBasedHeader = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // Derive role synchronously (prevents "student -> teacher/school" flicker)
+  const userRole = authUser?.role || "guest";
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userRole, setUserRole] = useState("student");
   const [showProfile, setShowProfile] = useState(false);
-  const [notifications, setNotifications] = useState([]);
   const [hoveredPath, setHoveredPath] = useState(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
 
-  // Desktop "More" split (stable measurement)
-  const desktopCenterRef = useRef(null); // IMPORTANT: stable width reference
-  const navWrapRef = useRef(null); // width reference for available space
-  const navMeasureRefs = useRef(new Map()); // path -> element (MEASURE ROW ONLY)
-  const moreBtnMeasureRef = useRef(null); // measure "More" button width
+  // Desktop "More" split measurement
+  const desktopCenterRef = useRef(null);
+  const navWrapRef = useRef(null);
+  const navMeasureRefs = useRef(new Map()); // path -> element
+  const moreBtnMeasureRef = useRef(null);
+
   const [visiblePaths, setVisiblePaths] = useState([]);
   const [hiddenPaths, setHiddenPaths] = useState([]);
-  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [hasMeasured, setHasMeasured] = useState(false);
 
   // Messages unread
   const messageUnreadCount = useSelector(selectUnreadCount);
@@ -55,11 +59,26 @@ const RoleBasedHeader = () => {
   const notificationRef = useRef(null);
   const moreRef = useRef(null);
 
+  // Teacher classification (keep for future; but your course logic uses schoolId)
   const teacherType =
     (authUser?.role === "teacher" && authUser?.profile?.employmentType) ||
     "independent";
 
-  // Close overlays on route change
+  const isSchoolTeacher =
+    authUser?.role === "teacher" && Boolean(authUser?.schoolId);
+
+  // Notifications derived (avoid state churn)
+  const notifications = useMemo(
+    () => getNotificationByRole(userRole),
+    [userRole]
+  );
+
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => n.unread).length,
+    [notifications]
+  );
+
+  // Close overlays on route change (OK; this should not affect nav measurement)
   useEffect(() => {
     setIsMenuOpen(false);
     setIsNotificationOpen(false);
@@ -80,22 +99,19 @@ const RoleBasedHeader = () => {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  useEffect(() => {
-    if (authUser) setUserRole(authUser?.role);
-    else setUserRole("guest");
-  }, [authUser]);
-
-  useEffect(() => {
-    setNotifications(getNotificationByRole(userRole));
-  }, [userRole]);
-
+  // Unread count fetch (only when not school)
   useEffect(() => {
     if (authUser && userRole !== "school") {
       dispatch(fetchUnreadCount());
     }
-  }, [authUser, userRole, dispatch]);
+  }, [authUser?._id, userRole, dispatch]); // use stable identity if available
 
-  const getNavigationItems = () => {
+  const getNavigationItems = useCallback(() => {
+    const manageCoursesConfig =
+      userRole === "teacher" || userRole === "school"
+        ? getManageCoursesRoute(userRole)
+        : null;
+
     const baseItems = {
       student: [
         {
@@ -182,11 +198,7 @@ const RoleBasedHeader = () => {
           path: "/teacher/manage-schedule",
           icon: "CalendarClock",
         },
-        {
-          label: "Messages",
-          path: "/teacher/messages",
-          icon: "MessageCircle",
-        },
+        { label: "Messages", path: "/teacher/messages", icon: "MessageCircle" },
       ],
       school: [
         {
@@ -209,64 +221,75 @@ const RoleBasedHeader = () => {
           path: "/school/manage-students",
           icon: "GraduationCap",
         },
-        {
-          label: "Manage Courses",
-          path: "/school/manage-courses",
-          iconComponent: ManageCourseIcon,
-          children: [],
-        },
-        {
-          label: "Earnings",
-          path: "/school/earnings",
-          icon: "DollarSign",
-        },
       ],
       guest: [{ label: "Login", path: "/login", icon: "LogIn" }],
     };
 
-    const independentTeacherTabs = [
-      {
-        label: "Manage Courses",
-        path: "/teacher/manage-courses",
-        iconComponent: ManageCourseIcon,
-        children: [
-          "/teacher/create-course",
-          "/teacher/lessons",
-          "/teacher/edit-course",
-          "/teacher/edit-lesson",
-          "/teacher/create-lesson",
-        ],
-      },
-      { label: "Earnings", path: "/teacher/earnings", icon: "DollarSign" },
-    ];
-
-    const schoolTeacherTabs = [
-      { label: "Progress", path: "/teacher/progress", icon: "TrendingUp" },
-    ];
-
     if (userRole === "teacher") {
-      return teacherType === "independent"
-        ? [...baseItems.teacherBase, ...independentTeacherTabs]
-        : [...baseItems.teacherBase, ...schoolTeacherTabs];
+      return [
+        ...baseItems.teacherBase,
+        ...(!isSchoolTeacher && manageCoursesConfig
+          ? [
+              {
+                label: "Manage Courses",
+                path: manageCoursesConfig.base,
+                iconComponent: ManageCourseIcon,
+                children: manageCoursesConfig.children,
+              },
+              {
+                label: "Earnings",
+                path: "/teacher/earnings",
+                icon: "DollarSign",
+              },
+            ]
+          : []),
+        // we will enable this line when we implement game feature
+        // [{ label: "Progress", path: "/teacher/progress", icon: "TrendingUp" }]),
+      ];
+    }
+
+    if (userRole === "school") {
+      return [
+        ...baseItems.school,
+        ...(manageCoursesConfig
+          ? [
+              {
+                label: "Manage Courses",
+                path: manageCoursesConfig.base,
+                iconComponent: ManageCourseIcon,
+                children: manageCoursesConfig.children,
+              },
+            ]
+          : []),
+        { label: "Earnings", path: "/school/earnings", icon: "DollarSign" },
+      ];
     }
 
     return baseItems[userRole] || baseItems.guest;
-  };
+  }, [userRole, isSchoolTeacher]);
 
   const navigationItems = useMemo(
     () => getNavigationItems(),
-    [userRole, teacherType]
+    [getNavigationItems]
   );
 
-  // Reset computed split when tabs change
+  // Keep split stable across nav changes (NO clearing to [])
   useEffect(() => {
-    navMeasureRefs.current = new Map();
-    setVisiblePaths([]);
-    setHiddenPaths([]);
-    setIsMoreOpen(false);
-  }, [navigationItems]);
+    // Mark "needs re-measure", but keep last visible/hidden to avoid flicker.
+    setHasMeasured(false);
 
-  const unreadCount = notifications.filter((n) => n.unread).length;
+    // Prune old paths that no longer exist in new nav items
+    const validPaths = new Set(navigationItems.map((x) => x.path));
+
+    setVisiblePaths((prev) => prev.filter((p) => validPaths.has(p)));
+    setHiddenPaths((prev) => prev.filter((p) => validPaths.has(p)));
+
+    // Also close "More" if state becomes invalid
+    setIsMoreOpen(false);
+
+    // Reset measure refs; they will be re-registered by hidden measurement row
+    navMeasureRefs.current = new Map();
+  }, [navigationItems]);
 
   const renderNavLabel = useCallback(
     (item) => {
@@ -313,6 +336,8 @@ const RoleBasedHeader = () => {
   }, [dispatch, navigate]);
 
   const handleNotificationClick = (notificationId) => {
+    // Keep your behavior; just avoid extra state changes here.
+    // eslint-disable-next-line no-console
     console.log("Notification clicked:", notificationId);
   };
 
@@ -336,22 +361,25 @@ const RoleBasedHeader = () => {
       if (
         profileMenuRef.current &&
         !profileMenuRef.current.contains(event.target)
-      )
+      ) {
         setShowProfile(false);
+      }
       if (
         notificationRef.current &&
         !notificationRef.current.contains(event.target)
-      )
+      ) {
         setIsNotificationOpen(false);
-      if (moreRef.current && !moreRef.current.contains(event.target))
+      }
+      if (moreRef.current && !moreRef.current.contains(event.target)) {
         setIsMoreOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Register refs ONLY from the measurement row (stable widths)
+  // Register refs ONLY from the measurement row
   const registerMeasureRef = (path) => (el) => {
     if (!el) navMeasureRefs.current.delete(path);
     else navMeasureRefs.current.set(path, el);
@@ -377,7 +405,7 @@ const RoleBasedHeader = () => {
       return { path: it.path, w };
     });
 
-    // measurement not ready
+    // measurement not ready yet: don't mutate state (prevents jitter)
     if (widths.some((x) => x.w === 0)) return;
 
     const total = widths.reduce((s, x) => s + x.w, 0);
@@ -416,17 +444,17 @@ const RoleBasedHeader = () => {
     );
 
     // IMPORTANT: force-hide More dropdown when no hidden items
-    if (nextHidden.length === 0) {
-      setIsMoreOpen(false);
-    }
+    if (nextHidden.length === 0) setIsMoreOpen(false);
+
+    setHasMeasured(true);
   }, [navigationItems]);
 
-  // Compute after layout (more reliable for resize / breakpoint changes)
+  // Layout compute: run after layout, before paint, when possible
   useLayoutEffect(() => {
     computeVisibleHidden();
   }, [computeVisibleHidden]);
 
-  // Observe center container + window resize (fixes "More not hiding" on large screens)
+  // Observe resize
   useEffect(() => {
     const el = desktopCenterRef.current;
     if (!el) return;
@@ -442,17 +470,36 @@ const RoleBasedHeader = () => {
     };
   }, [computeVisibleHidden]);
 
+  // Visible and hidden items:
+  // - If measurement is ready: use visiblePaths/hiddenPaths
+  // - If measurement isn't ready: keep previous split if possible; otherwise show all
   const visibleItems = useMemo(() => {
-    if (visiblePaths.length === 0 && hiddenPaths.length === 0)
+    if (!hasMeasured) {
+      // Prefer previously computed visiblePaths to prevent “show all then split” flicker
+      if (visiblePaths.length > 0) {
+        const set = new Set(visiblePaths);
+        const filtered = navigationItems.filter((it) => set.has(it.path));
+        if (filtered.length > 0) return filtered;
+      }
       return navigationItems; // initial fallback
+    }
+
     const set = new Set(visiblePaths);
     return navigationItems.filter((it) => set.has(it.path));
-  }, [navigationItems, visiblePaths, hiddenPaths]);
+  }, [navigationItems, visiblePaths, hasMeasured]);
 
   const hiddenItems = useMemo(() => {
+    if (!hasMeasured) {
+      if (hiddenPaths.length > 0) {
+        const set = new Set(hiddenPaths);
+        return navigationItems.filter((it) => set.has(it.path));
+      }
+      return [];
+    }
+
     const set = new Set(hiddenPaths);
     return navigationItems.filter((it) => set.has(it.path));
-  }, [navigationItems, hiddenPaths]);
+  }, [navigationItems, hiddenPaths, hasMeasured]);
 
   const isHiddenActive = hiddenItems.some((it) => isActivePath(it));
 

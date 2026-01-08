@@ -4,9 +4,9 @@ export const schoolService = {
   /**
    * Get all teachers for a school
    */
-  getTeachers: async (params = {}) => {
+  getTeachers: async () => {
     try {
-      const { data } = await api.get(`/school/teachers`, { params });
+      const { data } = await api.get(`/school/teachers`);
       return data?.data || data;
     } catch (error) {
       console.error("Failed to fetch teachers:", error);

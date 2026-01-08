@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+
 import TeacherDashboard from "../pages/teacher/dashboard";
 import NotFound from "../pages/NotFound";
 import StudentsFeedback from "../pages/teacher/students-feedback";
@@ -8,11 +9,15 @@ import ManageSchedule from "../pages/teacher/manage-schedule";
 import Messages from "../pages/student-parent/messages";
 import Progress from "../pages/teacher/progress";
 import ProfileAccountSettings from "../pages/teacher/profile-settings";
+import Earnings from "../pages/teacher/earnings";
+import BillingDashboard from "../pages/billing/BillingDashboard";
+
 import ManageCourses from "../pages/teacher/manage-courses";
 import CreateCourse from "../pages/teacher/create-course";
 import LessonsList from "../pages/teacher/lessons-list";
-import Earnings from "../pages/teacher/earnings";
-import BillingDashboard from "../pages/billing/BillingDashboard";
+
+import ProtectedRoute from "../components/ProtectedRoute";
+import { canManageCourses } from "../utils/authz";
 
 const TeacherRoutes = () => {
   return (
@@ -26,15 +31,25 @@ const TeacherRoutes = () => {
       <Route path="/progress" element={<Progress />} />
       <Route path="/profile-settings" element={<ProfileAccountSettings />} />
       <Route path="/billing" element={<BillingDashboard />} />
-      <Route path="/manage-courses" element={<ManageCourses />} />
-      <Route path="/create-course" element={<CreateCourse />} />
-      <Route path="/edit-course/:courseId" element={<CreateCourse />} />
-      <Route path="/edit-lesson/:courseId" element={<CreateCourse />} />
-      <Route path="/create-lesson/:courseId" element={<CreateCourse />} />
-      <Route path="/lessons/:courseId" element={<LessonsList />} />
       <Route path="/earnings" element={<Earnings />} />
 
-      {/* Catch-all */}
+      {/* Course Management: ONLY independent teacher allowed under /teacher */}
+      <Route
+        element={
+          <ProtectedRoute
+            allow={canManageCourses}
+            redirectTo="/teacher/dashboard"
+          />
+        }
+      >
+        <Route path="/manage-courses" element={<ManageCourses />} />
+        <Route path="/create-course" element={<CreateCourse />} />
+        <Route path="/edit-course/:courseId" element={<CreateCourse />} />
+        <Route path="/edit-lesson/:courseId" element={<CreateCourse />} />
+        <Route path="/create-lesson/:courseId" element={<CreateCourse />} />
+        <Route path="/lessons/:courseId" element={<LessonsList />} />
+      </Route>
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
