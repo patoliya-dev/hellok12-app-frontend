@@ -17,6 +17,8 @@ import { dayStrToIdx, idxToDayStr, isHHMM, isNumber, minutesToHHMM, toHHMM, toIS
 import { selectPageLoading } from "../../../reducers/ui/pageLoaderSlice";
 import PageLoaderOverlay from "components/ui/PageLoaderOverlay";
 
+const EMPTY_MONTHLY_WEEKLY = {};
+
 const ManageSchedule = () => {
   const dispatch = useDispatch();
   const auth = useSelector((s) => s.auth);
@@ -35,9 +37,47 @@ const ManageSchedule = () => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
 
+  const handleVisibleMonthChange = useCallback((monthKey) => {
+    if (!monthKey) return;
+    setVisibleMonth((prev) => (prev === monthKey ? prev : monthKey));
+  }, []);
+
   const slotsByMonth = useSelector((s) => s.schedule.slotsByMonth || {}); // { 'YYYY-MM': { monthlyWeekly, overrides, slotsByDate } }
-  // monthly weekly baseline for visibleMonth (labels HH:MM[]). Do NOT fallback to legacy.
-  const monthlyWeeklyBaseline = slotsByMonth?.[visibleMonth]?.monthlyWeekly || {};
+  const visibleMonthCache = slotsByMonth?.[visibleMonth];
+  const scheduleMonthly = scheduleState?.schedule?.monthly || {};
+
+  // month baseline from month API cache (preferred)
+  const monthlyWeeklyBaseline = visibleMonthCache?.monthlyWeekly;
+  const hasMonthBaselineFromApi = useMemo(() => {
+    return (
+      !!monthlyWeeklyBaseline &&
+      typeof monthlyWeeklyBaseline === "object" &&
+      Object.keys(monthlyWeeklyBaseline).length > 0
+    );
+  }, [monthlyWeeklyBaseline]);
+
+  // safe fallback from full schedule payload for initial prefill when month cache is not hydrated yet
+  const fallbackMonthlyBaseline = useMemo(() => {
+    const monthEntry = scheduleMonthly?.[visibleMonth];
+    if (!monthEntry || typeof monthEntry !== "object") return null;
+
+    const out = {};
+    Object.entries(monthEntry).forEach(([k, arr]) => {
+      if (!Array.isArray(arr)) {
+        out[k] = [];
+        return;
+      }
+      out[k] = arr.map((v) => {
+        if (isHHMM(v)) return v;
+        if (isNumber(v)) return minutesToHHMM(v);
+        return null;
+      }).filter(Boolean);
+    });
+    return out;
+  }, [scheduleMonthly, visibleMonth]);
+
+  const effectiveMonthlyWeeklyBaseline =
+    hasMonthBaselineFromApi ? monthlyWeeklyBaseline : fallbackMonthlyBaseline;
 
   // availability
   const [availability, setAvailability] = useState({
@@ -63,14 +103,14 @@ const ManageSchedule = () => {
   // Fetch month data when visibleMonth changes (if not cached)
   useEffect(() => {
     if (!teacherId || !visibleMonth) return;
-    const cached = scheduleState?.slotsByMonth?.[visibleMonth];
-    if (cached && cached.fetchedAt) return; // skip if recently cached
+    // Do not skip if cache came only from date-level fetch and monthly baseline is still missing.
+    if (hasMonthBaselineFromApi) return;
     dispatch(fetchSlotsForMonth({ teacherId, month: visibleMonth }))
       .unwrap()
       .catch((err) => {
         // fall back to per-date loads if month endpoint fails
       });
-  }, [visibleMonth, teacherId, dispatch]);
+  }, [visibleMonth, teacherId, dispatch, hasMonthBaselineFromApi]);
 
   // Keep refs to latest state to avoid stale closures inside handlers
   const visibleMonthRef = useRef(visibleMonth);
@@ -84,7 +124,7 @@ const ManageSchedule = () => {
 
     // Use monthly baseline only. If there is no monthly baseline for the visible month,
     // availability remains empty (we don't use legacy weekly or previous month).
-    const baseline = monthlyWeeklyBaseline || {};
+    const baseline = effectiveMonthlyWeeklyBaseline || EMPTY_MONTHLY_WEEKLY;
 
     Object.entries(baseline || {}).forEach(([k, arr]) => {
       const idx = Number(k);
@@ -102,8 +142,17 @@ const ManageSchedule = () => {
       next[key] = normalized;
     });
 
-    setAvailability((prev) => ({ ...prev, ...next }));
-  }, [monthlyWeeklyBaseline, visibleMonth]);
+    setAvailability((prev) => {
+      const merged = { ...prev, ...next };
+      const isSame = weekdayKeys.every((k) => {
+        const a = prev[k] || [];
+        const b = merged[k] || [];
+        if (a.length !== b.length) return false;
+        return a.every((v, i) => v === b[i]);
+      });
+      return isSame ? prev : merged;
+    });
+  }, [effectiveMonthlyWeeklyBaseline, visibleMonth]);
 
   // ---- pick/unpick date from MiniCalendar ----
   const handleDateSelect = (date) => {
@@ -270,7 +319,7 @@ const ManageSchedule = () => {
     // 2) Otherwise, use monthly baseline only - if monthly baseline missing -> return empty []
     const d = new Date(iso + "T00:00:00Z");
     const dow = d.getUTCDay(); // 0..6
-    const weeklyArr = monthlyWeeklyBaseline?.[dow] || [];
+    const weeklyArr = effectiveMonthlyWeeklyBaseline?.[dow] || [];
 
     return weeklyArr.map((x) => (isHHMM(x) ? x : minutesToHHMM(x)));
   };
@@ -322,7 +371,7 @@ const ManageSchedule = () => {
                   currentDate={currentDate}
                   onDateSelect={handleDateSelect} // override mode
                   onWeekdaySelect={handleWeekdaySelect} // weekly mode
-                  onVisibleMonthChange={(monthKey) => setVisibleMonth(monthKey)}
+                  onVisibleMonthChange={handleVisibleMonthChange}
                   selectedWeekday={selectedWeekday}
                   selectedDateISO={selectedDateISO} // inform MiniCalendar of date-edit mode
                 />

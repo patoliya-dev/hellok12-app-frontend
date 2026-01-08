@@ -31,8 +31,7 @@ export const fetchSlotsForDate = createAsyncThunk(
   "schedule/fetchSlotsForDate",
   async ({ teacherId, date, month }, { rejectWithValue }) => {
     try {
-      // pass month optionally - backend may use it for caching or ignore it
-      const { data } = await api.getSlotsForDate(teacherId, date, month);
+      const { data } = await api.getSlotsForDate(teacherId, date);
       if (!data.success) return rejectWithValue(data);
       const monthKey = month || (date ? String(date).slice(0, 7) : null);
       return { date, month: monthKey, slots: data.data.slots };

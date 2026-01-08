@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
 import { weekdayKeys } from "../../../../utils/time12h";
@@ -12,7 +12,13 @@ const MiniCalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeek
   const isDateSelected = Boolean(selectedDateISO);
 
   // Expose visible month to parent via onVisibleMonthChange
-  const [miniCalendarDate, setMiniCalendarDate] = useState(new Date(currentDate));
+  const [miniCalendarDate, setMiniCalendarDate] = useState(() => {
+    const d = new Date(currentDate);
+    d.setDate(1);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
+  const lastReportedMonthKeyRef = useRef(null);
 
   const handleMiniCalendarPrevious = () => {
     const newDate = new Date(miniCalendarDate);
@@ -30,18 +36,29 @@ const MiniCalendar = ({ currentDate, onDateSelect, onWeekdaySelect, selectedWeek
   useEffect(() => {
     if (typeof onVisibleMonthChange === 'function') {
       const d = miniCalendarDate;
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      onVisibleMonthChange(key);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (key !== lastReportedMonthKeyRef.current) {
+        lastReportedMonthKeyRef.current = key;
+        onVisibleMonthChange(key);
+      }
     }
   }, [miniCalendarDate, onVisibleMonthChange]);
 
   // Sync visible month when parent currentDate changes (e.g., user selected a date)
   useEffect(() => {
     if (!currentDate) return;
-    const d = new Date(currentDate);
-    if (d.getMonth() !== miniCalendarDate.getMonth() || d.getFullYear() !== miniCalendarDate.getFullYear()) {
-      setMiniCalendarDate(d);
-    }
+    setMiniCalendarDate((prev) => {
+      const d = new Date(currentDate);
+      d.setDate(1);
+      d.setHours(0, 0, 0, 0);
+      if (
+        d.getMonth() === prev.getMonth() &&
+        d.getFullYear() === prev.getFullYear()
+      ) {
+        return prev;
+      }
+      return d;
+    });
   }, [currentDate]);
 
   const calendarDays = useMemo(() => {
