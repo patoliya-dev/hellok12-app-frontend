@@ -27,6 +27,42 @@ import { getManageCoursesRoute } from "../../utils/courseRoutes";
 const arraysEqual = (a = [], b = []) =>
   a.length === b.length && a.every((v, i) => v === b[i]);
 
+/**
+ * Path matching utilities
+ * We want:
+ * - Exact match for many menu items (e.g., /school/lessons)
+ * - "Segment prefix" match for child routes (e.g., /school/lessons/:id should match /school/lessons/)
+ *
+ * Segment prefix rules:
+ * - prefix "/a/b" matches "/a/b" or "/a/b/..."
+ * - prefix "/a/b/" matches only "/a/b/..." (not "/a/b")
+ */
+const normalizePath = (p = "") =>
+  String(p || "")
+    .split("?")[0]
+    .split("#")[0];
+
+const isExactPath = (pathname, target) => {
+  const a = normalizePath(pathname);
+  const b = normalizePath(target);
+  return a === b;
+};
+
+const isSegmentPrefix = (pathname, prefix) => {
+  const path = normalizePath(pathname);
+  const pfx = normalizePath(prefix);
+
+  if (!pfx) return false;
+
+  // If prefix ends with "/", we ONLY consider "/.../" match (not exact "/...")
+  if (pfx.endsWith("/")) {
+    return path.startsWith(pfx);
+  }
+
+  // Otherwise allow exact OR "/prefix/..."
+  return path === pfx || path.startsWith(`${pfx}/`);
+};
+
 const RoleBasedHeader = () => {
   const authUser = useSelector(selectAuthUser);
   const location = useLocation();
@@ -58,11 +94,6 @@ const RoleBasedHeader = () => {
   const profileMenuRef = useRef(null);
   const notificationRef = useRef(null);
   const moreRef = useRef(null);
-
-  // Teacher classification (keep for future; but your course logic uses schoolId)
-  const teacherType =
-    (authUser?.role === "teacher" && authUser?.profile?.employmentType) ||
-    "independent";
 
   const isSchoolTeacher =
     authUser?.role === "teacher" && Boolean(authUser?.schoolId);
@@ -205,11 +236,8 @@ const RoleBasedHeader = () => {
           label: "Dashboard",
           path: "/school/dashboard",
           icon: "House",
-          children: [
-            "/school/upcoming-lessons",
-            "/school/scheduled-lessons",
-            "/school/profile-settings",
-          ],
+          // IMPORTANT: do NOT put "/school/lessons" here - it causes dashboard to be active on lessons.
+          children: ["/school/scheduled-lessons", "/school/profile-settings"],
         },
         {
           label: "Manage Teachers",
@@ -221,6 +249,8 @@ const RoleBasedHeader = () => {
           path: "/school/manage-students",
           icon: "GraduationCap",
         },
+        // IMPORTANT: Lessons menu should be active ONLY for /school/lessons (not /school/lessons/:courseId)
+        { label: "Lessons", path: "/school/lessons", icon: "Book" },
       ],
       guest: [{ label: "Login", path: "/login", icon: "LogIn" }],
     };
@@ -312,10 +342,27 @@ const RoleBasedHeader = () => {
     [messageUnreadCount]
   );
 
+  /**
+   * ACTIVE RULES:
+   * - exact match on item.path always activates the item
+   * - child matches use segment-safe prefix
+   *
+   * With courseRoutes change:
+   * - Manage Courses children includes "/school/lessons/" so it matches only "/school/lessons/:id"
+   * - Lessons item uses exact "/school/lessons" (so it won't activate on "/school/lessons/:id")
+   */
   const isActivePath = useCallback(
-    (item) =>
-      location.pathname === item.path ||
-      item.children?.some((child) => location.pathname.startsWith(child)),
+    (item) => {
+      const pathname = location.pathname;
+
+      if (isExactPath(pathname, item.path)) return true;
+
+      if (Array.isArray(item.children) && item.children.length > 0) {
+        return item.children.some((child) => isSegmentPrefix(pathname, child));
+      }
+
+      return false;
+    },
     [location.pathname]
   );
 
@@ -634,7 +681,7 @@ const RoleBasedHeader = () => {
                 </div>
               )}
 
-              {/* Hidden measurement row */}
+              {/* Measurement row */}
               <div className="absolute -left-[9999px] -top-[9999px] opacity-0 pointer-events-none">
                 <div className="flex items-center gap-1">
                   {navigationItems.map((item) => {
@@ -805,7 +852,7 @@ const RoleBasedHeader = () => {
         </div>
       </div>
 
-      {/* Mobile overlay + panel (unchanged) */}
+      {/* Mobile menu stays same (your existing implementation) */}
       <div
         className={[
           "lg:hidden fixed inset-0 z-[55] transition-opacity duration-200",
@@ -819,7 +866,7 @@ const RoleBasedHeader = () => {
           type="button"
           aria-label="Close menu"
           onClick={() => setIsMenuOpen(false)}
-          className="absolute inset-0 bg-black/40"
+          className="absolute inset-0"
         />
 
         <div

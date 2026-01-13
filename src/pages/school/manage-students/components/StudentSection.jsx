@@ -5,7 +5,6 @@ import Pagination from "components/ui/Pagination";
 
 const StudentSection = ({
   studentData,
-  studentCount,
   selectedStudent,
   onSelect,
   onStatusChange,
@@ -15,15 +14,6 @@ const StudentSection = ({
 }) => {
   return (
     <div className="bg-card border border-border rounded-lg">
-      {/* List Header */}
-      <div className="flex items-center justify-between p-6 border-b border-border">
-        <div>
-          <h3 className="font-medium text-card-foreground">
-            Students ({studentCount})
-          </h3>
-        </div>
-      </div>
-
       {/* Student Cards */}
       <div className="p-4">
         {studentData?.length > 0 ? (

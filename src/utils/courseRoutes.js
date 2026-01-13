@@ -8,7 +8,7 @@ export const getManageCoursesRoute = (role) => {
           "/teacher/edit-course",
           "/teacher/create-lesson",
           "/teacher/edit-lesson",
-          "/teacher/lessons",
+          "/teacher/lessons/",
         ],
       };
 
@@ -20,7 +20,7 @@ export const getManageCoursesRoute = (role) => {
           "/school/edit-course",
           "/school/create-lesson",
           "/school/edit-lesson",
-          "/school/lessons",
+          "/school/lessons/",
         ],
       };
 

@@ -95,14 +95,24 @@ export const schoolService = {
     }
   },
 
-  getInvitations: async ({ role, status } = {}) => {
+  getInvitations: async ({
+    role,
+    status,
+    search,
+    page = 1,
+    limit = 10,
+  } = {}) => {
     try {
-      const params = {};
-      if (role) params.role = role; // "TEACHER" | "STUDENT"
-      if (status) params.status = status; // "PENDING" | "ACCEPTED" | ...
-      const { data } = await api.get("/school/invitations", { params });
+      const params = new URLSearchParams();
+      if (role) params.set("role", role);
+      if (status) params.set("status", status);
+      if (search) params.set("search", search);
+      params.set("page", String(page));
+      params.set("limit", String(limit));
 
-      return data?.data?.data || data?.data || data;
+      const res = await api.get(`/school/invitations?${params.toString()}`);
+      // assuming createSuccessResponse => { data: { invitations, pagination } }
+      return res?.data?.data;
     } catch (error) {
       console.error("Failed to get invitations:", error);
       throw error.response?.data || { error: error.message };

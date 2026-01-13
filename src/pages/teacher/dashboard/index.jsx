@@ -15,8 +15,6 @@ import { fetchSchedule, fetchSlotsForMonth } from "../../../reducers/schedule/sc
 import { idxToDayStr, isHHMM, isNumber, minutesToHHMM } from "../../../utils/time12h";
 import Loader from "components/ui/Loader";
 
-
-
 const TeacherDashboard = () => {
   const dispatch = useDispatch();
   const [currentTime, setCurrentTime] = useState(new Date());

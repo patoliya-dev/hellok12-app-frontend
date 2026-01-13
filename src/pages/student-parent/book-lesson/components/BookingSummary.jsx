@@ -1,15 +1,12 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { format } from "date-fns";
-import Icon from "../../../../components/AppIcon";
+import Icon from "components/AppIcon";
 import { selectSelectedTeacher } from "reducers/teachers/teachersSlice";
 import { formatLessonDate } from "../../../../utils/formatters";
+import Image from "components/AppImage";
 
-const BookingSummary = ({
-  courseData,
-  selectedStudent,
-  total,
-}) => {
+const BookingSummary = ({ courseData, selectedStudent, total }) => {
   const selectedTeacher = useSelector(selectSelectedTeacher);
 
   const formatDuration = (minutes) => {
@@ -47,27 +44,34 @@ const BookingSummary = ({
               </p>
               <p className="text-xs text-text-secondary">
                 <span>
-                  ({courseData?.startDate && formatLessonDate(courseData?.startDate?.slice(0, 10))}){" "}
-                  {courseData?.endDate && `to (${formatLessonDate(courseData?.endDate?.slice(0, 10))})`}
+                  (
+                  {courseData?.startDate &&
+                    formatLessonDate(courseData?.startDate?.slice(0, 10))}
+                  ){" "}
+                  {courseData?.endDate &&
+                    `to (${formatLessonDate(
+                      courseData?.endDate?.slice(0, 10)
+                    )})`}
                 </span>
               </p>
             </div>
           </div>
         </div>
 
-        {courseData?.ownerType === "school" && <div className="flex items-center">
-          <Icon name="SchoolIcon" size={22} className="mr-2" />
-          <span className="text-body2 text-text-secondary">
-            {courseData?.teacher?.school}
-          </span>
-        </div>}
+        {courseData?.ownerType === "school" && (
+          <div className="flex items-center">
+            <Icon name="SchoolIcon" size={22} className="mr-2" />
+            <span className="text-body2 text-text-secondary">
+              {courseData?.teacher?.school}
+            </span>
+          </div>
+        )}
 
         <div className="border-t border-border pt-4">
           <div className="space-y-3">
             {/* Date & Time for 1-on-1 classes */}
             {courseData?.lessonType === "1-on-1" &&
-              courseData?.nextLessonDate &&
-              (
+              courseData?.nextLessonDate && (
                 <div className="flex items-center space-x-3">
                   <Icon
                     name="Calendar"
@@ -76,27 +80,30 @@ const BookingSummary = ({
                   />
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      Next lesson scheduled for {format(courseData?.nextLessonDate, "EEEE, MMMM d, yyyy")}
+                      Next lesson scheduled for{" "}
+                      {format(courseData?.nextLessonDate, "EEEE, MMMM d, yyyy")}
                     </p>
                   </div>
                 </div>
               )}
 
             {/* Group Class Schedule */}
-            {courseData?.lessonType === "group" && courseData?.nextLessonDate && (
-              <div className="flex items-center space-x-3">
-                <Icon
-                  name="Calendar"
-                  size={16}
-                  className="text-text-secondary"
-                />
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    Next lesson scheduled for {format(courseData?.nextLessonDate, "EEEE, MMMM d, yyyy")}
-                  </p>
+            {courseData?.lessonType === "group" &&
+              courseData?.nextLessonDate && (
+                <div className="flex items-center space-x-3">
+                  <Icon
+                    name="Calendar"
+                    size={16}
+                    className="text-text-secondary"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      Next lesson scheduled for{" "}
+                      {format(courseData?.nextLessonDate, "EEEE, MMMM d, yyyy")}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Location for Group Classes */}
             {courseData?.lessonType === "group" && courseData?.location && (
@@ -117,7 +124,7 @@ const BookingSummary = ({
             {selectedStudent && (
               <div className="pl-6">
                 <div className="flex items-center space-x-2">
-                  <img
+                  <Image
                     src={selectedStudent?.profileImage?.url}
                     alt={selectedStudent?.name}
                     className="w-8 h-8 rounded-full object-cover"
