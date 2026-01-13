@@ -93,7 +93,7 @@ const UpcomingLessonCard = () => {
   };
 
   const handleViewSchedule = () => {
-    navigate("/school/upcoming-lessons");
+    navigate("/school/lessons");
   };
 
   const handleLessonClick = (lesson) => {
