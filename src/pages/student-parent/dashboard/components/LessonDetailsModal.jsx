@@ -83,7 +83,7 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
     } catch (error) {
       console.error("Failed to submit feedback:", error);
       errorToast(
-        error?.message || "Failed to submit feedback. Please try again."
+        error?.message || "Failed to submit feedback. Please try again.",
       );
     } finally {
       setIsSubmitting(false);
@@ -93,7 +93,7 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
   return (
     <>
       {/* Overlay */}
-      <div className="fixed inset-0 z-50 bg-black/60">
+      <div className="fixed inset-0 z-50 bg-black/60 !m-0">
         {/* Center wrapper */}
         <div className="flex min-h-[100dvh] items-center justify-center p-3 sm:p-4 font-sans">
           {/* Modal */}

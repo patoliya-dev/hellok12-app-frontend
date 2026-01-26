@@ -35,7 +35,7 @@ export const schoolService = {
     try {
       const { data } = await api.post(
         `/school/teachers/${teacherId}/approval`,
-        { action }
+        { action },
       );
       return data?.data || data;
     } catch (error) {
@@ -95,6 +95,19 @@ export const schoolService = {
     }
   },
 
+  getUpcomingLessons: async ({ limit = 3, days = 7, signal } = {}) => {
+    try {
+      const { data } = await api.get("/lessons/upcoming", {
+        params: { limit, days },
+        signal,
+      });
+      return data?.data?.data || data?.data || data;
+    } catch (error) {
+      console.error("Failed to fetch upcoming lessons:", error);
+      throw error.response?.data || { error: error.message };
+    }
+  },
+
   getInvitations: async ({
     role,
     status,
@@ -122,7 +135,7 @@ export const schoolService = {
   cancelInvitation: async (invitationId) => {
     try {
       const { data } = await api.post(
-        `/school/invitations/${invitationId}/cancel`
+        `/school/invitations/${invitationId}/cancel`,
       );
       return data?.data?.data || data?.data || data;
     } catch (error) {
