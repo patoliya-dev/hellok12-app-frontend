@@ -12,7 +12,7 @@ import { getLessonsForStudent } from "../../../../services/lessons/lesson.servic
 import Loader from "components/ui/Loader";
 import { formatTimeToTZ, getUserTimezone } from "../../../../utils/timezone";
 
-const UpcomingSessionsCard = () => {
+const UpcomingSessionsCard = ({ role }) => {
   const [upcomingSessions, setUpcomingSessions] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedSession, setSelectedSession] = useState(null);
@@ -52,18 +52,24 @@ const UpcomingSessionsCard = () => {
         const response = await getLessonsForStudent({ studentId });
 
         // Transform API response to match component's expected format
-        const transformedSessions = (response?.data || []).map(session => {
+        const transformedSessions = (response?.data || []).map((session) => {
           // session.start is expected to be an ISO UTC string from API, e.g. "2025-12-03T11:30:00.000Z"
-          const sessionIso = session?.start || session?.startAt || session?.startTime || session?.start; // defensive
+          const sessionIso =
+            session?.start ||
+            session?.startAt ||
+            session?.startTime ||
+            session?.start; // defensive
           const sessionTime = sessionIso ? new Date(sessionIso) : null;
 
           // compute minutesUntil using instants (no timezone math) — Date.getTime() is epoch ms
           const now = Date.now();
-          const minutesUntil = sessionTime ? Math.floor((sessionTime.getTime() - now) / (1000 * 60)) : null;
+          const minutesUntil = sessionTime
+            ? Math.floor((sessionTime.getTime() - now) / (1000 * 60))
+            : null;
 
-          let status = 'scheduled';
+          let status = "scheduled";
           if (minutesUntil !== null && minutesUntil <= 15 && minutesUntil > 0) {
-            status = 'starting-soon';
+            status = "starting-soon";
           }
 
           const formattedTime = sessionTime.toLocaleTimeString("en-US", {
@@ -102,9 +108,9 @@ const UpcomingSessionsCard = () => {
               ...(session?.lesson?.isTrialAvailable ? ["Trial Lessons"] : []),
               ...(session?.course?.lessonType
                 ? [
-                  session.course.lessonType.charAt(0).toUpperCase() +
-                  session.course.lessonType.slice(1),
-                ]
+                    session.course.lessonType.charAt(0).toUpperCase() +
+                      session.course.lessonType.slice(1),
+                  ]
                 : []),
             ],
             description:
@@ -113,9 +119,9 @@ const UpcomingSessionsCard = () => {
               "",
             address: session?.lesson?.address || null,
             averageRating: parseFloat(
-              session?.lesson?.teacherId?.rating?.averageRating || 0
+              session?.lesson?.teacherId?.rating?.averageRating || 0,
             ).toFixed(2),
-            totalRating: session?.lesson?.teacherId?.rating?.totalRatings || 0
+            totalRating: session?.lesson?.teacherId?.rating?.totalRatings || 0,
           };
         });
 
@@ -188,16 +194,16 @@ const UpcomingSessionsCard = () => {
             ...(session?.lesson?.isTrialAvailable ? ["Trial Lessons"] : []),
             ...(session?.course?.lessonType
               ? [
-                session.course.lessonType.charAt(0).toUpperCase() +
-                session.course.lessonType.slice(1),
-              ]
+                  session.course.lessonType.charAt(0).toUpperCase() +
+                    session.course.lessonType.slice(1),
+                ]
               : []),
           ],
           description:
             session?.lesson?.description || session?.course?.description || "",
           address: session?.lesson?.address || null,
           averageRating: parseFloat(
-            session?.lesson?.teacherId?.rating?.averageRating || 0
+            session?.lesson?.teacherId?.rating?.averageRating || 0,
           ).toFixed(2),
           totalRating: session?.lesson?.teacherId?.rating?.totalRatings || 0,
         };
@@ -294,30 +300,35 @@ const UpcomingSessionsCard = () => {
             />
           </div>
           <p className="text-muted-foreground mt-4">No upcoming sessions</p>
-          <p className="text-sm text-muted-foreground">
-            Book a session to get started!
-          </p>
-          <Button
-            variant="default"
-            size="sm"
-            iconName="Plus"
-            iconPosition="left"
-            iconSize={16}
-            onClick={handleViewSchedule}
-            className="mt-4"
-          >
-            Book Session
-          </Button>
+          {role !== "school" && (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Book a session to get started!
+              </p>
+              <Button
+                variant="default"
+                size="sm"
+                iconName="Plus"
+                iconPosition="left"
+                iconSize={16}
+                onClick={handleViewSchedule}
+                className="mt-4"
+              >
+                Book Session
+              </Button>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
           {upcomingSessions.slice(0, 3).map((session) => (
             <div
               key={session.id}
-              className={`p-4 rounded-lg border transition-micro ${session.status === "starting-soon"
-                ? "border-warning bg-warning/5"
-                : "border-border bg-muted/30"
-                }`}
+              className={`p-4 rounded-lg border transition-micro ${
+                session.status === "starting-soon"
+                  ? "border-warning bg-warning/5"
+                  : "border-border bg-muted/30"
+              }`}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-3">
@@ -340,16 +351,19 @@ const UpcomingSessionsCard = () => {
 
                 <div className="text-right">
                   <div
-                    className={`text-sm font-medium ${session.status === "starting-soon"
-                      ? "text-warning"
-                      : "text-primary"
-                      }`}
+                    className={`text-sm font-medium ${
+                      session.status === "starting-soon"
+                        ? "text-warning"
+                        : "text-primary"
+                    }`}
                   >
                     {session?.status?.charAt(0).toUpperCase() +
                       session?.status?.slice(1).toLowerCase()}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {(session.startTimeIso ? formatTimeToTZ(session.startTimeIso, userTimezone) : '')}
+                    {session.startTimeIso
+                      ? formatTimeToTZ(session.startTimeIso, userTimezone)
+                      : ""}
                   </div>
                 </div>
               </div>

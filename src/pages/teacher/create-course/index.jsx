@@ -75,7 +75,7 @@ const CreateCourse = () => {
     price: "",
     startDate: "",
     endDate: "",
-    teachers: [user.id],
+    teachers: user?.role === "teacher" ? [user.id] : [],
     address: null,
     // Step 2
     lessons: [
@@ -96,7 +96,7 @@ const CreateCourse = () => {
   const [errors, setErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [breadCrumbData, setBreadCrumbData] = useState(
-    commonBreadCrumbData?.add
+    commonBreadCrumbData?.add,
   );
   const [introUpload, setIntroUpload] = useState({
     loading: false,
@@ -138,7 +138,7 @@ const CreateCourse = () => {
         fieldErrors,
         lastSubmittedUpdatesRef.current,
         formData.lessons || [],
-        setErrors
+        setErrors,
       );
     }
   }, [fieldErrors, currentStep, formData.lessons, setErrors]);
@@ -257,6 +257,14 @@ const CreateCourse = () => {
 
   const handlePrevious = () => setCurrentStep((p) => p - 1);
 
+  const computeCourseTeachersFromLessons = (lessons) => {
+    const set = new Set();
+    (lessons || []).forEach((l) => {
+      if (l?.assignedTeacher) set.add(l.assignedTeacher);
+    });
+    return Array.from(set);
+  };
+
   /**
    * Centralized course-level + lesson-level change handler
    * Also wires Intro Image upload via Attachment API (presign → S3 → complete)
@@ -305,7 +313,7 @@ const CreateCourse = () => {
             scope: "intro",
             onProgress: (pct) =>
               setIntroUpload((s) => ({ ...s, progress: pct })),
-          })
+          }),
         ).unwrap();
 
         // Compose the correct path
@@ -322,7 +330,7 @@ const CreateCourse = () => {
           let updated = setIn(
             { ...prev, ...updatedFormData },
             targetPath,
-            value
+            value,
           );
 
           // If updating lesson-level assignedTeacher, also update course-level teachers
@@ -365,7 +373,19 @@ const CreateCourse = () => {
       lessonIndex !== null ? `lessons[${lessonIndex}].${field}` : field;
 
     // Write value immutably
-    setFormData((prev) => setIn(prev || {}, targetPath, value));
+    setFormData((prev) => {
+      let updated = setIn(prev || {}, targetPath, value);
+
+      // If lesson assignedTeacher changed -> recompute teachers from ALL lessons
+      if (lessonIndex !== null && field === "assignedTeacher") {
+        updated = {
+          ...updated,
+          teachers: computeCourseTeachersFromLessons(updated.lessons),
+        };
+      }
+
+      return updated;
+    });
 
     // Mirror errors shape
     setErrors((prev) => setIn(prev || {}, targetPath, error));
@@ -385,7 +405,11 @@ const CreateCourse = () => {
   const removeLesson = (index) => {
     setFormData((prev) => {
       const lessons = (prev.lessons || []).filter((_, i) => i !== index);
-      return { ...prev, lessons };
+      return {
+        ...prev,
+        lessons,
+        teachers: computeCourseTeachersFromLessons(lessons),
+      };
     });
     setErrors((prev) => {
       const lessonErrs = (prev.lessons || []).filter((_, i) => i !== index);
@@ -430,14 +454,14 @@ const CreateCourse = () => {
       // Prefer route param courseId (true "edit" page)
       if (courseId) {
         const r = await dispatch(
-          updateCourseThunk({ id: courseId, patch: coursePayload })
+          updateCourseThunk({ id: courseId, patch: coursePayload }),
         ).unwrap();
         savedCourse = r;
       }
       // If no courseId in URL but we already created one in this session
       else if (createdCourseId) {
         const r = await dispatch(
-          updateCourseThunk({ id: createdCourseId, patch: coursePayload })
+          updateCourseThunk({ id: createdCourseId, patch: coursePayload }),
         ).unwrap();
         savedCourse = r;
       }
@@ -464,7 +488,7 @@ const CreateCourse = () => {
               entityId: targetCourseId,
               moveToEntityPrefix: true, // moves S3 object under courses/<courseId>/intro/
               scope: "intro",
-            })
+            }),
           ).unwrap();
           // Optionally update local state with final URL after move:
           if (claimed?.url) {
@@ -489,7 +513,7 @@ const CreateCourse = () => {
               createLessonsThunk({
                 courseId: targetCourseId,
                 payload: { lessons: createPayload },
-              })
+              }),
             ).unwrap();
           }
         } else {
@@ -498,14 +522,18 @@ const CreateCourse = () => {
             creates,
             updates: _updates,
             deletes,
-          } = buildLessonMutations(originalLessonsRef.current, currentLessons);
+          } = buildLessonMutations(
+            originalLessonsRef.current,
+            currentLessons,
+            buildPartialUpdate,
+          );
 
           const createPayload = creates.map(mapLessonToCreatePayload);
 
           // Build partial updates
           const updates = [];
           const byId = new Map(
-            originalLessonsRef.current.map((x) => [x._id, x])
+            originalLessonsRef.current.map((x) => [x._id, x]),
           );
           for (const n of currentLessons) {
             if (n._id && byId.has(n._id)) {
@@ -521,7 +549,7 @@ const CreateCourse = () => {
               createLessonsThunk({
                 courseId: targetCourseId,
                 payload: { lessons: createPayload },
-              })
+              }),
             ).unwrap();
           }
 
@@ -532,7 +560,7 @@ const CreateCourse = () => {
               updateLessonsThunk({
                 courseId: targetCourseId,
                 payload: { updates, deletes },
-              })
+              }),
             ).unwrap();
           }
 
@@ -541,7 +569,7 @@ const CreateCourse = () => {
         }
       }
       successToast(
-        `${isEdit ? "Course updated" : "Course created"} successfully!`
+        `${isEdit ? "Course updated" : "Course created"} successfully!`,
       );
 
       const finalCourseId = targetCourseId || courseId;
@@ -579,7 +607,7 @@ const CreateCourse = () => {
       // 409 overlap → banner/toast
       if (err?.message === "409_CONFLICT_OVERLAP") {
         errorToast(
-          "Lesson schedule overlaps an existing lesson for this teacher/course."
+          "Lesson schedule overlaps an existing lesson for this teacher/course.",
         );
         setCurrentStep(2);
         return;
