@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
 import { Checkbox } from "components/ui/Checkbox";
@@ -21,6 +22,7 @@ const LessonFormInstance = ({
   mode,
   teachers,
 }) => {
+  const { user } = useSelector((s) => s.auth);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   return (
     <div className="flex flex-col gap-y-3">
@@ -57,14 +59,16 @@ const LessonFormInstance = ({
             error={errors?.title}
             onChange={(e) => handleInputChange("title", e?.target?.value)}
           />
-          <Select
-            label="Assign Teacher"
-            placeholder="Select a teacher"
-            options={teachers}
-            value={formData?.assignedTeacher || ""}
-            onChange={(value) => handleInputChange("assignedTeacher", value)}
-            error={errors?.assignedTeacher}
-          />
+          {user.role === "school" && (
+            <Select
+              label="Assign Teacher"
+              placeholder="Select a teacher"
+              options={teachers}
+              value={formData?.assignedTeacher || ""}
+              onChange={(value) => handleInputChange("assignedTeacher", value)}
+              error={errors?.assignedTeacher}
+            />
+          )}
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium text-foreground mb-2">

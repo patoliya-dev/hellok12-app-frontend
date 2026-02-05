@@ -39,16 +39,42 @@ const currencySymbol = (c) => {
 };
 
 export const buildSchoolCardData = (metrics = {}) => {
-  const activeTeachers = Number(metrics.activeTeachers || 0);
-  const scheduledLessonsThisWeek = Number(
-    metrics.scheduledLessonsThisWeek || 0,
-  );
-  const totalCourses = Number(metrics.totalCourses || 0);
+  const activeTeachers = Number(metrics.activeTeachers ?? 0);
+  const scheduledLessonsThisWeek = Number(metrics.scheduledLessonsThisWeek ?? 0);
+  const totalCourses = Number(metrics.totalCourses ?? 0);
 
   const revenueObj = metrics.monthlyRevenue || {};
-  const revenueAmount = Number(revenueObj.amount || 0);
+
+  // currency (support both)
   const revenueCurrency = revenueObj.currency || "USD";
-  const revenueText = `${currencySymbol(revenueCurrency)}${revenueAmount.toLocaleString()}`;
+
+  // Prefer NET if available (payout net), else fallback to gross, else fallback legacy "amount"
+  const netCents =
+    revenueObj.netAmountCents != null ? Number(revenueObj.netAmountCents) : null;
+  const grossCents =
+    revenueObj.amountCents != null ? Number(revenueObj.amountCents) : null;
+
+  // Legacy support (already dollars)
+  const legacyAmount =
+    revenueObj.netAmount != null
+      ? Number(revenueObj.netAmount)
+      : revenueObj.amount != null
+        ? Number(revenueObj.amount)
+        : null;
+
+  // Decide final amount in dollars
+  const amountDollars = Number.isFinite(netCents)
+    ? netCents / 100
+    : Number.isFinite(grossCents)
+      ? grossCents / 100
+      : Number.isFinite(legacyAmount)
+        ? legacyAmount
+        : 0;
+
+  const revenueText = `${currencySymbol(revenueCurrency)}${amountDollars.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
 
   return [
     {

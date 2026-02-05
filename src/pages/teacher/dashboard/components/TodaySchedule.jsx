@@ -16,10 +16,10 @@ const TodaySchedule = ({
 
   const getSessionStatus = (session) => {
     // Remove 'Z' to treat as local time instead of UTC
-    const localTimeString = session.startTime?.replace("Z", "");
+    const localTimeString = session.start;
     const sessionTime = new Date(localTimeString);
     const endTime = new Date(
-      sessionTime.getTime() + session.lesson?.schedule?.duration * 60000
+      sessionTime.getTime() + session.lesson?.schedule?.duration * 60000,
     );
     const now = new Date();
 
@@ -68,7 +68,7 @@ const TodaySchedule = ({
   };
 
   const sortedSessions = [...sessions].sort(
-    (a, b) => new Date(a.startTime) - new Date(b.startTime)
+    (a, b) => new Date(a.startTime) - new Date(b.startTime),
   );
 
   return (
@@ -106,7 +106,7 @@ const TodaySchedule = ({
               <div
                 key={session._id}
                 className={`p-4 rounded-lg border transition-micro ${getStatusBgColor(
-                  sessionStatus.status
+                  sessionStatus.status,
                 )}`}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -128,7 +128,7 @@ const TodaySchedule = ({
                   <div className="text-right">
                     <div
                       className={`text-sm font-medium ${getStatusColor(
-                        session.status
+                        session.status,
                       )}`}
                     >
                       {session?.status?.charAt(0).toUpperCase() +
@@ -149,22 +149,8 @@ const TodaySchedule = ({
                         color="var(--color-muted-foreground)"
                       />
                       <span className="text-muted-foreground">
-                        {new Date(
-                          session.startTime?.replace("Z", "")
-                        ).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}{" "}
-                        -{" "}
-                        {new Date(
-                          new Date(
-                            session.startTime?.replace("Z", "")
-                          ).getTime() +
-                            session.lesson?.schedule?.duration * 60000
-                        ).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {session.startTime}{" "}
+                        - {" "}{session.endTime}
                       </span>
                     </div>
                     <div className="space-x-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-blue-100 text-blue-700 border-blue-200">
@@ -252,7 +238,8 @@ const TodaySchedule = ({
                             name: session?.course.title || "N/A",
                             avatar: session?.course.introImageRef.url || "",
                           },
-                          startTime: session?.lesson?.schedule?.time,
+                          startTime: session?.startTime,
+                          endTime: session?.endTime,
                           date: session?.lesson?.schedule?.date,
                           duration: session?.lesson?.schedule?.duration || 0,
                           status: session?.status?.toLowerCase() || "pending",

@@ -21,6 +21,7 @@ import { CourseIcon, VideoIcon } from "components/icons";
 import Button from "./Button";
 import LessonDetailsModal from "../../pages/student-parent/dashboard/components/LessonDetailsModal";
 import { getRolePath } from "../../utils/rolePath";
+import Image from "components/AppImage";
 
 const LessonCard = ({ lesson, onRefresh }) => {
   const [selectedLesson, setSelectedLesson] = useState(null);
@@ -129,8 +130,8 @@ const LessonCard = ({ lesson, onRefresh }) => {
         <div className="min-w-0 flex-1">
           {/* Header row: avatar + name */}
           <div className="flex gap-4 w-full">
-            <img
-              src={lesson?.teacherImage?.url || "/default-avatar.png"}
+            <Image
+              src={lesson?.teacherImage?.url}
               alt={lesson.teacherName}
               className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover flex-shrink-0"
             />
