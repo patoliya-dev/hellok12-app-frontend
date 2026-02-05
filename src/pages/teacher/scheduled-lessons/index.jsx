@@ -13,7 +13,11 @@ const breadCrumbData = [
 ];
 
 const ScheduledLessons = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
 
   const today = useMemo(() => {
     const d = new Date();

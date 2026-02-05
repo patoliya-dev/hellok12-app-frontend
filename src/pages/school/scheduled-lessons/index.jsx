@@ -13,7 +13,11 @@ import { breadCrumbData } from "./data";
 
 const ScheduledLessons = () => {
   /* -------------------- State -------------------- */
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
   const [selectedTeacher, setSelectedTeacher] = useState("all");
 
   const [lessons, setLessons] = useState([]);
