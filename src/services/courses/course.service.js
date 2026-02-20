@@ -1,9 +1,9 @@
 import { errorToast } from "../../utils/utils";
 import api from "../../utils/axiosInstance";
 
-export const getCourseDetails = async (id) => {
+export const getCourseDetails = async (id, params = {}) => {
   try {
-    const response = await api.get(`/courses/${id}/details`);
+    const response = await api.get(`/courses/${id}/details`, { params });
     return response.data;
   } catch (error) {
     errorToast(error.response?.data || error.message);

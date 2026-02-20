@@ -110,6 +110,15 @@ const BookLesson = () => {
     return parentChildren.some((c) => (c?._id || c?.id) === sid);
   }, [isParent, selectedStudent, parentChildren]);
 
+  const isAlreadyPurchasedForSelectedStudent =
+    !!courseData?.purchaseInfo?.alreadyPurchased;
+  const hasNoRemainingLessons =
+    type === "enroll" &&
+    Number(courseData?.pricing?.remainingLessons || 0) <= 0 &&
+    Number(courseData?.pricing?.totalLessons || 0) > 0;
+  const isBookingBlocked =
+    isAlreadyPurchasedForSelectedStudent || hasNoRemainingLessons;
+
   // Normalize address into backend expected structure
   const normalizedAddress = useMemo(() => {
     if (!isInPersonOneOnOne) return undefined;
@@ -191,14 +200,17 @@ const BookLesson = () => {
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const { data } = await getCourseDetails(id);
+        const studentId =
+          (selectedStudent?._id || selectedStudent?.id || "").toString() || "";
+        const params = studentId ? { studentId } : {};
+        const { data } = await getCourseDetails(id, params);
         setCourseData(data);
       } catch (error) {
         errorToast(error.response?.data || error.message);
       }
     };
     fetchCourse();
-  }, [id]);
+  }, [id, selectedStudent?._id, selectedStudent?.id]);
 
   // make sure selectedStudent has _id (if currentUser is a student)
   useEffect(() => {
@@ -265,6 +277,7 @@ const BookLesson = () => {
   ];
 
   const handleNextStep = () => {
+    if (isBookingBlocked) return;
     // Validate Step 1 only
     if (currentStep === 1) {
       const v = validateStep();
@@ -287,7 +300,7 @@ const BookLesson = () => {
   };
 
   const calculateTotal = () => {
-    return courseData?.price || 0;
+    return (courseData?.pricing?.effectivePrice ?? courseData?.price) || 0;
   };
 
   // Used only for Step 1 "Next" button
@@ -319,6 +332,10 @@ const BookLesson = () => {
         return "Please select a valid student.";
       case "ADDRESS_REQUIRED":
         return "Address is required for in-person 1-on-1 bookings.";
+      case "ALREADY_PURCHASED":
+        return "This course is already purchased for the selected student.";
+      case "NO_REMAINING_LESSONS":
+        return "No remaining lessons are available for this course.";
       default:
         return err?.message || "Something went wrong. Please try again.";
     }
@@ -331,6 +348,13 @@ const BookLesson = () => {
       // Validate again before submit (critical)
       const v = validateStep();
       if (!v.ok) return errorToast(v.message);
+      if (isBookingBlocked) {
+        return errorToast(
+          isAlreadyPurchasedForSelectedStudent
+            ? "This course is already purchased for the selected student."
+            : "No remaining lessons are available for this course.",
+        );
+      }
 
       // generate idempotency key
       const idempotencyKey = `booking-${Date.now()}-${Math.random()
@@ -351,7 +375,9 @@ const BookLesson = () => {
         courseId: courseData?._id || courseData?.id,
         studentId: selectedStudent?._id || selectedStudent?.id,
         teacherId: selectedTeacher?._id || selectedTeacher?.id,
-        amount: Math.round((courseData?.price || 0) * 100),
+        amount:
+          courseData?.pricing?.effectivePriceCents ??
+          Math.round((courseData?.price || 0) * 100),
         isTrial: type === "trial",
         lessonId:
           type === "trial"
@@ -385,7 +411,10 @@ const BookLesson = () => {
       const piPayload = {
         bookingId: bookingRes?.booking?._id,
         teacherId: selectedTeacher?._id || selectedTeacher?.id,
-        amount: Math.round((courseData?.price || 0) * 100),
+        amount:
+          bookingRes?.pricing?.effectiveAmountCents ??
+          courseData?.pricing?.effectivePriceCents ??
+          Math.round((courseData?.price || 0) * 100),
         currency: "usd",
         paymentMethodId:
           selectedPaymentMethod?.type === "saved_card"
@@ -523,6 +552,9 @@ const BookLesson = () => {
   };
 
   const getButtonText = () => {
+    if (isAlreadyPurchasedForSelectedStudent) return "Already Purchased";
+    if (hasNoRemainingLessons) return "No Remaining Lessons";
+
     const texts = {
       enroll: {
         1: "Next",
@@ -578,7 +610,7 @@ const BookLesson = () => {
                         <div className="mt-6 flex justify-end">
                           <Button
                             onClick={handleNextStep}
-                            disabled={!isFormValid()}
+                            disabled={!isFormValid() || isBookingBlocked}
                             className="w-56 h-12"
                             size="lg"
                             iconName="ChevronRight"
@@ -618,7 +650,7 @@ const BookLesson = () => {
                     <div className="mt-6 flex justify-center">
                       <Button
                         onClick={handleNextStep}
-                        disabled={!isFormValid()}
+                        disabled={!isFormValid() || isBookingBlocked}
                         className="w-56 h-12"
                         size="lg"
                         iconName="ChevronRight"
@@ -687,7 +719,11 @@ const BookLesson = () => {
                             onClick={
                               currentStep === 3 ? handleSubmit : handleNextStep
                             }
-                            disabled={selectedPaymentMethod === null || isSubmitting}
+                            disabled={
+                              selectedPaymentMethod === null ||
+                              isSubmitting ||
+                              isBookingBlocked
+                            }
                             className={`h-12 ${
                               currentStep === 3 ? "w-72" : "w-56"
                             }`}
@@ -750,7 +786,9 @@ const BookLesson = () => {
                         onClick={
                           currentStep === 3 ? handleSubmit : handleNextStep
                         }
-                        disabled={selectedPaymentMethod === null}
+                        disabled={
+                          selectedPaymentMethod === null || isBookingBlocked
+                        }
                         className={`h-12 ${
                           currentStep === 3 ? "w-72" : "w-56"
                         }`}
@@ -802,7 +840,7 @@ const BookLesson = () => {
                         <div className="mt-6 flex justify-end">
                           <Button
                             onClick={handleNextStep}
-                            disabled={!isFormValid()}
+                            disabled={!isFormValid() || isBookingBlocked}
                             className="w-56 h-12"
                             size="lg"
                             iconName="ChevronRight"
@@ -840,7 +878,7 @@ const BookLesson = () => {
                     <div className="mt-6 flex justify-center">
                       <Button
                         onClick={handleNextStep}
-                        disabled={!isFormValid()}
+                        disabled={!isFormValid() || isBookingBlocked}
                         className="w-56 h-12"
                         size="lg"
                         iconName="ChevronRight"
@@ -894,7 +932,9 @@ const BookLesson = () => {
                             onClick={
                               currentStep === 2 ? handleSubmit : handleNextStep
                             }
-                            disabled={selectedPaymentMethod === null}
+                            disabled={
+                              selectedPaymentMethod === null || isBookingBlocked
+                            }
                             className={`h-12 ${
                               currentStep === 2 ? "w-72" : "w-56"
                             }`}
@@ -946,7 +986,9 @@ const BookLesson = () => {
                         onClick={
                           currentStep === 2 ? handleSubmit : handleNextStep
                         }
-                        disabled={selectedPaymentMethod === null}
+                        disabled={
+                          selectedPaymentMethod === null || isBookingBlocked
+                        }
                         className={`h-12 ${
                           currentStep === 2 ? "w-72" : "w-56"
                         }`}
@@ -980,6 +1022,13 @@ const BookLesson = () => {
             Complete your booking in a few simple steps. All fields marked with
             * are required.
           </p>
+          {isBookingBlocked && (
+            <div className="mt-4 rounded-md border border-red-500 bg-red-50 p-3 text-sm text-foreground">
+              {isAlreadyPurchasedForSelectedStudent
+                ? "This course is already purchased for the selected student."
+                : "No remaining lessons are available for this course."}
+            </div>
+          )}
         </section>
 
         {/* Booking Steps */}

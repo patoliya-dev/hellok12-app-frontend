@@ -5,7 +5,7 @@ import Button from "components/ui/Button";
 import { Checkbox } from "components/ui/Checkbox";
 import Input from "components/ui/Input";
 import DeleteModal from "components/ui/DeleteModal";
-import { successToast } from "../../../../utils/utils";
+import { errorToast, successToast } from "../../../../utils/utils";
 import WeeklySchedule from "../../../../components/ui/WeeklySchedule";
 import DurationRange from "components/ui/DurationRange";
 import { schoolService } from "../../../../services/school/school.service";
@@ -21,16 +21,19 @@ const LessonFormInstance = ({
   onDeleteLesson,
   mode,
   teachers,
+  editPolicy,
 }) => {
   const { user } = useSelector((s) => s.auth);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const isLocked = (field) =>
+    !!editPolicy && !editPolicy.canEditLessonField(field);
   return (
     <div className="flex flex-col gap-y-3">
       <div className="flex justify-between">
         <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-primary text-white">
           {index}
         </div>
-        {index !== 1 && (
+        {index !== 1 && editPolicy?.canRemoveLesson && (
           <Icon
             name="Trash2"
             size={24}
@@ -58,6 +61,7 @@ const LessonFormInstance = ({
             required
             error={errors?.title}
             onChange={(e) => handleInputChange("title", e?.target?.value)}
+            disabled={isLocked("title")}
           />
           {user.role === "school" && (
             <Select
@@ -67,6 +71,7 @@ const LessonFormInstance = ({
               value={formData?.assignedTeacher || ""}
               onChange={(value) => handleInputChange("assignedTeacher", value)}
               error={errors?.assignedTeacher}
+              disabled={isLocked("assignedTeacher")}
             />
           )}
         </div>
@@ -83,6 +88,7 @@ const LessonFormInstance = ({
             value={formData?.description || ""}
             required
             onChange={(e) => handleInputChange("description", e.target.value)}
+            disabled={isLocked("description")}
           />
 
           {errors?.description && (
@@ -96,12 +102,14 @@ const LessonFormInstance = ({
           errors={errors?.schedule || {}}
           teacherId={formData?.assignedTeacher}
           onTeacherRequired={() => errorToast("Please select a teacher first")}
+          disabled={isLocked("schedule")}
         />
 
         <DurationRange
           formData={formData}
           handleInputChange={(field, value) => handleInputChange(field, value)}
           error={errors?.schedule?.duration}
+          disabled={isLocked("schedule.duration")}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
@@ -112,6 +120,7 @@ const LessonFormInstance = ({
             onChange={(e) =>
               handleInputChange("isTrialAvailable", e.target.checked)
             }
+            disabled={isLocked("isTrialAvailable")}
           />
 
           {formData?.isTrialAvailable && (
@@ -126,6 +135,7 @@ const LessonFormInstance = ({
               }
               required={formData?.isTrialAvailable}
               error={errors?.trialCapacity}
+              disabled={isLocked("trialCapacity")}
             />
           )}
         </div>
@@ -140,7 +150,7 @@ const LessonFormInstance = ({
         /> */}
       </div>
 
-      {showAddButton && (
+      {showAddButton && editPolicy?.canAddLesson && (
         <div className="flex justify-center mt-4">
           <Button size="lg" iconName="Plus" onClick={onAddLesson}>
             Add More Lesson
@@ -170,6 +180,7 @@ export default function LessonForm({
   addLesson,
   removeLesson,
   mode,
+  editPolicy,
 }) {
   const [teachers, setTeachers] = useState([]);
 
@@ -209,6 +220,7 @@ export default function LessonForm({
         showAddButton={index === formData.lessons.length - 1}
         teachers={teachers}
         mode={mode}
+        editPolicy={editPolicy}
       />
       {index !== formData?.lessons.length - 1 && <hr className="!my-8" />}
     </div>

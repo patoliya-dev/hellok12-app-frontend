@@ -4,6 +4,61 @@ import Icon from "../ui/Icon";
 const LessonList = ({ lessons, selectedLesson }) => {
   const [expandedLessons, setExpandedLessons] = useState(new Set(["lesson-1"]));
 
+  const toDate = (value) => {
+    if (!value) return null;
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+
+  const parseScheduleDate = (lesson) => {
+    const datePart = lesson?.schedule?.date;
+    const timePart = lesson?.schedule?.time;
+    if (!datePart) return null;
+    const combined = timePart ? `${datePart}T${timePart}` : datePart;
+    return toDate(combined) || toDate(datePart);
+  };
+
+  const isLessonOutdated = (lesson) => {
+    if (!lesson) return false;
+
+    if (lesson?.isOutdated === true || lesson?.outdated === true) return true;
+
+    const status = String(lesson?.status || lesson?.lessonStatus || "")
+      .trim()
+      .toLowerCase();
+
+    if (status === "outdated" || status === "expired") return true;
+    if (status === "completed" || status === "active" || status === "upcoming")
+      return false;
+
+    const now = Date.now();
+    const expiresAt = toDate(lesson?.expiresAt);
+    if (expiresAt && expiresAt.getTime() < now) return true;
+
+    const startAt =
+      toDate(lesson?.startAt) ||
+      toDate(lesson?.startTime) ||
+      parseScheduleDate(lesson);
+    if (startAt && startAt.getTime() < now) return true;
+
+    return false;
+  };
+
+  const getLessonDateLabel = (lesson) => {
+    const dateValue =
+      lesson?.startAt ||
+      lesson?.startTime ||
+      lesson?.schedule?.date ||
+      lesson?.date;
+    const parsed = toDate(dateValue) || parseScheduleDate(lesson);
+    if (!parsed) return "Date not available";
+    return parsed.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   const toggleLessonExpansion = (lessonId) => {
     const newExpanded = new Set(expandedLessons);
     if (newExpanded.has(lessonId)) {
@@ -41,7 +96,7 @@ const LessonList = ({ lessons, selectedLesson }) => {
           {lessons?.reduce(
             (total, lesson) =>
               total + parseInt(lesson?.schedule.duration || "0"),
-            0
+            0,
           )}{" "}
           minutes total
         </span>
@@ -80,10 +135,21 @@ const LessonList = ({ lessons, selectedLesson }) => {
                       <p className="text-sm text-muted-foreground">
                         {lesson?.schedule.duration} minutes
                       </p>
+                      <p className="text-sm text-muted-foreground">
+                        {getLessonDateLabel(lesson)}
+                      </p>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-end  ">
+                  {isLessonOutdated(lesson) && (
+                    <div className="mr-2">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-red-50 text-red-700">
+                        <Icon name="AlertCircle" size={12} />
+                        Outdated
+                      </span>
+                    </div>
+                  )}
                   {lesson?.isTrialAvailable && (
                     <div>
                       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-[#0ea5e9]/5 text-[#0ea5e9]">
@@ -115,6 +181,15 @@ const LessonList = ({ lessons, selectedLesson }) => {
                   <p className="text-muted-foreground mb-4">
                     {lesson.description}
                   </p>
+                )}
+                {isLessonOutdated(lesson) && (
+                  <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    <Icon name="Info" size={14} className="mt-0.5" />
+                    <span>
+                      This lesson is outdated and is not counted as an available
+                      remaining lesson.
+                    </span>
+                  </div>
                 )}
               </div>
             )}

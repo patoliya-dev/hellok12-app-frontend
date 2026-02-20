@@ -5,7 +5,15 @@ import { languageOptions } from "../../../../utils/utils";
 import FileUploader from "components/ui/FileUploader";
 import { ageGroupOptions } from "../../../teacher/profile-settings/data";
 
-const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
+const CourseForm = ({
+  formData,
+  handleInputChange,
+  errors,
+  introUpload,
+  editPolicy,
+}) => {
+  const isLocked = (field) =>
+    !!editPolicy && !editPolicy.canEditCourseField(field);
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 !mb-4">
@@ -16,6 +24,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           onChange={(e) => handleInputChange("title", e?.target?.value)}
           error={errors?.title}
           required
+          disabled={isLocked("title")}
         />
 
         <Select
@@ -26,6 +35,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           error={errors?.languageCode}
           required
           searchable
+          disabled={isLocked("languageCode")}
         />
       </div>
 
@@ -43,6 +53,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
             handleInputChange("description", e.target.value)
           }
           required
+          disabled={isLocked("description")}
         />
 
         {errors?.description && (
@@ -56,6 +67,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           options={lessonTypeOptions}
           value={formData?.lessonType || ""}
           onChange={(value) => handleInputChange("lessonType", value)}
+          disabled={isLocked("lessonType")}
         />
         {formData?.lessonType === "group" && (
           <Input
@@ -69,6 +81,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
               handleInputChange("studentCapacity", parseInt(e?.target?.value))
             }
             error={errors?.studentCapacity}
+            disabled={isLocked("studentCapacity")}
           />
         )}
         <FileUploader
@@ -83,6 +96,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           isLoading={!!introUpload?.loading}
           progress={introUpload?.progress || 0}
           previewUrl={formData?.introImageRef?.url || null}
+          disabled={isLocked("introImage")}
         />
       </div>
 
@@ -94,6 +108,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           onChange={(value) => handleInputChange("mode", value)}
           required
           error={errors?.mode}
+          disabled={isLocked("mode")}
         />
 
         <Input
@@ -106,6 +121,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           onChange={(e) =>
             handleInputChange("price", parseFloat(e?.target?.value))
           }
+          disabled={isLocked("price")}
         />
 
         <div className="space-y-2">
@@ -117,6 +133,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
             onChange={(value) => handleInputChange("ageGroups", value)}
             placeholder="Select age groups..."
             required
+            disabled={isLocked("ageGroups")}
           />
         </div>
       </div>
@@ -129,6 +146,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           onChange={(e) => handleInputChange("startDate", e?.target?.value)}
           error={errors?.startDate}
           required
+          disabled={isLocked("startDate")}
         />
 
         <Input
@@ -136,6 +154,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           type="date"
           value={formData?.endDate}
           onChange={(e) => handleInputChange("endDate", e?.target?.value)}
+          disabled={isLocked("endDate")}
         />
       </div>
     </>

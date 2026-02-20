@@ -239,9 +239,19 @@ const BookingConfirmation = ({
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Course Fee:</span>
               <span className="font-medium text-foreground">
-                ${safeNum(courseData?.price, 0).toFixed(2)}
+                $
+                {safeNum(
+                  courseData?.pricing?.effectivePrice ?? courseData?.price,
+                  0,
+                ).toFixed(2)}
               </span>
             </div>
+            {Number(courseData?.pricing?.completedLessons || 0) > 0 && (
+              <div className="mt-2 text-xs text-muted-foreground">
+                Adjusted for {courseData?.pricing?.completedLessons} completed
+                lesson(s).
+              </div>
+            )}
           </div>
 
           {/* Payment Method */}

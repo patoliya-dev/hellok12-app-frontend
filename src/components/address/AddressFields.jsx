@@ -9,6 +9,7 @@ export default function AddressFields({
   errors = {},
   // optional flags (keep defaults for course/booking use)
   enableCountryStateCity = true,
+  disabled = false,
 }) {
   const v = value || {};
   const set = (k, val) => onChange({ ...(v || {}), [k]: val });
@@ -48,6 +49,7 @@ export default function AddressFields({
         onChange={(e) => set("line1", e.target.value)}
         error={errors?.line1}
         required
+        disabled={disabled}
       />
 
       <Input
@@ -56,6 +58,7 @@ export default function AddressFields({
         value={v.line2 || ""}
         onChange={(e) => set("line2", e.target.value)}
         error={errors?.line2}
+        disabled={disabled}
       />
 
       {enableCountryStateCity && (
@@ -67,6 +70,7 @@ export default function AddressFields({
             value={selectedCountry}
             onChange={onCountryChange}
             searchable
+            disabled={disabled}
           />
 
           <Select
@@ -75,7 +79,7 @@ export default function AddressFields({
             options={stateOptions}
             value={selectedState}
             onChange={onStateChange}
-            disabled={!selectedCountry}
+            disabled={disabled || !selectedCountry}
             searchable
           />
 
@@ -85,7 +89,7 @@ export default function AddressFields({
             options={cityOptions}
             value={selectedCity}
             onChange={(val) => set("city", val)}
-            disabled={!selectedCountry || !selectedState}
+            disabled={disabled || !selectedCountry || !selectedState}
             searchable
           />
         </>
@@ -97,6 +101,7 @@ export default function AddressFields({
         value={v.postalCode || ""}
         onChange={(e) => set("postalCode", e.target.value)}
         error={errors?.postalCode}
+        disabled={disabled}
       />
     </div>
   );

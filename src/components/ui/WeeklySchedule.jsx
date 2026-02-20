@@ -14,6 +14,7 @@ export default function WeeklySchedule({
   errors = {},
   teacherId: externalTeacherId, // Optional: override the auth user's teacherId
   onTeacherRequired, // Optional: callback when teacher is required but not provided
+  disabled = false,
 }) {
   const dispatch = useDispatch();
   const auth = useSelector((s) => s.auth);
@@ -23,7 +24,7 @@ export default function WeeklySchedule({
   const [availableSlots, setAvailableSlots] = useState([]); // array of { label, minutes, disabled? } OR legacy string[]
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedTime, setSelectedTime] = useState(
-    formData?.schedule?.time || ""
+    formData?.schedule?.time || "",
   );
 
   // fetch slots whenever date changes
@@ -105,10 +106,11 @@ export default function WeeklySchedule({
   }, [formData?.schedule?.time]);
 
   const onTimeClick = (slot) => {
+    if (disabled) return;
     // slot may be string (legacy) or object { label, disabled }
     const rawLabel = typeof slot === "string" ? slot : slot.label;
-    const disabled = typeof slot === "string" ? false : !!slot.disabled;
-    if (disabled) return;
+    const slotDisabled = typeof slot === "string" ? false : !!slot.disabled;
+    if (slotDisabled) return;
     // Always store 24h "HH:MM" in formData.schedule.time
     const hhmm24 = normalizeToHHMM24(rawLabel) || rawLabel;
 
@@ -129,7 +131,9 @@ export default function WeeklySchedule({
             type="date"
             value={formData?.schedule?.date || ""}
             required
+            disabled={disabled}
             onChange={(e) => {
+              if (disabled) return;
               const newDate = e.target.value;
               // If onTeacherRequired is provided and no teacherId, call the callback
               if (onTeacherRequired && !teacherId && newDate) {
@@ -156,7 +160,7 @@ export default function WeeklySchedule({
                   availableSlots.map((slotItem) => {
                     const label =
                       typeof slotItem === "string" ? slotItem : slotItem.label;
-                    const disabled =
+                    const slotDisabled =
                       typeof slotItem === "string"
                         ? false
                         : !!slotItem.disabled;
@@ -166,14 +170,16 @@ export default function WeeklySchedule({
                     return (
                       <button
                         key={label}
-                        disabled={disabled}
+                        disabled={disabled || slotDisabled}
                         onClick={() => onTimeClick(slotItem)}
                         className={`px-4 py-1.5 text-sm rounded-md border transition
-                          ${(selectedTime === label || formData?.schedule?.time == label)
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : disabled
-                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                              : "bg-white text-gray-700 hover:bg-gray-50 border-gray-300"
+                          ${
+                            selectedTime === label ||
+                            formData?.schedule?.time == label
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : disabled || slotDisabled
+                                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                : "bg-white text-gray-700 hover:bg-gray-50 border-gray-300"
                           }`}
                       >
                         {displayLabel}

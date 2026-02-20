@@ -4,9 +4,9 @@ import paymentsApi from "./stripeApi";
 // Thunks
 export const createConnectedAccount = createAsyncThunk(
     "stripe/createConnectedAccount",
-    async (_, { rejectWithValue }) => {
+    async (params, { rejectWithValue }) => {
         try {
-            const res = await paymentsApi.createConnectedAccount();
+            const res = await paymentsApi.createConnectedAccount(params);
             return res.data || res;
         } catch (err) {
             return rejectWithValue(err.response?.data || err.message);
