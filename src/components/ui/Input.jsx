@@ -12,6 +12,9 @@ const Input = React.forwardRef(
       error,
       required = false,
       id,
+      leftAdornment = null,
+      rightAdornment = null,
+      fieldClassName = "",
       ...props
     },
     ref
@@ -104,6 +107,8 @@ const Input = React.forwardRef(
     }
 
     // Default: text/email/password/etc.
+    const hasAdornment = !!leftAdornment || !!rightAdornment;
+
     return (
       <div className="space-y-2">
         {label && (
@@ -119,17 +124,33 @@ const Input = React.forwardRef(
           </label>
         )}
 
-        <input
-          type={type}
-          className={cn(
-            baseInputClasses,
-            error && "border-destructive focus-visible:ring-destructive",
-            className
+        <div className={cn("relative", fieldClassName)}>
+          {leftAdornment && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex items-center">
+              {leftAdornment}
+            </div>
           )}
-          ref={ref}
-          id={inputId}
-          {...props}
-        />
+
+          <input
+            type={type}
+            className={cn(
+              baseInputClasses,
+              hasAdornment && leftAdornment && "pl-10",
+              hasAdornment && rightAdornment && "pr-10",
+              error && "border-destructive focus-visible:ring-destructive",
+              className
+            )}
+            ref={ref}
+            id={inputId}
+            {...props}
+          />
+
+          {rightAdornment && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex items-center">
+              {rightAdornment}
+            </div>
+          )}
+        </div>
 
         {description && !error && (
           <p className="text-sm text-muted-foreground">{description}</p>

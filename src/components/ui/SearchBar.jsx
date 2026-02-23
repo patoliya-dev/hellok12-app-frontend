@@ -25,15 +25,14 @@ const SearchBar = ({ onSearch }) => {
   };
 
   return (
-    <div className="relative">
-      <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-        <Icon name="Search" size={18} className="text-muted-foreground" />
-      </div>
-
+    <div>
       <Input
         type="text"
         placeholder="Search"
         value={searchTerm}
+        leftAdornment={
+          <Icon name="Search" size={18} className="text-muted-foreground" />
+        }
         onChange={(e) => setSearchTerm(e.target.value)}
         className="pl-10 pr-10 h-12 border-muted-1 bg-white"
       />

@@ -12,6 +12,16 @@ export const fetchTeachers = async (filters, pagination) => {
   }
 };
 
+export const fetchTeacherSchools = async () => {
+  try {
+    const response = await api.get("/find-teacher/schools");
+    return response.data;
+  } catch (error) {
+    errorToast(error.response?.data || error.message);
+    throw error;
+  }
+};
+
 export const fetchDetails = async (teacherId) => {
   try {
     const response = await api.get(`/find-teacher/${teacherId}`);

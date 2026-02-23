@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import ParentInfoSection from "./components/ParentInfoSection";
-import StudentInfoSection from "./components/StudentInfoSection";
-import StudentProfileSection from "./components/StudentProfileSection";
-import ChildSelector from "./components/ChildSelector";
+import SchoolProfileSection from "./components/SchoolProfileSection";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import ChangePasswordModal from "./components/ChangePasswordModal";
+import Icon from "components/AppIcon";
 import { selectAuthUser } from "reducers/auth/authSelectors";
-import { capitalize } from "../../../utils/utils";
+import { getLanguageName } from "../../../utils/utils";
 import { updateProfile as updateProfileThunk } from "reducers/profile/profileThunks";
 import Loader from "components/ui/Loader";
 import { fetchCurrentUser } from "reducers/auth/authThunks";
@@ -15,15 +13,9 @@ import { fetchCurrentUser } from "reducers/auth/authThunks";
 const ProfileAccountSettings = () => {
   const dispatch = useDispatch();
   const authUser = useSelector(selectAuthUser);
-  const isParent = authUser?.role === "parent";
-  const isStudent = authUser?.role === "student";
-  const students = useSelector((state) => state.profile.students);
   const [currentLanguage, setCurrentLanguage] = useState("en");
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [expandedSections, setExpandedSections] = useState({
-    personal: true,
-    student: isParent,
-  });
+  const [expandedSections, setExpandedSections] = useState({ personal: true });
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -53,9 +45,10 @@ const ProfileAccountSettings = () => {
     throw new Error(result.payload?.error);
   };
 
-  const studentProfile = isStudent
-    ? students.find((s) => s.email === authUser.email) || authUser
-    : authUser;
+  const lastUpdatedRaw = authUser?.profile?.updatedAt || authUser?.updatedAt;
+  const lastUpdatedText = lastUpdatedRaw
+    ? new Date(lastUpdatedRaw).toLocaleDateString("en-GB")
+    : "N/A";
 
   return isLoading ? (
     <Loader />
@@ -66,33 +59,26 @@ const ProfileAccountSettings = () => {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header and language/role indicators */}
           <div className="my-8">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">
-                  Profile & Account Settings
-                </h1>
-                <p className="text-text-secondary mt-1">
-                  Manage your personal information, and preferences
-                </p>
-              </div>
-              {isParent && <ChildSelector />}
-            </div>
-            <div className="flex items-center space-x-3 text-sm">
-              <span className="py-1 bg-primary/10 text-primary font-medium rounded-full">
-                {capitalize(authUser.role)} Account
-              </span>
-              <span className="text-text-secondary">
-                • Language: {currentLanguage.toUpperCase()}
+            <h1 className="text-3xl font-bold text-foreground">
+              Profile & Account Settings
+            </h1>
+            <p className="text-text-secondary mt-1">
+              Manage school information, and preferences
+            </p>
+            <div className="mt-3 text-sm text-muted-foreground flex items-center gap-1.5">
+              <Icon name="Dot" size={24} strokeWidth={3} className="shrink-0" />
+              <span>
+                Language: {getLanguageName(currentLanguage) || "English"}
               </span>
             </div>
           </div>
 
           {/* Profile Sections */}
           <div className="space-y-6">
-            <StudentProfileSection
+            <SchoolProfileSection
               isExpanded={expandedSections.personal}
               onToggle={() => handleSectionToggle("personal")}
-              profileData={students}
+              profileData={authUser}
               onSave={handleProfileSave}
               onChangePasswordClick={() => setShowChangePassword(true)}
             />
@@ -102,7 +88,7 @@ const ProfileAccountSettings = () => {
           <div className="mt-10 pt-6 border-t border-border">
             <div className="flex items-center justify-between">
               <div className="text-sm text-text-secondary">
-                <p>Last updated: 8/1/2025</p>
+                <p>Last updated: {lastUpdatedText}</p>
                 <p>All changes are automatically saved</p>
               </div>
               <button className="text-sm font-medium text-error hover:text-error/80 transition-colors">

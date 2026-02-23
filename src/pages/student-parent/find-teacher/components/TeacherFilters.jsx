@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Button from "../../../../components/ui/Button";
 import { languageOptions } from "../../../../utils/utils";
 import Input from "components/ui/Input";
@@ -12,6 +12,7 @@ export default function TeacherFilters({
   filters,
   onFiltersChange,
   schoolSlug,
+  schoolOptions = [],
 }) {
   const [localFilters, setLocalFilters] = useState(filters);
   const [priceInputs, setPriceInputs] = useState({
@@ -109,10 +110,9 @@ export default function TeacherFilters({
     { value: "18+", label: "18+ years old" },
   ];
 
-  const schoolOptions = [
+  const dynamicSchoolOptions = [
     { value: "", label: "Select school" },
-    { value: "school1", label: "School 1" },
-    { value: "school2", label: "School 2" },
+    ...schoolOptions,
   ];
   const experienceOptions = [
     { value: "", label: "Select experience..." },
@@ -133,7 +133,7 @@ export default function TeacherFilters({
             label="School"
             value={filters.school}
             onChange={(val) => handleChange("school", val)}
-            options={schoolOptions}
+            options={dynamicSchoolOptions}
           />
         ) : null}
         {/* Languages */}
