@@ -1,17 +1,42 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
-import { successToast } from "../../../../utils/utils";
+import { errorToast } from "../../../../utils/utils";
 
-const ProfileRequestModal = ({ isOpen, onClose }) => {
-  const [message, setMessage] = useState(
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
+const ProfileRequestModal = ({
+  isOpen,
+  onClose,
+  teacher,
+  onSubmit,
+  loading = false,
+}) => {
+  const defaultMessage = useMemo(
+    () =>
+      `Hi ${teacher?.name || "Teacher"}, please complete your profile details so students and parents can view your updated information.`,
+    [teacher?.name],
   );
+  const [title, setTitle] = useState("Complete your profile");
+  const [message, setMessage] = useState(defaultMessage);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    setMessage(defaultMessage);
+  }, [defaultMessage, isOpen]);
+
+  const handleSubmit = async (e) => {
     e?.preventDefault();
-    onClose();
-    successToast("Request sent successfully!");
+    const trimmedMessage = String(message || "").trim();
+    if (trimmedMessage.length < 5 || trimmedMessage.length > 500) {
+      errorToast("Message must be between 5 and 500 characters");
+      return;
+    }
+
+    await onSubmit?.({
+      teacherId: teacher?._id,
+      title: String(title || "").trim(),
+      message: trimmedMessage,
+      context: "PROFILE_COMPLETION",
+    });
   };
 
   if (!isOpen) return null;
@@ -30,7 +55,11 @@ const ProfileRequestModal = ({ isOpen, onClose }) => {
                 Send Request
               </h2>
               <p className="text-sm text-muted-foreground">
-                Send a request to fill in the details
+                Send a request to complete profile details
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Teacher will receive a notification with a direct link to
+                profile edit.
               </p>
             </div>
           </div>
@@ -46,6 +75,25 @@ const ProfileRequestModal = ({ isOpen, onClose }) => {
               <h3 className="text-lg text-brand-gray-800 font-semibold">
                 Request Message
               </h3>
+              <p className="text-sm text-muted-foreground">
+                Teacher:{" "}
+                <span className="font-medium text-foreground">
+                  {teacher?.name || "N/A"}
+                </span>
+              </p>
+
+              <div>
+                <label className="text-sm font-medium text-brand-gray-800 mb-2 block">
+                  Title
+                </label>
+                <input
+                  className="w-full p-3 border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent text-sm text-brand-gray-800"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={80}
+                  placeholder="Complete your profile"
+                />
+              </div>
 
               <div>
                 <label className="text-sm font-medium text-brand-gray-800 mb-2 block">
@@ -56,8 +104,13 @@ const ProfileRequestModal = ({ isOpen, onClose }) => {
                   rows={6}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
+                  minLength={5}
+                  maxLength={500}
                   placeholder="Write a personalized message..."
                 />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {message.length}/500
+                </p>
               </div>
             </div>
           </div>
@@ -72,8 +125,9 @@ const ProfileRequestModal = ({ isOpen, onClose }) => {
               variant="default"
               iconName="Send"
               iconPosition="left"
+              disabled={loading}
             >
-              Send Request
+              {loading ? "Sending..." : "Send Request"}
             </Button>
           </div>
         </form>

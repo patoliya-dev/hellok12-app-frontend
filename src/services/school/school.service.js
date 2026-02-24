@@ -4,9 +4,9 @@ export const schoolService = {
   /**
    * Get all teachers for a school
    */
-  getTeachers: async () => {
+  getTeachers: async (params = {}) => {
     try {
-      const { data } = await api.get(`/school/teachers`);
+      const { data } = await api.get(`/school/teachers`, { params });
       return data?.data || data;
     } catch (error) {
       console.error("Failed to fetch teachers:", error);
@@ -40,6 +40,28 @@ export const schoolService = {
       return data?.data || data;
     } catch (error) {
       console.error("Failed to approve/reject teacher:", error);
+      throw error.response?.data || { error: error.message };
+    }
+  },
+
+  sendTeacherNotification: async ({
+    teacherId,
+    message,
+    title,
+    context = "PROFILE_COMPLETION",
+  }) => {
+    try {
+      const { data } = await api.post(
+        `/school/teachers/${teacherId}/notifications`,
+        {
+          message,
+          title,
+          context,
+        },
+      );
+      return data?.data || data;
+    } catch (error) {
+      console.error("Failed to send teacher notification:", error);
       throw error.response?.data || { error: error.message };
     }
   },

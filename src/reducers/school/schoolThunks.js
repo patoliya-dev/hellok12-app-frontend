@@ -10,7 +10,7 @@ export const fetchSchoolTeachers = createAsyncThunk(
     } catch (e) {
       return rejectWithValue(e);
     }
-  }
+  },
 );
 
 export const inviteSchoolTeacher = createAsyncThunk(
@@ -21,7 +21,7 @@ export const inviteSchoolTeacher = createAsyncThunk(
     } catch (e) {
       return rejectWithValue(e);
     }
-  }
+  },
 );
 
 export const approveRejectSchoolTeacher = createAsyncThunk(
@@ -32,7 +32,23 @@ export const approveRejectSchoolTeacher = createAsyncThunk(
     } catch (e) {
       return rejectWithValue(e);
     }
-  }
+  },
+);
+
+export const sendSchoolTeacherNotification = createAsyncThunk(
+  "school/sendSchoolTeacherNotification",
+  async ({ teacherId, message, title, context }, { rejectWithValue }) => {
+    try {
+      return await schoolService.sendTeacherNotification({
+        teacherId,
+        message,
+        title,
+        context,
+      });
+    } catch (e) {
+      return rejectWithValue(e);
+    }
+  },
 );
 
 // Students
@@ -44,7 +60,7 @@ export const fetchSchoolStudents = createAsyncThunk(
     } catch (e) {
       return rejectWithValue(e);
     }
-  }
+  },
 );
 
 export const inviteSchoolStudent = createAsyncThunk(
@@ -55,5 +71,5 @@ export const inviteSchoolStudent = createAsyncThunk(
     } catch (e) {
       return rejectWithValue(e);
     }
-  }
+  },
 );

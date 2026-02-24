@@ -16,13 +16,23 @@ import { logout } from "reducers/auth/authSlice";
 import Image from "components/AppImage";
 import ManageCourseIcon from "components/icons/ManageCourseIcon";
 import NotificationModal from "./NotificationModal";
-import { getNotificationByRole } from "./data";
 import { getRolePath } from "../../utils/rolePath";
 import {
   selectUnreadCount,
   fetchUnreadCount,
 } from "../../reducers/messages/messageSlice";
 import { getManageCoursesRoute } from "../../utils/courseRoutes";
+import {
+  fetchNotifications,
+  fetchNotificationUnreadCount,
+  markNotificationRead,
+  markAllNotificationsRead,
+  selectNotifications,
+  selectNotificationUnreadCount,
+  selectNotificationsLoading,
+} from "../../reducers/notifications/notificationsSlice";
+import { resolveNotificationDeepLink } from "../../utils/notificationRoutes";
+import useNotificationPolling from "../../hooks/useNotificationPolling";
 
 const arraysEqual = (a = [], b = []) =>
   a.length === b.length && a.every((v, i) => v === b[i]);
@@ -98,16 +108,9 @@ const RoleBasedHeader = () => {
   const isSchoolTeacher =
     authUser?.role === "teacher" && Boolean(authUser?.schoolId);
 
-  // Notifications derived (avoid state churn)
-  const notifications = useMemo(
-    () => getNotificationByRole(userRole),
-    [userRole],
-  );
-
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => n.unread).length,
-    [notifications],
-  );
+  const notifications = useSelector(selectNotifications);
+  const unreadCount = useSelector(selectNotificationUnreadCount);
+  const notificationsLoading = useSelector(selectNotificationsLoading);
 
   // Close overlays on route change (OK; this should not affect nav measurement)
   useEffect(() => {
@@ -136,6 +139,16 @@ const RoleBasedHeader = () => {
       dispatch(fetchUnreadCount());
     }
   }, [authUser?._id, userRole, dispatch]); // use stable identity if available
+
+  useNotificationPolling(Boolean(authUser?.id || authUser?._id));
+
+  useEffect(() => {
+    if (!authUser) return;
+    if (!isNotificationOpen) return;
+
+    dispatch(fetchNotifications({ page: 1, limit: 10 }));
+    dispatch(fetchNotificationUnreadCount());
+  }, [authUser, isNotificationOpen, dispatch]);
 
   const getNavigationItems = useCallback(() => {
     const manageCoursesConfig =
@@ -392,10 +405,21 @@ const RoleBasedHeader = () => {
     setIsMoreOpen(false);
   }, [dispatch, navigate]);
 
-  const handleNotificationClick = (notificationId) => {
-    // Keep your behavior; just avoid extra state changes here.
-    // eslint-disable-next-line no-console
-    console.log("Notification clicked:", notificationId);
+  const handleNotificationClick = async (notification) => {
+    if (!notification) return;
+
+    if (!notification.isRead) {
+      await dispatch(markNotificationRead(notification._id));
+    }
+
+    const target = resolveNotificationDeepLink(notification, userRole);
+    setIsNotificationOpen(false);
+    if (target) navigate(target);
+  };
+
+  const handleViewAllNotifications = () => {
+    setIsNotificationOpen(false);
+    navigate(getRolePath(userRole, "notifications"));
   };
 
   const toggleNotifications = () => {
@@ -760,7 +784,11 @@ const RoleBasedHeader = () => {
                   {isNotificationOpen && (
                     <NotificationModal
                       notifications={notifications}
+                      loading={notificationsLoading}
+                      unreadCount={unreadCount}
                       handleNotificationClick={handleNotificationClick}
+                      handleMarkAllRead={() => dispatch(markAllNotificationsRead({}))}
+                      handleViewAll={handleViewAllNotifications}
                     />
                   )}
                 </div>

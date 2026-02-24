@@ -8,6 +8,7 @@ import {
   fetchSchoolTeachers,
   inviteSchoolTeacher,
   approveRejectSchoolTeacher,
+  sendSchoolTeacherNotification,
   fetchSchoolStudents,
   inviteSchoolStudent,
 } from "./schoolThunks";
@@ -16,6 +17,7 @@ const allThunks = [
   fetchSchoolTeachers,
   inviteSchoolTeacher,
   approveRejectSchoolTeacher,
+  sendSchoolTeacherNotification,
   fetchSchoolStudents,
   inviteSchoolStudent,
 ];
@@ -30,6 +32,7 @@ const initialState = {
     fetchSchoolTeachers: { status: "idle", error: null },
     inviteSchoolTeacher: { status: "idle", error: null },
     approveRejectSchoolTeacher: { status: "idle", error: null },
+    sendSchoolTeacherNotification: { status: "idle", error: null },
 
     fetchSchoolStudents: { status: "idle", error: null },
     inviteSchoolStudent: { status: "idle", error: null },

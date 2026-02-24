@@ -12,6 +12,7 @@ import ProfileAccountSettings from "../pages/school/profile-settings";
 import ManageCourses from "../pages/teacher/manage-courses";
 import CreateCourse from "../pages/teacher/create-course";
 import LessonsList from "../pages/teacher/lessons-list";
+import NotificationsPage from "../pages/shared/notifications";
 
 import ProtectedRoute from "../components/ProtectedRoute";
 import { canManageCourses } from "../utils/authz";
@@ -24,6 +25,7 @@ const SchoolRoutes = () => {
       <Route path="/scheduled-lessons" element={<ScheduledLessons />} />
       <Route path="/manage-teachers" element={<ManageTeachers />} />
       <Route path="/manage-students" element={<ManageStudents />} />
+      <Route path="/notifications" element={<NotificationsPage />} />
       <Route path="/earnings" element={<Earnings />} />
       <Route path="/profile-settings" element={<ProfileAccountSettings />} />
 

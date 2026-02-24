@@ -15,6 +15,7 @@ import { successToast, errorToast } from "../../../utils/utils";
 import {
   fetchSchoolTeachers,
   approveRejectSchoolTeacher,
+  sendSchoolTeacherNotification,
 } from "../../../reducers/school/schoolThunks";
 import {
   selectSchoolTeachers,
@@ -54,12 +55,16 @@ const ManageTeachers = () => {
   const teachers = useSelector(selectSchoolTeachers);
   const summary = useSelector(selectSchoolTeachersSummary);
   const fetchReq = useSelector(selectSchoolReq("fetchSchoolTeachers"));
+  const sendTeacherNotificationReq = useSelector(
+    selectSchoolReq("sendSchoolTeacherNotification")
+  );
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showProfileRequestModal, setShowProfileRequestModal] = useState(false);
+  const [profileRequestTeacher, setProfileRequestTeacher] = useState(null);
   const [activeTab, setActiveTab] = useState("teachers");
 
   const [filters, setFilters] = useState({
@@ -99,7 +104,7 @@ const ManageTeachers = () => {
   }, [dispatch, invSearch, invPage]);
 
   useEffect(() => {
-    dispatch(fetchSchoolTeachers());
+    dispatch(fetchSchoolTeachers({ includeReminderMeta: 1 }));
   }, [dispatch]);
 
   // Only fetch invitations when invitations tab active
@@ -225,9 +230,31 @@ const ManageTeachers = () => {
         approveRejectSchoolTeacher({ teacherId, action: apiAction })
       ).unwrap();
       successToast("Teacher status updated successfully!");
-      dispatch(fetchSchoolTeachers());
+      dispatch(fetchSchoolTeachers({ includeReminderMeta: 1 }));
     } catch (e) {
       errorToast(e?.message || e?.error || "Failed to update teacher status");
+    }
+  };
+
+  const handleSendProfileRequest = async ({ teacherId, title, message, context }) => {
+    try {
+      if (!teacherId) {
+        errorToast("Teacher is required");
+        return;
+      }
+      await dispatch(
+        sendSchoolTeacherNotification({
+          teacherId,
+          title,
+          message,
+          context,
+        })
+      ).unwrap();
+      successToast("Notification sent successfully");
+      setShowProfileRequestModal(false);
+      dispatch(fetchSchoolTeachers({ includeReminderMeta: 1 }));
+    } catch (e) {
+      errorToast(e?.message || e?.error || "Failed to send notification");
     }
   };
 
@@ -362,9 +389,10 @@ const ManageTeachers = () => {
                     onPageChange={setCurrentPage}
                     pageSize={teachersPerPage}
                     onInviteTeacher={() => setShowInviteModal((v) => !v)}
-                    onProfileRequest={() =>
-                      setShowProfileRequestModal((v) => !v)
-                    }
+                    onProfileRequest={(teacher) => {
+                      setProfileRequestTeacher(teacher);
+                      setShowProfileRequestModal(true);
+                    }}
                   />
 
                   {/* Responsive: keep desktop height, allow natural height on small */}
@@ -407,7 +435,13 @@ const ManageTeachers = () => {
 
       <ProfileRequestModal
         isOpen={showProfileRequestModal}
-        onClose={() => setShowProfileRequestModal((v) => !v)}
+        teacher={profileRequestTeacher || selectedTeacher}
+        loading={sendTeacherNotificationReq.status === "loading"}
+        onSubmit={handleSendProfileRequest}
+        onClose={() => {
+          setShowProfileRequestModal(false);
+          setProfileRequestTeacher(null);
+        }}
       />
 
       {showSuccessModal && (
