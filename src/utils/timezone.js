@@ -80,26 +80,3 @@ export function formatDateObjToTZ(dateObj, timeZone, opts = {}) {
     date,
   );
 }
-
-/**
- * Convenience: formats full date-time in a single call.
- */
-export function formatDateTimeToTZ(isoString, timeZone, opts = {}) {
-  if (!isoString) return "";
-  const tz = safeTimeZone(timeZone);
-  const date = new Date(isoString);
-
-  const options = {
-    year: "numeric",
-    month: "long",
-    day: "2-digit",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    ...opts,
-  };
-
-  return new Intl.DateTimeFormat("en-US", { ...options, timeZone: tz }).format(
-    date,
-  );
-}

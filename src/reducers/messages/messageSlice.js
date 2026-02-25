@@ -11,7 +11,7 @@ export const fetchUnreadCount = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.message);
     }
-  }
+  },
 );
 
 const messagesSlice = createSlice({
@@ -69,7 +69,5 @@ export const { setUnreadCount, setUnreadMessageCount, resetUnreadCount } =
 
 // Selectors
 export const selectUnreadCount = (state) => state.messages.unreadCount;
-export const selectMessagesLoading = (state) => state.messages.loading;
-export const selectMessagesError = (state) => state.messages.error;
 
 export default messagesSlice.reducer;

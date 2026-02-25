@@ -30,7 +30,9 @@ export const fetchNotifications = createAsyncThunk(
       return await getNotifications(params);
     } catch (error) {
       return rejectWithValue(
-        error?.response?.data?.error || error?.message || "Failed to fetch notifications",
+        error?.response?.data?.error ||
+          error?.message ||
+          "Failed to fetch notifications",
       );
     }
   },
@@ -58,7 +60,9 @@ export const markNotificationRead = createAsyncThunk(
       return await markNotificationAsRead(id);
     } catch (error) {
       return rejectWithValue(
-        error?.response?.data?.error || error?.message || "Failed to mark notification as read",
+        error?.response?.data?.error ||
+          error?.message ||
+          "Failed to mark notification as read",
       );
     }
   },
@@ -88,7 +92,9 @@ export const removeNotification = createAsyncThunk(
       return id;
     } catch (error) {
       return rejectWithValue(
-        error?.response?.data?.error || error?.message || "Failed to delete notification",
+        error?.response?.data?.error ||
+          error?.message ||
+          "Failed to delete notification",
       );
     }
   },
@@ -121,7 +127,10 @@ const notificationsSlice = createSlice({
       })
       .addCase(fetchNotifications.rejected, (state, action) => {
         state.loadingList = false;
-        state.error = action.payload || action.error?.message || "Failed to fetch notifications";
+        state.error =
+          action.payload ||
+          action.error?.message ||
+          "Failed to fetch notifications";
       })
       .addCase(fetchNotificationUnreadCount.pending, (state) => {
         state.loadingUnreadCount = true;
@@ -133,7 +142,9 @@ const notificationsSlice = createSlice({
       .addCase(fetchNotificationUnreadCount.rejected, (state, action) => {
         state.loadingUnreadCount = false;
         state.error =
-          action.payload || action.error?.message || "Failed to fetch unread notification count";
+          action.payload ||
+          action.error?.message ||
+          "Failed to fetch unread notification count";
       })
       .addCase(markNotificationRead.pending, (state) => {
         state.mutating = true;
@@ -151,7 +162,10 @@ const notificationsSlice = createSlice({
       })
       .addCase(markNotificationRead.rejected, (state, action) => {
         state.mutating = false;
-        state.error = action.payload || action.error?.message || "Failed to mark notification as read";
+        state.error =
+          action.payload ||
+          action.error?.message ||
+          "Failed to mark notification as read";
       })
       .addCase(markAllNotificationsRead.pending, (state) => {
         state.mutating = true;
@@ -171,7 +185,9 @@ const notificationsSlice = createSlice({
       .addCase(markAllNotificationsRead.rejected, (state, action) => {
         state.mutating = false;
         state.error =
-          action.payload || action.error?.message || "Failed to mark all notifications as read";
+          action.payload ||
+          action.error?.message ||
+          "Failed to mark all notifications as read";
       })
       .addCase(removeNotification.fulfilled, (state, action) => {
         const id = action.payload;
@@ -182,19 +198,23 @@ const notificationsSlice = createSlice({
         state.items = state.items.filter((item) => item._id !== id);
       })
       .addCase(removeNotification.rejected, (state, action) => {
-        state.error = action.payload || action.error?.message || "Failed to delete notification";
+        state.error =
+          action.payload ||
+          action.error?.message ||
+          "Failed to delete notification";
       });
   },
 });
 
-export const { setNotificationFilters, resetNotificationState } = notificationsSlice.actions;
+export const { setNotificationFilters, resetNotificationState } =
+  notificationsSlice.actions;
 
-export const selectNotificationsState = (state) => state.notifications;
 export const selectNotifications = (state) => state.notifications.items;
-export const selectNotificationUnreadCount = (state) => state.notifications.unreadCount;
-export const selectNotificationsLoading = (state) => state.notifications.loadingList;
-export const selectNotificationsMutating = (state) => state.notifications.mutating;
-export const selectNotificationFilters = (state) => state.notifications.filters;
-export const selectNotificationsPagination = (state) => state.notifications.pagination;
+export const selectNotificationUnreadCount = (state) =>
+  state.notifications.unreadCount;
+export const selectNotificationsLoading = (state) =>
+  state.notifications.loadingList;
+export const selectNotificationsPagination = (state) =>
+  state.notifications.pagination;
 
 export default notificationsSlice.reducer;

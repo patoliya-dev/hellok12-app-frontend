@@ -1,5 +1,5 @@
-import api from '../../utils/axiosInstance';
-import { cleanParams } from '../../features/shared/apiTypes';
+import api from "../../utils/axiosInstance";
+import { cleanParams } from "../../features/shared/apiTypes";
 
 // -----------------------------
 // Stripe Customer
@@ -21,15 +21,6 @@ export const createSetupIntent = (payload) =>
 // -----------------------------
 export const createPaymentIntent = (payload) =>
   api.post(`/payments/create-payment-intent`, payload);
-
-export const confirmPayment = (payload) =>
-  api.post(`/payments/confirm-payment`, payload);
-
-// -----------------------------
-// Optional: Stripe Checkout Session
-// -----------------------------
-export const createCheckoutSession = (payload) =>
-  api.post(`/payments/create-checkout-session`, payload);
 
 // Set a payment method as default
 export const setDefaultPaymentMethod = (paymentMethodId) =>
@@ -56,10 +47,8 @@ export const getInvoice = (invoiceId) =>
 export const getInvoiceDownload = (invoiceId) =>
   api.get(`/payments/invoices/${invoiceId}/download`);
 
-
 // -----------------------------
 // Parent students (for parent role)
 // -----------------------------
 export const listParentStudents = (parentId) =>
   api.get(`/user/${parentId}/students`);
-

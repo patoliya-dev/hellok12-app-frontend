@@ -111,6 +111,25 @@ export const getSchoolLessons = async (params = {}, { signal } = {}) => {
   return res.data;
 };
 
+export const markSessionCompleted = async (
+  sessionId,
+  payload = {},
+  { signal } = {},
+) => {
+  if (!sessionId) throw new Error("sessionId is required");
+  try {
+    const res = await api.patch(`/sessions/${sessionId}/complete`, payload, {
+      signal,
+    });
+    return res.data;
+  } catch (error) {
+    console.error(`PATCH /sessions/${sessionId}/complete error:`, error);
+    throw new Error(
+      getApiErrorMessage(error, "Failed to mark session as completed"),
+    );
+  }
+};
+
 // School-owned courses for dropdown
 export const getCoursesForSchool = async ({
   status = "active",

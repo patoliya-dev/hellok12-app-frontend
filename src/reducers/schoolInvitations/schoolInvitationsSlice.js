@@ -32,7 +32,7 @@ const normLimit = (v) => {
 // include pagination in key to avoid overwriting caches
 const keyOf = (role, search, page, limit) =>
   `${normRole(role)}:${normSearchKey(search)}:${normPage(page)}:${normLimit(
-    limit
+    limit,
   )}`;
 
 const normalizeInvitationStatus = (v) =>
@@ -98,7 +98,7 @@ const slice = createSlice({
         state.byKey[k] = list.map((inv) =>
           String(inv._id) === String(invitationId)
             ? { ...inv, status: "CANCELLED" }
-            : inv
+            : inv,
         );
       });
   },
@@ -113,7 +113,7 @@ export const selectInvitations = (
   role,
   search,
   page = 1,
-  limit = 10
+  limit = 10,
 ) => {
   const k = keyOf(role, search, page, limit);
   return state.schoolInvitations?.byKey?.[k] || [];
@@ -124,7 +124,7 @@ export const selectInvitationsLoading = (
   role,
   search,
   page = 1,
-  limit = 10
+  limit = 10,
 ) => {
   const k = keyOf(role, search, page, limit);
   return Boolean(state.schoolInvitations?.loadingByKey?.[k]);
@@ -135,19 +135,8 @@ export const selectInvitationsPagination = (
   role,
   search,
   page = 1,
-  limit = 10
+  limit = 10,
 ) => {
   const k = keyOf(role, search, page, limit);
   return state.schoolInvitations?.paginationByKey?.[k] || null;
-};
-
-export const selectInvitationsError = (
-  state,
-  role,
-  search,
-  page = 1,
-  limit = 10
-) => {
-  const k = keyOf(role, search, page, limit);
-  return state.schoolInvitations?.errorByKey?.[k] || null;
 };

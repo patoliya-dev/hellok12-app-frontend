@@ -37,16 +37,6 @@ export const capitalize = (s) => {
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
-export function titleCase(label) {
-  return (
-    label?.charAt(0)?.toUpperCase() +
-    label
-      ?.slice(1)
-      ?.split(/(?=[A-Z])/)
-      ?.join("")
-  );
-}
-
 export const copyToClipboard = (text) => {
   if (!text) return;
   navigator.clipboard.writeText(text);
@@ -130,34 +120,6 @@ export function getIn(obj, path, fallback = undefined) {
   return cur === undefined ? fallback : cur;
 }
 
-export function to12hTime(input) {
-  if (!input) return "";
-  let s = String(input).trim().toUpperCase().replace(/\s+/g, " ");
-  const ampmGiven = s.includes("AM") || s.includes("PM");
-  const hhmm = s.replace(/AM|PM/g, "").trim();
-  let [hStr, mStr = "00"] = hhmm.split(":");
-  let h = parseInt(hStr, 10);
-  let m = parseInt(mStr, 10);
-  if (isNaN(h) || h < 0 || h > 23) h = 0;
-  if (isNaN(m) || m < 0 || m > 59) m = 0;
-
-  if (!ampmGiven) {
-    const suffix = h >= 12 ? "PM" : "AM";
-    const twelve = h % 12 || 12;
-    return `${String(twelve).padStart(2, "0")}:${String(m).padStart(
-      2,
-      "0"
-    )} ${suffix}`;
-  } else {
-    const isPM = s.includes("PM");
-    if (h === 0) h = 12;
-    if (h > 12) h = h % 12;
-    const hh = String(h || 12).padStart(2, "0");
-    const mm = String(m).padStart(2, "0");
-    return `${hh}:${mm} ${isPM ? "PM" : "AM"}`;
-  }
-}
-
 export const safeParseArray = (s) => {
   try {
     const v = JSON.parse(s);
@@ -199,7 +161,7 @@ export const getTimeAgo = (dateString) => {
   const date = new Date(dateString);
   const now = new Date();
   const diffInDays = Math.floor(
-    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
+    (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   if (diffInDays === 0) return "Today";
@@ -239,7 +201,10 @@ export function formatAddressOneLine(address) {
   if (line1) parts.push(line1);
   if (line2) parts.push(line2);
 
-  const cityStateZip = [city, state, postalCode].filter(Boolean).join(", ").replace(/,\s*,/g, ",");
+  const cityStateZip = [city, state, postalCode]
+    .filter(Boolean)
+    .join(", ")
+    .replace(/,\s*,/g, ",");
   if (cityStateZip) parts.push(cityStateZip);
 
   if (country) parts.push(country);
