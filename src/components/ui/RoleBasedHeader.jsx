@@ -294,6 +294,11 @@ const RoleBasedHeader = () => {
                 path: "/teacher/earnings",
                 icon: "DollarSign",
               },
+              {
+                label: "Payout Details",
+                path: "/teacher/payout-account",
+                icon: "Building2",
+              },
             ]
           : []),
         // we will enable this line when we implement game feature
@@ -315,6 +320,11 @@ const RoleBasedHeader = () => {
             ]
           : []),
         { label: "Earnings", path: "/school/earnings", icon: "DollarSign" },
+        {
+          label: "Payout Details",
+          path: "/school/payout-account",
+          icon: "Building2",
+        },
       ];
     }
 
@@ -787,7 +797,9 @@ const RoleBasedHeader = () => {
                       loading={notificationsLoading}
                       unreadCount={unreadCount}
                       handleNotificationClick={handleNotificationClick}
-                      handleMarkAllRead={() => dispatch(markAllNotificationsRead({}))}
+                      handleMarkAllRead={() =>
+                        dispatch(markAllNotificationsRead({}))
+                      }
                       handleViewAll={handleViewAllNotifications}
                     />
                   )}

@@ -57,10 +57,18 @@ const Earnings = () => {
       setIsLoadingChart(true);
       try {
         const data = await fetchEarningsTrend(selectedPeriod);
-        // Transform API response to match chart format
-        const transformedData = data.dataPoints.map((point) => ({
+        // Prefer canonical bucket payload; keep `dataPoints` fallback for legacy responses.
+        const points =
+          data?.buckets?.map((bucket) => ({
+            label: bucket.label,
+            amount: bucket.netEarnings,
+          })) ||
+          data?.dataPoints ||
+          [];
+
+        const transformedData = points.map((point) => ({
           period: point.label,
-          earnings: point.amount,
+          earnings: point.netEarnings ?? point.amount ?? 0,
         }));
         setChartData(transformedData);
       } catch (error) {
@@ -115,7 +123,7 @@ const Earnings = () => {
 
         const response = await fetchEarningsList(queryParams);
 
-        // Transform API response to match component format
+        // Normalize backend rows to UI table shape without changing amount semantics.
         const transformedData = response.data.map((item) => ({
           date: item.date,
           description: item.lessonService,
@@ -162,7 +170,7 @@ const Earnings = () => {
 
         const response = await fetchEarningsCommission(queryParams);
 
-        // Transform API response to match component format
+        // This section is payout history ("after commission"), not purchase earnings rows.
         const transformedData = response.data.payouts.map((item) => ({
           invoiceId: item.invoiceNumber,
           date: item.date,
@@ -253,14 +261,16 @@ const Earnings = () => {
                 onChange={(values) => handleFiltersChangeForInvoices(values)}
               />
             </div>
-            <InvoiceTable data={invoiceData} isLoading={isLoadingInvoices} />
+            <InvoiceTable
+              data={invoiceData}
+              isLoading={isLoadingInvoices}
+              currentPage={currentPageForInvoices}
+              totalPages={invoicePagination.totalPages}
+              totalItems={invoicePagination.total}
+              pageSize={itemsPerPage}
+              onPageChange={handlePageChangeForInvoices}
+            />
           </div>
-          <Pagination
-            currentPage={currentPageForInvoices}
-            totalPages={invoicePagination.totalPages}
-            totalItems={invoicePagination.total}
-            onPageChange={handlePageChangeForInvoices}
-          />
         </section>
       </main>
     </div>

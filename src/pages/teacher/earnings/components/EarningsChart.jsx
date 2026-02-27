@@ -23,8 +23,9 @@ const EarningsChart = ({ data, selectedPeriod, onPeriodChange, isLoading }) => {
   };
 
   const formatTooltip = (value, name) => {
+    // Chart series represents net purchase earnings, not payout cash-out amounts.
     if (name === "earnings") {
-      return [formatCurrency(value), "Earnings"];
+      return [formatCurrency(value), "Net Earnings"];
     }
     return [value, name];
   };
@@ -33,7 +34,7 @@ const EarningsChart = ({ data, selectedPeriod, onPeriodChange, isLoading }) => {
     <section className="bg-card rounded-lg p-6 shadow-card border border-border mb-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-0 mb-6">
         <h3 className="text-lg font-semibold text-foreground">
-          {capitalize(selectedPeriod)} Earnings Trend
+          {capitalize(selectedPeriod)} Net Earnings Trend
         </h3>
         <PeriodTabs
           selectedPeriod={selectedPeriod}
@@ -49,7 +50,10 @@ const EarningsChart = ({ data, selectedPeriod, onPeriodChange, isLoading }) => {
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--color-border)"
+              />
               <XAxis
                 dataKey="period"
                 stroke="var(--color-muted-foreground)"

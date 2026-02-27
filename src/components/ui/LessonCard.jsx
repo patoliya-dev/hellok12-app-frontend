@@ -30,10 +30,10 @@ const LessonCard = ({ lesson, onRefresh }) => {
 
   const renderTimeInfo = () => {
     if (lesson.status === "Upcoming") {
-      // If the date is far in the future, show the date. Otherwise, show countdown.
+      // Show date once lesson is 1+ day away; otherwise show hours/minutes countdown.
       const isFarFuture =
-        new Date(lesson.startTime).getTime() - new Date().getTime() >
-        2 * 24 * 60 * 60 * 1000; // More than 2 days
+        new Date(lesson.startTime).getTime() - new Date().getTime() >=
+        24 * 60 * 60 * 1000;
       if (isFarFuture) {
         return (
           <div className="text-right">
