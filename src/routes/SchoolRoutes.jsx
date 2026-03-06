@@ -1,8 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 
 import NotFound from "../pages/NotFound";
-// import UpcomingLessons from "../pages/school/upcoming-lessons";
-import Lessons from "../pages/student-parent/lessons";
+import SchoolLessons from "../pages/school/lessons";
 import ScheduledLessons from "../pages/school/scheduled-lessons";
 import ManageTeachers from "../pages/school/manage-teachers";
 import SchoolDashboard from "../pages/school/dashboard";
@@ -21,8 +20,7 @@ const SchoolRoutes = () => {
   return (
     <Routes>
       <Route path="/dashboard" element={<SchoolDashboard />} />
-      <Route path="/lessons" element={<Lessons />} />
-      {/* UpcomingLessons />} /> */}
+      <Route path="/lessons" element={<SchoolLessons />} />
       <Route path="/scheduled-lessons" element={<ScheduledLessons />} />
       <Route path="/manage-teachers" element={<ManageTeachers />} />
       <Route path="/manage-students" element={<ManageStudents />} />
