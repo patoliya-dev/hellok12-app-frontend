@@ -209,3 +209,40 @@ export const getTimeAgo = (dateString) => {
   if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`;
   return `${Math.floor(diffInDays / 365)} years ago`;
 };
+
+/**
+ * Safe one-line address formatter.
+ * Works with:
+ * - your manual address object { line1, line2, city, state, postalCode, country }
+ * - partial objects
+ * - string address (fallback)
+ */
+export function formatAddressOneLine(address) {
+  if (!address) return "";
+
+  // If someone passes string (old flow)
+  if (typeof address === "string") {
+    return address.trim();
+  }
+
+  const parts = [];
+
+  const line1 = String(address.line1 || "").trim();
+  const line2 = String(address.line2 || "").trim();
+
+  const city = String(address.city || "").trim();
+  const state = String(address.state || "").trim();
+  const postalCode = String(address.postalCode || "").trim();
+  const country = String(address.country || "").trim();
+
+  // Prefer common human-readable ordering
+  if (line1) parts.push(line1);
+  if (line2) parts.push(line2);
+
+  const cityStateZip = [city, state, postalCode].filter(Boolean).join(", ").replace(/,\s*,/g, ",");
+  if (cityStateZip) parts.push(cityStateZip);
+
+  if (country) parts.push(country);
+
+  return parts.filter(Boolean).join(", ");
+}

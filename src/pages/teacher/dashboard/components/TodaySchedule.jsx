@@ -16,9 +16,11 @@ const TodaySchedule = ({
 
   const getSessionStatus = (session) => {
     // Remove 'Z' to treat as local time instead of UTC
-    const localTimeString = session.startTime.replace('Z', '');
+    const localTimeString = session.startTime?.replace("Z", "");
     const sessionTime = new Date(localTimeString);
-    const endTime = new Date(sessionTime.getTime() + session.lesson.schedule.duration * 60000);
+    const endTime = new Date(
+      sessionTime.getTime() + session.lesson?.schedule?.duration * 60000
+    );
     const now = new Date();
 
     if (now < sessionTime) {
@@ -87,11 +89,13 @@ const TodaySchedule = ({
             size={48}
             color="var(--color-muted-foreground)"
           />
-          <div className='flex flex-col gap-2'>
+          <div className="flex flex-col gap-2">
             <p className="text-muted-foreground mt-2">
               No sessions scheduled for today
             </p>
-            <p className="text-sm text-muted-foreground">Enjoy your free day!</p>
+            <p className="text-sm text-muted-foreground">
+              Enjoy your free day!
+            </p>
           </div>
         </div>
       ) : (
@@ -127,10 +131,11 @@ const TodaySchedule = ({
                         session.status
                       )}`}
                     >
-                      {session?.status?.charAt(0).toUpperCase() + session?.status?.slice(1).toLowerCase()}
+                      {session?.status?.charAt(0).toUpperCase() +
+                        session?.status?.slice(1).toLowerCase()}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {session.lesson.schedule.duration} minutes
+                      {session.lesson?.schedule?.duration} minutes
                     </div>
                   </div>
                 </div>
@@ -144,14 +149,18 @@ const TodaySchedule = ({
                         color="var(--color-muted-foreground)"
                       />
                       <span className="text-muted-foreground">
-                        {new Date(session.startTime.replace('Z', '')).toLocaleTimeString([], {
+                        {new Date(
+                          session.startTime?.replace("Z", "")
+                        ).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}{" "}
                         -{" "}
                         {new Date(
-                          new Date(session.startTime.replace('Z', '')).getTime() +
-                          session.lesson.schedule.duration * 60000
+                          new Date(
+                            session.startTime?.replace("Z", "")
+                          ).getTime() +
+                            session.lesson?.schedule?.duration * 60000
                         ).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -159,13 +168,8 @@ const TodaySchedule = ({
                       </span>
                     </div>
                     <div className="space-x-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-blue-100 text-blue-700 border-blue-200">
-                      <Icon
-                        name="Video"
-                        size={14}
-                      />
-                      <span className="">
-                        {session.course.mode}
-                      </span>
+                      <Icon name="Video" size={14} />
+                      <span className="">{session.course.mode}</span>
                     </div>
                   </div>
                   {/* <span className="text-success font-medium">
@@ -254,9 +258,23 @@ const TodaySchedule = ({
                           status: session?.status?.toLowerCase() || "pending",
                           lessonDescription: session?.lesson?.description || "",
                           tags: [
-                            ...(session?.course?.mode ? [session.course.mode.charAt(0).toUpperCase() + session.course.mode.slice(1)] : []),
-                            ...(session?.lesson?.isTrialAvailable ? ['Trial Session'] : []),
-                            ...(session?.course?.lessonType ? [session.course.lessonType.charAt(0).toUpperCase() + session.course.lessonType.slice(1)] : [])
+                            ...(session?.course?.mode
+                              ? [
+                                  session.course.mode.charAt(0).toUpperCase() +
+                                    session.course.mode.slice(1),
+                                ]
+                              : []),
+                            ...(session?.lesson?.isTrialAvailable
+                              ? ["Trial Session"]
+                              : []),
+                            ...(session?.course?.lessonType
+                              ? [
+                                  session.course.lessonType
+                                    .charAt(0)
+                                    .toUpperCase() +
+                                    session.course.lessonType.slice(1),
+                                ]
+                              : []),
                           ],
                           address: session?.lesson?.address || null,
                         };

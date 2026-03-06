@@ -3,12 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Icon from "../../components/ui/Icon";
 import Button from "../../components/ui/Button";
-import { selectAuthUser } from "reducers/auth/authSelectors";
+import {
+  selectAuthUser,
+  selectUserTimezone,
+} from "reducers/auth/authSelectors";
 import { getRolePath } from "../../utils/rolePath";
+import { formatDateObjToTZ } from "../../utils/timezone";
 
 const CourseCard = ({ courseItem, teacherId }) => {
   const navigate = useNavigate();
   const authUser = useSelector(selectAuthUser);
+  const userTimeZone = useSelector(selectUserTimezone);
 
   const handleBookNow = () => {
     // router.push({
@@ -41,12 +46,13 @@ const CourseCard = ({ courseItem, teacherId }) => {
   const getTypeIcon = () =>
     courseItem?.lessonType === "1-on-1" ? "User" : "Users";
 
-  const formatted = (date) => new Intl.DateTimeFormat("en-US", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    timeZone: "Asia/Kolkata",   // ← update time zone here
-  }).format(date);
+  const startDateLabel = courseItem?.startDate
+    ? formatDateObjToTZ(new Date(courseItem.startDate), userTimeZone, {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    : "";
 
   return (
     <div className="bg-card border border-border rounded-lg p-6 hover:shadow-interactive transition-smooth flex flex-col justify-between">
@@ -65,12 +71,12 @@ const CourseCard = ({ courseItem, teacherId }) => {
         </div>
 
         <div className="space-y-3 mb-4">
-          {courseItem?.startDate && <div className="flex items-center gap-2 text-sm text-text-secondary">
-            <Icon name="Calendar" size={16} />
-            <span>
-              Start Date - {formatted(new Date(courseItem?.startDate))}
-            </span>
-          </div>}
+          {courseItem?.startDate && (
+            <div className="flex items-center gap-2 text-sm text-text-secondary">
+              <Icon name="Calendar" size={16} />
+              <span>Start Date - {startDateLabel}</span>
+            </div>
+          )}
           {courseItem?.lessonType === "group" && courseItem?.location && (
             <div className="flex items-center gap-2 text-sm text-text-secondary">
               <Icon name="MapPin" size={16} />
@@ -78,7 +84,10 @@ const CourseCard = ({ courseItem, teacherId }) => {
             </div>
           )}
           <div className="flex items-center gap-2 text-sm text-text-secondary">
-            <Icon name="Users" size={16} />
+            <Icon
+              name={`${courseItem?.lessonType === "1-on-1" ? "User" : "Users"}`}
+              size={16}
+            />
             <span>
               {courseItem?.lessonType === "1-on-1"
                 ? "Individual session"
@@ -96,23 +105,22 @@ const CourseCard = ({ courseItem, teacherId }) => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {
-              courseItem?.enrolledCount &&
-                courseItem?.studentCapacity &&
-                courseItem.enrolledCount >= courseItem.studentCapacity ? (
-                <Button variant="secondary" disabled>
-                  Class Full
-                </Button>
-              ) : (
-                <Button
-                  variant="default"
-                  iconName="Calendar"
-                  iconPosition="left"
-                  onClick={handleBookNow}
-                >
-                  Book Now
-                </Button>
-              )}
+            {courseItem?.enrolledCount &&
+            courseItem?.studentCapacity &&
+            courseItem.enrolledCount >= courseItem.studentCapacity ? (
+              <Button variant="secondary" disabled>
+                Class Full
+              </Button>
+            ) : (
+              <Button
+                variant="default"
+                iconName="Calendar"
+                iconPosition="left"
+                onClick={handleBookNow}
+              >
+                Book Now
+              </Button>
+            )}
           </div>
         </div>
 

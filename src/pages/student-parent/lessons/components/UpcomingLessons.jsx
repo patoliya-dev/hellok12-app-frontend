@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import LessonCard from "components/ui/LessonCard";
 import { getStudentLessons } from "../../../../services/lessons/lesson.service";
 import { Loader2 } from "lucide-react";
+import { formatAddressOneLine } from "../../../../utils/utils";
 
 const UpcomingLessons = ({ studentId, selectedCourse }) => {
   const [lessons, setLessons] = useState([]);
@@ -50,6 +51,7 @@ const UpcomingLessons = ({ studentId, selectedCourse }) => {
           meetingUrl: lesson.meetingUrl,
           description: lesson.description,
           ratings: lesson?.teacher?.rating,
+          address: lesson.address ? formatAddressOneLine(lesson.address) : null
         }));
 
         setLessons(mappedLessons);

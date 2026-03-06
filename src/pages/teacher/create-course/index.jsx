@@ -75,7 +75,7 @@ const CreateCourse = () => {
     startDate: "",
     endDate: "",
     teachers: [user.id],
-
+    address: null,
     // Step 2
     lessons: [
       {
@@ -199,6 +199,15 @@ const CreateCourse = () => {
         newErrors.studentCapacity = "Capacity must be at least 1";
       if (!formData?.startDate) newErrors.startDate = "Start date is required";
       if (!formData?.mode) newErrors.mode = "Lesson mode is required";
+      if (!formData?.lessonType) newErrors.lessonType = "Lesson type is required";
+      if (!formData?.price) newErrors.price = "Price is required";
+      if (!formData?.ageGroups?.length) newErrors.ageGroups = "Age Groups are required";
+      const isInpersonGroup = formData.mode === 'in-person' && formData.lessonType === 'group';
+      if (isInpersonGroup && !formData?.address?.line1) {
+        newErrors.address ??= {};
+        newErrors.address.line1 = "Address Line 1 is required";
+      }
+      
     }
 
     if (step === 2) {
@@ -359,6 +368,8 @@ const CreateCourse = () => {
   const handleSubmit = async () => {
     if (!validateStep(currentStep)) return;
 
+    const isInPersonGroup = formData.mode === "in-person" && formData.lessonType === "group";
+
     // Build course payload (align to BE contracts)
     const coursePayload = {
       title: formData.title,
@@ -377,6 +388,7 @@ const CreateCourse = () => {
       introImage: formData.introImageRef
         ? { attachmentId: formData.introImageRef.attachmentId }
         : undefined,
+      address: isInPersonGroup ? formData.address : undefined,
       introImageRef: formData.introImageRef.attachmentId,
       teachers: formData.teachers,
     };
