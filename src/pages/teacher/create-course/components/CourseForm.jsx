@@ -10,7 +10,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
   const isInPersonGroup = formData?.mode === "in-person" && formData?.lessonType === "group";
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 !mb-4">
         <Input
           label="Course Name"
           placeholder="e.g., Beginner Spanish Conversation"

@@ -4,11 +4,14 @@ import Icon from "../../../../components/AppIcon";
 import Image from "../../../../components/AppImage";
 import Button from "../../../../components/ui/Button";
 import LessonDetailsModal from "./LessonDetailsModal";
-import { mockLessons, TAG_CONFIG } from "../data";
+import { TAG_CONFIG } from "../data";
 import { formatLessonTime } from "../../../../utils/formatters";
+import { schoolService } from "../../../../services/school/school.service";
+import Loader from "../../../../components/ui/Loader";
 
 const UpcomingLessonCard = () => {
   const [upcomingLessons, setUpcomingLessons] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedLesson, setSelectedLesson] = useState(null);
 
@@ -24,9 +27,52 @@ const UpcomingLessonCard = () => {
   }, []);
 
   useEffect(() => {
-    // Mock upcoming lessons data
+    const fetchUpcomingLessons = async () => {
+      setLoading(true);
+      try {
+        const response = await schoolService.getUpcomingLessons({ limit: 10 });
 
-    setUpcomingLessons(mockLessons);
+        // Transform API response to match component format
+        const lessons = response.lessons || response || [];
+        const transformedLessons = lessons.map((lesson) => ({
+          id: lesson._id || lesson.id,
+          studentName: lesson.studentName || lesson.student?.name || "Student",
+          studentImage:
+            lesson.studentImage || lesson.student?.profileImage?.url || "",
+          studentAge: lesson.studentAge || lesson.student?.profile?.age || null,
+          subject: lesson.subject || lesson.title || "",
+          title: lesson.title || lesson.subject || "",
+          description: lesson.description || "",
+          status: lesson.status || "scheduled",
+          startTime: new Date(lesson.startTime),
+          endTime: new Date(lesson.endTime),
+          duration: lesson.duration || 60,
+          lessonDate: lesson.lessonDate || lesson.startTime?.split("T")?.[0],
+          lessonType: lesson.lessonType || "1-on-1",
+          lessonMode: lesson.lessonMode || "online",
+          address: lesson.address || lesson.location || null,
+          isTrailAvailable:
+            lesson.isTrailAvailable || lesson.isTrialAvailable || false,
+          isCurriculumGames: lesson.isCurriculumGames || false,
+          teacher: {
+            name: lesson.teacher?.name || lesson.teacherName || "Teacher",
+            avatar:
+              lesson.teacher?.avatar || lesson.teacher?.profileImage?.url || "",
+          },
+          courseId: lesson.courseId || lesson.course?._id || "",
+          createdAt: lesson.createdAt ? new Date(lesson.createdAt) : new Date(),
+        }));
+
+        setUpcomingLessons(transformedLessons);
+      } catch (error) {
+        console.error("Failed to fetch upcoming lessons:", error);
+        setUpcomingLessons([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUpcomingLessons();
   }, []);
 
   const getTimeUntilSession = (startTime) => {
@@ -97,7 +143,11 @@ const UpcomingLessonCard = () => {
         </Button>
       </div>
 
-      {upcomingLessons.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader />
+        </div>
+      ) : upcomingLessons.length === 0 ? (
         <div className="text-center py-8">
           <Icon
             name="Calendar"
@@ -121,14 +171,14 @@ const UpcomingLessonCard = () => {
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 rounded-full overflow-hidden bg-muted">
                     <Image
-                      src={lesson.studentImage}
-                      alt={lesson.studentName}
+                      src={lesson.teacher.avatar || ""}
+                      alt={lesson.teacher.name}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div>
                     <h3 className="font-medium text-foreground">
-                      {lesson.studentName}
+                      {lesson.teacher.name}
                     </h3>
                   </div>
                 </div>

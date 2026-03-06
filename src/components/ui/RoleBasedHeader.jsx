@@ -90,7 +90,7 @@ const RoleBasedHeader = () => {
   }, [userRole]);
 
   useEffect(() => {
-    if (authUser && userRole !== "guest") {
+    if (authUser && userRole !== "school") {
       dispatch(fetchUnreadCount());
     }
   }, [authUser, userRole, dispatch]);
@@ -211,13 +211,13 @@ const RoleBasedHeader = () => {
         },
         {
           label: "Manage Courses",
-          path: "/teacher/manage-courses",
+          path: "/school/manage-courses",
           iconComponent: ManageCourseIcon,
           children: [],
         },
         {
           label: "Earnings",
-          path: "/teacher/earnings",
+          path: "/school/earnings",
           icon: "DollarSign",
         },
       ],

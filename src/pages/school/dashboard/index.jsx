@@ -1,46 +1,67 @@
-import Button from "components/ui/Button";
-import NotificationCenter from "components/ui/NotificationCenter";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import React, { useState } from "react";
 import { cardData } from "./data";
 import Card from "./components/Card";
 import UpcomingLessonCard from "./components/UpcomingLessonCard";
 import QuickAction from "./components/QuickAction";
+import PageHeader from "components/ui/PageHeader";
+import InviteTeacherModal from "../manage-teachers/components/InviteTeacherModal";
 
 const SchoolDashboard = () => {
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+
+  const handleInviteModalOpen = () => {
+    setShowInviteModal(!showInviteModal);
+  };
+
+  const handleInviteTeacher = (inviteData) => {
+    const newTeacher = {
+      id: 100,
+      name: inviteData?.name,
+      email: inviteData?.email,
+      phone: "",
+      address: "",
+      avatar:
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+      status: inviteData?.setAsActive ? "active" : "pending",
+      languages: inviteData?.languages,
+      location: "Location TBD",
+      experience: 0,
+      isOnline: false,
+      travelDistance: 10,
+      hourlyRate: 35,
+      availability: {
+        onsite: false,
+        online: false,
+      },
+      bio: "New teacher - profile setup pending",
+      stats: {
+        totalLessons: 0,
+        totalStudents: 0,
+        rating: 0,
+        totalEarnings: 0,
+      },
+      joinedDate: new Date()?.toISOString()?.split("T")?.[0],
+    };
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <RoleBasedHeader />
 
-      {/* Notification Center */}
-      <NotificationCenter
-        isOpen={showNotifications}
-        onClose={() => setShowNotifications(false)}
-        userRole="admin"
-      />
-
       {/* Main Content */}
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
-        <section className="my-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0mb-6">
-            <div>
-              <h1 className="text-h3 font-bold text-foreground mb-2">
-                Dashboard Overview
-              </h1>
-              <p className="text-brand-gray-500">
-                Welcome back! Here's what's happening at your school today.
-              </p>
-            </div>
-            <Button
-              iconName="RefreshCw"
-              onClick={() => window.location.reload()}
-            >
-              Refresh
-            </Button>
-          </div>
-        </section>
+        <PageHeader
+          title="Dashboard Overview"
+          description={
+            "Welcome back! Here's what's happening at your school today."
+          }
+          isButton
+          iconName="RefreshCw"
+          buttonTitle="Refresh"
+          onButtonClick={() => window.location.reload()}
+        />
         <section className="mb-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {cardData?.map((card, idx) => (
@@ -56,7 +77,7 @@ const SchoolDashboard = () => {
           </div>
           {/* Right Column */}
           <div className="lg:col-span-4 space-y-8">
-            <QuickAction />
+            <QuickAction onInviteTeacher={handleInviteModalOpen} />
           </div>
         </section>
         {/*Mobile View*/}
@@ -64,9 +85,14 @@ const SchoolDashboard = () => {
           {/* Upcoming Lessons */}
           <UpcomingLessonCard />
           {/* Quick Actions */}
-          <QuickAction />
+          <QuickAction onInviteTeacher={handleInviteModalOpen} />
         </section>
       </main>
+
+      <InviteTeacherModal
+        isOpen={showInviteModal}
+        onClose={handleInviteModalOpen}
+      />
     </div>
   );
 };
