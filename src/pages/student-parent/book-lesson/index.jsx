@@ -71,8 +71,10 @@ const BookLesson = () => {
   const [type, setType] = useState(action);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState(
-    currentUser?.profile?.children?.[0] || null
+    currentUser?.profile?.children?.[0] || null,
   );
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const isSubmitting = submitLoading;
 
   /**
    * IMPORTANT:
@@ -84,7 +86,7 @@ const BookLesson = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [courseData, setCourseData] = useState({}); // initially empty
   const stripePromise = loadStripe(
-    import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY
+    import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY,
   );
 
   // NEW: read payment methods & parent students from payments slice
@@ -324,6 +326,7 @@ const BookLesson = () => {
 
   // New: use real createPaymentIntent thunk and confirm via stripe
   const handleSubmit = async () => {
+    setSubmitLoading(true);
     try {
       // Validate again before submit (critical)
       const v = validateStep();
@@ -374,6 +377,11 @@ const BookLesson = () => {
       }
 
       // 3) Create PaymentIntent
+      const payoutReceiverType = selectedTeacher?.school ? "school" : "teacher";
+      const payoutReceiverId = selectedTeacher?.school
+        ? selectedTeacher.school
+        : selectedTeacher?._id || selectedTeacher?.id;
+
       const piPayload = {
         bookingId: bookingRes?.booking?._id,
         teacherId: selectedTeacher?._id || selectedTeacher?.id,
@@ -386,6 +394,8 @@ const BookLesson = () => {
             : undefined,
         savePaymentMethod: selectedPaymentMethod?.type !== "saved_card",
         idempotencyKey,
+        payoutReceiverType,
+        payoutReceiverId,
         metadata: {
           courseId: courseData?._id || courseData?.id,
           studentId: selectedStudent?._id || selectedStudent?.id,
@@ -394,11 +404,13 @@ const BookLesson = () => {
               ? lessonIdParam || courseData?.lessons?.[0]?._id
               : undefined,
           bookingId: bookingRes?.booking?._id,
+          payoutReceiverType,
+          payoutReceiverId,
         },
       };
 
       const paymentIntentRes = await dispatch(
-        createPaymentIntent(piPayload)
+        createPaymentIntent(piPayload),
       ).unwrap();
       const clientSecret =
         paymentIntentRes?.client_secret || paymentIntentRes?.raw?.client_secret;
@@ -406,7 +418,7 @@ const BookLesson = () => {
 
       // 4) Confirm via Stripe (if using saved PM provide it)
       const stripe = await loadStripe(
-        import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY
+        import.meta.env.VITE_APP_STRIPE_PUBLISHABLE_KEY,
       );
       if (!stripe) throw new Error("Stripe failed to load");
 
@@ -437,7 +449,7 @@ const BookLesson = () => {
           pi.status === "requires_capture")
       ) {
         successToast(
-          "Payment initiated — confirmation will be finalised shortly."
+          "Payment initiated — confirmation will be finalised shortly.",
         );
         setShowSuccessModal(true);
       } else {
@@ -447,6 +459,8 @@ const BookLesson = () => {
       console.error("Payment error", err);
       const msg = err?.message || "Payment failed. Please try again.";
       errorToast(msg);
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -464,7 +478,7 @@ const BookLesson = () => {
           methods.find(
             (m) =>
               m?.stripePaymentMethodId === paymentMethodId ||
-              m?.id === paymentMethodId
+              m?.id === paymentMethodId,
           ) || null;
       } catch (e) {
         newCard = null;
@@ -643,7 +657,6 @@ const BookLesson = () => {
                         <BookingConfirmation
                           courseData={courseData}
                           selectedPaymentMethod={selectedPaymentMethod}
-                          teacherData={courseData?.teacher}
                           selectedStudent={selectedStudent}
                         />
                       </div>
@@ -674,7 +687,7 @@ const BookLesson = () => {
                             onClick={
                               currentStep === 3 ? handleSubmit : handleNextStep
                             }
-                            disabled={selectedPaymentMethod === null}
+                            disabled={selectedPaymentMethod === null || isSubmitting}
                             className={`h-12 ${
                               currentStep === 3 ? "w-72" : "w-56"
                             }`}
@@ -707,7 +720,6 @@ const BookLesson = () => {
                     <BookingConfirmation
                       courseData={courseData}
                       selectedPaymentMethod={selectedPaymentMethod}
-                      teacherData={courseData?.teacher}
                       selectedStudent={selectedStudent}
                     />
                   )}
@@ -852,7 +864,6 @@ const BookLesson = () => {
                       <BookingConfirmation
                         courseData={courseData}
                         selectedPaymentMethod={selectedPaymentMethod}
-                        teacherData={courseData?.teacher}
                         selectedStudent={selectedStudent}
                         type="trial"
                       />
@@ -905,7 +916,6 @@ const BookLesson = () => {
                   <BookingConfirmation
                     courseData={courseData}
                     selectedPaymentMethod={selectedPaymentMethod}
-                    teacherData={courseData?.teacher}
                     selectedStudent={selectedStudent}
                     type="trial"
                   />

@@ -9,7 +9,11 @@ import Loader from "components/ui/Loader";
 import { selectAuthUser } from "reducers/auth/authSelectors";
 
 const LessonsCalendar = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
   const authUser = useSelector(selectAuthUser);
   const selectedChildId = useSelector((state) => state.profile.selectedChildId);
 
@@ -85,7 +89,7 @@ const LessonsCalendar = () => {
 
         return lessonDate.getTime() === selected.getTime();
       }),
-    [selectedDate, lessons]
+    [selectedDate, lessons],
   );
 
   return (

@@ -14,9 +14,11 @@ import { feedbackRatingAPI } from "../../../services/feedbacks/feedback.service"
 import { fetchSchedule, fetchSlotsForMonth } from "../../../reducers/schedule/scheduleThunks";
 import { idxToDayStr, isHHMM, isNumber, minutesToHHMM } from "../../../utils/time12h";
 import Loader from "components/ui/Loader";
+import { formatTimeToTZ, getUserTimezone } from "../../../utils/timezone";
 
 const TeacherDashboard = () => {
   const dispatch = useDispatch();
+  const userTimezone = getUserTimezone();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showNotifications, setShowNotifications] = useState(false);
   const [todaySessions, setTodaySessions] = useState([]);
@@ -206,7 +208,8 @@ const TeacherDashboard = () => {
         const data = await getDashboardData();
         const sessionsWithDates = (data?.data?.lessons || []).map(session => ({
           ...session,
-          startTime: session?.lesson?.startAt
+          startTime: formatTime(session?.lesson?.startAt),
+          endTime: formatTime(session?.lesson?.endAt)
         }))
         setTodaySessions(sessionsWithDates)
       } catch (err) {
@@ -234,6 +237,11 @@ const TeacherDashboard = () => {
     if (hour < 17) return "Good afternoon";
     return "Good evening";
   };
+
+  // Format time from ISO string to readable format
+    const formatTime = (isoString) => {
+      return formatTimeToTZ(isoString, userTimezone, { hour: 'numeric', minute: '2-digit', hour12: true });
+    };
 
   const TodayDate = () => {
     const today = new Date();
