@@ -21,6 +21,7 @@ import { getRolePath } from "../../../../utils/rolePath";
 import FeedbackModal from "./FeedbackModal";
 import { feedbackRatingAPI } from "../../../../services/feedbacks/feedback.service";
 import { errorToast } from "../../../../utils/utils";
+import Image from "components/AppImage";
 
 const tagDetails = {
   "Curriculum-Aligned Games": { icon: <Gamepad2 size={16} />, color: "orange" },
@@ -133,10 +134,13 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
                 <div className="mt-4 rounded-lg bg-brand-gray-100 p-4">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-4">
                     <div className="flex items-center gap-4">
-                      <img
-                        src={lesson.teacher?.avatar}
+                      <Image
+                        src={
+                          lesson.teacher?.avatar ||
+                          "/assets/images/no_image.png"
+                        }
                         alt={lesson.teacher?.name}
-                        className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover"
+                        className="w-16 h-16 rounded-full object-cover"
                       />
                       <div className="min-w-0">
                         <h4 className="text-base sm:text-lg font-bold text-brand-gray-800 truncate">

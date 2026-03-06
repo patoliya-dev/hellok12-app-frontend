@@ -81,6 +81,7 @@ const FileUploader = ({
             <button
               type="button"
               onClick={handleRemoveImage}
+              disabled={!!props.disabled}
               className="absolute top-1 right-1 bg-error text-white rounded-full p-1 hover:bg-error/90"
             >
               <Icon name="X" size={14} />
@@ -92,7 +93,7 @@ const FileUploader = ({
           </span>
         )}
 
-        <label className="cursor-pointer">
+        <label className={props.disabled ? "cursor-not-allowed" : "cursor-pointer"}>
           <span className="px-3 py-1.5 border border-[#E5E7EB] rounded-md text-sm font-medium text-brand-gray-800 flex items-center gap-1">
             <Icon name="FolderOpen" size={16} /> Choose File
           </span>

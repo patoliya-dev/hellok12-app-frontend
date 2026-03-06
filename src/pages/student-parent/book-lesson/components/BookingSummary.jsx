@@ -40,8 +40,14 @@ const BookingSummary = ({ courseData, selectedStudent, total }) => {
             </div>
             <div className="text-right">
               <p className="font-semibold text-foreground">
-                ${courseData?.price}
+                ${courseData?.pricing?.effectivePrice ?? courseData?.price}
               </p>
+              {Number(courseData?.pricing?.completedLessons || 0) > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {courseData?.pricing?.completedLessons} completed lesson(s)
+                  excluded
+                </p>
+              )}
               <p className="text-xs text-text-secondary">
                 <span>
                   (
@@ -50,7 +56,7 @@ const BookingSummary = ({ courseData, selectedStudent, total }) => {
                   ){" "}
                   {courseData?.endDate &&
                     `to (${formatLessonDate(
-                      courseData?.endDate?.slice(0, 10)
+                      courseData?.endDate?.slice(0, 10),
                     )})`}
                 </span>
               </p>

@@ -30,6 +30,7 @@ import {
   toBracketPath,
 } from "../../../utils/utils";
 import { formatDateForDateInput } from "../../../utils/formatters";
+import { buildCourseEditPolicy } from "../../../utils/courseEditPolicy";
 import { validateSchedule } from "./utils/validateSchedule";
 import {
   buildPartialUpdate,
@@ -115,6 +116,11 @@ const CreateCourse = () => {
   const isEdit = mode === "edit";
   const isLesson = location.pathname.includes("lesson");
   const isCreateLesson = location.pathname.includes("create-lesson");
+  const editPolicy = buildCourseEditPolicy({
+    isEdit,
+    enrolledCount: formData?.enrolledCount,
+  });
+  const isEnrollmentStarted = editPolicy.enrollmentStarted;
 
   const {
     loading: lessonsSaving,
@@ -250,6 +256,11 @@ const CreateCourse = () => {
    * Also wires Intro Image upload via Attachment API (presign → S3 → complete)
    */
   const handleInputChange = async (field, value, lessonIndex = null) => {
+    const canEdit =
+      lessonIndex !== null
+        ? editPolicy.canEditLessonField(field)
+        : editPolicy.canEditCourseField(field);
+    if (!canEdit) return;
     let error = null;
     // Special case: intro image file -> upload now
     if (
@@ -353,6 +364,7 @@ const CreateCourse = () => {
   };
 
   const addLesson = () => {
+    if (!editPolicy.canAddLesson) return;
     setFormData((prev) => ({
       ...prev,
       lessons: [...(prev.lessons || []), { ...defaultLesson }],
@@ -364,6 +376,7 @@ const CreateCourse = () => {
   };
 
   const removeLesson = (index) => {
+    if (!editPolicy.canRemoveLesson) return;
     setFormData((prev) => {
       const lessons = (prev.lessons || []).filter((_, i) => i !== index);
       return { ...prev, lessons };
@@ -375,6 +388,10 @@ const CreateCourse = () => {
   };
 
   const handleSubmit = async () => {
+    if (!editPolicy.canSubmit) {
+      errorToast(editPolicy.lockReason);
+      return;
+    }
     if (!validateStep(currentStep)) return;
     // Build course payload (align to BE contracts)
     const coursePayload = {
@@ -559,7 +576,13 @@ const CreateCourse = () => {
               </p>
             </div>
             <CourseForm
-              {...{ formData, handleInputChange, errors, introUpload }}
+              {...{
+                formData,
+                handleInputChange,
+                errors,
+                introUpload,
+                editPolicy,
+              }}
             />
           </div>
         );
@@ -583,6 +606,7 @@ const CreateCourse = () => {
                 addLesson,
                 removeLesson,
                 mode,
+                editPolicy,
               }}
             />
           </div>
@@ -626,6 +650,12 @@ const CreateCourse = () => {
           </div>
           {/* STEP CONTENT */}
           {getCurrentStepComponent()}
+          {isEnrollmentStarted && (
+            <div className="mt-4 p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+              This course has active enrollments ({formData?.enrolledCount}).
+              Course and lesson templates are locked.
+            </div>
+          )}
 
           {/* Step-2 inline banner for server errors */}
           {currentStep === 2 && lessonsError && (
@@ -665,7 +695,7 @@ const CreateCourse = () => {
                 onClick={handleSubmit}
                 iconName="Check"
                 iconPosition="left"
-                disabled={lessonsSaving}
+                disabled={lessonsSaving || !editPolicy.canSubmit}
               >
                 {isEdit ? "Update" : "Create"}
               </Button>

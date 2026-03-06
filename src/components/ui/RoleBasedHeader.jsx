@@ -101,12 +101,12 @@ const RoleBasedHeader = () => {
   // Notifications derived (avoid state churn)
   const notifications = useMemo(
     () => getNotificationByRole(userRole),
-    [userRole]
+    [userRole],
   );
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => n.unread).length,
-    [notifications]
+    [notifications],
   );
 
   // Close overlays on route change (OK; this should not affect nav measurement)
@@ -300,7 +300,7 @@ const RoleBasedHeader = () => {
 
   const navigationItems = useMemo(
     () => getNavigationItems(),
-    [getNavigationItems]
+    [getNavigationItems],
   );
 
   // Keep split stable across nav changes (NO clearing to [])
@@ -339,7 +339,7 @@ const RoleBasedHeader = () => {
         </span>
       );
     },
-    [messageUnreadCount]
+    [messageUnreadCount],
   );
 
   /**
@@ -363,7 +363,7 @@ const RoleBasedHeader = () => {
 
       return false;
     },
-    [location.pathname]
+    [location.pathname],
   );
 
   const handleNavigation = useCallback(
@@ -372,7 +372,7 @@ const RoleBasedHeader = () => {
       setIsMenuOpen(false);
       setIsMoreOpen(false);
     },
-    [navigate]
+    [navigate],
   );
 
   const handleLogout = useCallback(() => {
@@ -484,10 +484,10 @@ const RoleBasedHeader = () => {
     }
 
     setVisiblePaths((prev) =>
-      arraysEqual(prev, nextVisible) ? prev : nextVisible
+      arraysEqual(prev, nextVisible) ? prev : nextVisible,
     );
     setHiddenPaths((prev) =>
-      arraysEqual(prev, nextHidden) ? prev : nextHidden
+      arraysEqual(prev, nextHidden) ? prev : nextHidden,
     );
 
     // IMPORTANT: force-hide More dropdown when no hidden items
@@ -796,7 +796,7 @@ const RoleBasedHeader = () => {
                           className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
                           onClick={() =>
                             navigate(
-                              getRolePath(authUser.role, "profile-settings")
+                              getRolePath(authUser.role, "profile-settings"),
                             )
                           }
                         >
@@ -809,7 +809,7 @@ const RoleBasedHeader = () => {
                             className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
                             onClick={() =>
                               navigate(
-                                getRolePath(authUser.role, "payment-billing")
+                                getRolePath(authUser.role, "payment-billing"),
                               )
                             }
                           >

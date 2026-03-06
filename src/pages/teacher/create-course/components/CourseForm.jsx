@@ -6,8 +6,17 @@ import FileUploader from "components/ui/FileUploader";
 import { ageGroupOptions } from "../../profile-settings/data";
 import AddressFields from "components/address/AddressFields";
 
-const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
-  const isInPersonGroup = formData?.mode === "in-person" && formData?.lessonType === "group";
+const CourseForm = ({
+  formData,
+  handleInputChange,
+  errors,
+  introUpload,
+  editPolicy,
+}) => {
+  const isLocked = (field) =>
+    !!editPolicy && !editPolicy.canEditCourseField(field);
+  const isInPersonGroup =
+    formData?.mode === "in-person" && formData?.lessonType === "group";
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 !mb-4">
@@ -18,6 +27,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           onChange={(e) => handleInputChange("title", e?.target?.value)}
           error={errors?.title}
           required
+          disabled={isLocked("title")}
         />
 
         <Select
@@ -28,6 +38,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           error={errors?.languageCode}
           required
           searchable
+          disabled={isLocked("languageCode")}
         />
       </div>
 
@@ -36,15 +47,15 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           Description <span className="text-error">*</span>
         </label>
         <textarea
-          className={`w-full px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50 ${errors?.description &&
+          className={`w-full px-3 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none disabled:cursor-not-allowed disabled:opacity-50 ${
+            errors?.description &&
             "border-destructive focus-visible:ring-destructive"
-            }`}
+          }`}
           placeholder="Brief description of the course content and objectives"
           value={formData?.description || ""}
-          onChange={(e) =>
-            handleInputChange("description", e.target.value)
-          }
+          onChange={(e) => handleInputChange("description", e.target.value)}
           required
+          disabled={isLocked("description")}
         />
 
         {errors?.description && (
@@ -52,7 +63,9 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
         )}
       </div>
 
-      <div className={`grid grid-cols-1 gap-6 ${formData?.lessonType === "group" ? "md:grid-cols-3" : "md:grid-cols-2"}`}>
+      <div
+        className={`grid grid-cols-1 gap-6 ${formData?.lessonType === "group" ? "md:grid-cols-3" : "md:grid-cols-2"}`}
+      >
         <Select
           label="Lesson Type"
           options={lessonTypeOptions}
@@ -60,6 +73,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           onChange={(value) => handleInputChange("lessonType", value)}
           error={errors?.lessonType}
           required
+          disabled={isLocked("lessonType")}
         />
         {formData?.lessonType === "group" && (
           <Input
@@ -73,6 +87,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
               handleInputChange("studentCapacity", parseInt(e?.target?.value))
             }
             error={errors?.studentCapacity}
+            disabled={isLocked("studentCapacity")}
           />
         )}
         <FileUploader
@@ -87,6 +102,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           isLoading={!!introUpload?.loading}
           progress={introUpload?.progress || 0}
           previewUrl={formData?.introImageRef?.url || null}
+          disabled={isLocked("introImage")}
         />
       </div>
 
@@ -98,6 +114,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           onChange={(value) => handleInputChange("mode", value)}
           required
           error={errors?.mode}
+          disabled={isLocked("mode")}
         />
 
         <Input
@@ -112,6 +129,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           }
           error={errors?.price}
           required
+          disabled={isLocked("price")}
         />
 
         <div className="space-y-2">
@@ -124,16 +142,17 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
             placeholder="Select age groups..."
             error={errors?.ageGroups}
             required
+            disabled={isLocked("ageGroups")}
           />
         </div>
       </div>
 
       {isInPersonGroup && (
         <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-
           <div className="mt-4">
             <h3 className="text-sm font-medium text-foreground mb-2">
-              Course Address (In-person Group) <span className="text-error">*</span>
+              Course Address (In-person Group){" "}
+              <span className="text-error">*</span>
             </h3>
 
             <AddressFields
@@ -141,6 +160,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
               onChange={(addr) => handleInputChange("address", addr)}
               errors={errors?.address || {}}
               countryDefault="IN"
+              disabled={isLocked("address")}
             />
           </div>
         </div>
@@ -154,6 +174,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           onChange={(e) => handleInputChange("startDate", e?.target?.value)}
           error={errors?.startDate}
           required
+          disabled={isLocked("startDate")}
         />
 
         <Input
@@ -161,6 +182,7 @@ const CourseForm = ({ formData, handleInputChange, errors, introUpload }) => {
           type="date"
           value={formData?.endDate}
           onChange={(e) => handleInputChange("endDate", e?.target?.value)}
+          disabled={isLocked("endDate")}
         />
       </div>
     </>

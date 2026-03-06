@@ -42,14 +42,14 @@ const LessonDetailsModal = ({ lesson, onClose, getLessonTags }) => {
 
   const statusInfo = statusDetails[lesson.status] || statusDetails["pending"];
 
-  const canJoin =
-    lesson?.lessonMode === "online" &&
-    lesson?.joinUrl &&
-    (lesson.status === "starting-soon" || lesson.status === "in-progress");
+  // const canJoin =
+  //   lesson?.lessonMode === "online" &&
+  //   lesson?.joinUrl &&
+  //   (lesson.status === "starting-soon" || lesson.status === "in-progress");
 
-  const handleJoin = () => {
-    if (lesson?.joinUrl) window.open(lesson.joinUrl, "_blank");
-  };
+  // const handleJoin = () => {
+  //   if (lesson?.joinUrl) window.open(lesson.joinUrl, "_blank");
+  // };
 
   return (
     // Modal overlay
@@ -109,7 +109,7 @@ const LessonDetailsModal = ({ lesson, onClose, getLessonTags }) => {
               <span>Message</span>
             </button> */}
             <div className="flex items-center gap-2">
-              {canJoin && (
+              {/* {canJoin && (
                 <Button
                   variant="default"
                   size="sm"
@@ -118,7 +118,7 @@ const LessonDetailsModal = ({ lesson, onClose, getLessonTags }) => {
                 >
                   Join
                 </Button>
-              )}
+              )} */}
               <Button variant="ghost" size="sm" iconName="MessageCircle">
                 Message
               </Button>
