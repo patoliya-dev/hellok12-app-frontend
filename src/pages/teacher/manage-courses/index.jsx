@@ -1,32 +1,66 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+
 import Button from "components/ui/Button";
 import RoleBasedHeader from "../../../components/ui/RoleBasedHeader";
 import Icon from "components/AppIcon";
 import CourseFilter from "./components/CourseFilter";
 import CourseTable from "./components/CourseTable";
+
 import {
   fetchCourses,
   removeCourse,
   duplicateCourse,
 } from "../../../reducers/courses/courseThunks";
-import PageLoaderOverlay from 'components/ui/PageLoaderOverlay';
-import { selectPageLoading } from '../../../reducers/ui/pageLoaderSlice';
+
+import PageLoaderOverlay from "components/ui/PageLoaderOverlay";
+import { selectPageLoading } from "../../../reducers/ui/pageLoaderSlice";
+import { selectAuthUser } from "reducers/auth/authSelectors";
+
+const ITEMS_PER_PAGE = 10;
+
+const parsePriceRange = (priceRange) => {
+  if (!priceRange || typeof priceRange !== "string")
+    return [undefined, undefined];
+  if (!priceRange.includes("-")) return [undefined, undefined];
+
+  const [minStr, maxStr] = priceRange.split("-").map((v) => v.trim());
+  const min = Number(minStr);
+  const max = Number(maxStr);
+
+  return [
+    Number.isFinite(min) ? min : undefined,
+    Number.isFinite(max) ? max : undefined,
+  ];
+};
+
+const parseTrial = (v) => {
+  if (v === "yes") return true;
+  if (v === "no") return false;
+  return undefined;
+};
 
 const ManageCourses = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  // Page loader state
+
   const pageLoading = useSelector(selectPageLoading);
+  const authUser = useSelector(selectAuthUser);
 
-  // Redux course list state
-  const { items: courses, pagination, loading, error } = useSelector(
-    (state) => state.courseList
-  );
+  const {
+    items: courses,
+    pagination,
+    loading,
+    error,
+  } = useSelector((state) => state.courseList);
 
+  // ---------------------------
+  // Local UI state
+  // ---------------------------
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilter, setShowFilter] = useState(false);
+
   const [filters, setFilters] = useState({
     language: "",
     status: "",
@@ -34,105 +68,135 @@ const ManageCourses = () => {
     isTrialAvailable: "",
     dateRange: { start: "", end: "" },
   });
+
   const [sortConfig, setSortConfig] = useState({
     key: "title",
     direction: "Asc",
   });
-  const [courseCount, setCourseCount] = useState([
-    { label: "Total Courses", count: 0 },
-    { label: "Active Courses", count: 0 },
-  ]);
 
-  const itemsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch courses from backend
-  useEffect(() => {
-    const params = {
+  // ---------------------------
+  // Derived: role + role-safe routes
+  // ---------------------------
+  const role = authUser?.role;
+
+  const courseRoutes = useMemo(() => {
+    return {
+      manage: `/${role}/manage-courses`,
+      create: `/${role}/create-course`,
+      edit: (id) => `/${role}/edit-course/${id}`,
+    };
+  }, [role]);
+
+  // ---------------------------
+  // Derived: counts (no extra state needed)
+  // ---------------------------
+  const courseCount = useMemo(() => {
+    const list = Array.isArray(courses) ? courses : [];
+    const total = list.length;
+    const active = list.reduce((acc, c) => {
+      const s = c?.status;
+      return String(s || "").toLowerCase() === "active" ? acc + 1 : acc;
+    }, 0);
+
+    return [
+      { label: "Total Courses", count: total },
+      { label: "Active Courses", count: active },
+    ];
+  }, [courses]);
+
+  // ---------------------------
+  // Derived: backend query params
+  // ---------------------------
+  const queryParams = useMemo(() => {
+    const isTrialAvailable = parseTrial(filters.isTrialAvailable);
+    const [priceMin, priceMax] = parsePriceRange(filters.priceRange);
+
+    const sortBy =
+      sortConfig?.key && sortConfig?.direction
+        ? `${sortConfig.key}${sortConfig.direction}`
+        : "newest";
+
+    return {
       search: searchTerm || undefined,
       language: filters.language || undefined,
       status: filters.status || undefined,
-      isTrialAvailable:
-        filters.isTrialAvailable === "yes"
-          ? true
-          : filters.isTrialAvailable === "no"
-            ? false
-            : undefined,
-      priceMin:
-        filters.priceRange && filters.priceRange.includes("-")
-          ? Number(filters.priceRange.split("-")[0])
-          : undefined,
-      priceMax:
-        filters.priceRange && filters.priceRange.includes("-")
-          ? Number(filters.priceRange.split("-")[1])
-          : undefined,
+      isTrialAvailable,
+      priceMin,
+      priceMax,
       dateFrom: filters.dateRange?.start || undefined,
       dateTo: filters.dateRange?.end || undefined,
       page: currentPage,
-      limit: itemsPerPage,
-      sortBy:
-        sortConfig.key && sortConfig.direction
-          ? sortConfig.key + sortConfig.direction
-          : "newest",
+      limit: ITEMS_PER_PAGE,
+      sortBy,
     };
+  }, [searchTerm, filters, sortConfig, currentPage]);
 
-    dispatch(fetchCourses(params));
-  }, [dispatch, searchTerm, filters, sortConfig, currentPage]);
-
-  // Course statistics
+  // Fetch courses
   useEffect(() => {
-    const totalCourseCount = courses?.length || 0;
-    const activeCourseCount = courses?.filter(
-      (course) => course?.status?.toLowerCase() === "active"
-    )?.length;
-    setCourseCount([
-      { label: "Total Courses", count: totalCourseCount },
-      { label: "Active Courses", count: activeCourseCount },
-    ]);
-  }, [courses]);
+    dispatch(fetchCourses(queryParams));
+  }, [dispatch, queryParams]);
 
-  const handleFilterClick = () => {
-    setShowFilter(!showFilter);
-  };
+  // ---------------------------
+  // Handlers
+  // ---------------------------
+  const handleFilterClick = useCallback(() => {
+    setShowFilter((v) => !v);
+  }, []);
 
-  const handleFiltersChange = (newFilters) => {
+  const handleFiltersChange = useCallback((newFilters) => {
     setFilters(newFilters);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleSort = (key) => {
-    setSortConfig((prevConfig) => ({
+  const handleSort = useCallback((key) => {
+    setSortConfig((prev) => ({
       key,
-      direction:
-        prevConfig.key === key && prevConfig.direction === "Asc"
-          ? "Desc"
-          : "Asc",
+      direction: prev.key === key && prev.direction === "Asc" ? "Desc" : "Asc",
     }));
-  };
+    setCurrentPage(1);
+  }, []);
 
-  const handlePageChange = (page) => {
+  const handlePageChange = useCallback((page) => {
     setCurrentPage(page);
-  };
+  }, []);
 
-  const handleEditCourse = (course) => {
-    navigate(`/teacher/edit-course/${course?._id}`);
-  };
+  const handleEditCourse = useCallback(
+    (course) => {
+      const id = course?._id;
+      if (!id) return;
+      navigate(courseRoutes.edit(id));
+    },
+    [navigate, courseRoutes]
+  );
 
-  const handleDuplicateCourse = async (course) => {
-    await dispatch(duplicateCourse(course?._id));
-    dispatch(fetchCourses({ page: currentPage, limit: itemsPerPage }));
-  };
+  const handleDuplicateCourse = useCallback(
+    async (course) => {
+      const id = course?._id;
+      if (!id) return;
 
-  const handleDeleteCourse = async (courseId) => {
-    await dispatch(removeCourse(courseId));
-    dispatch(fetchCourses({ page: currentPage, limit: itemsPerPage }));
-  };
+      await dispatch(duplicateCourse(id));
+      // Re-fetch same page with same filters/sort/search
+      dispatch(fetchCourses(queryParams));
+    },
+    [dispatch, queryParams]
+  );
 
-  const handleCreateCourseClick = () => {
-    navigate("/teacher/create-course");
-  };
+  const handleDeleteCourse = useCallback(
+    async (courseId) => {
+      if (!courseId) return;
 
-  // Sorting & filtering are now handled server-side; we only do pagination here
+      await dispatch(removeCourse(courseId));
+      dispatch(fetchCourses(queryParams));
+    },
+    [dispatch, queryParams]
+  );
+
+  const handleCreateCourseClick = useCallback(() => {
+    navigate(courseRoutes.create);
+  }, [navigate, courseRoutes]);
+
   const totalPages = pagination?.pages || 1;
   const totalItems = pagination?.total || 0;
 
@@ -142,6 +206,7 @@ const ManageCourses = () => {
       <PageLoaderOverlay show={pageLoading} label="Loading courses…" />
       {/* Header */}
       <RoleBasedHeader />
+
       <main className="max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 lg:pb-8">
         {/* Top Section */}
         <section className="my-8 flex flex-col gap-y-6 lg:gap-y-0 lg:flex-row lg:justify-between lg:items-center">
@@ -153,23 +218,26 @@ const ManageCourses = () => {
               Create, schedule, and manage your educational offerings
             </p>
           </div>
+
           <div className="flex items-center gap-x-12 flex-wrap lg:flex-nowrap gap-y-4">
             {courseCount.map((item, index) => (
               <div
-                key={index}
-                className={`${index !== courseCount.length - 1
-                  ? "pr-6 xl:pr-16 border-r border-[#CECECE]"
-                  : ""
-                  }`}
+                key={item.label}
+                className={
+                  index !== courseCount.length - 1
+                    ? "pr-6 xl:pr-16 border-r border-[#CECECE]"
+                    : ""
+                }
               >
                 <h3 className="text-2xl font-bold text-brand-gray-800">
-                  {item?.count}
+                  {item.count}
                 </h3>
                 <span className="text-sm text-brand-gray-500">
-                  {item?.label}
+                  {item.label}
                 </span>
               </div>
             ))}
+
             <Button size="sm" iconName="Plus" onClick={handleCreateCourseClick}>
               Create New Course
             </Button>
@@ -190,7 +258,10 @@ const ManageCourses = () => {
                 type="text"
                 placeholder="Search courses by name, description, or teacher..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="pl-10 pr-4 py-2 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring w-full"
               />
             </div>
@@ -201,18 +272,22 @@ const ManageCourses = () => {
               iconSize={22}
               className="text-primary"
               onClick={handleFilterClick}
-            ></Button>
+            />
           </div>
         </section>
 
         {/* Filters */}
         {showFilter && (
-          <CourseFilter filters={filters} onFiltersChange={handleFiltersChange} />
+          <CourseFilter
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+          />
         )}
 
         {/* Table */}
         <CourseTable
           onSort={handleSort}
+          role={role}
           sortConfig={sortConfig}
           currentPage={currentPage}
           totalPages={totalPages}

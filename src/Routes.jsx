@@ -4,19 +4,23 @@ import {
   Routes as RouterRoutes,
   Route,
 } from "react-router-dom";
+
 import ScrollToTop from "./components/ScrollToTop";
 import ErrorBoundary from "./components/ErrorBoundary";
+
 import Login from "./pages/auth/login";
 import UserRegistration from "./pages/auth/user-registration";
 import PasswordReset from "./pages/auth/password-reset";
-import NotFound from "./pages/NotFound";
-import ProtectedRoute from "./components/ProtectedRoute";
 import VerifyEmailPage from "./pages/auth/user-registration/components/VerifyEmailPage";
+import AcceptInvitation from "./pages/auth/accept-invitation";
+
+import NotFound from "./pages/NotFound";
+import RootRedirect from "components/RootRedirect";
+
+import ProtectedRoute from "./components/ProtectedRoute";
 import StudentParentRoutes from "./routes/StudentParentRoutes";
 import TeacherRoutes from "./routes/TeacherRoutes";
 import SchoolRoutes from "./routes/SchoolRoutes";
-import RootRedirect from "components/RootRedirect";
-import AcceptInvitation from "./pages/auth/accept-invitation";
 
 const Routes = () => {
   return (
@@ -32,7 +36,7 @@ const Routes = () => {
           <Route path="/password-reset" element={<PasswordReset />} />
           <Route path="/accept-invitation" element={<AcceptInvitation />} />
 
-          {/* Protected Routes - Grouped by role */}
+          {/* Protected Routes - grouped by role */}
           <Route element={<ProtectedRoute allowedRoles={["teacher"]} />}>
             <Route path="/teacher/*" element={<TeacherRoutes />} />
           </Route>
@@ -45,9 +49,7 @@ const Routes = () => {
             <Route path="/parent/*" element={<StudentParentRoutes />} />
           </Route>
 
-          <Route
-            element={<ProtectedRoute allowedRoles={["admin", "school"]} />}
-          >
+          <Route element={<ProtectedRoute allowedRoles={["admin", "school"]} />}>
             <Route path="/school/*" element={<SchoolRoutes />} />
           </Route>
 

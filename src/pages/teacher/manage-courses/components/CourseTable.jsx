@@ -1,19 +1,51 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+
 import Icon from "components/AppIcon";
 import Pagination from "components/ui/Pagination";
 import ActionMenu from "./ActionMenu";
 import SmartMenuPortal from "components/ui/SmartMenuPortal";
 import DeleteModal from "components/ui/DeleteModal";
+
 import { getLanguageName, successToast } from "../../../../utils/utils";
 import { updateLocalCourse } from "reducers/courses/courseSlice";
 import { updateCourse as updateCourseThunk } from "reducers/courses/courseThunks";
+
+const STATUS_CONFIG = {
+  active: {
+    bg: "bg-green-50",
+    text: "text-green-700",
+    border: "border-green-500",
+    label: "Active",
+  },
+  draft: {
+    bg: "bg-yellow-50",
+    text: "text-yellow-700",
+    border: "border-yellow-500",
+    label: "Draft",
+  },
+  archived: {
+    bg: "bg-gray-100",
+    text: "text-gray-600",
+    border: "border-gray-500",
+    label: "Archived",
+  },
+  full: {
+    bg: "bg-red-50",
+    text: "text-red-700",
+    border: "border-red-500",
+    label: "Full",
+  },
+};
+
+const normalizeStatus = (status) => String(status || "").toLowerCase();
 
 const CourseTable = ({
   onSort,
   sortConfig,
   currentPage,
+  role,
   totalPages,
   totalItems,
   onPageChange,
@@ -23,99 +55,145 @@ const CourseTable = ({
 }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [openMenuId, setOpenMenuId] = useState(null);
-  const [menuAnchor, setMenuAnchor] = useState(null);   // DOMRect of the icon
-  const [menuAnchorEl, setMenuAnchorEl] = useState(null); // actual icon element
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteCourseId, setDeleteCourseId] = useState(null);
 
   const data = useSelector((s) => s.courseList.items || []);
 
-  const getSortIcon = (column) => {
-    if (sortConfig?.key !== column) {
-      return (
-        <Icon name="ArrowUpDown" size={14} className="text-muted-foreground" />
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [menuAnchor, setMenuAnchor] = useState(null); // DOMRect
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null); // HTMLElement
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteCourseId, setDeleteCourseId] = useState(null);
+
+  // -------------------------
+  // Helpers
+  // -------------------------
+  const closeMenu = useCallback(() => {
+    setOpenMenuId(null);
+    setMenuAnchor(null);
+    setMenuAnchorEl(null);
+  }, []);
+
+  const getSortIcon = useCallback(
+    (column) => {
+      if (sortConfig?.key !== column) {
+        return (
+          <Icon
+            name="ArrowUpDown"
+            size={14}
+            className="text-muted-foreground"
+          />
+        );
+      }
+
+      return sortConfig?.direction === "Asc" ? (
+        <Icon name="ArrowUp" size={14} className="text-primary" />
+      ) : (
+        <Icon name="ArrowDown" size={14} className="text-primary" />
       );
-    }
-    return sortConfig?.direction === "Asc" ? (
-      <Icon name="ArrowUp" size={14} className="text-primary" />
-    ) : (
-      <Icon name="ArrowDown" size={14} className="text-primary" />
-    );
-  };
+    },
+    [sortConfig]
+  );
 
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      active: {
-        bg: "bg-green-50",
-        text: "text-green-700",
-        border: "border-green-500",
-        label: "Active",
-      },
-      draft: {
-        bg: "bg-yellow-50",
-        text: "text-yellow-700",
-        border: "border-yellow-500",
-        label: "Draft",
-      },
-      archived: {
-        bg: "bg-gray-100",
-        text: "text-gray-600",
-        border: "border-gray-500",
-        label: "Archived",
-      },
-      full: {
-        bg: "bg-red-50",
-        text: "text-red-700",
-        border: "border-red-500",
-        label: "Full",
-      },
-    };
-
-    const config = statusConfig?.[status] || statusConfig?.draft;
+  const renderStatusBadge = useCallback((status) => {
+    const key = normalizeStatus(status);
+    const cfg = STATUS_CONFIG[key] || STATUS_CONFIG.draft;
 
     return (
       <span
-        className={`inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium border ${config.border} ${config.bg} ${config.text}`}
+        className={`inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium border ${cfg.border} ${cfg.bg} ${cfg.text}`}
       >
-        {config.label}
+        {cfg.label}
       </span>
     );
-  };
+  }, []);
 
-  const toggleMenu = (courseId, e) => {
-    if (openMenuId === courseId) {
-      setOpenMenuId(null);
-      setMenuAnchor(null);
-      setMenuAnchorEl(null);
-      return;
-    }
-    const el = e?.currentTarget || null;
-    const rect = el?.getBoundingClientRect?.();
-    if (rect) setMenuAnchor(rect);
-    setMenuAnchorEl(el);
-    setOpenMenuId(courseId);
-  };
+  const handleNavigate = useCallback(
+    (id) => {
+      if (!id) return;
+      navigate(`/${role}/lessons/${id}`);
+      closeMenu();
+    },
+    [navigate, role, closeMenu]
+  );
 
-  const handleActiveCourse = async (course) => {
-    await dispatch(
-      updateCourseThunk({ id: course?._id, patch: { status: course?.status === 'active' ? 'draft' : 'active' } })
-    ).unwrap();
-    const next = data.map((x) =>
-      x._id === course._id ? { ...x, status: course.status === 'active' ? 'draft' : 'active' } : x
-    );
-    dispatch(updateLocalCourse(next));
-    successToast(`Course ${course?.status === 'active' ? 'moved to draft' : 'activated'} successfully!`);
-  }
+  const toggleMenu = useCallback(
+    (courseId, e) => {
+      if (!courseId) return;
 
-  const handleNavigate = (id) => {
-    navigate(`/teacher/lessons/${id}`);
-    setOpenMenuId(null);
-  };
+      // Clicking the same row action closes it
+      if (openMenuId === courseId) {
+        closeMenu();
+        return;
+      }
 
-  const handleDeleteModal = () => {
-    setShowDeleteModal(!showDeleteModal);
-  };
+      const el = e?.currentTarget || null;
+      const rect = el?.getBoundingClientRect?.() || null;
+
+      setMenuAnchor(rect);
+      setMenuAnchorEl(el);
+      setOpenMenuId(courseId);
+    },
+    [openMenuId, closeMenu]
+  );
+
+  const handleActiveCourse = useCallback(
+    async (course) => {
+      const id = course?._id;
+      if (!id) return;
+
+      const currentStatus = normalizeStatus(course?.status);
+      const nextStatus = currentStatus === "active" ? "draft" : "active";
+
+      await dispatch(
+        updateCourseThunk({
+          id,
+          patch: { status: nextStatus },
+        })
+      ).unwrap();
+
+      // Keep your existing optimistic list update behavior
+      const next = (Array.isArray(data) ? data : []).map((x) =>
+        x?._id === id ? { ...x, status: nextStatus } : x
+      );
+      dispatch(updateLocalCourse(next));
+
+      successToast(
+        `Course ${
+          currentStatus === "active" ? "moved to draft" : "activated"
+        } successfully!`
+      );
+    },
+    [dispatch, data]
+  );
+
+  const requestDelete = useCallback(
+    (courseId) => {
+      if (!courseId) return;
+      setDeleteCourseId(courseId);
+      closeMenu();
+      setShowDeleteModal(true);
+    },
+    [closeMenu]
+  );
+
+  const confirmDelete = useCallback(() => {
+    if (!deleteCourseId) return;
+
+    onDelete?.(deleteCourseId);
+    setDeleteCourseId(null);
+    setShowDeleteModal(false);
+    successToast("Course deleted successfully!");
+  }, [deleteCourseId, onDelete]);
+
+  const cancelDelete = useCallback(() => {
+    setDeleteCourseId(null);
+    setShowDeleteModal(false);
+  }, []);
+
+  // Keep table rendering stable
+  const hasData = Array.isArray(data) && data.length > 0;
+
+  const rows = useMemo(() => (Array.isArray(data) ? data : []), [data]);
 
   return (
     <section className="bg-card border border-border rounded-lg overflow-hidden">
@@ -125,45 +203,50 @@ const CourseTable = ({
             <tr>
               <th className="px-6 py-4 text-left">
                 <button
-                  onClick={() => onSort("title")}
+                  onClick={() => onSort?.("title")}
                   className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
                 >
                   Course Title
                   {getSortIcon("title")}
                 </button>
               </th>
+
               <th className="px-6 py-4 text-left">
                 <button
-                  onClick={() => onSort("languageCode")}
+                  onClick={() => onSort?.("languageCode")}
                   className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
                 >
                   Language
                   {getSortIcon("languageCode")}
                 </button>
               </th>
+
               <th className="px-6 py-4 text-left">
                 <span className="text-sm font-medium text-foreground">
                   Students
                 </span>
               </th>
+
               <th className="px-6 py-4 text-left">
                 <button
-                  onClick={() => onSort("price")}
+                  onClick={() => onSort?.("price")}
                   className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
                 >
                   Price
                   {getSortIcon("price")}
                 </button>
               </th>
+
               <th className="px-6 py-4 text-left">
                 <button
-                  onClick={() => onSort("status")}
+                  onClick={() => onSort?.("status")}
                   className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-smooth"
                 >
                   Status
                   {getSortIcon("status")}
                 </button>
               </th>
+
               <th className="px-6 py-4 text-left">
                 <span className="text-sm font-medium text-foreground">
                   Actions
@@ -171,8 +254,9 @@ const CourseTable = ({
               </th>
             </tr>
           </thead>
+
           <tbody>
-            {data?.map((course) => (
+            {rows.map((course) => (
               <tr
                 key={course?._id}
                 className="border-t border-border hover:bg-muted/30 transition-smooth"
@@ -198,22 +282,29 @@ const CourseTable = ({
                     </div>
                   </div>
                 </td>
+
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
                     {getLanguageName(course?.languageCode)}
                   </span>
                 </td>
+
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
                     {`${course?.enrolledCount}/${course?.studentCapacity}`}
                   </span>
                 </td>
+
                 <td className="px-6 py-4">
                   <span className="font-medium text-foreground">
                     ${course?.price}
                   </span>
                 </td>
-                <td className="px-6 py-4">{getStatusBadge(course?.status)}</td>
+
+                <td className="px-6 py-4">
+                  {renderStatusBadge(course?.status)}
+                </td>
+
                 <td className="relative px-6 py-4">
                   <Icon
                     name="MoreVertical"
@@ -221,32 +312,19 @@ const CourseTable = ({
                     className="text-muted-foreground cursor-pointer"
                     onClick={(e) => toggleMenu(course?._id, e)}
                   />
+
                   {openMenuId === course?._id && menuAnchor && (
                     <SmartMenuPortal
                       anchorRect={menuAnchor}
                       anchorEl={menuAnchorEl}
-                      onClose={() => {
-                        setOpenMenuId(null);
-                        setMenuAnchor(null);
-                        setMenuAnchorEl(null);
-                      }}
+                      onClose={closeMenu}
                     >
                       <ActionMenu
                         data={course}
-                        setOpenMenuId={() => {
-                          setOpenMenuId(null);
-                          setMenuAnchor(null);
-                          setMenuAnchorEl(null);
-                        }}
+                        setOpenMenuId={closeMenu}
                         onEdit={onEdit}
                         onDuplicate={onDuplicate}
-                        onDelete={() => {
-                          setDeleteCourseId(course?._id);
-                          setOpenMenuId(null);
-                          setMenuAnchor(null);
-                          setMenuAnchorEl(null);
-                          handleDeleteModal();
-                        }}
+                        onDelete={() => requestDelete(course?._id)}
                         onActive={(lesson) => handleActiveCourse(lesson)}
                       />
                     </SmartMenuPortal>
@@ -257,7 +335,8 @@ const CourseTable = ({
           </tbody>
         </table>
       </div>
-      {data?.length === 0 && (
+
+      {!hasData && (
         <div className="flex flex-col items-center justify-center h-[400px]">
           <Icon
             name="Calendar"
@@ -272,6 +351,7 @@ const CourseTable = ({
           </p>
         </div>
       )}
+
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
@@ -283,16 +363,8 @@ const CourseTable = ({
       {showDeleteModal && (
         <DeleteModal
           type="course"
-          onConfirm={() => {
-            onDelete(deleteCourseId);
-            setDeleteCourseId(null);
-            handleDeleteModal();
-            successToast("Course deleted successfully!");
-          }}
-          onClose={() => {
-            setDeleteCourseId(null);
-            handleDeleteModal();
-          }}
+          onConfirm={confirmDelete}
+          onClose={cancelDelete}
         />
       )}
     </section>
