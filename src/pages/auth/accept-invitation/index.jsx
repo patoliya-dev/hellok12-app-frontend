@@ -56,7 +56,7 @@ const AcceptInvitationPage = () => {
           ticket,
           // only needed when user is not logged in or backend requires it
           fullName: canDirectAccept ? undefined : fullName,
-          password: canDirectAccept ? undefined : password,
+          password: password,
         })
       ).unwrap();
 
@@ -103,19 +103,21 @@ const AcceptInvitationPage = () => {
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-20">
         <div className="bg-card border border-border rounded-lg p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Icon name="UserPlus" size={20} color="white" />
+          {validateReq.status !== "failed" && (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <Icon name="UserPlus" size={20} color="white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-card-foreground">
+                  Accept Invitation
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Validate and accept your HelloK12 invitation
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-semibold text-card-foreground">
-                Accept Invitation
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Validate and accept your HelloK12 invitation
-              </p>
-            </div>
-          </div>
+          )}
 
           {validating ? (
             <div className="flex justify-center items-center py-16">
@@ -123,12 +125,12 @@ const AcceptInvitationPage = () => {
             </div>
           ) : validateReq.status === "failed" ? (
             <div className="mt-6">
-              <p className="text-destructive">
+              <p className="text-destructive text-center">
                 {validateReq.error || "Invitation is invalid or expired."}
               </p>
-              <p className="text-muted-foreground mt-2">
+              {/* <p className="text-muted-foreground mt-2">
                 Please ask the school to resend the invitation.
-              </p>
+              </p> */}
             </div>
           ) : (
             <>
@@ -174,20 +176,23 @@ const AcceptInvitationPage = () => {
                 ) : null}
               </div>
 
-              {!canDirectAccept && (
-                <div className="mt-6 space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    If you don’t have an account, create one now to accept the
-                    invitation. If you already have an account, log in with the
-                    invited email and come back to this page.
-                  </p>
-
-                  <Input
-                    label="Full Name"
-                    placeholder="Enter your full name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                  />
+              <div className="mt-6 space-y-4">
+                <>
+                  {!canDirectAccept && (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        If you don’t have an account, create one now to accept
+                        the invitation. If you already have an account, log in
+                        with the invited email and come back to this page.
+                      </p>
+                      <Input
+                        label="Full Name"
+                        placeholder="Enter your full name"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                      />
+                    </>
+                  )}
                   <div className="relative">
                     <Input
                       type={showPassword ? "text" : "password"}
@@ -207,8 +212,8 @@ const AcceptInvitationPage = () => {
                       <Icon name={showPassword ? "EyeOff" : "Eye"} size={16} />
                     </button>
                   </div>
-                </div>
-              )}
+                </>
+              </div>
 
               <div className="flex justify-end gap-3 mt-8">
                 <Button variant="ghost" onClick={() => navigate("/login")}>

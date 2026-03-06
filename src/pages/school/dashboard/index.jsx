@@ -6,43 +6,34 @@ import UpcomingLessonCard from "./components/UpcomingLessonCard";
 import QuickAction from "./components/QuickAction";
 import PageHeader from "components/ui/PageHeader";
 import InviteTeacherModal from "../manage-teachers/components/InviteTeacherModal";
+import TodaySchedule from "../../../pages/teacher/dashboard/components/TodaySchedule";
+import { useNavigate } from "react-router-dom";
 
 const SchoolDashboard = () => {
+  const navigate = useNavigate();
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [todaySessions, setTodaySessions] = useState([]);
 
   const handleInviteModalOpen = () => {
     setShowInviteModal(!showInviteModal);
   };
 
-  const handleInviteTeacher = (inviteData) => {
-    const newTeacher = {
-      id: 100,
-      name: inviteData?.name,
-      email: inviteData?.email,
-      phone: "",
-      address: "",
-      avatar:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-      status: inviteData?.setAsActive ? "active" : "pending",
-      languages: inviteData?.languages,
-      location: "Location TBD",
-      experience: 0,
-      isOnline: false,
-      travelDistance: 10,
-      hourlyRate: 35,
-      availability: {
-        onsite: false,
-        online: false,
-      },
-      bio: "New teacher - profile setup pending",
-      stats: {
-        totalLessons: 0,
-        totalStudents: 0,
-        rating: 0,
-        totalEarnings: 0,
-      },
-      joinedDate: new Date()?.toISOString()?.split("T")?.[0],
-    };
+  const handleJoinSession = (session) => {
+    if (session.joinUrl) {
+      window.open(session.joinUrl, "_blank");
+    }
+  };
+
+  const handleCancelSession = (session) => {
+    alert("Session canceled successfully!");
+  };
+
+  const handleViewAllSchedules = () => {
+    navigate("/school/lessons");
+  };
+
+  const handleMessages = () => {
+    navigate("/school/messages");
   };
 
   return (
@@ -72,8 +63,14 @@ const SchoolDashboard = () => {
         {/*Desktop View*/}
         <section className="mb-8 hidden lg:grid lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-8 space-y-8">
-            {/* Upcoming Lessons */}
-            <UpcomingLessonCard />
+            {/* Today's Lessons */}
+            <TodaySchedule
+              sessions={todaySessions}
+              onJoinSession={handleJoinSession}
+              onCancelSession={handleCancelSession}
+              onViewAllSchedules={handleViewAllSchedules}
+              onMessage={handleMessages}
+            />
           </div>
           {/* Right Column */}
           <div className="lg:col-span-4 space-y-8">

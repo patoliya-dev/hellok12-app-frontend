@@ -5,58 +5,94 @@ import {
 } from "./schoolInvitationsThunks";
 
 const initialState = {
-  byKey: {}, // key = `${role}:${status}`
+  byKey: {}, // key => invitations[]
+  paginationByKey: {}, // key => pagination
   loadingByKey: {},
   errorByKey: {},
 };
 
-const keyOf = (role, status) => `${role || "ALL"}:${status || "ALL"}`;
+const normRole = (v) =>
+  String(v || "")
+    .trim()
+    .toUpperCase() || "ALL";
+const normSearchKey = (v) =>
+  String(v || "")
+    .trim()
+    .toLowerCase() || "ALL";
+const normPage = (v) => {
+  const n = parseInt(String(v || "1"), 10);
+  return Number.isFinite(n) && n > 0 ? n : 1;
+};
+const normLimit = (v) => {
+  const n = parseInt(String(v || "10"), 10);
+  if (!Number.isFinite(n) || n <= 0) return 10;
+  return Math.min(100, n);
+};
 
-const normalizeStatus = (s) => String(s || "").toUpperCase();
+// include pagination in key to avoid overwriting caches
+const keyOf = (role, search, page, limit) =>
+  `${normRole(role)}:${normSearchKey(search)}:${normPage(page)}:${normLimit(
+    limit
+  )}`;
+
+const normalizeInvitationStatus = (v) =>
+  String(v || "")
+    .trim()
+    .toUpperCase();
 
 const slice = createSlice({
   name: "schoolInvitations",
   initialState,
   reducers: {
-    clearInvitationsError: (state, action) => {
-      const { role, status } = action.payload || {};
-      const k = keyOf(role, status);
-      delete state.errorByKey[k];
+    // optional utility if you ever want to clear old cached pages for role/search
+    // not required for correctness
+    clearInvitationCacheForQuery: (state, action) => {
+      const { role, search } = action.payload || {};
+      const r = normRole(role);
+      const s = normSearchKey(search);
+      const prefix = `${r}:${s}:`;
+
+      Object.keys(state.byKey).forEach((k) => {
+        if (k.startsWith(prefix)) {
+          delete state.byKey[k];
+          delete state.paginationByKey[k];
+          delete state.loadingByKey[k];
+          delete state.errorByKey[k];
+        }
+      });
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchSchoolInvitations.pending, (state, action) => {
-        const { role, status } = action.meta.arg || {};
-        const k = keyOf(role, status);
+        const { role, search, page, limit } = action.meta.arg || {};
+        const k = keyOf(role, search, page, limit);
         state.loadingByKey[k] = true;
         state.errorByKey[k] = null;
       })
       .addCase(fetchSchoolInvitations.fulfilled, (state, action) => {
-        const { role, status } = action.payload || {};
-        const k = keyOf(role, status);
+        const { role, search, page, limit } = action.payload || {};
+        const k = keyOf(role, search, page, limit);
 
         const invitations = (action.payload?.invitations || []).map((inv) => ({
           ...inv,
-          status: normalizeStatus(inv.status),
+          status: normalizeInvitationStatus(inv.status),
         }));
 
         state.byKey[k] = invitations;
+        state.paginationByKey[k] = action.payload?.pagination || null;
         state.loadingByKey[k] = false;
       })
       .addCase(fetchSchoolInvitations.rejected, (state, action) => {
-        const { role, status } = action.meta.arg || {};
-        const k = keyOf(role, status);
+        const { role, search, page, limit } = action.meta.arg || {};
+        const k = keyOf(role, search, page, limit);
         state.loadingByKey[k] = false;
-        state.errorByKey[k] = action.payload || action.error?.message;
-      })
-
-      .addCase(cancelSchoolInvitation.pending, (state, action) => {
-        // optional: could set a per-item loading flag, keeping simple here
+        state.errorByKey[k] = action.payload || action.error?.message || null;
       })
       .addCase(cancelSchoolInvitation.fulfilled, (state, action) => {
-        const { invitationId, role, status } = action.payload || {};
-        const k = keyOf(role, status);
+        const { invitationId, role, search, page, limit } =
+          action.payload || {};
+        const k = keyOf(role, search, page, limit);
 
         const list = state.byKey[k] || [];
         state.byKey[k] = list.map((inv) =>
@@ -68,18 +104,50 @@ const slice = createSlice({
   },
 });
 
-export const { clearInvitationsError } = slice.actions;
+export const { clearInvitationCacheForQuery } = slice.actions;
 export default slice.reducer;
 
-export const selectInvitations = (state, role, status) => {
-  const k = `${role || "ALL"}:${status || "ALL"}`;
+// Selectors
+export const selectInvitations = (
+  state,
+  role,
+  search,
+  page = 1,
+  limit = 10
+) => {
+  const k = keyOf(role, search, page, limit);
   return state.schoolInvitations?.byKey?.[k] || [];
 };
-export const selectInvitationsLoading = (state, role, status) => {
-  const k = `${role || "ALL"}:${status || "ALL"}`;
+
+export const selectInvitationsLoading = (
+  state,
+  role,
+  search,
+  page = 1,
+  limit = 10
+) => {
+  const k = keyOf(role, search, page, limit);
   return Boolean(state.schoolInvitations?.loadingByKey?.[k]);
 };
-export const selectInvitationsError = (state, role, status) => {
-  const k = `${role || "ALL"}:${status || "ALL"}`;
+
+export const selectInvitationsPagination = (
+  state,
+  role,
+  search,
+  page = 1,
+  limit = 10
+) => {
+  const k = keyOf(role, search, page, limit);
+  return state.schoolInvitations?.paginationByKey?.[k] || null;
+};
+
+export const selectInvitationsError = (
+  state,
+  role,
+  search,
+  page = 1,
+  limit = 10
+) => {
+  const k = keyOf(role, search, page, limit);
   return state.schoolInvitations?.errorByKey?.[k] || null;
 };
