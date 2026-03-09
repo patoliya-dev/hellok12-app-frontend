@@ -8,6 +8,7 @@ import SchoolDashboard from "../pages/school/dashboard";
 import ManageStudents from "../pages/school/manage-students";
 import Earnings from "../pages/school/earnings";
 import ProfileAccountSettings from "../pages/school/profile-settings";
+import PayoutAccountPage from "../pages/shared/payout-account";
 
 import ManageCourses from "../pages/teacher/manage-courses";
 import CreateCourse from "../pages/teacher/create-course";
@@ -28,6 +29,8 @@ const SchoolRoutes = () => {
       <Route path="/notifications" element={<NotificationsPage />} />
       <Route path="/earnings" element={<Earnings />} />
       <Route path="/profile-settings" element={<ProfileAccountSettings />} />
+      {/* Account details used by admin before payout can be marked as PAID. */}
+      <Route path="/payout-account" element={<PayoutAccountPage />} />
 
       {/* Course Management: School allowed */}
       <Route

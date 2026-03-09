@@ -10,9 +10,33 @@ import { selectAuthUser } from "reducers/auth/authSelectors";
 import { getRolePath } from "../../../../utils/rolePath";
 import { getLessonsForStudent } from "../../../../services/lessons/lesson.service";
 import Loader from "components/ui/Loader";
-import { formatTimeToTZ, getUserTimezone } from "../../../../utils/timezone";
+import {
+  formatDateToTZ,
+  formatTimeToTZ,
+  getUserTimezone,
+} from "../../../../utils/timezone";
 
-const getCardState = (session, nowMs = Date.now()) => {
+const formatAddress = (address) => {
+  if (!address) return "";
+  if (typeof address === "string") return address.trim();
+  if (Array.isArray(address)) return address.filter(Boolean).join(", ");
+  if (typeof address === "object") {
+    const parts = [
+      address.line1,
+      address.line2,
+      address.city,
+      address.state,
+      address.country,
+      address.postalCode || address.zip || address.zipCode,
+    ]
+      .map((part) => String(part || "").trim())
+      .filter(Boolean);
+    return parts.join(", ");
+  }
+  return String(address).trim();
+};
+
+const getCardState = (session, nowMs = Date.now(), userTimezone = "UTC") => {
   const startMs = new Date(session.startTimeIso).getTime();
   const endMs = new Date(session.endTimeIso).getTime();
 
@@ -34,6 +58,17 @@ const getCardState = (session, nowMs = Date.now()) => {
   }
 
   if (diffMin > 0) {
+    if (diffMin >= 24 * 60) {
+      return {
+        key: "scheduled",
+        label: "Scheduled",
+        countdown: formatDateToTZ(session.startTimeIso, userTimezone, {
+          month: "short",
+          day: "numeric",
+        }),
+      };
+    }
+
     const hours = Math.floor(diffMin / 60);
     const mins = diffMin % 60;
     return {
@@ -46,7 +81,7 @@ const getCardState = (session, nowMs = Date.now()) => {
   return { key: "completed", label: "Completed", countdown: "" };
 };
 
-const mapSessions = (sessions = []) =>
+const mapSessions = (sessions = [], userTimezone = "UTC") =>
   sessions.map((session) => ({
     id: session._id,
     subject: session?.course?.title || "N/A",
@@ -60,6 +95,8 @@ const mapSessions = (sessions = []) =>
     },
     startTimeIso: session?.start,
     endTimeIso: session?.end,
+    date: formatDateToTZ(session?.start, userTimezone),
+    startTime: formatTimeToTZ(session?.start, userTimezone),
     duration: session?.lesson?.schedule?.duration || 0,
     meetingLink: session?.joinUrl || "",
     title: session?.lesson?.title || "N/A",
@@ -89,7 +126,9 @@ const mapSessions = (sessions = []) =>
     ],
     description:
       session?.lesson?.description || session?.course?.description || "",
-    address: session?.lesson?.address || null,
+    address: formatAddress(
+      session?.address || session?.lesson?.address || session?.course?.address,
+    ),
     averageRating: parseFloat(
       session?.lesson?.teacherId?.rating?.averageRating || 0,
     ).toFixed(2),
@@ -143,7 +182,7 @@ const UpcomingSessionsCard = () => {
       }
 
       const response = await getLessonsForStudent({ studentId });
-      setUpcomingSessions(mapSessions(response?.data || []));
+      setUpcomingSessions(mapSessions(response?.data || [], userTimezone));
     } catch (err) {
       console.error("Failed to fetch student lessons:", err);
       setError(err.message || "Failed to load upcoming lessons");
@@ -179,7 +218,7 @@ const UpcomingSessionsCard = () => {
   const visibleSessions = useMemo(() => {
     const nowMs = currentTime.getTime();
     const base = upcomingSessions
-      .map((s) => ({ ...s, uiState: getCardState(s, nowMs) }))
+      .map((s) => ({ ...s, uiState: getCardState(s, nowMs, userTimezone) }))
       .filter((s) => s.uiState.key !== "completed");
 
     if (activeTab === "game") {
@@ -316,6 +355,13 @@ const UpcomingSessionsCard = () => {
                     </span>
                   )}
                 </div>
+
+                {session.address ? (
+                  <div className="mt-2 inline-flex max-w-full items-start gap-1.5 text-sm text-[#667085]">
+                    <Icon name="MapPin" size={14} className="mt-0.5 shrink-0" />
+                    <span className="break-words">{session.address}</span>
+                  </div>
+                ) : null}
 
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
                   {session.uiState.key === "starting-soon" ||

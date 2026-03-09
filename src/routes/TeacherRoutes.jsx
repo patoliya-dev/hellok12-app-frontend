@@ -10,6 +10,7 @@ import Messages from "../pages/student-parent/messages";
 import Progress from "../pages/teacher/progress";
 import ProfileAccountSettings from "../pages/teacher/profile-settings";
 import Earnings from "../pages/teacher/earnings";
+import PayoutAccountPage from "../pages/shared/payout-account";
 import BillingDashboard from "../pages/billing/BillingDashboard";
 
 import ManageCourses from "../pages/teacher/manage-courses";
@@ -34,6 +35,8 @@ const TeacherRoutes = () => {
       <Route path="/profile-settings" element={<ProfileAccountSettings />} />
       <Route path="/billing" element={<BillingDashboard />} />
       <Route path="/earnings" element={<Earnings />} />
+      {/* Account details used by admin before payout can be marked as PAID. */}
+      <Route path="/payout-account" element={<PayoutAccountPage />} />
 
       {/* Course Management: ONLY independent teacher allowed under /teacher */}
       <Route

@@ -47,6 +47,42 @@ const statusDetails = {
   cancelled: { color: "error", text: "Cancelled" },
 };
 
+const normalizeTag = (tag) => {
+  if (typeof tag === "string") {
+    return { key: tag, label: tag, icon: null };
+  }
+
+  if (tag && typeof tag === "object") {
+    return {
+      key: tag.key || tag.label || JSON.stringify(tag),
+      label: tag.label || "",
+      icon: tag.icon || null,
+    };
+  }
+
+  return { key: String(tag || ""), label: String(tag || ""), icon: null };
+};
+
+const formatAddress = (address) => {
+  if (!address) return "";
+  if (typeof address === "string") return address.trim();
+  if (Array.isArray(address)) return address.filter(Boolean).join(", ");
+  if (typeof address === "object") {
+    const parts = [
+      address.line1,
+      address.line2,
+      address.city,
+      address.state,
+      address.country,
+      address.postalCode || address.zip || address.zipCode,
+    ]
+      .map((part) => String(part || "").trim())
+      .filter(Boolean);
+    return parts.join(", ");
+  }
+  return String(address).trim();
+};
+
 const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
   const navigate = useNavigate();
   const authUser = useSelector((state) => state.auth.user);
@@ -57,6 +93,7 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
   if (!lesson) return null;
 
   const statusInfo = statusDetails[lesson.status] || statusDetails["pending"];
+  const formattedAddress = formatAddress(lesson.address);
 
   const handleMessage = () => {
     navigate(getRolePath(authUser?.role || "student", "messages"));
@@ -206,7 +243,7 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
                     </div>
                   </div>
 
-                  {lesson.address ? (
+                  {formattedAddress ? (
                     <div className="flex items-start gap-3">
                       <span>
                         <MapPin className="mt-1 h-5 w-5 text-brand-gray-500" />
@@ -214,7 +251,7 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
                       <div className="min-w-0">
                         <p className="text-sm text-brand-gray-500">Location</p>
                         <p className="font-semibold text-brand-gray-800 break-words">
-                          {lesson.address}
+                          {formattedAddress}
                         </p>
                       </div>
                     </div>
@@ -244,14 +281,25 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
                 {/* Tags */}
                 {lesson.tags && lesson.tags.length > 0 && (
                   <div className="mt-6 flex flex-wrap items-center gap-2 sm:gap-3">
-                    {lesson.tags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        text={tag}
-                        color={tagDetails[tag]?.color || "sky"}
-                        icon={tagDetails[tag]?.icon}
-                      />
-                    ))}
+                    {lesson.tags.map((tag) => {
+                      const normalizedTag = normalizeTag(tag);
+                      const tagConfig = tagDetails[normalizedTag.label];
+                      const fallbackIcon =
+                        typeof normalizedTag.icon === "string" ? (
+                          <Icon name={normalizedTag.icon} size={16} />
+                        ) : (
+                          normalizedTag.icon
+                        );
+
+                      return (
+                        <Badge
+                          key={normalizedTag.key}
+                          text={normalizedTag.label}
+                          color={tagConfig?.color || "sky"}
+                          icon={tagConfig?.icon || fallbackIcon}
+                        />
+                      );
+                    })}
                   </div>
                 )}
 
