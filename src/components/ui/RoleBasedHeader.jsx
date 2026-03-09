@@ -160,6 +160,11 @@ const RoleBasedHeader = () => {
           label: "Find Teacher",
           path: getRolePath("student", "find-teacher"),
           icon: "Search",
+          children: [
+            getRolePath("student", "teacher-profile-detail/"),
+            getRolePath("student", "course-details/"),
+            getRolePath("student", "book-lesson/"),
+          ],
         },
         {
           label: "Lessons",
@@ -191,6 +196,11 @@ const RoleBasedHeader = () => {
           label: "Find Teacher",
           path: getRolePath("parent", "find-teacher"),
           icon: "Search",
+          children: [
+            getRolePath("parent", "teacher-profile-detail/"),
+            getRolePath("parent", "course-details/"),
+            getRolePath("parent", "book-lesson/"),
+          ],
         },
         {
           label: "Lessons",
