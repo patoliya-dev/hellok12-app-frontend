@@ -73,16 +73,20 @@ const teachersSlice = createSlice({
       })
       .addCase(fetchTeacherDetails.rejected, (state, action) => {
         state.loading = false;
-        state.error = action?.payload?.message || action.error?.message || "Failed to fetch teacher";
+        state.error =
+          action?.payload?.message ||
+          action.error?.message ||
+          "Failed to fetch teacher";
       });
   },
 });
 
-export const { setSelectedTeacher, clearSelectedTeacher } = teachersSlice.actions;
+export const { setSelectedTeacher, clearSelectedTeacher } =
+  teachersSlice.actions;
 
 // Selectors
-export const selectSelectedTeacher = (state) => state.teachers?.selectedTeacher || null;
+export const selectSelectedTeacher = (state) =>
+  state.teachers?.selectedTeacher || null;
 export const selectTeacherLoading = (state) => state.teachers?.loading || false;
-export const selectTeacherError = (state) => state.teachers?.error || null;
 
 export default teachersSlice.reducer;

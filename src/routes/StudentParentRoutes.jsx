@@ -11,6 +11,7 @@ import ProfileAccountSettings from "../pages/student-parent/profile-settings";
 import PaymentBilling from "../pages/student-parent/payment-billing";
 import TeacherProfileDetail from "../pages/student-parent/teacher-profile-detail";
 import PublicCourseDetails from "../pages/student-parent/course-details";
+import NotificationsPage from "../pages/shared/notifications";
 
 import NotFound from "../pages/NotFound";
 import useAutoSelectChild from "../hooks/useAutoSelectChild";
@@ -30,6 +31,7 @@ const StudentParentRoutes = () => {
       <Route path="progress-analytics" element={<ProgressAnalytics />} />
       <Route path="lessons" element={<Lessons />} />
       <Route path="messages" element={<Messages />} />
+      <Route path="notifications" element={<NotificationsPage />} />
       <Route path="lesson-calendar" element={<LessonsCalendar />} />
 
       <Route path="profile-settings" element={<ProfileAccountSettings />} />

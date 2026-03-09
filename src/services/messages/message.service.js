@@ -1,20 +1,6 @@
 import api from "../../utils/axiosInstance";
 
 /**
- * Get messages for a specific thread (deprecated - use socket instead)
- * Kept for backward compatibility
- */
-export const getMessages = async (threadId) => {
-  try {
-    const response = await api.get(`/messages/${threadId}`);
-    return response.data;
-  } catch (error) {
-    console.error("Get messages error:", error);
-    return error.response?.data?.message || "Failed to get messages";
-  }
-};
-
-/**
  * List all conversations for current user
  * Returns conversations with unread counts and last message
  */
@@ -25,7 +11,7 @@ export const listConversations = async () => {
   } catch (error) {
     console.error("List conversations error:", error);
     throw new Error(
-      error.response?.data?.message || "Failed to load conversations"
+      error.response?.data?.message || "Failed to load conversations",
     );
   }
 };
@@ -74,29 +60,6 @@ export const listChats = async (threadId, limit = 30, skip = 0) => {
 };
 
 /**
- * Upload file/image for messaging
- * Returns file URL to be sent in message
- */
-export const uploadMessageFile = async (file, threadId) => {
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("threadId", threadId);
-
-    const { data } = await api.post("/messages/upload", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    return data.data;
-  } catch (error) {
-    console.error("Upload file error:", error);
-    throw new Error(error.response?.data?.message || "Failed to upload file");
-  }
-};
-
-/**
  * Get total unread message count across all threads
  */
 export const getTotalUnreadCount = async () => {
@@ -118,13 +81,13 @@ export const addParticipantsToGroup = async (threadId, participants) => {
       `/messages/thread/${threadId}/participants`,
       {
         participants,
-      }
+      },
     );
     return data.data;
   } catch (error) {
     console.error("Add participants error:", error);
     throw new Error(
-      error.response?.data?.message || "Failed to add participants"
+      error.response?.data?.message || "Failed to add participants",
     );
   }
 };
@@ -168,50 +131,5 @@ export const downloadAttachment = async (url, filename) => {
   } catch (error) {
     console.error("Download error:", error);
     throw new Error("Failed to download file");
-  }
-};
-
-/**
- * Search messages within a thread
- */
-export const searchMessages = async (threadId, query) => {
-  try {
-    const { data } = await api.get(`/messages/search/${threadId}`, {
-      params: { q: query },
-    });
-    return data.data || [];
-  } catch (error) {
-    console.error("Search messages error:", error);
-    return [];
-  }
-};
-
-/**
- * Delete a message
- */
-export const deleteMessage = async (messageId) => {
-  try {
-    const { data } = await api.delete(`/messages/message/${messageId}`);
-    return data.data;
-  } catch (error) {
-    console.error("Delete message error:", error);
-    throw new Error(
-      error.response?.data?.message || "Failed to delete message"
-    );
-  }
-};
-
-/**
- * Edit a message
- */
-export const editMessage = async (messageId, newBody) => {
-  try {
-    const { data } = await api.put(`/messages/message/${messageId}`, {
-      body: newBody,
-    });
-    return data.data;
-  } catch (error) {
-    console.error("Edit message error:", error);
-    throw new Error(error.response?.data?.message || "Failed to edit message");
   }
 };

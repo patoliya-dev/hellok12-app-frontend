@@ -4,6 +4,21 @@ import Image from "components/AppImage";
 import Button from "components/ui/Button";
 import { capitalize, getLanguageName } from "../../../../utils/utils";
 
+const formatCooldown = (minutesLeft) => {
+  const mins = Math.max(0, Number(minutesLeft || 0));
+  if (mins < 60) return `${mins} min`;
+
+  const hours = Math.floor(mins / 60);
+  const remMins = mins % 60;
+
+  if (hours < 24) return remMins ? `${hours} hr ${remMins} min` : `${hours} hr`;
+
+  const days = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  if (!remHours) return `${days} day${days > 1 ? "s" : ""}`;
+  return `${days} day${days > 1 ? "s" : ""} ${remHours} hr`;
+};
+
 const TeacherCard = ({
   teacher,
   onSelect,
@@ -12,6 +27,23 @@ const TeacherCard = ({
   onProfileRequest,
   getFullLocationName,
 }) => {
+  const cooldownMs = 24 * 60 * 60 * 1000;
+  const lastReminderAt = teacher?.reminderMeta?.lastProfileReminderAt
+    ? new Date(teacher?.reminderMeta?.lastProfileReminderAt)
+    : null;
+  const cooldownEndAt = lastReminderAt
+    ? new Date(lastReminderAt.getTime() + cooldownMs)
+    : null;
+  const isCooldownActive = cooldownEndAt
+    ? cooldownEndAt.getTime() > Date.now()
+    : false;
+  const cooldownMinutesLeft = isCooldownActive
+    ? Math.ceil((cooldownEndAt.getTime() - Date.now()) / (60 * 1000))
+    : 0;
+  const cooldownLabel = isCooldownActive
+    ? `Resend after ${formatCooldown(cooldownMinutesLeft)}`
+    : "Remind to complete profile";
+
   const getStatusColor = (status) => {
     switch (status) {
       case "active":
@@ -76,7 +108,7 @@ const TeacherCard = ({
           </div>
           <span
             className={`hidden sm:inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(
-              teacher?.status
+              teacher?.status,
             )}`}
           >
             {capitalize(teacher?.status)}
@@ -84,15 +116,31 @@ const TeacherCard = ({
         </div>
 
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 mt-8">
-          <Button
-            size="sm"
-            iconName="Send"
-            iconPosition="right"
-            iconSize="15"
-            onClick={onProfileRequest}
-          >
-            Request Teacher To Update Profile
-          </Button>
+          <div className="flex flex-col">
+            <Button
+              size="sm"
+              iconName="Send"
+              iconPosition="right"
+              iconSize="15"
+              disabled={isCooldownActive}
+              title={
+                isCooldownActive
+                  ? `Resend after ${cooldownEndAt?.toLocaleString()}`
+                  : ""
+              }
+              onClick={(e) => {
+                e?.stopPropagation();
+                onProfileRequest?.(teacher);
+              }}
+            >
+              {cooldownLabel}
+            </Button>
+            {lastReminderAt ? (
+              <span className="text-xs text-muted-foreground mt-1">
+                Last reminder sent: {lastReminderAt.toLocaleString()}
+              </span>
+            ) : null}
+          </div>
           {teacher?.status === "pending" && (
             <div className="flex space-x-2 mt-3">
               <Button
@@ -153,7 +201,7 @@ const TeacherCard = ({
             </div>
             <span
               className={`hidden sm:inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(
-                teacher?.status
+                teacher?.status,
               )}`}
             >
               {capitalize(teacher?.status)}
@@ -162,7 +210,7 @@ const TeacherCard = ({
 
           <span
             className={`my-2 inline-flex sm:hidden items-center px-3.5 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(
-              teacher?.status
+              teacher?.status,
             )}`}
           >
             {capitalize(teacher?.status)}
@@ -238,6 +286,29 @@ const TeacherCard = ({
                 </Button>
               </div>
             )}
+            {/* {teacher?.status !== "pending" ? (
+              <div className="flex flex-col items-end mt-3">
+                <Button
+                  size="sm"
+                  iconName="Send"
+                  iconPosition="right"
+                  iconSize="15"
+                  disabled={isCooldownActive}
+                  title={isCooldownActive ? `Resend after ${cooldownEndAt?.toLocaleString()}` : ""}
+                  onClick={(e) => {
+                    e?.stopPropagation();
+                    onProfileRequest?.(teacher);
+                  }}
+                >
+                  {cooldownLabel}
+                </Button>
+                {lastReminderAt ? (
+                  <span className="text-xs text-muted-foreground mt-1">
+                    Last reminder sent: {lastReminderAt.toLocaleString()}
+                  </span>
+                ) : null}
+              </div>
+            ) : null} */}
             {teacher?.status !== "pending" && (
               <div className="flex items-center space-x-2">
                 <Image src="/assets/images/yellow_star.svg" alt="Star" />

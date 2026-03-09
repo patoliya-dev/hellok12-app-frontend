@@ -60,14 +60,14 @@ export const mockFetchProgress = async (courseId) => {
         const aggregated = {
           label: "Overall",
           progress: Math.round(
-            courses.reduce((sum, c) => sum + c.progress, 0) / numCourses
+            courses.reduce((sum, c) => sum + c.progress, 0) / numCourses,
           ),
           learningTime: courses
             .reduce((sum, c) => sum + c.learningTime, 0)
             .toFixed(1),
           completedLessons: courses.reduce(
             (sum, c) => sum + c.completedLessons,
-            0
+            0,
           ),
           totalLessons: courses.reduce((sum, c) => sum + c.totalLessons, 0),
           pendingLessons: courses.reduce((sum, c) => sum + c.pendingLessons, 0),
@@ -77,10 +77,10 @@ export const mockFetchProgress = async (courseId) => {
               score: Math.round(
                 courses.reduce(
                   (sum, c) => sum + (c.monthlyProgress[index]?.score || 0),
-                  0
-                ) / numCourses
+                  0,
+                ) / numCourses,
               ),
-            })
+            }),
           ),
         };
         resolve(aggregated);
@@ -88,89 +88,6 @@ export const mockFetchProgress = async (courseId) => {
         resolve(courseData[courseId] || courseData.a);
       }
     }, 500);
-  });
-};
-
-// src/services/mockApi.ts
-// Add these new mock functions to your existing mockApi.ts file.
-
-/**
- * Simulates fetching upcoming lessons from an API.
- * @returns {Promise<ILesson[]>} A promise that resolves with the list of lessons.
- */
-export const mockFetchUpcomingLessons = () => {
-  const mockData = [
-    {
-      _id: "1",
-      title: "Spanish Conversation",
-      teacher: {
-        fullName: "Mr. Carlos Rodriguez",
-        profilePicture: "https://randomuser.me/api/portraits/men/32.jpg",
-        rating: 4.5,
-        reviewCount: 52,
-        subject: "Spanish",
-      },
-      durationInMinutes: 45,
-      courseDetails: "Course A",
-      lessonType: "Group",
-      lessonMode: "Online Course",
-      trialLesson: true,
-      upcomingDateTime: "2h 0m",
-      lessonTime: "08:20 AM",
-      additionalTags: ["Trial Lessons"],
-      location: "Online",
-      description:
-        "Quantum mechanics fundamentals and wave-particle duality concepts.",
-    },
-    {
-      _id: "2",
-      title: "Japanese Writing",
-      teacher: {
-        fullName: "Ms. Yuki Tanaka",
-        profilePicture: "https://randomuser.me/api/portraits/women/44.jpg",
-        rating: 4.8,
-        reviewCount: 75,
-        subject: "Japanese",
-      },
-      durationInMinutes: 90,
-      courseDetails: "Course B",
-      lessonType: "Group",
-      lessonMode: "Online Course",
-      trialLesson: false,
-      upcomingDateTime: "1d 0h",
-      lessonTime: "06:20 AM",
-      additionalTags: ["Curriculum-Aligned Games"],
-      location: "19 Washington Square N, New York, NY 10011, USA",
-      description:
-        "Fundamentals of Japanese hiragana and katakana writing systems.",
-    },
-    {
-      _id: "3",
-      title: "English Literature",
-      teacher: {
-        fullName: "Ms. Sarah Johnson",
-        profilePicture: "https://randomuser.me/api/portraits/women/78.jpg",
-        rating: 5.0,
-        reviewCount: 31,
-        subject: "English",
-      },
-      durationInMinutes: 90,
-      courseDetails: "Course C",
-      lessonType: "1-on-1",
-      lessonMode: "Online Course",
-      trialLesson: false,
-      upcomingDateTime: "31 Jul 2025",
-      lessonTime: "06:20 AM",
-      location: "Online",
-      description:
-        "An introductory class on classic English novels and poetry.",
-    },
-  ];
-
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockData);
-    }, 500); // Simulate network delay
   });
 };
 
@@ -216,48 +133,6 @@ export const upcomingLessons = [
     tags: [],
     startTime: new Date(2025, 6, 31, 6, 20, 0).toISOString(), // July 31, 2025
     status: "Upcoming",
-  },
-];
-
-export const historyLessons = [
-  {
-    _id: "history1",
-    title: "Spanish Conversation",
-    teacherName: "Mr. Carlos Rodriguez",
-    teacherImage: "https://randomuser.me/api/portraits/men/32.jpg",
-    duration: 45,
-    course: "A",
-    type: "Group",
-    modality: "Online Course",
-    tags: ["Trial Lessons"],
-    startTime: new Date(2025, 6, 31, 8, 20, 0).toISOString(), // July 31, 2025
-    status: "Completed",
-  },
-  {
-    _id: "history2",
-    title: "Japanese Writing",
-    teacherName: "Ms. Yuki Tanaka",
-    teacherImage: "https://randomuser.me/api/portraits/women/44.jpg",
-    duration: 90,
-    course: "B",
-    type: "Group",
-    modality: "Online Course",
-    tags: ["Curriculum-Aligned Games"],
-    startTime: new Date(2025, 6, 25, 6, 20, 0).toISOString(), // July 25, 2025
-    status: "Cancelled",
-  },
-  {
-    _id: "history3",
-    title: "English Literature",
-    teacherName: "Ms. Sarah Johnson",
-    teacherImage: "https://randomuser.me/api/portraits/women/68.jpg",
-    duration: 90,
-    course: "C",
-    type: "1-on-1",
-    modality: "Online Course",
-    tags: [],
-    startTime: new Date(2025, 6, 18, 8, 20, 0).toISOString(), // July 18, 2025
-    status: "Completed",
   },
 ];
 
@@ -2027,75 +1902,6 @@ export const mockTeachers = [
       "Grammar Fundamentals",
       "Cultural Communication",
     ],
-  },
-];
-
-export const mockClasses = [
-  {
-    id: "class-001",
-    teacherId: "teacher-003", // Sarah Martinez teaches this class
-    title: "Conversational English Mastery",
-    description:
-      "Improve your speaking confidence through engaging conversations about daily topics, current events, and personal interests.",
-    type: "1-on-1",
-    duration: 60,
-    price: 45,
-    schedule: { flexible: true },
-  },
-  {
-    id: "class-002",
-    teacherId: "teacher-003", // Sarah Martinez teaches this class
-    title: "Business English Essentials",
-    description:
-      "Master professional communication skills including presentations, meetings, emails, and networking.",
-    type: "1-on-1",
-    duration: 90,
-    price: 65,
-    schedule: { flexible: true },
-  },
-  {
-    id: "class-003",
-    teacherId: "teacher-001", // María García teaches this class
-    title: "Spanish for Beginners Group",
-    description:
-      "Start your Spanish journey with basic vocabulary, grammar, and pronunciation in a supportive group environment.",
-    type: "Group",
-    duration: 75,
-    price: 25,
-    maxStudents: 8,
-    enrolledStudents: 6,
-    location: "Downtown Learning Center, Room 204",
-    schedule: {
-      days: ["Monday", "Wednesday", "Friday"],
-      time: "6:00 PM - 7:15 PM",
-    },
-    nextSession: "Monday, January 8th at 6:00 PM",
-  },
-  {
-    id: "class-004",
-    teacherId: "teacher-002", // Pierre Dubois teaches this class
-    title: "French Conversation Circle",
-    description:
-      "Practice French speaking skills in a relaxed group setting with fellow learners. All levels welcome.",
-    type: "Group",
-    duration: 60,
-    price: 20,
-    maxStudents: 10,
-    enrolledStudents: 8,
-    location: "Language Lab, Building A",
-    schedule: { days: ["Tuesday", "Thursday"], time: "7:00 PM - 8:00 PM" },
-    nextSession: "Tuesday, January 9th at 7:00 PM",
-  },
-  {
-    id: "class-005",
-    teacherId: "teacher-003", // Sarah Martinez teaches this class
-    title: "Academic Writing Workshop",
-    description:
-      "Develop strong academic writing skills for essays, research papers, and thesis work. Includes feedback and revision techniques.",
-    type: "1-on-1",
-    duration: 120,
-    price: 80,
-    schedule: { flexible: true },
   },
 ];
 
