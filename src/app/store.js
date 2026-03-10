@@ -14,6 +14,7 @@ import messagesReducer from "../reducers/messages/messageSlice";
 import schoolReducer from "../reducers/school/schoolSlice";
 import invitationReducer from "../reducers/invitations/invitationSlice";
 import schoolInvitationsReducer from "../reducers/schoolInvitations/schoolInvitationsSlice"
+import notificationsReducer from "../reducers/notifications/notificationsSlice";
 
 const store = configureStore({
   reducer: {
@@ -32,7 +33,8 @@ const store = configureStore({
     messages: messagesReducer,
     school: schoolReducer,
     invitations: invitationReducer,
-    schoolInvitations: schoolInvitationsReducer
+    schoolInvitations: schoolInvitationsReducer,
+    notifications: notificationsReducer
   },
 });
 

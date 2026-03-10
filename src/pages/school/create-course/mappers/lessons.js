@@ -2,6 +2,13 @@ import { normalizeToHHMM24 } from "../../../../utils/time24h";
 import { normalizeTime12h } from "../../../../utils/time12h";
 import { formatDateForDateInput } from "../../../../utils/formatters";
 
+const normalizeDateOnly = (value) => {
+  if (!value) return "";
+  if (value instanceof Date) return formatDateForDateInput(value);
+  if (typeof value === "string") return value.slice(0, 10);
+  return "";
+};
+
 // Map BE -> UI
 export function mapLessonFromApi(l) {
   return {
@@ -27,8 +34,8 @@ export function mapLessonToCreatePayload(l) {
     typeof l?.schedule?.date === "string"
       ? l.schedule.date
       : l.schedule?.date
-      ? formatDateForDateInput(l.schedule.date)
-      : undefined;
+        ? formatDateForDateInput(l.schedule.date)
+        : undefined;
 
   const time = normalizeToHHMM24(l.schedule?.time) || l.schedule?.time;
   return {
@@ -71,8 +78,9 @@ export function buildPartialUpdate(oldL, newL) {
   const sOld = oldL.schedule || {},
     sNew = newL.schedule || {};
   const schedule = {};
-  if ((sNew.date || "") !== (sOld.date || ""))
-    schedule.date = sNew.date ? new Date(sNew.date) : undefined;
+  const oldDateStr = normalizeDateOnly(sOld.date);
+  const newDateStr = normalizeDateOnly(sNew.date);
+  if (newDateStr && newDateStr !== oldDateStr) schedule.date = newDateStr;
   const normTime = normalizeTime12h(sNew.time);
   if ((normTime || "") !== (sOld.time || "")) schedule.time = normTime;
   const newDur = Number(sNew.duration || 0),

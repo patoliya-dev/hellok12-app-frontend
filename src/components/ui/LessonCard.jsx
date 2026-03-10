@@ -21,6 +21,7 @@ import { CourseIcon, VideoIcon } from "components/icons";
 import Button from "./Button";
 import LessonDetailsModal from "../../pages/student-parent/dashboard/components/LessonDetailsModal";
 import { getRolePath } from "../../utils/rolePath";
+import Image from "components/AppImage";
 
 const LessonCard = ({ lesson, onRefresh }) => {
   const [selectedLesson, setSelectedLesson] = useState(null);
@@ -29,10 +30,10 @@ const LessonCard = ({ lesson, onRefresh }) => {
 
   const renderTimeInfo = () => {
     if (lesson.status === "Upcoming") {
-      // If the date is far in the future, show the date. Otherwise, show countdown.
+      // Show date once lesson is 1+ day away; otherwise show hours/minutes countdown.
       const isFarFuture =
-        new Date(lesson.startTime).getTime() - new Date().getTime() >
-        2 * 24 * 60 * 60 * 1000; // More than 2 days
+        new Date(lesson.startTime).getTime() - new Date().getTime() >=
+        24 * 60 * 60 * 1000;
       if (isFarFuture) {
         return (
           <div className="text-right">
@@ -129,8 +130,8 @@ const LessonCard = ({ lesson, onRefresh }) => {
         <div className="min-w-0 flex-1">
           {/* Header row: avatar + name */}
           <div className="flex gap-4 w-full">
-            <img
-              src={lesson?.teacherImage?.url || "/default-avatar.png"}
+            <Image
+              src={lesson?.teacherImage?.url}
               alt={lesson.teacherName}
               className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover flex-shrink-0"
             />

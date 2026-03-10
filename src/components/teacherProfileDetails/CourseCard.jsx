@@ -15,6 +15,18 @@ const CourseCard = ({ courseItem, teacherId }) => {
   const authUser = useSelector(selectAuthUser);
   const userTimeZone = useSelector(selectUserTimezone);
 
+  const toValidDate = (value) => {
+    if (!value) return null;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const getLastLessonDate = (course) => {
+    // Prefer backend-computed date from teacher details API.
+    const backendLastLessonDate = toValidDate(course?.lastLessonDate);
+    if (backendLastLessonDate) return backendLastLessonDate;
+  };
+
   const handleBookNow = () => {
     // router.push({
     //   pathname: "/class-booking-flow",
@@ -27,19 +39,19 @@ const CourseCard = ({ courseItem, teacherId }) => {
     //   } as any
     // });
 
-    const params = new URLSearchParams({
-      courseId: courseItem.id,
-      teacherId: teacherId,
-      classType: courseItem.type,
-      className: courseItem.title,
-      price: courseItem.price.toString(),
-    });
+    // const params = new URLSearchParams({
+    //   courseId: courseItem.id,
+    //   teacherId: teacherId,
+    //   classType: courseItem.type,
+    //   className: courseItem.title,
+    //   price: courseItem.price.toString(),
+    // });
 
     navigate(
       getRolePath(
         authUser?.role || "student",
-        `course-details/${courseItem.id}`
-      )
+        `course-details/${courseItem.id}`,
+      ),
     );
   };
 
@@ -53,6 +65,14 @@ const CourseCard = ({ courseItem, teacherId }) => {
         year: "numeric",
       })
     : "";
+
+  const lastLessonDate = getLastLessonDate(courseItem);
+  const isCourseOutdated =
+    !!lastLessonDate && lastLessonDate.getTime() <= Date.now();
+  const isClassFull =
+    courseItem?.enrolledCount &&
+    courseItem?.studentCapacity &&
+    courseItem.enrolledCount >= courseItem.studentCapacity;
 
   return (
     <div className="bg-card border border-border rounded-lg p-6 hover:shadow-interactive transition-smooth flex flex-col justify-between">
@@ -105,9 +125,11 @@ const CourseCard = ({ courseItem, teacherId }) => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {courseItem?.enrolledCount &&
-            courseItem?.studentCapacity &&
-            courseItem.enrolledCount >= courseItem.studentCapacity ? (
+            {isCourseOutdated ? (
+              <Button variant="secondary" disabled>
+                Course Ended
+              </Button>
+            ) : isClassFull ? (
               <Button variant="secondary" disabled>
                 Class Full
               </Button>

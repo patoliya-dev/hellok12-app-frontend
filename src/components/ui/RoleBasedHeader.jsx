@@ -16,16 +16,62 @@ import { logout } from "reducers/auth/authSlice";
 import Image from "components/AppImage";
 import ManageCourseIcon from "components/icons/ManageCourseIcon";
 import NotificationModal from "./NotificationModal";
-import { getNotificationByRole } from "./data";
 import { getRolePath } from "../../utils/rolePath";
 import {
   selectUnreadCount,
   fetchUnreadCount,
 } from "../../reducers/messages/messageSlice";
 import { getManageCoursesRoute } from "../../utils/courseRoutes";
+import {
+  fetchNotifications,
+  fetchNotificationUnreadCount,
+  markNotificationRead,
+  markAllNotificationsRead,
+  selectNotifications,
+  selectNotificationUnreadCount,
+  selectNotificationsLoading,
+} from "../../reducers/notifications/notificationsSlice";
+import { resolveNotificationDeepLink } from "../../utils/notificationRoutes";
+import useNotificationPolling from "../../hooks/useNotificationPolling";
 
 const arraysEqual = (a = [], b = []) =>
   a.length === b.length && a.every((v, i) => v === b[i]);
+
+/**
+ * Path matching utilities
+ * We want:
+ * - Exact match for many menu items (e.g., /school/lessons)
+ * - "Segment prefix" match for child routes (e.g., /school/lessons/:id should match /school/lessons/)
+ *
+ * Segment prefix rules:
+ * - prefix "/a/b" matches "/a/b" or "/a/b/..."
+ * - prefix "/a/b/" matches only "/a/b/..." (not "/a/b")
+ */
+const normalizePath = (p = "") =>
+  String(p || "")
+    .split("?")[0]
+    .split("#")[0];
+
+const isExactPath = (pathname, target) => {
+  const a = normalizePath(pathname);
+  const b = normalizePath(target);
+  return a === b;
+};
+
+const isSegmentPrefix = (pathname, prefix) => {
+  const path = normalizePath(pathname);
+  const pfx = normalizePath(prefix);
+
+  if (!pfx) return false;
+
+  // If prefix ends with "/", we ONLY consider "/.../" match (not exact "/...")
+  if (pfx.endsWith("/")) {
+    return path.startsWith(pfx);
+  }
+
+  // Otherwise allow exact OR "/prefix/..."
+  return path === pfx || path.startsWith(`${pfx}/`);
+};
 
 const RoleBasedHeader = () => {
   const authUser = useSelector(selectAuthUser);
@@ -59,24 +105,12 @@ const RoleBasedHeader = () => {
   const notificationRef = useRef(null);
   const moreRef = useRef(null);
 
-  // Teacher classification (keep for future; but your course logic uses schoolId)
-  const teacherType =
-    (authUser?.role === "teacher" && authUser?.profile?.employmentType) ||
-    "independent";
-
   const isSchoolTeacher =
     authUser?.role === "teacher" && Boolean(authUser?.schoolId);
 
-  // Notifications derived (avoid state churn)
-  const notifications = useMemo(
-    () => getNotificationByRole(userRole),
-    [userRole]
-  );
-
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => n.unread).length,
-    [notifications]
-  );
+  const notifications = useSelector(selectNotifications);
+  const unreadCount = useSelector(selectNotificationUnreadCount);
+  const notificationsLoading = useSelector(selectNotificationsLoading);
 
   // Close overlays on route change (OK; this should not affect nav measurement)
   useEffect(() => {
@@ -106,6 +140,16 @@ const RoleBasedHeader = () => {
     }
   }, [authUser?._id, userRole, dispatch]); // use stable identity if available
 
+  useNotificationPolling(Boolean(authUser?.id || authUser?._id));
+
+  useEffect(() => {
+    if (!authUser) return;
+    if (!isNotificationOpen) return;
+
+    dispatch(fetchNotifications({ page: 1, limit: 10 }));
+    dispatch(fetchNotificationUnreadCount());
+  }, [authUser, isNotificationOpen, dispatch]);
+
   const getNavigationItems = useCallback(() => {
     const manageCoursesConfig =
       userRole === "teacher" || userRole === "school"
@@ -129,6 +173,11 @@ const RoleBasedHeader = () => {
           label: "Find Teacher",
           path: getRolePath("student", "find-teacher"),
           icon: "Search",
+          children: [
+            getRolePath("student", "teacher-profile-detail/"),
+            getRolePath("student", "course-details/"),
+            getRolePath("student", "book-lesson/"),
+          ],
         },
         {
           label: "Lessons",
@@ -160,6 +209,11 @@ const RoleBasedHeader = () => {
           label: "Find Teacher",
           path: getRolePath("parent", "find-teacher"),
           icon: "Search",
+          children: [
+            getRolePath("parent", "teacher-profile-detail/"),
+            getRolePath("parent", "course-details/"),
+            getRolePath("parent", "book-lesson/"),
+          ],
         },
         {
           label: "Lessons",
@@ -205,11 +259,8 @@ const RoleBasedHeader = () => {
           label: "Dashboard",
           path: "/school/dashboard",
           icon: "House",
-          children: [
-            "/school/upcoming-lessons",
-            "/school/scheduled-lessons",
-            "/school/profile-settings",
-          ],
+          // IMPORTANT: do NOT put "/school/lessons" here - it causes dashboard to be active on lessons.
+          children: ["/school/scheduled-lessons", "/school/profile-settings"],
         },
         {
           label: "Manage Teachers",
@@ -221,6 +272,8 @@ const RoleBasedHeader = () => {
           path: "/school/manage-students",
           icon: "GraduationCap",
         },
+        // IMPORTANT: Lessons menu should be active ONLY for /school/lessons (not /school/lessons/:courseId)
+        { label: "Lessons", path: "/school/lessons", icon: "Book" },
       ],
       guest: [{ label: "Login", path: "/login", icon: "LogIn" }],
     };
@@ -240,6 +293,11 @@ const RoleBasedHeader = () => {
                 label: "Earnings",
                 path: "/teacher/earnings",
                 icon: "DollarSign",
+              },
+              {
+                label: "Payout Details",
+                path: "/teacher/payout-account",
+                icon: "Building2",
               },
             ]
           : []),
@@ -262,6 +320,11 @@ const RoleBasedHeader = () => {
             ]
           : []),
         { label: "Earnings", path: "/school/earnings", icon: "DollarSign" },
+        {
+          label: "Payout Details",
+          path: "/school/payout-account",
+          icon: "Building2",
+        },
       ];
     }
 
@@ -270,7 +333,7 @@ const RoleBasedHeader = () => {
 
   const navigationItems = useMemo(
     () => getNavigationItems(),
-    [getNavigationItems]
+    [getNavigationItems],
   );
 
   // Keep split stable across nav changes (NO clearing to [])
@@ -309,14 +372,31 @@ const RoleBasedHeader = () => {
         </span>
       );
     },
-    [messageUnreadCount]
+    [messageUnreadCount],
   );
 
+  /**
+   * ACTIVE RULES:
+   * - exact match on item.path always activates the item
+   * - child matches use segment-safe prefix
+   *
+   * With courseRoutes change:
+   * - Manage Courses children includes "/school/lessons/" so it matches only "/school/lessons/:id"
+   * - Lessons item uses exact "/school/lessons" (so it won't activate on "/school/lessons/:id")
+   */
   const isActivePath = useCallback(
-    (item) =>
-      location.pathname === item.path ||
-      item.children?.some((child) => location.pathname.startsWith(child)),
-    [location.pathname]
+    (item) => {
+      const pathname = location.pathname;
+
+      if (isExactPath(pathname, item.path)) return true;
+
+      if (Array.isArray(item.children) && item.children.length > 0) {
+        return item.children.some((child) => isSegmentPrefix(pathname, child));
+      }
+
+      return false;
+    },
+    [location.pathname],
   );
 
   const handleNavigation = useCallback(
@@ -325,7 +405,7 @@ const RoleBasedHeader = () => {
       setIsMenuOpen(false);
       setIsMoreOpen(false);
     },
-    [navigate]
+    [navigate],
   );
 
   const handleLogout = useCallback(() => {
@@ -335,10 +415,21 @@ const RoleBasedHeader = () => {
     setIsMoreOpen(false);
   }, [dispatch, navigate]);
 
-  const handleNotificationClick = (notificationId) => {
-    // Keep your behavior; just avoid extra state changes here.
-    // eslint-disable-next-line no-console
-    console.log("Notification clicked:", notificationId);
+  const handleNotificationClick = async (notification) => {
+    if (!notification) return;
+
+    if (!notification.isRead) {
+      await dispatch(markNotificationRead(notification._id));
+    }
+
+    const target = resolveNotificationDeepLink(notification, userRole);
+    setIsNotificationOpen(false);
+    if (target) navigate(target);
+  };
+
+  const handleViewAllNotifications = () => {
+    setIsNotificationOpen(false);
+    navigate(getRolePath(userRole, "notifications"));
   };
 
   const toggleNotifications = () => {
@@ -437,10 +528,10 @@ const RoleBasedHeader = () => {
     }
 
     setVisiblePaths((prev) =>
-      arraysEqual(prev, nextVisible) ? prev : nextVisible
+      arraysEqual(prev, nextVisible) ? prev : nextVisible,
     );
     setHiddenPaths((prev) =>
-      arraysEqual(prev, nextHidden) ? prev : nextHidden
+      arraysEqual(prev, nextHidden) ? prev : nextHidden,
     );
 
     // IMPORTANT: force-hide More dropdown when no hidden items
@@ -634,7 +725,7 @@ const RoleBasedHeader = () => {
                 </div>
               )}
 
-              {/* Hidden measurement row */}
+              {/* Measurement row */}
               <div className="absolute -left-[9999px] -top-[9999px] opacity-0 pointer-events-none">
                 <div className="flex items-center gap-1">
                   {navigationItems.map((item) => {
@@ -703,7 +794,13 @@ const RoleBasedHeader = () => {
                   {isNotificationOpen && (
                     <NotificationModal
                       notifications={notifications}
+                      loading={notificationsLoading}
+                      unreadCount={unreadCount}
                       handleNotificationClick={handleNotificationClick}
+                      handleMarkAllRead={() =>
+                        dispatch(markAllNotificationsRead({}))
+                      }
+                      handleViewAll={handleViewAllNotifications}
                     />
                   )}
                 </div>
@@ -749,7 +846,7 @@ const RoleBasedHeader = () => {
                           className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
                           onClick={() =>
                             navigate(
-                              getRolePath(authUser.role, "profile-settings")
+                              getRolePath(authUser.role, "profile-settings"),
                             )
                           }
                         >
@@ -762,7 +859,7 @@ const RoleBasedHeader = () => {
                             className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-smooth"
                             onClick={() =>
                               navigate(
-                                getRolePath(authUser.role, "payment-billing")
+                                getRolePath(authUser.role, "payment-billing"),
                               )
                             }
                           >
@@ -805,7 +902,7 @@ const RoleBasedHeader = () => {
         </div>
       </div>
 
-      {/* Mobile overlay + panel (unchanged) */}
+      {/* Mobile menu stays same (your existing implementation) */}
       <div
         className={[
           "lg:hidden fixed inset-0 z-[55] transition-opacity duration-200",
@@ -819,7 +916,7 @@ const RoleBasedHeader = () => {
           type="button"
           aria-label="Close menu"
           onClick={() => setIsMenuOpen(false)}
-          className="absolute inset-0 bg-black/40"
+          className="absolute inset-0"
         />
 
         <div

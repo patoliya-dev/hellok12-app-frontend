@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import LoginForm from "./components/LoginForm";
 import SocialLoginSection from "./components/SocialLoginSection";
@@ -15,6 +15,7 @@ import useAuthHash from "../../../hooks/useAuthHash";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("signin");
   const [currentStep, setCurrentStep] = useState(0);
   const loginStatus = useSelector(selectLoginStatus);
@@ -55,12 +56,42 @@ const Login = () => {
     });
   };
 
+  const getPostLoginRedirect = (role) => {
+    const params = new URLSearchParams(location.search);
+    const next = params.get("next");
+    if (!next) return null;
+
+    try {
+      const nextUrl = new URL(next, window.location.origin);
+      const isSameOrigin = nextUrl.origin === window.location.origin;
+      if (!isSameOrigin) return null;
+
+      const teacherDetailMatch = nextUrl.pathname.match(
+        /^\/(student|parent)\/teacher-profile-detail\/([^/]+)$/,
+      );
+      if (teacherDetailMatch && (role === "student" || role === "parent")) {
+        const teacherId = teacherDetailMatch[2];
+        return `/${role}/teacher-profile-detail/${teacherId}`;
+      }
+
+      return `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
+    } catch (err) {
+      console.error("Error processing post-login redirect:", err);
+      return null;
+    }
+  };
+
   const handleLogin = async (formData) => {
     const resultAction = await dispatch(loginUser(formData));
 
     if (loginUser.fulfilled.match(resultAction)) {
       const { user } = resultAction.payload;
-      redirectToRoleDashboard(user.role);
+      const postLoginRedirect = getPostLoginRedirect(user.role);
+      if (postLoginRedirect) {
+        navigate(postLoginRedirect, { replace: true });
+      } else {
+        redirectToRoleDashboard(user.role);
+      }
     }
   };
 

@@ -4,9 +4,9 @@ export const schoolService = {
   /**
    * Get all teachers for a school
    */
-  getTeachers: async () => {
+  getTeachers: async (params = {}) => {
     try {
-      const { data } = await api.get(`/school/teachers`);
+      const { data } = await api.get(`/school/teachers`, { params });
       return data?.data || data;
     } catch (error) {
       console.error("Failed to fetch teachers:", error);
@@ -35,11 +35,33 @@ export const schoolService = {
     try {
       const { data } = await api.post(
         `/school/teachers/${teacherId}/approval`,
-        { action }
+        { action },
       );
       return data?.data || data;
     } catch (error) {
       console.error("Failed to approve/reject teacher:", error);
+      throw error.response?.data || { error: error.message };
+    }
+  },
+
+  sendTeacherNotification: async ({
+    teacherId,
+    message,
+    title,
+    context = "PROFILE_COMPLETION",
+  }) => {
+    try {
+      const { data } = await api.post(
+        `/school/teachers/${teacherId}/notifications`,
+        {
+          message,
+          title,
+          context,
+        },
+      );
+      return data?.data || data;
+    } catch (error) {
+      console.error("Failed to send teacher notification:", error);
       throw error.response?.data || { error: error.message };
     }
   },
@@ -95,14 +117,37 @@ export const schoolService = {
     }
   },
 
-  getInvitations: async ({ role, status } = {}) => {
+  getUpcomingLessons: async ({ limit = 3, days = 7, signal } = {}) => {
     try {
-      const params = {};
-      if (role) params.role = role; // "TEACHER" | "STUDENT"
-      if (status) params.status = status; // "PENDING" | "ACCEPTED" | ...
-      const { data } = await api.get("/school/invitations", { params });
-
+      const { data } = await api.get("/lessons/upcoming", {
+        params: { limit, days },
+        signal,
+      });
       return data?.data?.data || data?.data || data;
+    } catch (error) {
+      console.error("Failed to fetch upcoming lessons:", error);
+      throw error.response?.data || { error: error.message };
+    }
+  },
+
+  getInvitations: async ({
+    role,
+    status,
+    search,
+    page = 1,
+    limit = 10,
+  } = {}) => {
+    try {
+      const params = new URLSearchParams();
+      if (role) params.set("role", role);
+      if (status) params.set("status", status);
+      if (search) params.set("search", search);
+      params.set("page", String(page));
+      params.set("limit", String(limit));
+
+      const res = await api.get(`/school/invitations?${params.toString()}`);
+      // assuming createSuccessResponse => { data: { invitations, pagination } }
+      return res?.data?.data;
     } catch (error) {
       console.error("Failed to get invitations:", error);
       throw error.response?.data || { error: error.message };
@@ -112,7 +157,7 @@ export const schoolService = {
   cancelInvitation: async (invitationId) => {
     try {
       const { data } = await api.post(
-        `/school/invitations/${invitationId}/cancel`
+        `/school/invitations/${invitationId}/cancel`,
       );
       return data?.data?.data || data?.data || data;
     } catch (error) {

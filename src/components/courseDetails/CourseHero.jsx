@@ -3,7 +3,7 @@ import Icon from "../ui/Icon";
 import Image from "../AppImage";
 import Button from "../ui/Button";
 
-const CourseHero = ({ course, onEnroll, onTrial }) => {
+const CourseHero = ({ course, onEnroll, onTrial, isAlreadyPurchased = false }) => {
   if (!course) return null;
   const getTypeIcon = () => (course?.type === "1-on-1" ? "User" : "Users");
 
@@ -95,9 +95,12 @@ const CourseHero = ({ course, onEnroll, onTrial }) => {
                 size="lg"
                 onClick={onEnroll}
                 className="flex-1 sm:flex-none"
+                disabled={isAlreadyPurchased}
               >
                 <Icon name="ShoppingCart" size={20} className="mr-2" />
-                Enroll Now - ${course?.price}
+                {isAlreadyPurchased
+                  ? "Already Purchased"
+                  : `Enroll Now - $${course?.pricing?.effectivePrice ?? course?.price}`}
               </Button>
 
               {course?.isTrialAvailable && (
@@ -106,6 +109,7 @@ const CourseHero = ({ course, onEnroll, onTrial }) => {
                   size="lg"
                   onClick={onTrial}
                   className="flex-1 sm:flex-none"
+                  disabled={isAlreadyPurchased}
                 >
                   <Icon name="Play" size={20} className="mr-2" />
                   Try Free Lesson

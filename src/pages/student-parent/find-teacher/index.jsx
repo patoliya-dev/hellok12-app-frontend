@@ -1,11 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Funnel } from "lucide-react";
 import SearchBar from "../../../components/ui/SearchBar";
 import TeacherGrid from "./components/TeacherGrid";
 import Button from "../../../components/ui/Button";
 import TeacherFilters from "./components/TeacherFilters";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
-import { fetchTeachers } from "../../../services/teachers/findTeachers.service";
+import {
+  fetchTeachers,
+  fetchTeacherSchools,
+} from "../../../services/teachers/findTeachers.service";
 
 const itemsPerPage = 8;
 
@@ -16,6 +19,7 @@ const FindTeacher = () => {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [schoolOptions, setSchoolOptions] = useState([]);
   const [filters, setFilters] = useState({
     school: "",
     languages: "",
@@ -99,6 +103,29 @@ const FindTeacher = () => {
     loadTeachers(false);
   }, [filters, searchQuery, quickFilters]);
 
+  useEffect(() => {
+    let ignore = false;
+
+    const loadSchoolOptions = async () => {
+      try {
+        const response = await fetchTeacherSchools();
+        const options = (response?.data || []).map((school) => ({
+          value: school._id,
+          label: school.name,
+        }));
+        if (!ignore) setSchoolOptions(options);
+      } catch (error) {
+        if (!ignore) setSchoolOptions([]);
+      }
+    };
+
+    loadSchoolOptions();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   const handleSearchChange = (query) => setSearchQuery(query);
   const handleFilterChange = (newFilters) => setFilters(newFilters);
 
@@ -139,6 +166,7 @@ const FindTeacher = () => {
             <TeacherFilters
               filters={filters}
               onFiltersChange={(value) => handleFilterChange(value)}
+              schoolOptions={schoolOptions}
             />
           </div>
         )}

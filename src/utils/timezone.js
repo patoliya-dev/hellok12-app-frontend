@@ -30,16 +30,16 @@ export function formatTimeToTZ(isoString, timeZone, opts = {}) {
   const tz = safeTimeZone(timeZone);
 
   // isoString should be a full ISO with timezone (Z). e.g. "2025-12-03T11:30:00.000Z"
-  const date = new Date(isoString);
+  const date = isoString instanceof Date ? isoString : new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "";
 
-  const options = {
+  return date.toLocaleTimeString(undefined, {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
     ...opts,
-  };
-
-  return date.toLocaleTimeString(undefined, { ...options, timeZone: tz });
+    timeZone: tz,
+  });
 }
 
 export function formatDateToTZ(isoString, timeZone, opts = {}) {
@@ -77,29 +77,6 @@ export function formatDateObjToTZ(dateObj, timeZone, opts = {}) {
   };
 
   return new Intl.DateTimeFormat("en-US", { ...options, timeZone: tz }).format(
-    date
-  );
-}
-
-/**
- * Convenience: formats full date-time in a single call.
- */
-export function formatDateTimeToTZ(isoString, timeZone, opts = {}) {
-  if (!isoString) return "";
-  const tz = safeTimeZone(timeZone);
-  const date = new Date(isoString);
-
-  const options = {
-    year: "numeric",
-    month: "long",
-    day: "2-digit",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    ...opts,
-  };
-
-  return new Intl.DateTimeFormat("en-US", { ...options, timeZone: tz }).format(
-    date
+    date,
   );
 }

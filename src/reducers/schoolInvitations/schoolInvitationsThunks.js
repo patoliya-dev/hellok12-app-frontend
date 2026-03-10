@@ -3,10 +3,16 @@ import { schoolService } from "../../services/school/school.service";
 
 export const fetchSchoolInvitations = createAsyncThunk(
   "schoolInvitations/fetch",
-  async ({ role, status }, { rejectWithValue }) => {
+  async ({ role, search = "", page = 1, limit = 10 }, { rejectWithValue }) => {
     try {
-      const res = await schoolService.getInvitations({ role, status });
-      return { role, status, ...res };
+      const res = await schoolService.getInvitations({
+        role,
+        search,
+        page,
+        limit,
+      });
+      // res should be: { invitations, pagination }
+      return { role, search, page, limit, ...res };
     } catch (e) {
       return rejectWithValue(
         e?.response?.data?.message ||
@@ -19,10 +25,13 @@ export const fetchSchoolInvitations = createAsyncThunk(
 
 export const cancelSchoolInvitation = createAsyncThunk(
   "schoolInvitations/cancel",
-  async ({ invitationId, role, status }, { rejectWithValue }) => {
+  async (
+    { invitationId, role, search = "", page = 1, limit = 10 },
+    { rejectWithValue }
+  ) => {
     try {
       await schoolService.cancelInvitation(invitationId);
-      return { invitationId, role, status };
+      return { invitationId, role, search, page, limit };
     } catch (e) {
       return rejectWithValue(
         e?.response?.data?.message ||

@@ -1,87 +1,83 @@
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
+// src/pages/school/manage-students/components/InviteStudentModal.jsx
+import React, { useCallback, useMemo, useState } from "react";
 import Icon from "components/AppIcon";
 import Button from "components/ui/Button";
 import Input from "components/ui/Input";
+import { useDispatch, useSelector } from "react-redux";
 import { successToast, errorToast } from "../../../../utils/utils";
-import { schoolService } from "../../../../services/school/school.service";
+import { inviteSchoolStudent } from "reducers/school/schoolThunks";
+import { selectSchoolReq } from "reducers/school/schoolSlice";
+
+const DEFAULT_MESSAGE = `Welcome to HelloK12! We'd love to have you join our school.
+
+You'll be able to:
+• Access your lessons and schedule
+• Message your teachers
+• Track your learning progress
+
+Click the link below to get started!`;
+
+const isValidEmail = (email) => /\S+@\S+\.\S+/.test(String(email || "").trim());
 
 const InviteStudentModal = ({ isOpen, onClose, onSuccess }) => {
-  const { user } = useSelector((s) => s.auth);
+  const dispatch = useDispatch();
+  const req = useSelector(selectSchoolReq("inviteSchoolStudent"));
+
   const [formData, setFormData] = useState({
     email: "",
-    name: "Test Test",
-    message: `Welcome to SchoolHub! We'd love to have you join our teaching team.\n\nYou'll be able to:\n• Create and manage your teaching profile\n• Set your availability and rates\n• Connect with students in your area\n• Track your earnings and lessons\n\nClick the link below to get started!`,
-    languages: ["en", "es"],
-    sendWelcomeEmail: true,
-    setAsActive: false,
+    message: DEFAULT_MESSAGE,
   });
-
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
 
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const loading = req.status === "loading";
 
-    // Clear error when user starts typing
-    if (errors?.[field]) {
-      setErrors((prev) => ({
-        ...prev,
-        [field]: "",
-      }));
-    }
-  };
+  const handleInputChange = useCallback((field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => (prev?.[field] ? { ...prev, [field]: "" } : prev));
+  }, []);
 
-  const validateForm = () => {
-    const newErrors = {};
+  const validateForm = useCallback(() => {
+    const next = {};
+    const email = String(formData?.email || "").trim();
 
-    if (!formData?.email?.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData?.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
+    if (!email) next.email = "Email is required";
+    else if (!isValidEmail(email))
+      next.email = "Please enter a valid email address";
 
-    setErrors(newErrors);
-    return Object.keys(newErrors)?.length === 0;
-  };
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  }, [formData?.email]);
 
-  const handleSubmit = async (e) => {
-    e?.preventDefault();
+  const handleSubmit = useCallback(
+    async (e) => {
+      e?.preventDefault();
+      if (!validateForm()) return;
 
-    if (!validateForm()) return;
+      try {
+        await dispatch(
+          inviteSchoolStudent({
+            email: String(formData.email).trim(),
+            message: formData.message,
+          })
+        ).unwrap();
 
-    setLoading(true);
-    try {
-      const schoolId = user?.id || user?._id;
+        setFormData({ email: "", message: DEFAULT_MESSAGE });
+        setErrors({});
+        onClose?.();
+        successToast("Invitation sent successfully!");
+        onSuccess?.();
+      } catch (err) {
+        errorToast(err?.message || err?.error || "Failed to send invitation");
+      }
+    },
+    [dispatch, formData, onClose, onSuccess, validateForm]
+  );
 
-      await schoolService.inviteStudent({
-        email: formData.email,
-        message: formData.message,
-        schoolId: schoolId,
-      });
-
-      // Reset form
-      setFormData({
-        email: "",
-        name: "Test Test",
-        message: `Welcome to SchoolHub! We'd love to have you join our teaching team.\n\nYou'll be able to:\n• Create and manage your teaching profile\n• Set your availability and rates\n• Connect with students in your area\n• Track your earnings and lessons\n\nClick the link below to get started!`,
-        languages: ["en", "es"],
-        sendWelcomeEmail: true,
-        setAsActive: false,
-      });
-      setErrors({});
-      onClose();
-      successToast("Invitation sent successfully!");
-      onSuccess && onSuccess();
-    } catch (error) {
-      errorToast(error?.message || error?.error || "Failed to send invitation");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Optional: surface server error near submit
+  const submitError = useMemo(
+    () => (req.status === "failed" ? req.error : null),
+    [req]
+  );
 
   if (!isOpen) return null;
 
@@ -103,7 +99,12 @@ const InviteStudentModal = ({ isOpen, onClose, onSuccess }) => {
               </p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            disabled={loading}
+          >
             <Icon name="X" size={16} />
           </Button>
         </div>
@@ -152,11 +153,20 @@ const InviteStudentModal = ({ isOpen, onClose, onSuccess }) => {
                 />
               </div>
             </div>
+
+            {submitError ? (
+              <p className="text-sm text-destructive">{submitError}</p>
+            ) : null}
           </div>
 
           {/* Footer */}
           <div className="flex items-center justify-end space-x-3 p-6 border-t border-border bg-muted">
-            <Button type="button" variant="ghost" onClick={onClose}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              disabled={loading}
+            >
               Cancel
             </Button>
             <Button

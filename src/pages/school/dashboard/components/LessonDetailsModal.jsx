@@ -38,8 +38,18 @@ const LessonDetailsModal = ({ lesson, onClose, getLessonTags }) => {
     return null;
   }
 
-  const { fullDate, time } = formatDate(lesson.startTime);
+  const { fullDate, time: startTime } = formatDate(lesson.startTime);
+
   const statusInfo = statusDetails[lesson.status] || statusDetails["pending"];
+
+  // const canJoin =
+  //   lesson?.lessonMode === "online" &&
+  //   lesson?.joinUrl &&
+  //   (lesson.status === "starting-soon" || lesson.status === "in-progress");
+
+  // const handleJoin = () => {
+  //   if (lesson?.joinUrl) window.open(lesson.joinUrl, "_blank");
+  // };
 
   return (
     // Modal overlay
@@ -74,8 +84,10 @@ const LessonDetailsModal = ({ lesson, onClose, getLessonTags }) => {
           {/* Tutor Information Card */}
           <div className="mt-4 flex items-center gap-4 rounded-lg bg-brand-gray-100 p-4">
             <img
-              src={lesson.teacher.avatar}
-              alt={lesson.teacher.name}
+              src={
+                lesson?.teacher?.avatar || "/assets/images/default-avatar.png"
+              }
+              alt={lesson?.teacher?.name || "Teacher"}
               className="h-16 w-16 rounded-full object-cover"
             />
             <div className="flex-grow">
@@ -96,9 +108,21 @@ const LessonDetailsModal = ({ lesson, onClose, getLessonTags }) => {
               <MessageSquare size={18} />
               <span>Message</span>
             </button> */}
-            <Button variant="ghost" size="sm" iconName="MessageCircle">
-              Message
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* {canJoin && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  iconName="Video"
+                  onClick={handleJoin}
+                >
+                  Join
+                </Button>
+              )} */}
+              <Button variant="ghost" size="sm" iconName="MessageCircle">
+                Message
+              </Button>
+            </div>
           </div>
 
           {/* Date, Duration, and Time Section */}
@@ -137,7 +161,7 @@ const LessonDetailsModal = ({ lesson, onClose, getLessonTags }) => {
               <Clock className="mt-1 h-5 w-5 text-brand-gray-500" />
               <div>
                 <p className="text-sm text-brand-gray-500">Time</p>
-                <p className="font-semibold text-brand-gray-800">{time}</p>
+                <p className="font-semibold text-brand-gray-800">{startTime}</p>
               </div>
             </div>
           </div>

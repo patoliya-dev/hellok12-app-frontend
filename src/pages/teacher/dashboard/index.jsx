@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { selectAuthUser } from "reducers/auth/authSelectors";
@@ -8,17 +8,29 @@ import MetricsCard from "./components/MetricsCard";
 import TodaySchedule from "./components/TodaySchedule";
 import AvailabilityCalendar from "./components/AvailabilityCalendar";
 import StudentFeedback from "./components/StudentFeedback";
-import { getDashboardData } from "../../../services/lessons/lesson.service";
+import {
+  getDashboardData,
+  markSessionCompleted,
+} from "../../../services/lessons/lesson.service";
 import { dashboardService } from "../../../services/dashboard/dashboard.service";
 import { feedbackRatingAPI } from "../../../services/feedbacks/feedback.service";
-import { fetchSchedule, fetchSlotsForMonth } from "../../../reducers/schedule/scheduleThunks";
-import { idxToDayStr, isHHMM, isNumber, minutesToHHMM } from "../../../utils/time12h";
+import {
+  fetchSchedule,
+  fetchSlotsForMonth,
+} from "../../../reducers/schedule/scheduleThunks";
+import {
+  idxToDayStr,
+  isHHMM,
+  isNumber,
+  minutesToHHMM,
+} from "../../../utils/time12h";
 import Loader from "components/ui/Loader";
-
-
+import { formatTimeToTZ, getUserTimezone } from "../../../utils/timezone";
+import { errorToast, successToast } from "../../../utils/utils";
 
 const TeacherDashboard = () => {
   const dispatch = useDispatch();
+  const userTimezone = getUserTimezone();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showNotifications, setShowNotifications] = useState(false);
   const [todaySessions, setTodaySessions] = useState([]);
@@ -54,7 +66,7 @@ const TeacherDashboard = () => {
         subtitle: "This week",
         icon: "Calendar",
         trend: change >= 0 ? "up" : "down",
-        trendValue: `${change >= 0 ? '+' : ''}${change} from last week`,
+        trendValue: `${change >= 0 ? "+" : ""}${change} from last week`,
         color: "primary",
       });
     }
@@ -67,7 +79,7 @@ const TeacherDashboard = () => {
         subtitle: "Trial Lessons",
         icon: "Clock",
         trend: newRequests > 0 ? "up" : "down",
-        trendValue: `${newRequests >= 0 ? '+' : ''}${newRequests} new requests`,
+        trendValue: `${newRequests >= 0 ? "+" : ""}${newRequests} new requests`,
         color: "warning",
       });
     }
@@ -81,7 +93,7 @@ const TeacherDashboard = () => {
         subtitle: `Based on ${data.averageRating.totalReviews || 0} reviews`,
         icon: "Star",
         trend: change >= 0 ? "up" : "down",
-        trendValue: `${change >= 0 ? '+' : ''}${change.toFixed(1)} this month`,
+        trendValue: `${change >= 0 ? "+" : ""}${change.toFixed(1)} this month`,
         color: "success",
       });
     }
@@ -97,7 +109,7 @@ const TeacherDashboard = () => {
         subtitle: data.monthlyEarnings.month || "This month",
         icon: "DollarSign",
         trend: change >= 0 ? "up" : "down",
-        trendValue: `${change >= 0 ? '+' : ''}${change}% from last month`,
+        trendValue: `${change >= 0 ? "+" : ""}${change}% from last month`,
         color: "accent",
       });
     }
@@ -118,11 +130,12 @@ const TeacherDashboard = () => {
   // Get current month's data
   const currentMonth = (() => {
     const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   })();
 
   const slotsByMonth = useSelector((s) => s.schedule?.slotsByMonth || {});
-  const monthlyWeeklyBaseline = slotsByMonth?.[currentMonth]?.monthlyWeekly || {};
+  const monthlyWeeklyBaseline =
+    slotsByMonth?.[currentMonth]?.monthlyWeekly || {};
 
   useEffect(() => {
     if (!teacherId || !currentMonth) return;
@@ -136,7 +149,15 @@ const TeacherDashboard = () => {
   }, [currentMonth, teacherId, dispatch, scheduleState?.slotsByMonth]);
 
   useEffect(() => {
-    const next = { sun: [], mon: [], tue: [], wed: [], thu: [], fri: [], sat: [] };
+    const next = {
+      sun: [],
+      mon: [],
+      tue: [],
+      wed: [],
+      thu: [],
+      fri: [],
+      sat: [],
+    };
 
     const baseline = monthlyWeeklyBaseline || {};
 
@@ -200,27 +221,39 @@ const TeacherDashboard = () => {
     fetchFeedbacks();
   }, []);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getDashboardData();
-        const sessionsWithDates = (data?.data?.lessons || []).map(session => ({
-          ...session,
-          startTime: session?.lesson?.startAt
-        }))
-        setTodaySessions(sessionsWithDates)
-      } catch (err) {
-        console.error("Failed to fetch dashboard data:", err);
-        setError(err.message || "Failed to load dashboard data");
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Format time from ISO string to readable format
+  const formatTime = useCallback(
+    (isoString) =>
+      formatTimeToTZ(isoString, userTimezone, {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }),
+    [userTimezone],
+  );
 
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getDashboardData();
+      const sessionsWithDates = (data?.data?.lessons || []).map((session) => ({
+        ...session,
+        startTime: formatTime(session?.lesson?.startAt),
+        endTime: formatTime(session?.lesson?.endAt),
+      }));
+      setTodaySessions(sessionsWithDates);
+    } catch (err) {
+      console.error("Failed to fetch dashboard data:", err);
+      setError(err.message || "Failed to load dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  }, [formatTime]);
+
+  useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -258,8 +291,23 @@ const TeacherDashboard = () => {
     }
   };
 
-  const handleCancelSession = (session) => {
-    alert("Session canceled successfully!");
+  const handleCompleteSession = async (session, note) => {
+    const sessionId = session?._id || session?.id;
+    if (!sessionId) return;
+
+    setTodaySessions((prev) =>
+      prev.filter(
+        (item) => String(item?._id || item?.id) !== String(sessionId),
+      ),
+    );
+
+    try {
+      await markSessionCompleted(sessionId, note ? { note } : {});
+      successToast("Session marked as completed");
+    } catch (err) {
+      await fetchDashboardData();
+      errorToast(err?.message || "Failed to mark session as completed");
+    }
   };
 
   const handleViewAllSchedules = () => {
@@ -308,52 +356,54 @@ const TeacherDashboard = () => {
 
           {/* Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-            {metricsLoading ? (
-              Array.from({ length: 4 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="bg-card border border-border rounded-lg p-6 shadow-soft animate-pulse"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="h-4 bg-muted rounded w-24 mb-2"></div>
-                      <div className="h-8 bg-muted rounded w-16 mb-2"></div>
-                      <div className="h-3 bg-muted rounded w-32"></div>
+            {metricsLoading
+              ? Array.from({ length: 4 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="bg-card border border-border rounded-lg p-6 shadow-soft animate-pulse"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="h-4 bg-muted rounded w-24 mb-2"></div>
+                        <div className="h-8 bg-muted rounded w-16 mb-2"></div>
+                        <div className="h-3 bg-muted rounded w-32"></div>
+                      </div>
+                      <div className="w-12 h-12 bg-muted rounded-lg"></div>
                     </div>
-                    <div className="w-12 h-12 bg-muted rounded-lg"></div>
                   </div>
-                </div>
-              ))
-            ) : (
-              metricsData?.map((metric, index) => (
-                <MetricsCard
-                  key={index}
-                  title={metric?.title}
-                  value={metric?.value}
-                  subtitle={metric?.subtitle}
-                  icon={metric?.icon}
-                  trend={metric?.trend}
-                  trendValue={metric?.trendValue}
-                  color={metric?.color}
-                />
-              ))
-            )}
+                ))
+              : metricsData?.map((metric, index) => (
+                  <MetricsCard
+                    key={index}
+                    title={metric?.title}
+                    value={metric?.value}
+                    subtitle={metric?.subtitle}
+                    icon={metric?.icon}
+                    trend={metric?.trend}
+                    trendValue={metric?.trendValue}
+                    color={metric?.color}
+                  />
+                ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div className="lg:col-span-2">
-              {loading ? <Loader /> : error ? (
+              {loading ? (
+                <Loader />
+              ) : error ? (
                 <div className="bg-card rounded-lg border border-destructive/50 p-8 text-center">
-                  <p className="text-destructive mb-2">Failed to load schedule</p>
+                  <p className="text-destructive mb-2">
+                    Failed to load schedule
+                  </p>
                   <p className="text-sm text-muted-foreground">{error}</p>
                 </div>
               ) : (
                 <TodaySchedule
                   sessions={todaySessions}
                   onJoinSession={handleJoinSession}
-                  onCancelSession={handleCancelSession}
                   onViewAllSchedules={handleViewAllSchedules}
                   onMessage={handleMessages}
+                  onCompleteSession={handleCompleteSession}
                 />
               )}
             </div>

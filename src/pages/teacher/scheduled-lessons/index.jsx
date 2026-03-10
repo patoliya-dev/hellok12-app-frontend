@@ -13,7 +13,11 @@ const breadCrumbData = [
 ];
 
 const ScheduledLessons = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
 
   const today = useMemo(() => {
     const d = new Date();
@@ -41,11 +45,18 @@ const ScheduledLessons = () => {
         if (data.monthOverview) {
           Object.entries(data.monthOverview).forEach(([date, dateData]) => {
             (dateData.lessons || []).forEach((lesson) => {
+              const startIso = lesson.start; // ISO from BE
+              const start = new Date(startIso);
+
               transformedLessons.push({
                 id: lesson.id,
                 title: lesson.title,
-                date,
-                time: lesson.time,
+                date, // already YYYY-MM-DD correct in user TZ
+                time: start.toLocaleTimeString("en-US", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                }),
                 color: "blue",
                 status: "pending",
               });

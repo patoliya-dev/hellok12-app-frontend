@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import RoleBasedHeader from "components/ui/RoleBasedHeader";
 import PageHeader from "components/ui/PageHeader";
@@ -15,6 +15,7 @@ import { successToast, errorToast } from "../../../utils/utils";
 import {
   fetchSchoolTeachers,
   approveRejectSchoolTeacher,
+  sendSchoolTeacherNotification,
 } from "../../../reducers/school/schoolThunks";
 import {
   selectSchoolTeachers,
@@ -29,21 +30,22 @@ import {
 import {
   selectInvitations,
   selectInvitationsLoading,
+  selectInvitationsPagination,
 } from "reducers/schoolInvitations/schoolInvitationsSlice";
 import { State } from "country-state-city";
 
-const teachersPerPage = 10; // keep same
+import SearchBar from "../../../components/ui/SearchBar";
+
+const teachersPerPage = 10;
+const invPageSize = 10;
 
 const getFullLocationName = (location) => {
   if (!location) return "";
-
   const { country, state, city } = location;
   const stateName = state
     ? State.getStateByCodeAndCountry(state, country)?.name
     : "";
   const cityName = city || "";
-
-  // Build string dynamically (avoid undefined or extra commas)
   return [cityName, stateName].filter(Boolean).join(", ");
 };
 
@@ -53,12 +55,16 @@ const ManageTeachers = () => {
   const teachers = useSelector(selectSchoolTeachers);
   const summary = useSelector(selectSchoolTeachersSummary);
   const fetchReq = useSelector(selectSchoolReq("fetchSchoolTeachers"));
+  const sendTeacherNotificationReq = useSelector(
+    selectSchoolReq("sendSchoolTeacherNotification")
+  );
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showProfileRequestModal, setShowProfileRequestModal] = useState(false);
+  const [profileRequestTeacher, setProfileRequestTeacher] = useState(null);
   const [activeTab, setActiveTab] = useState("teachers");
 
   const [filters, setFilters] = useState({
@@ -67,49 +73,85 @@ const ManageTeachers = () => {
     availability: "all",
     experience: "all",
   });
+
+  // Tab-specific search
+  const [teacherSearch, setTeacherSearch] = useState("");
+  const [invSearch, setInvSearch] = useState("");
+
+  // Invitations pagination
+  const [invPage, setInvPage] = useState(1);
+
+  // selectors must include search (slice key = role:status:search)
   const invitations = useSelector((s) =>
-    selectInvitations(
-      s,
-      "teacher",
-      filters.status === "all" ? "" : filters.status
-    )
+    selectInvitations(s, "teacher", invSearch, invPage, invPageSize)
   );
   const invLoading = useSelector((s) =>
-    selectInvitationsLoading(
-      s,
-      "teacher",
-      filters.status === "all" ? "" : filters.status
-    )
+    selectInvitationsLoading(s, "teacher", invSearch, invPage, invPageSize)
+  );
+  const invPagination = useSelector((s) =>
+    selectInvitationsPagination(s, "teacher", invSearch, invPage, invPageSize)
   );
 
-  useEffect(() => {
-    dispatch(fetchSchoolTeachers());
-    dispatch(
+  const fetchInvitations = useCallback(() => {
+    return dispatch(
       fetchSchoolInvitations({
         role: "teacher",
-        status: filters.status === "all" ? "" : filters.status,
+        search: invSearch,
+        page: invPage,
+        limit: invPageSize,
       })
     );
-  }, [dispatch]);
+  }, [dispatch, invSearch, invPage]);
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [filters]);
+    dispatch(fetchSchoolTeachers({ includeReminderMeta: 1 }));
+  }, [dispatch]);
 
-  const onCancelInvite = async (inv) => {
-    try {
-      await dispatch(
-        cancelSchoolInvitation({
-          invitationId: inv._id,
-          role: "teacher",
-          status: filters.status === "all" ? "" : filters.status,
-        })
-      ).unwrap();
-      successToast("Invitation cancelled");
-    } catch (e) {
-      errorToast(e || "Failed to cancel invitation");
-    }
-  };
+  // Only fetch invitations when invitations tab active
+  useEffect(() => {
+    if (activeTab !== "invitations") return;
+    fetchInvitations();
+  }, [activeTab, fetchInvitations]);
+
+  // When invitation search changes on invitations tab: reset page to 1
+  useEffect(() => {
+    if (activeTab !== "invitations") return;
+    setInvPage(1);
+  }, [invSearch, activeTab]);
+
+  // Teachers search is client-side; reset page on teacher search change
+  useEffect(() => {
+    if (activeTab !== "teachers") return;
+    setCurrentPage(1);
+  }, [teacherSearch, activeTab]);
+
+  // UX-only: when switching tabs, clear selection to avoid weird right-pane on small screens
+  useEffect(() => {
+    if (activeTab !== "teachers") setSelectedTeacher(null);
+  }, [activeTab]);
+
+  const onCancelInvite = useCallback(
+    async (inv) => {
+      try {
+        await dispatch(
+          cancelSchoolInvitation({
+            invitationId: inv._id,
+            role: "teacher",
+            search: invSearch,
+            page: invPage,
+            limit: invPageSize,
+          })
+        ).unwrap();
+
+        // refetch current view for correct totals
+        if (activeTab === "invitations") await fetchInvitations();
+        successToast("Invitation cancelled");
+      } catch (e) {
+        errorToast(e || "Failed to cancel invitation");
+      }
+    },
+    [dispatch, invSearch, invPage, fetchInvitations, activeTab]
+  );
 
   const handleFilterChange = (field, value) => {
     setFilters((p) => ({ ...p, [field]: value }));
@@ -127,6 +169,10 @@ const ManageTeachers = () => {
   };
 
   const filteredTeachers = useMemo(() => {
+    const q = String(teacherSearch || "")
+      .trim()
+      .toLowerCase();
+
     return (teachers || []).filter((teacher) => {
       const profile = teacher?.teacherProfile || {};
 
@@ -151,11 +197,24 @@ const ManageTeachers = () => {
         profile?.teachingMode ===
           (filters.availability === "online" ? "ONLINE" : "IN_PERSON");
 
+      const matchesSearch =
+        !q ||
+        String(teacher?.name || "")
+          .toLowerCase()
+          .includes(q) ||
+        String(teacher?.email || "")
+          .toLowerCase()
+          .includes(q);
+
       return (
-        matchesStatus && matchesLanguage && matchesExperience && matchesMode
+        matchesStatus &&
+        matchesLanguage &&
+        matchesExperience &&
+        matchesMode &&
+        matchesSearch
       );
     });
-  }, [teachers, filters]);
+  }, [teachers, filters, teacherSearch]);
 
   const totalPages = Math.ceil(filteredTeachers.length / teachersPerPage);
   const startIndex = (currentPage - 1) * teachersPerPage;
@@ -171,9 +230,31 @@ const ManageTeachers = () => {
         approveRejectSchoolTeacher({ teacherId, action: apiAction })
       ).unwrap();
       successToast("Teacher status updated successfully!");
-      dispatch(fetchSchoolTeachers());
+      dispatch(fetchSchoolTeachers({ includeReminderMeta: 1 }));
     } catch (e) {
       errorToast(e?.message || e?.error || "Failed to update teacher status");
+    }
+  };
+
+  const handleSendProfileRequest = async ({ teacherId, title, message, context }) => {
+    try {
+      if (!teacherId) {
+        errorToast("Teacher is required");
+        return;
+      }
+      await dispatch(
+        sendSchoolTeacherNotification({
+          teacherId,
+          title,
+          message,
+          context,
+        })
+      ).unwrap();
+      successToast("Notification sent successfully");
+      setShowProfileRequestModal(false);
+      dispatch(fetchSchoolTeachers({ includeReminderMeta: 1 }));
+    } catch (e) {
+      errorToast(e?.message || e?.error || "Failed to send notification");
     }
   };
 
@@ -204,6 +285,22 @@ const ManageTeachers = () => {
     },
   ];
 
+  const invitationTotalCount = invPagination?.total ?? invitations?.length ?? 0;
+
+  // Tab-aware search handler
+  const handleSearch = useCallback(
+    (term) => {
+      if (activeTab === "teachers") {
+        setTeacherSearch(term);
+        setCurrentPage(1);
+      } else {
+        setInvSearch(term);
+        setInvPage(1);
+      }
+    },
+    [activeTab]
+  );
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -219,6 +316,7 @@ const ManageTeachers = () => {
           buttonTitle="Invite Teacher"
           onButtonClick={() => setShowInviteModal((v) => !v)}
         />
+
         <section className="mb-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {cardData?.map((card, idx) => (
@@ -226,12 +324,22 @@ const ManageTeachers = () => {
             ))}
           </div>
         </section>
-        <Filters
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onChangeFilters={handleFilterChange}
-          onClearFilters={handleClearFilters}
-        />
+
+        {activeTab === "teachers" && (
+          <Filters
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onChangeFilters={handleFilterChange}
+            onClearFilters={handleClearFilters}
+          />
+        )}
+
+        {/* Responsive: keep desktop width, allow full width on small */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+          <div className="w-full lg:w-[59%]">
+            <SearchBar onSearch={handleSearch} />
+          </div>
+        </div>
 
         {fetchReq.status === "loading" ? (
           <div className="flex justify-center items-center py-20">
@@ -249,22 +357,21 @@ const ManageTeachers = () => {
                 {
                   id: "invitations",
                   label: "Invitations",
-                  count: invitations?.length,
+                  count: invitationTotalCount,
                 },
-              ].map((t) => {
-                return (
-                  <button
-                    key={t.id}
-                    className={`px-4 py-2 rounded ${
-                      activeTab === t.id ? "bg-primary text-white" : "bg-muted"
-                    }`}
-                    onClick={() => setActiveTab(t.id)}
-                  >
-                    {t.label} ({t.count})
-                  </button>
-                );
-              })}
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  className={`px-4 py-2 rounded ${
+                    activeTab === t.id ? "bg-primary text-white" : "bg-muted"
+                  }`}
+                  onClick={() => setActiveTab(t.id)}
+                >
+                  {t.label} ({t.count})
+                </button>
+              ))}
             </div>
+
             {activeTab === "teachers" && (
               <section className="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-6">
                 {/* Teacher List */}
@@ -282,13 +389,14 @@ const ManageTeachers = () => {
                     onPageChange={setCurrentPage}
                     pageSize={teachersPerPage}
                     onInviteTeacher={() => setShowInviteModal((v) => !v)}
-                    onProfileRequest={() =>
-                      setShowProfileRequestModal((v) => !v)
-                    }
+                    onProfileRequest={(teacher) => {
+                      setProfileRequestTeacher(teacher);
+                      setShowProfileRequestModal(true);
+                    }}
                   />
 
-                  <div className="bg-card border border-border rounded-lg h-[800px]">
-                    {/* Right Section - Teacher Profile */}
+                  {/* Responsive: keep desktop height, allow natural height on small */}
+                  <div className="bg-card border border-border rounded-lg h-auto xl:h-[800px]">
                     <TeacherProfile
                       getFullLocationName={getFullLocationName}
                       teacher={selectedTeacher}
@@ -298,14 +406,17 @@ const ManageTeachers = () => {
                 </>
               </section>
             )}
+
             {activeTab === "invitations" && (
               <section className="grid grid-cols-1 xl:grid-cols-1">
                 <InvitationTable
                   title="Teacher invitations"
                   invitations={invitations}
+                  pagination={invPagination}
                   loading={invLoading}
                   onCancel={onCancelInvite}
                   showRole={false}
+                  onPageChange={setInvPage}
                 />
               </section>
             )}
@@ -324,7 +435,13 @@ const ManageTeachers = () => {
 
       <ProfileRequestModal
         isOpen={showProfileRequestModal}
-        onClose={() => setShowProfileRequestModal((v) => !v)}
+        teacher={profileRequestTeacher || selectedTeacher}
+        loading={sendTeacherNotificationReq.status === "loading"}
+        onSubmit={handleSendProfileRequest}
+        onClose={() => {
+          setShowProfileRequestModal(false);
+          setProfileRequestTeacher(null);
+        }}
       />
 
       {showSuccessModal && (

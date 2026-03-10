@@ -3,13 +3,19 @@ import React, { useState } from "react";
 const FieldError = ({ children }) =>
   children ? <p className="mt-1 text-sm text-destructive">{children}</p> : null;
 
-export default function DurationRange({ formData, handleInputChange, error = "" }) {
+export default function DurationRange({
+  formData,
+  handleInputChange,
+  error = "",
+  disabled = false,
+}) {
   // Duration in minutes
   const [duration, setDuration] = useState(60);
 
   const handleChange = (e) => {
+    if (disabled) return;
     setDuration(Number(e.target.value));
-    handleInputChange("schedule.duration", Number(e.target.value))
+    handleInputChange("schedule.duration", Number(e.target.value));
   };
 
   return (
@@ -29,9 +35,12 @@ export default function DurationRange({ formData, handleInputChange, error = "" 
         max="60"
         step="15"
         required
+        disabled={disabled}
         value={formData?.schedule?.duration || duration || 60}
         onChange={handleChange}
-        className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-blue-600"
+        className={`w-full h-2 bg-muted rounded-lg appearance-none accent-blue-600 ${
+          disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+        }`}
       />
 
       {/* Step Labels */}

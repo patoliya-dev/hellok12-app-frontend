@@ -7,7 +7,12 @@ import {
   listTeachers,
 } from "../../../../services/messages/message.service";
 
-const NewMessageModal = ({ onClose, onNewConversation, currentUser, conversations = [] }) => {
+const NewMessageModal = ({
+  onClose,
+  onNewConversation,
+  currentUser,
+  conversations = [],
+}) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creatingUserId, setCreatingUserId] = useState(null); // Track specific user being created
@@ -16,17 +21,17 @@ const NewMessageModal = ({ onClose, onNewConversation, currentUser, conversation
     const loadUsers = async () => {
       try {
         setLoading(true);
-        const data = await listTeachers(); 
+        const data = await listTeachers();
         const directConversations = conversations.filter(
-          (conv) => conv.threadType === "DIRECT"
+          (conv) => conv.threadType === "DIRECT",
         );
         const usersWithDirectChats = directConversations.flatMap((conv) =>
           conv.participants
             .filter((p) => p._id !== currentUser?.id)
-            .map((p) => p._id)
+            .map((p) => p._id),
         );
         const availableUsers = data.filter(
-          (user) => !usersWithDirectChats.includes(user._id)
+          (user) => !usersWithDirectChats.includes(user._id),
         );
         setUsers(availableUsers);
       } catch (err) {

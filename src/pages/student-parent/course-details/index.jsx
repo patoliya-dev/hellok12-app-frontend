@@ -21,18 +21,28 @@ const PublicCourseDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const authUser = useSelector(selectAuthUser);
+  const isParent = authUser?.role === "parent";
+  const selectedChildId = useSelector((state) => state.profile?.selectedChildId);
 
   const [course, setCourse] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [showEnrollment, setShowEnrollment] = useState(false);
   const [showLessonModal, setShowLessonModal] = useState(false);
+  const isAlreadyPurchased = !!course?.purchaseInfo?.alreadyPurchased;
+  const shouldBlockPurchaseActions = isAlreadyPurchased && !isParent;
 
   useEffect(() => {
     const fetchCourse = async () => {
       setIsLoading(true);
       try {
-        const { data } = await getCourseDetails(id);
+        const studentId =
+          authUser?.role === "parent"
+            ? selectedChildId || authUser?.profile?.children?.[0]?._id || authUser?.profile?.children?.[0]?.id
+            : authUser?._id || authUser?.id;
+
+        const params = studentId ? { studentId } : {};
+        const { data } = await getCourseDetails(id, params);
         setCourse(data);
       } catch (error) {
         errorToast(error.response?.data || error.message);
@@ -42,9 +52,10 @@ const PublicCourseDetails = () => {
     };
 
     fetchCourse();
-  }, [id]);
+  }, [id, authUser?.role, authUser?._id, authUser?.id, selectedChildId]);
 
   const handleEnrollCourse = () =>
+    !shouldBlockPurchaseActions &&
     navigate(
       getRolePath(
         authUser?.role || "student",
@@ -54,6 +65,7 @@ const PublicCourseDetails = () => {
 
   // onTrial now expects a lessonId argument from the modal
   const handleTrialLesson = (selectedLessonId) => {
+    if (shouldBlockPurchaseActions) return;
     // close modal (modal will call onClose itself in most paths, but ensure it's closed)
     setShowLessonModal(false);
 
@@ -139,6 +151,7 @@ const PublicCourseDetails = () => {
           course={course}
           onEnroll={handleEnrollCourse}
           onTrial={() => setShowLessonModal(true)}
+          isAlreadyPurchased={shouldBlockPurchaseActions}
         />
 
         <div className="max-w-6xl mx-auto px-6 py-8">
@@ -157,6 +170,7 @@ const PublicCourseDetails = () => {
                   course={course}
                   onEnroll={handleEnrollCourse}
                   onTrial={() => setShowLessonModal(true)}
+                  isAlreadyPurchased={shouldBlockPurchaseActions}
                 />
               </div>
             </div>

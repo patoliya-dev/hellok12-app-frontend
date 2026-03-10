@@ -1,7 +1,7 @@
 import React from 'react';
 
 function Image({
-  src,
+  src = "",
   alt = "Image Name",
   className = "",
   ...props
@@ -9,7 +9,7 @@ function Image({
 
   return (
     <img
-      src={src}
+      src={src || ""}
       alt={alt}
       className={className}
       onError={(e) => {

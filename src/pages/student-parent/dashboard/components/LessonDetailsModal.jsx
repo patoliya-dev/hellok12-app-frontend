@@ -21,6 +21,7 @@ import { getRolePath } from "../../../../utils/rolePath";
 import FeedbackModal from "./FeedbackModal";
 import { feedbackRatingAPI } from "../../../../services/feedbacks/feedback.service";
 import { errorToast } from "../../../../utils/utils";
+import Image from "components/AppImage";
 
 const tagDetails = {
   "Curriculum-Aligned Games": { icon: <Gamepad2 size={16} />, color: "orange" },
@@ -46,6 +47,42 @@ const statusDetails = {
   cancelled: { color: "error", text: "Cancelled" },
 };
 
+const normalizeTag = (tag) => {
+  if (typeof tag === "string") {
+    return { key: tag, label: tag, icon: null };
+  }
+
+  if (tag && typeof tag === "object") {
+    return {
+      key: tag.key || tag.label || JSON.stringify(tag),
+      label: tag.label || "",
+      icon: tag.icon || null,
+    };
+  }
+
+  return { key: String(tag || ""), label: String(tag || ""), icon: null };
+};
+
+const formatAddress = (address) => {
+  if (!address) return "";
+  if (typeof address === "string") return address.trim();
+  if (Array.isArray(address)) return address.filter(Boolean).join(", ");
+  if (typeof address === "object") {
+    const parts = [
+      address.line1,
+      address.line2,
+      address.city,
+      address.state,
+      address.country,
+      address.postalCode || address.zip || address.zipCode,
+    ]
+      .map((part) => String(part || "").trim())
+      .filter(Boolean);
+    return parts.join(", ");
+  }
+  return String(address).trim();
+};
+
 const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
   const navigate = useNavigate();
   const authUser = useSelector((state) => state.auth.user);
@@ -56,6 +93,7 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
   if (!lesson) return null;
 
   const statusInfo = statusDetails[lesson.status] || statusDetails["pending"];
+  const formattedAddress = formatAddress(lesson.address);
 
   const handleMessage = () => {
     navigate(getRolePath(authUser?.role || "student", "messages"));
@@ -83,7 +121,7 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
     } catch (error) {
       console.error("Failed to submit feedback:", error);
       errorToast(
-        error?.message || "Failed to submit feedback. Please try again."
+        error?.message || "Failed to submit feedback. Please try again.",
       );
     } finally {
       setIsSubmitting(false);
@@ -93,7 +131,7 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
   return (
     <>
       {/* Overlay */}
-      <div className="fixed inset-0 z-50 bg-black/60">
+      <div className="fixed inset-0 z-50 bg-black/60 !m-0">
         {/* Center wrapper */}
         <div className="flex min-h-[100dvh] items-center justify-center p-3 sm:p-4 font-sans">
           {/* Modal */}
@@ -133,10 +171,13 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
                 <div className="mt-4 rounded-lg bg-brand-gray-100 p-4">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-4">
                     <div className="flex items-center gap-4">
-                      <img
-                        src={lesson.teacher?.avatar}
+                      <Image
+                        src={
+                          lesson.teacher?.avatar ||
+                          "/assets/images/no_image.png"
+                        }
                         alt={lesson.teacher?.name}
-                        className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover"
+                        className="w-16 h-16 rounded-full object-cover"
                       />
                       <div className="min-w-0">
                         <h4 className="text-base sm:text-lg font-bold text-brand-gray-800 truncate">
@@ -202,7 +243,7 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
                     </div>
                   </div>
 
-                  {lesson.address ? (
+                  {formattedAddress ? (
                     <div className="flex items-start gap-3">
                       <span>
                         <MapPin className="mt-1 h-5 w-5 text-brand-gray-500" />
@@ -210,7 +251,7 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
                       <div className="min-w-0">
                         <p className="text-sm text-brand-gray-500">Location</p>
                         <p className="font-semibold text-brand-gray-800 break-words">
-                          {lesson.address}
+                          {formattedAddress}
                         </p>
                       </div>
                     </div>
@@ -240,14 +281,25 @@ const LessonDetailsModal = ({ lesson, onClose, onFeedbackSubmitted }) => {
                 {/* Tags */}
                 {lesson.tags && lesson.tags.length > 0 && (
                   <div className="mt-6 flex flex-wrap items-center gap-2 sm:gap-3">
-                    {lesson.tags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        text={tag}
-                        color={tagDetails[tag]?.color || "sky"}
-                        icon={tagDetails[tag]?.icon}
-                      />
-                    ))}
+                    {lesson.tags.map((tag) => {
+                      const normalizedTag = normalizeTag(tag);
+                      const tagConfig = tagDetails[normalizedTag.label];
+                      const fallbackIcon =
+                        typeof normalizedTag.icon === "string" ? (
+                          <Icon name={normalizedTag.icon} size={16} />
+                        ) : (
+                          normalizedTag.icon
+                        );
+
+                      return (
+                        <Badge
+                          key={normalizedTag.key}
+                          text={normalizedTag.label}
+                          color={tagConfig?.color || "sky"}
+                          icon={tagConfig?.icon || fallbackIcon}
+                        />
+                      );
+                    })}
                   </div>
                 )}
 

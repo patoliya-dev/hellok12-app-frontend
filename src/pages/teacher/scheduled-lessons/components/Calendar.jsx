@@ -29,10 +29,12 @@ const Calendar = ({ currentDate, setCurrentDate, lessons, today, selectedDate, s
   }, [lessons]);
 
   const navigateMonth = (direction) => {
-    setCurrentDate(prevDate => {
-      const newDate = new Date(prevDate);
-      newDate.setMonth(newDate.getMonth() + direction);
-      return newDate;
+    setCurrentDate((prevDate) => {
+      const d = new Date(prevDate);
+
+      d.setHours(0, 0, 0, 0);
+      d.setMonth(d.getMonth() + direction);
+      return d;
     });
   };
 
