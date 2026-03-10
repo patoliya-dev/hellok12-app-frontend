@@ -6,8 +6,8 @@ export const getTeacherSchedule = (teacherId) =>
 export const upsertTeacherSchedule = (teacherId, body) =>
   api.patch(`/teachers/${teacherId}/schedule`, body);
 
-export const getSlotsForDate = (teacherId, date, month) =>
-  api.get(`/teachers/${teacherId}/schedule/slots`, { params: { date, month } });
+export const getSlotsForDate = (teacherId, date) =>
+  api.get(`/teachers/${teacherId}/schedule/slots`, { params: { date } });
 
 // fetch whole month:
 export const getSlotsForMonth = (teacherId, month) =>

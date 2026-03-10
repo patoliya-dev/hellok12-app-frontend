@@ -13,18 +13,11 @@ import {
   updateDateSlots,
 } from "../../../reducers/schedule/scheduleThunks";
 import { errorToast, successToast } from "../../../utils/utils";
-import {
-  dayStrToIdx,
-  idxToDayStr,
-  isHHMM,
-  isNumber,
-  minutesToHHMM,
-  toHHMM,
-  toISO,
-  weekdayKeys,
-} from "../../../utils/time12h";
+import { dayStrToIdx, idxToDayStr, isHHMM, isNumber, minutesToHHMM, toHHMM, toISO, weekdayKeys } from "../../../utils/time12h";
 import { selectPageLoading } from "../../../reducers/ui/pageLoaderSlice";
 import PageLoaderOverlay from "components/ui/PageLoaderOverlay";
+
+const EMPTY_MONTHLY_WEEKLY = {};
 
 const ManageSchedule = () => {
   const dispatch = useDispatch();
@@ -35,25 +28,56 @@ const ManageSchedule = () => {
   const pageLoading = useSelector(selectPageLoading);
 
   // selected day/date state
-  const [currentDate, setCurrentDate] = useState(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  });
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDateISO, setSelectedDateISO] = useState(null); // null => weekly mode
-  const [selectedWeekday, setSelectedWeekday] = useState(
-    weekdayKeys[new Date().getDay()],
-  );
+  const [selectedWeekday, setSelectedWeekday] = useState(weekdayKeys[new Date().getDay()]);
   // visible month (YYYY-MM) for calendar view
   const [visibleMonth, setVisibleMonth] = useState(() => {
     const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
 
+  const handleVisibleMonthChange = useCallback((monthKey) => {
+    if (!monthKey) return;
+    setVisibleMonth((prev) => (prev === monthKey ? prev : monthKey));
+  }, []);
+
   const slotsByMonth = useSelector((s) => s.schedule.slotsByMonth || {}); // { 'YYYY-MM': { monthlyWeekly, overrides, slotsByDate } }
-  // monthly weekly baseline for visibleMonth (labels HH:MM[]). Do NOT fallback to legacy.
-  const monthlyWeeklyBaseline =
-    slotsByMonth?.[visibleMonth]?.monthlyWeekly || {};
+  const visibleMonthCache = slotsByMonth?.[visibleMonth];
+  const scheduleMonthly = scheduleState?.schedule?.monthly || {};
+
+  // month baseline from month API cache (preferred)
+  const monthlyWeeklyBaseline = visibleMonthCache?.monthlyWeekly;
+  const hasMonthBaselineFromApi = useMemo(() => {
+    return (
+      !!monthlyWeeklyBaseline &&
+      typeof monthlyWeeklyBaseline === "object" &&
+      Object.keys(monthlyWeeklyBaseline).length > 0
+    );
+  }, [monthlyWeeklyBaseline]);
+
+  // safe fallback from full schedule payload for initial prefill when month cache is not hydrated yet
+  const fallbackMonthlyBaseline = useMemo(() => {
+    const monthEntry = scheduleMonthly?.[visibleMonth];
+    if (!monthEntry || typeof monthEntry !== "object") return null;
+
+    const out = {};
+    Object.entries(monthEntry).forEach(([k, arr]) => {
+      if (!Array.isArray(arr)) {
+        out[k] = [];
+        return;
+      }
+      out[k] = arr.map((v) => {
+        if (isHHMM(v)) return v;
+        if (isNumber(v)) return minutesToHHMM(v);
+        return null;
+      }).filter(Boolean);
+    });
+    return out;
+  }, [scheduleMonthly, visibleMonth]);
+
+  const effectiveMonthlyWeeklyBaseline =
+    hasMonthBaselineFromApi ? monthlyWeeklyBaseline : fallbackMonthlyBaseline;
 
   // availability
   const [availability, setAvailability] = useState({
@@ -79,40 +103,28 @@ const ManageSchedule = () => {
   // Fetch month data when visibleMonth changes (if not cached)
   useEffect(() => {
     if (!teacherId || !visibleMonth) return;
-    const cached = scheduleState?.slotsByMonth?.[visibleMonth];
-    if (cached && cached.fetchedAt) return; // skip if recently cached
+    // Do not skip if cache came only from date-level fetch and monthly baseline is still missing.
+    if (hasMonthBaselineFromApi) return;
     dispatch(fetchSlotsForMonth({ teacherId, month: visibleMonth }))
       .unwrap()
       .catch((err) => {
         // fall back to per-date loads if month endpoint fails
       });
-  }, [visibleMonth, teacherId, dispatch]);
+  }, [visibleMonth, teacherId, dispatch, hasMonthBaselineFromApi]);
 
   // Keep refs to latest state to avoid stale closures inside handlers
   const visibleMonthRef = useRef(visibleMonth);
-  useEffect(() => {
-    visibleMonthRef.current = visibleMonth;
-  }, [visibleMonth]);
+  useEffect(() => { visibleMonthRef.current = visibleMonth; }, [visibleMonth]);
   const selectedDateISORef = useRef(selectedDateISO);
-  useEffect(() => {
-    selectedDateISORef.current = selectedDateISO;
-  }, [selectedDateISO]);
+  useEffect(() => { selectedDateISORef.current = selectedDateISO; }, [selectedDateISO]);
 
   // ---- hydrate weekly availability from monthly baseline ONLY (accept minutes or HH:MM) ----
   useEffect(() => {
-    const next = {
-      sun: [],
-      mon: [],
-      tue: [],
-      wed: [],
-      thu: [],
-      fri: [],
-      sat: [],
-    };
+    const next = { sun: [], mon: [], tue: [], wed: [], thu: [], fri: [], sat: [] };
 
     // Use monthly baseline only. If there is no monthly baseline for the visible month,
     // availability remains empty (we don't use legacy weekly or previous month).
-    const baseline = monthlyWeeklyBaseline || {};
+    const baseline = effectiveMonthlyWeeklyBaseline || EMPTY_MONTHLY_WEEKLY;
 
     Object.entries(baseline || {}).forEach(([k, arr]) => {
       const idx = Number(k);
@@ -130,8 +142,17 @@ const ManageSchedule = () => {
       next[key] = normalized;
     });
 
-    setAvailability((prev) => ({ ...prev, ...next }));
-  }, [monthlyWeeklyBaseline, visibleMonth]);
+    setAvailability((prev) => {
+      const merged = { ...prev, ...next };
+      const isSame = weekdayKeys.every((k) => {
+        const a = prev[k] || [];
+        const b = merged[k] || [];
+        if (a.length !== b.length) return false;
+        return a.every((v, i) => v === b[i]);
+      });
+      return isSame ? prev : merged;
+    });
+  }, [effectiveMonthlyWeeklyBaseline, visibleMonth]);
 
   // ---- pick/unpick date from MiniCalendar ----
   const handleDateSelect = (date) => {
@@ -153,9 +174,7 @@ const ManageSchedule = () => {
       setSelectedDateISO(iso);
       // fetch that date’s slots (override) with authoritative monthKey
       const fetchMonthParam = monthKey || visibleMonthRef.current;
-      dispatch(
-        fetchSlotsForDate({ teacherId, date: iso, month: fetchMonthParam }),
-      )
+      dispatch(fetchSlotsForDate({ teacherId, date: iso, month: fetchMonthParam }))
         .unwrap()
         .catch((err) => errorToast(err?.error || "Failed to load date slots"));
     }
@@ -163,8 +182,7 @@ const ManageSchedule = () => {
   };
 
   // slotsByDate for current visible month
-  const currentMonthSlotsByDate =
-    slotsByMonth?.[visibleMonth]?.slotsByDate || {};
+  const currentMonthSlotsByDate = slotsByMonth?.[visibleMonth]?.slotsByDate || {};
 
   // update dayName based on selected weekday instead of current date
   const dayName = useMemo(() => {
@@ -227,7 +245,7 @@ const ManageSchedule = () => {
         monthKey = visibleMonth;
       } else if (currentDate) {
         const d = new Date(currentDate);
-        monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       }
 
       const body = {
@@ -238,81 +256,55 @@ const ManageSchedule = () => {
 
       await dispatch(saveSchedule({ teacherId, body })).unwrap();
       // refresh month data
-      if (monthKey)
-        dispatch(fetchSlotsForMonth({ teacherId, month: monthKey })).catch(
-          () => {},
-        );
+      if (monthKey) dispatch(fetchSlotsForMonth({ teacherId, month: monthKey })).catch(() => { });
       successToast("Schedule saved successfully!");
     } catch (err) {
       errorToast(err?.error || "Failed to save schedule");
     }
-  }, [
-    availability,
-    dispatch,
-    teacherId,
-    visibleMonth,
-    selectedDateISO,
-    currentDate,
-  ]);
+  }, [availability, dispatch, teacherId, visibleMonth, selectedDateISO, currentDate]);
 
   // Determine if we already have an override entry for this date (only for current visible month)
-  const hasOverrideFor = useCallback(
-    (iso) => {
-      return Object.prototype.hasOwnProperty.call(
-        currentMonthSlotsByDate || {},
-        iso,
-      );
-    },
-    [currentMonthSlotsByDate],
-  );
+  const hasOverrideFor = useCallback((iso) => {
+    return Object.prototype.hasOwnProperty.call(currentMonthSlotsByDate || {}, iso);
+  }, [currentMonthSlotsByDate]);
+
 
   // Unified slot handler: prefer explicit add/remove (server-side will still accept toggle),
   // but we avoid using 'toggle' to keep payload explicit and deterministic.
-  const handleToggleOverride = useCallback(
-    async (hhmm) => {
-      const selectedIso = selectedDateISORef.current;
-      if (!selectedIso) return;
+  const handleToggleOverride = useCallback(async (hhmm) => {
+    const selectedIso = selectedDateISORef.current;
+    if (!selectedIso) return;
 
-      try {
-        // authoritative month for this action
-        const actionMonth = selectedIso.slice(0, 7) || visibleMonthRef.current;
+    try {
+      // authoritative month for this action
+      const actionMonth = selectedIso.slice(0, 7) || visibleMonthRef.current;
 
-        // compute source-of-truth locally
-        const overrideExists = hasOverrideFor(selectedIso);
-        const currentOverrideSlots = (
-          currentMonthSlotsByDate[selectedIso] || []
-        ).map((s) =>
-          typeof s === "string" ? s : s.label || toHHMM(s.minutes),
-        );
-        const baselineForDate = effectiveSlotsForDate(selectedIso); // uses monthly baseline only
-        const source = overrideExists ? currentOverrideSlots : baselineForDate;
+      // compute source-of-truth locally
+      const overrideExists = hasOverrideFor(selectedIso);
+      const currentOverrideSlots = (currentMonthSlotsByDate[selectedIso] || []).map(s => (typeof s === 'string' ? s : (s.label || toHHMM(s.minutes))));
+      const baselineForDate = effectiveSlotsForDate(selectedIso); // uses monthly baseline only
+      const source = overrideExists ? currentOverrideSlots : baselineForDate;
 
-        const isCurrentlySelected = (source || []).includes(hhmm);
+      const isCurrentlySelected = (source || []).includes(hhmm);
 
-        // prefer explicit add/remove; server patchDateSlots will handle safe delta merging
-        const payload = {
-          date: selectedIso,
-          [isCurrentlySelected ? "remove" : "add"]: [hhmm],
-        };
+      // prefer explicit add/remove; server patchDateSlots will handle safe delta merging
+      const payload = {
+        date: selectedIso,
+        [isCurrentlySelected ? 'remove' : 'add']: [hhmm]
+      };
 
-        await dispatch(updateDateSlots({ teacherId, body: payload })).unwrap();
+      await dispatch(updateDateSlots({ teacherId, body: payload })).unwrap();
 
-        // refresh month data to reflect new override/state
-        if (actionMonth) {
-          dispatch(fetchSlotsForMonth({ teacherId, month: actionMonth })).catch(
-            () => {},
-          );
-        }
-
-        successToast(
-          `Updated ${selectedIso} — ${isCurrentlySelected ? "removed" : "added"} slot ${hhmm}`,
-        );
-      } catch (err) {
-        errorToast(err?.error || "Failed to update date slot");
+      // refresh month data to reflect new override/state
+      if (actionMonth) {
+        dispatch(fetchSlotsForMonth({ teacherId, month: actionMonth })).catch(() => { });
       }
-    },
-    [dispatch, teacherId, hasOverrideFor, currentMonthSlotsByDate],
-  );
+
+      successToast(`Updated ${selectedIso} — ${isCurrentlySelected ? 'removed' : 'added'} slot ${hhmm}`);
+    } catch (err) {
+      errorToast(err?.error || 'Failed to update date slot');
+    }
+  }, [dispatch, teacherId, hasOverrideFor, currentMonthSlotsByDate]);
 
   // ---- derive slots for TimeSlots: weekly vs override ----
 
@@ -320,17 +312,14 @@ const ManageSchedule = () => {
     // 1) If override exists for this date (in current visible month) -> return it
     const overrideRaw = currentMonthSlotsByDate?.[iso];
     if (overrideRaw) {
-      if (overrideRaw.length && typeof overrideRaw[0] === "string")
-        return overrideRaw;
-      return overrideRaw.map((it) =>
-        typeof it === "string" ? it : it.label || toHHMM(it.minutes),
-      );
+      if (overrideRaw.length && typeof overrideRaw[0] === 'string') return overrideRaw;
+      return overrideRaw.map((it) => (typeof it === 'string' ? it : (it.label || toHHMM(it.minutes))));
     }
 
     // 2) Otherwise, use monthly baseline only - if monthly baseline missing -> return empty []
     const d = new Date(iso + "T00:00:00Z");
     const dow = d.getUTCDay(); // 0..6
-    const weeklyArr = monthlyWeeklyBaseline?.[dow] || [];
+    const weeklyArr = effectiveMonthlyWeeklyBaseline?.[dow] || [];
 
     return weeklyArr.map((x) => (isHHMM(x) ? x : minutesToHHMM(x)));
   };
@@ -372,12 +361,9 @@ const ManageSchedule = () => {
                 </div>
               )}
               <div className="mb-8">
-                <h3 className="text-lg font-semibold text-foreground">
-                  Set Availability
-                </h3>
+                <h3 className="text-lg font-semibold text-foreground">Set Availability</h3>
                 <p className="text-muted-foreground">
-                  Set your available hours for each day of the week. Click on
-                  time slots to toggle availability.
+                  Set your available hours for each day of the week. Click on time slots to toggle availability.
                 </p>
               </div>
               <div className="flex flex-col gap-8">
@@ -385,7 +371,7 @@ const ManageSchedule = () => {
                   currentDate={currentDate}
                   onDateSelect={handleDateSelect} // override mode
                   onWeekdaySelect={handleWeekdaySelect} // weekly mode
-                  onVisibleMonthChange={(monthKey) => setVisibleMonth(monthKey)}
+                  onVisibleMonthChange={handleVisibleMonthChange}
                   selectedWeekday={selectedWeekday}
                   selectedDateISO={selectedDateISO} // inform MiniCalendar of date-edit mode
                 />
@@ -396,20 +382,15 @@ const ManageSchedule = () => {
                   availability={availability}
                   setAvailability={
                     selectedDateISO
-                      ? (hhmm, wasSelected) =>
-                          handleToggleOverride(hhmm, wasSelected) // instant API
-                      : handleAvailabilitySelect // local only
+                      ? (hhmm, wasSelected) => handleToggleOverride(hhmm, wasSelected) // instant API
+                      : handleAvailabilitySelect               // local only
                   }
                   toggleAllSlotsForDay={toggleAllSlotsForDay}
                   handleClearAll={handleClearAll}
                   onSaveWeekly={handleSaveWeekly}
                   saving={scheduleState.loading}
                   isOverrideMode={!!selectedDateISO}
-                  overrideSlots={
-                    selectedDateISO
-                      ? effectiveSlotsForDate(selectedDateISO)
-                      : []
-                  }
+                  overrideSlots={selectedDateISO ? effectiveSlotsForDate(selectedDateISO) : []}
                 />
               </div>
             </div>
